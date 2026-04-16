@@ -1,0 +1,68 @@
+{
+  "_description": "HiaiOpenCode Configuration: Define agent-model mappings and performance categories. Reference environment variables using {env:VAR_NAME} syntax. MODEL FORMATS: 1. OpenRouter (Recommended): 'openrouter/company/model' (e.g., 'openrouter/anthropic/claude-3.5-sonnet'). 2. Direct API calls: 'anthropic/model', 'openai/model', 'google/model', 'zai-coding-plan/model', 'kimi-for-coding/model', 'vercel/model'.",
+  "$schema": "./src/config/hiai-opencode.schema.json",
+  "agents": {
+    "bob": { "model": "openrouter/anthropic/claude-3.5-opus" },
+    "strategist": { "model": "openrouter/z-ai/glm-5.1" },
+    "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "guard": { "model": "openrouter/openai/gpt-4o" },
+    "general": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "zoe": { "model": "openrouter/google/gemini-2.0-flash" },
+    "sub": { "model": "openrouter/google/gemini-2.0-flash" },
+    "logician": { "model": "openrouter/anthropic/claude-3.5-opus" },
+    "explore": { "model": "openrouter/google/gemini-2.0-flash" },
+    "librarian": { "model": "openrouter/google/gemini-2.0-flash" },
+    "pre-plan": { "model": "openrouter/openai/gpt-4o" },
+    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct" },
+    "ui": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05" },
+    "mindmodel": { "model": "openrouter/google/gemini-2.0-flash" },
+    "ledger-creator": { "model": "openrouter/google/gemini-2.0-flash" },
+    "bootstrapper": { "model": "openrouter/google/gemini-2.0-flash" },
+    "project-initializer": { "model": "openrouter/openai/gpt-4o" },
+    "build": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "code-reviewer": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "systematic-debugger": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "brainstormer": { "model": "openrouter/google/gemini-2.0-flash" },
+    "agent-skills": { "model": "openrouter/google/gemini-2.0-flash" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
+    "artistry": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
+    "ultrabrain": { "model": "openrouter/openai/gpt-4o", "variant": "xhigh" },
+    "deep": { "model": "openrouter/openai/o1", "variant": "medium" },
+    "quick": { "model": "openrouter/anthropic/claude-3-5-haiku" },
+    "writing": { "model": "openrouter/kimi/kimi-latest" },
+    "git": { "model": "openrouter/anthropic/claude-3-5-haiku" }
+  },
+  "auth": {
+    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
+    "openai": "{env:OPENAI_API_KEY}",
+    "openrouter": "{env:OPENROUTER_API_KEY}",
+    "stitch": "{env:STITCH_AI_API_KEY}",
+    "firecrawl": "{env:FIRECRAWL_API_KEY}",
+    "context7": "{env:CONTEXT7_API_KEY}"
+  },
+  "ollama": {
+    "enabled": false,
+    "model": "qwen3.5:4b",
+    "baseUrl": "http://localhost:11434",
+    "purpose": "helper"
+  },
+  "mcp": {
+    "context7": { "enabled": true },
+    "mempalace": { "enabled": true },
+    "rag": { "enabled": true },
+    "playwright": { "enabled": true },
+    "stitch": { "enabled": true },
+    "sequential-thinking": { "enabled": true },
+    "firecrawl": { "enabled": true }
+  },
+  "lsp": {
+    "typescript": { "enabled": true },
+    "python": { "enabled": true },
+    "svelte": { "enabled": true }
+  },
+  "subtask2": {
+    "replace_generic": true
+  }
+}

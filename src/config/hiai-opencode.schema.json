@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "agents": { "type": "object" },
+    "auth": { "type": "object" },
+    "ollama": { "type": "object" },
+    "mcp": { "type": "object" },
+    "lsp": { "type": "object" },
+    "subtask2": { "type": "object" }
+  }
+}

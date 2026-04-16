@@ -1,0 +1,5 @@
+export * from "./types"
+export { createBuiltinAgents } from "./builtin-agents"
+export type { AvailableAgent, AvailableCategory, AvailableSkill } from "./dynamic-agent-prompt-builder"
+export type { StrategistPromptSource } from "./strategist"
+export { createBobJuniorAgentWithOverrides, BOB_JUNIOR_DEFAULTS } from "./sub"
