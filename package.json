@@ -1,7 +1,7 @@
 {
   "name": "hiai-opencode",
   "version": "1.0.0",
-  "description": "Unified OpenCode plugin — agents, MCPs, skills, LSP, permissions in one install",
+  "description": "Unified OpenCode plugin — canonical 12-agent model with bundled skills, MCP integrations, LSP, and permissions in one install.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -15,10 +15,36 @@
     "dist/",
     "skills/",
     "assets/",
-    "config/"
+    "config/",
+    "LICENSE.md",
+    "README.md"
   ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "agents",
+    "mcp",
+    "llm",
+    "ai-agents",
+    "hiai"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/HiAi-gg/hiai-opencode.git"
+  },
+  "homepage": "https://github.com/HiAi-gg/hiai-opencode#readme",
+  "bugs": {
+    "url": "https://github.com/HiAi-gg/hiai-opencode/issues"
+  },
+  "author": "HiAi",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
-    "build": "bun build src/index.ts --outdir dist --target bun --format esm",
+    "build": "bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
+    "build:bundle": "bun build src/index.ts --outdir dist --target bun --format esm",
+    "build:types": "tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "prompts:measure": "bun run scripts/measure_prompts.ts",
     "prepublishOnly": "bun run build"
@@ -42,11 +68,15 @@
     "picomatch": "^4.0.3",
     "diff": "^7.0.0"
   },
-  "license": "MIT",
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/picomatch": "^4.0.3",
     "@types/diff": "^7.0.0",
-    "bun-types": "^1.3.12"
+    "bun-types": "^1.3.12",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=18",
+    "bun": ">=1.1.0"
   }
 }

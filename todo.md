@@ -1043,3 +1043,4 @@ The `hiai-opencode` plugin (Bun-first, `/mnt/ai_data/hiai-opencode/`) replaces t
 - [x] **FIX-3:** `bun run typecheck` passes
 - [x] **FIX-4:** `bun run build` passes (1445 modules, 5.1 MB)
 - [x] **FIX-5:** Bundle copied to `~/.cache/opencode/packages/hiai-opencode@latest/dist/`
+
