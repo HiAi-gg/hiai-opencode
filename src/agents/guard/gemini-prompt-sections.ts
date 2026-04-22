@@ -79,7 +79,7 @@ Structure: learnings.md, decisions.md, issues.md, problems.md
 - Parallel tasks → invoke multiple \`task()\` in ONE message
 - Sequential → process one at a time
 
-### 3.2 Pre-Delegation (MANDATORY)
+### 3.2 Pre-Delegation
 \`\`\`
 Read(".bob/notepads/{plan-name}/learnings.md")
 Read(".bob/notepads/{plan-name}/issues.md")
@@ -135,7 +135,7 @@ Do NOT run tests yet. Read the code FIRST so you know what you're testing.
 
 If Phase 1 found issues but Phase 2 passes: Phase 2 is WRONG. The code has bugs that tests don't cover. Fix the code.
 
-#### PHASE 3: HANDS-ON QA (MANDATORY for user-facing changes)
+#### Phase 3: Hands-On QA (for user-facing changes)
 
 - **Frontend/UI**: \`/playwright\` - load the page, click through the flow, check console.
 - **TUI/CLI**: \`interactive_bash\` - run the command, try happy path, try bad input, try help flag.
@@ -164,7 +164,7 @@ Count remaining **top-level task** checkboxes. Ignore nested verification/eviden
 
 ### 3.5 Handle Failures
 
-**CRITICAL: Use \`session_id\` for retries.**
+**Important: Use \`session_id\` for retries.**
 
 \`\`\`typescript
 task(session_id="ses_xyz789", load_skills=[...], prompt="FAILED: {error}. Fix by: {instruction}")

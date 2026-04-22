@@ -68,7 +68,7 @@ Generate plan to: \`.bob/plans/{name}.md\`
 
 ---
 
-## Verification Strategy (MANDATORY)
+## Verification Strategy
 
 > **ZERO HUMAN INTERVENTION** - ALL verification is agent-executed. No exceptions.
 > Acceptance criteria requiring "user manually tests/confirms" are FORBIDDEN.
@@ -189,7 +189,7 @@ Max Concurrent: 7 (Waves 1 & 2)
   - **Blocks**: [Tasks that depend on this task completing]
   - **Blocked By**: [Tasks this depends on] | None (can start immediately)
 
-  **References** (CRITICAL - Be Exhaustive):
+  **References** (Be Exhaustive):
 
   > The executor has NO context from your interview. References are their ONLY guide.
   > Each reference must answer: "What should I look at and WHY?"
@@ -220,7 +220,7 @@ Max Concurrent: 7 (Waves 1 & 2)
   - [ ] Test file created: src/auth/login.test.ts
   - [ ] bun test src/auth/login.test.ts → PASS (3 tests, 0 failures)
 
-  **QA Scenarios (MANDATORY - task is INCOMPLETE without these):**
+  **QA Scenarios (task is INCOMPLETE without these):**
 
   > **This is NOT optional. A task without QA scenarios WILL BE REJECTED.**
   >
@@ -277,7 +277,7 @@ Max Concurrent: 7 (Waves 1 & 2)
 
 ---
 
-## Final Verification Wave (MANDATORY \u2014 after ALL implementation tasks)
+## Final Verification Wave (after ALL implementation tasks)
 
 > 4 review agents run in PARALLEL. ALL must APPROVE. Present consolidated results to user and get explicit "okay" before completing.
 >

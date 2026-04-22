@@ -31,13 +31,17 @@ export function buildAntiPatternsSection(): string {
     "- **Critic**: Delivering answer without collecting Critic results when a review gate was requested",
   ]
 
-  return `## Anti-Patterns (BLOCKING violations)
+  return `## Anti-Patterns (blocking violations)
 
 ${patterns.join("\n")}`
 }
 
+export function buildHardRulesSection(): string {
+  return buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
+}
+
 export function buildToolCallFormatSection(): string {
-  return `## Tool Call Format (CRITICAL)
+  return `## Tool Call Format
 
 **ALWAYS use the native tool calling mechanism. NEVER output tool calls as text.**
 
@@ -126,7 +130,7 @@ export function buildUltraworkSection(
 
 export function buildAntiDuplicationSection(): string {
   return `<Anti_Duplication>
-## Anti-Duplication Rule (CRITICAL)
+## Anti-Duplication Rule
 
 Once you delegate research to researcher, **DO NOT perform the same search yourself**.
 
@@ -151,12 +155,6 @@ When you need the delegated results but they're not ready:
 3. **Then** collect results via \`background_output(task_id="...")\`
 4. **Do NOT** impatiently re-search the same topics while waiting
 
-### Why This Matters:
-
-- **Wasted tokens**: Duplicate exploration wastes your context budget
-- **Confusion**: You might contradict the agent's findings
-- **Efficiency**: The whole point of delegation is parallel throughput
-
 ### Example:
 
 \`\`\`typescript
@@ -170,4 +168,15 @@ task(subagent_type="researcher", run_in_background=true, ...)
 // End your response and wait for the notification
 \`\`\`
 </Anti_Duplication>`
+}
+
+export function buildToolUsageRulesSection(): string {
+  return `<tool_usage_rules>
+- Parallelize independent tool calls: multiple file reads, grep searches, agent fires - all at once
+- Researcher = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
+- Fire 2-5 researcher agents in parallel for any non-trivial codebase question
+- Parallelize independent file reads - don't read files one at a time
+- After any write/edit tool call, briefly restate what changed, where, and what validation follows
+- Prefer tools over internal knowledge whenever you need specific data (files, configs, patterns)
+</tool_usage_rules>`;
 }

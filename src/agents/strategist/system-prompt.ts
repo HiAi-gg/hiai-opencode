@@ -1,28 +1,17 @@
-import { PROMETHEUS_IDENTITY_CONSTRAINTS } from "./identity-constraints"
-import { PROMETHEUS_INTERVIEW_MODE } from "./interview-mode"
-import { PROMETHEUS_PLAN_GENERATION } from "./plan-generation"
-import { PROMETHEUS_HIGH_ACCURACY_MODE } from "./high-accuracy-mode"
-import { PROMETHEUS_PLAN_TEMPLATE } from "./plan-template"
-import { PROMETHEUS_BEHAVIORAL_SUMMARY } from "./behavioral-summary"
 import { getGptStrategistPrompt } from "./gpt"
 import { getGeminiStrategistPrompt } from "./gemini"
 import { isGptModel, isGeminiModel } from "../types"
 
-import { UNIFIED_STRATEGIST_PROMPT } from "../prompt-library/strategy"
+import { getUnifiedStrategistPrompt, type StrategistMode } from "../prompt-library/strategy"
+export type { StrategistMode }
 
 /**
  * Combined Strategist system prompt (Claude-optimized, default).
- * Assembled from modular sections for maintainability.
- * Canonical model note: Strategist remains separate from Critic;
- * Critic is the explicit high-accuracy review gate.
+ * Uses "interview" mode for backward compat — full prompt with all sections.
+ * For leaner planning calls, use getStrategistPrompt(model, tools, "planning").
  */
-export const PROMETHEUS_SYSTEM_PROMPT = UNIFIED_STRATEGIST_PROMPT
+export const PROMETHEUS_SYSTEM_PROMPT = getUnifiedStrategistPrompt("interview")
 
-/**
- * Strategist planner permission configuration.
- * Allows write/edit for plan files (.md only, enforced by strategist-md-only hook).
- * Question permission allows agent to ask user questions via OpenCode's QuestionTool.
- */
 export const PROMETHEUS_PERMISSION = {
   edit: "allow" as const,
   bash: "allow" as const,
@@ -32,9 +21,6 @@ export const PROMETHEUS_PERMISSION = {
 
 export type StrategistPromptSource = "default" | "gpt" | "gemini"
 
-/**
- * Determines which Strategist prompt to use based on model.
- */
 export function getStrategistPromptSource(model?: string): StrategistPromptSource {
   if (model && isGptModel(model)) {
     return "gpt"
@@ -46,12 +32,14 @@ export function getStrategistPromptSource(model?: string): StrategistPromptSourc
 }
 
 /**
- * Gets the appropriate Strategist prompt based on model.
- * GPT models → GPT-5.4 optimized prompt (XML-tagged, principle-driven)
- * Gemini models → Gemini-optimized prompt (aggressive tool-call enforcement, thinking checkpoints)
- * Default (Claude, etc.) → Claude-optimized prompt (modular sections)
+ * Gets the appropriate Strategist prompt based on model and mode.
+ * Mode defaults to "planning" for lean default calls; pass "interview" for full spec sessions.
  */
-export function getStrategistPrompt(model?: string, disabledTools?: readonly string[]): string {
+export function getStrategistPrompt(
+  model?: string,
+  disabledTools?: readonly string[],
+  mode: StrategistMode = "planning",
+): string {
   const source = getStrategistPromptSource(model)
   const isQuestionDisabled = disabledTools?.includes("question") ?? false
 
@@ -65,7 +53,7 @@ export function getStrategistPrompt(model?: string, disabledTools?: readonly str
       break
     case "default":
     default:
-      prompt = PROMETHEUS_SYSTEM_PROMPT
+      prompt = getUnifiedStrategistPrompt(mode)
   }
 
   if (isQuestionDisabled) {
@@ -75,10 +63,6 @@ export function getStrategistPrompt(model?: string, disabledTools?: readonly str
   return prompt
 }
 
-/**
- * Removes Question tool usage examples from prompt text when question tool is disabled.
- */
 function stripQuestionToolReferences(prompt: string): string {
-  // Remove Question({...}) code blocks (multi-line)
   return prompt.replace(/```typescript\n\s*Question\(\{[\s\S]*?\}\)\s*\n```/g, "")
 }

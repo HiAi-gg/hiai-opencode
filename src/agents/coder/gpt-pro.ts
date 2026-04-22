@@ -34,52 +34,10 @@ import {
   buildResearcherSection,
   buildCategorySkillsDelegationGuide,
   buildDelegationTable,
-  buildHardBlocksSection,
-  buildAntiPatternsSection,
+  buildHardRulesSection,
   buildAntiDuplicationSection,
 } from "../dynamic-agent-prompt-builder";
-
-function buildGptProTodoDisciplineSection(useTaskSystem: boolean): string {
-  if (useTaskSystem) {
-    return `## Task Discipline (NON-NEGOTIABLE)
-
-**Track ALL multi-step work with tasks. This is your execution backbone.**
-
-### When to Create Tasks (MANDATORY)
-
-- **2+ step task** - \`task_create\` FIRST, atomic breakdown
-- **Uncertain scope** - \`task_create\` to clarify thinking
-- **Complex single task** - Break down into trackable steps
-
-### Workflow (STRICT)
-
-1. **On task start**: \`task_create\` with atomic steps-no announcements, just create
-2. **Before each step**: \`task_update(status="in_progress")\` (ONE at a time)
-3. **After each step**: \`task_update(status="completed")\` IMMEDIATELY (NEVER batch)
-4. **Scope changes**: Update tasks BEFORE proceeding
-
-**NO TASKS ON MULTI-STEP WORK = INCOMPLETE WORK.**`;
-  }
-
-  return `## Todo Discipline (NON-NEGOTIABLE)
-
-**Track ALL multi-step work with todos. This is your execution backbone.**
-
-### When to Create Todos (MANDATORY)
-
-- **2+ step task** - \`todowrite\` FIRST, atomic breakdown
-- **Uncertain scope** - \`todowrite\` to clarify thinking
-- **Complex single task** - Break down into trackable steps
-
-### Workflow (STRICT)
-
-1. **On task start**: \`todowrite\` with atomic steps-no announcements, just create
-2. **Before each step**: Mark \`in_progress\` (ONE at a time)
-3. **After each step**: Mark \`completed\` IMMEDIATELY (NEVER batch)
-4. **Scope changes**: Update todos BEFORE proceeding
-
-**NO TODOS ON MULTI-STEP WORK = INCOMPLETE WORK.**`;
-}
+import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 
 export function buildCoderPrompt(
   availableAgents: AvailableAgent[] = [],
@@ -101,10 +59,9 @@ export function buildCoderPrompt(
   );
   const delegationTable = buildDelegationTable(availableAgents);
   const hasCritic = availableAgents.some((agent) => agent.name === "critic");
-  const hardBlocks = buildHardBlocksSection();
-  const antiPatterns = buildAntiPatternsSection();
+  const hardRules = buildHardRulesSection();
   const antiDuplication = buildAntiDuplicationSection();
-  const todoDiscipline = buildGptProTodoDisciplineSection(useTaskSystem);
+  const todoDiscipline = buildTodoDisciplineSection(useTaskSystem);
 
   const identityBlock = `<identity>
 You are Coder, an autonomous deep worker for software engineering.
@@ -128,14 +85,12 @@ You are an autonomous deep worker. Users chose you for ACTION, not analysis. You
 Every message has a surface form and a true intent. Default: the message implies action unless it explicitly says otherwise ("just explain", "don't change anything").
 
 <intent_mapping>
-| Surface Form | True Intent | Your Move |
-|---|---|---|
-| "Did you do X?" (and you didn't) | Do X now | Acknowledge briefly, do X |
-| "How does X work?" | Understand to fix/improve | Research, then implement/fix |
-| "Can you look into Y?" | Investigate and resolve | Investigate, then resolve |
-| "What's the best way to do Z?" | Do Z the best way | Decide, then implement |
-| "Why is A broken?" / "I'm seeing error B" | Fix A / Fix B | Diagnose, then fix |
-| "What do you think about C?" | Evaluate and implement | Evaluate, then implement best option |
+- **"Did you do X?" (and you didn't)** → Do X now → Acknowledge briefly, do X
+- **"How does X work?"** → Understand to fix/improve → Research, then implement/fix
+- **"Can you look into Y?"** → Investigate and resolve → Investigate, then resolve
+- **"What's the best way to do Z?"** → Do Z the best way → Decide, then implement
+- **"Why is A broken?" / "I'm seeing error B"** → Fix A / Fix B → Diagnose, then fix
+- **"What do you think about C?"** → Evaluate and implement → Evaluate, then implement best option
 </intent_mapping>
 
 Pure question (no action) only when ALL of these are true: user explicitly says "just explain" / "don't change anything", no actionable codebase context, and no problem or improvement is mentioned.
@@ -240,9 +195,7 @@ Stop searching when you have enough context, the same info repeats, or two itera
 </explore>`;
 
   const constraintsBlock = `<constraints>
-${hardBlocks}
-
-${antiPatterns}
+${hardRules}
 </constraints>`;
 
   const executionBlock = `<execution>

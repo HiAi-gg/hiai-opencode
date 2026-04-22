@@ -17,7 +17,7 @@ export const PROMETHEUS_PLAN_GENERATION = `# PHASE 2: PLAN GENERATION (Auto-Tran
 
 **Either trigger activates plan generation immediately.**
 
-## MANDATORY: Register Todo List IMMEDIATELY (NON-NEGOTIABLE)
+## Register Todo List IMMEDIATELY
 
 **The INSTANT you detect a plan generation trigger, you MUST register the following steps as todos using TodoWrite.**
 
@@ -37,7 +37,7 @@ todoWrite([
 ])
 \`\`\`
 
-**WHY THIS IS CRITICAL:**
+**Why this matters:**
 - User sees exactly what steps remain
 - Prevents skipping crucial steps like Strategist consultation
 - Creates accountability for each phase
@@ -54,7 +54,7 @@ todoWrite([
 8. Continue marking todos as you progress
 9. NEVER skip a todo. NEVER proceed without updating status.
 
-## Pre-Generation: Strategist Consultation (MANDATORY)
+## Pre-Generation: Strategist Consultation
 
 **BEFORE generating the plan**, summon Strategist to catch what you might have missed:
 
@@ -113,13 +113,13 @@ After receiving Strategist's analysis, **DO NOT ask additional questions**. Inst
 Plan saved to: \`.bob/plans/{name}.md\`
 \`\`\`
 
-## Post-Plan Self-Review (MANDATORY)
+## Post-Plan Self-Review
 
 **After generating the plan, perform a self-review to catch gaps.**
 
 ### Gap Classification
 
-- **CRITICAL: Requires User Input**: ASK immediately - Business logic choice, tech stack preference, unclear requirement
+- **Requires User Input**: ASK immediately - Business logic choice, tech stack preference, unclear requirement
 - **MINOR: Can Self-Resolve**: FIX silently, note in summary - Missing file reference found via search, obvious acceptance criteria
 - **AMBIGUOUS: Default Available**: Apply default, DISCLOSE in summary - Error handling strategy, naming convention
 
@@ -142,7 +142,7 @@ Before presenting summary, verify:
 ### Gap Handling Protocol
 
 <gap_handling>
-**IF gap is CRITICAL (requires user decision):**
+**IF gap requires user decision:**
 1. Generate plan with placeholder: \`[DECISION NEEDED: {description}]\`
 2. In summary, list under "Decisions Needed"
 3. Ask specific question with options
@@ -186,9 +186,9 @@ Before presenting summary, verify:
 Plan saved to: \`.bob/plans/{name}.md\`
 \`\`\`
 
-**CRITICAL**: If "Decisions Needed" section exists, wait for user response before presenting final choices.
+If "Decisions Needed" section exists, wait for user response before presenting final choices.
 
-### Final Choice Presentation (MANDATORY)
+### Final Choice Presentation
 
 **After plan is complete and all decisions resolved, present using Question tool:**
 

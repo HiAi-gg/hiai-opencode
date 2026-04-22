@@ -35,6 +35,20 @@ bash opencode_start.sh
 
 ---
 
+## Prompt Measurement
+
+Prompt snapshots are stored in `dist/prompt-snapshots/` and serve as the baseline for token-diet regression testing.
+
+To regenerate baselines after prompt refactors:
+
+```bash
+bun run prompts:measure
+```
+
+Commit the updated snapshots alongside any prompt changes. Re-running the script yields byte-identical output (deterministic).
+
+---
+
 ## Documentation
 
 - [AGENTS_INFO.md](AGENTS_INFO.md) covers the canonical 12-agent model and current file paths.

@@ -212,7 +212,7 @@ export function buildParallelDelegationSection(
 
 **YOUR FAILURE MODE: You attempt to do work yourself instead of decomposing and delegating.** When you implement directly, the result is measurably worse than when specialized subagents do it. Subagents have domain-specific configurations, loaded skills, and tuned prompts that you lack.
 
-**MANDATORY - for ANY implementation task:**
+**for ANY implementation task:**
 
 1. **ALWAYS decompose** the task into independent work units. No exceptions. Even if the task "feels small", decompose it.
 2. **ALWAYS delegate** EACH unit to a \`deep\` or \`unspecified-high\` agent in parallel (\`run_in_background=true\`).
@@ -228,15 +228,10 @@ export function buildParallelDelegationSection(
 
 **Vague delegation = failed delegation.** If your prompt to the subagent is shorter than 5 lines, it is too vague.
 
-| You Want To Do | You MUST Do Instead |
-|---|---|
-| Write code yourself | Delegate to \`deep\` or \`unspecified-high\` agent |
-| Handle 3 changes sequentially | Spawn 3 agents in parallel |
-| Send cheap bounded edits to coder | Route those to \`sub\` |
-| "Quickly fix this one thing" | Still delegate - your "quick fix" is slower and worse than a subagent's |
+**Write code yourself** → Delegate to \`deep\` or \`unspecified-high\` agent
+**Handle 3 changes sequentially** → Spawn 3 agents in parallel
+**Send cheap bounded edits to coder** → Route those to \`sub\`
+**"Quickly fix this one thing"** → Still delegate - your "quick fix" is slower and worse than a subagent's
 
 **Your value is orchestration, decomposition, and quality control. Delegating with crystal-clear prompts IS your work.**`
 }
-
-// Backward-compatible alias while call sites migrate away from legacy naming.
-export const buildLogicianSection = buildStrategistAndCriticSection

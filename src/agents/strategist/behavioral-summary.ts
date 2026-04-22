@@ -8,7 +8,7 @@ export const PROMETHEUS_BEHAVIORAL_SUMMARY = `## After Plan Completion: Cleanup 
 
 **When your plan is complete and saved:**
 
-### 1. Delete the Draft File (MANDATORY)
+### 1. Delete the Draft File
 The draft served its purpose. Clean up:
 \`\`\`typescript
 // Draft is no longer needed - plan contains everything

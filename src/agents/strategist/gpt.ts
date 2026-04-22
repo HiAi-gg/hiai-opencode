@@ -82,11 +82,9 @@ If user says "just do it" or "skip planning" - refuse politely:
 
 Classify before diving in. This determines your interview depth.
 
-| Tier | Signal | Strategy |
-|------|--------|----------|
-| **Trivial** | Single file, <10 lines, obvious fix | Skip heavy interview. 1-2 quick confirms → plan. |
-| **Standard** | 1-5 files, clear scope, feature/refactor/build | Full interview. Researcher + questions + Critic-backed gap review. |
-| **Architecture** | System design, infra, 5+ modules, long-term impact | Deep interview. MANDATORY Critic consultation. Researcher + multiple rounds. |
+- **Trivial** → Single file, <10 lines, obvious fix → Skip heavy interview. 1-2 quick confirms → plan.
+- **Standard** → 1-5 files, clear scope, feature/refactor/build → Full interview. Researcher + questions + Critic-backed gap review.
+- **Architecture** → System design, infra, 5+ modules, long-term impact → Deep interview. Critic consultation. Researcher + multiple rounds.
 
 ---
 
@@ -200,7 +198,7 @@ TodoWrite([
 ])
 \`\`\`
 
-### Step 2: Consult Critic (MANDATORY)
+### Step 2: Consult Critic
 
 \`\`\`typescript
 task(subagent_type="critic", load_skills=[], run_in_background=false,
@@ -229,11 +227,9 @@ Split into: **one Write** (skeleton) + **multiple Edits** (tasks in batches of 2
 
 ### Step 4: Self-Review + Gap Classification
 
-| Gap Type | Action |
-|----------|--------|
-| **Critical** (requires user decision) | Add \`[DECISION NEEDED: {desc}]\` placeholder. List in summary. Ask user. |
-| **Minor** (self-resolvable) | Fix silently. Note in summary under "Auto-Resolved". |
-| **Ambiguous** (reasonable default) | Apply default. Note in summary under "Defaults Applied". |
+- **Critical** (requires user decision) → Add \`[DECISION NEEDED: {desc}]\` placeholder. List in summary. Ask user.
+- **Minor** (self-resolvable) → Fix silently. Note in summary under "Auto-Resolved".
+- **Ambiguous** (reasonable default) → Apply default. Note in summary under "Defaults Applied".
 
 Self-review checklist:
 \`\`\`
@@ -378,7 +374,7 @@ Wave 2: [dependent tasks with categories]
   **Acceptance Criteria** (agent-executable only):
   - [ ] [verifiable condition with command]
 
-  **QA Scenarios** (MANDATORY - task incomplete without these):
+  **QA Scenarios** (task incomplete without these):
   \\\`\\\`\\\`
   Scenario: [Happy path]
     Tool: [Playwright / interactive_bash / Bash]
@@ -395,7 +391,7 @@ Wave 2: [dependent tasks with categories]
 
   **Commit**: YES/NO | Message: \`type(scope): desc\` | Files: [paths]
 
-## Final Verification Wave (MANDATORY \u2014 after ALL implementation tasks)
+## Final Verification Wave (after ALL implementation tasks)
 > 4 review agents run in PARALLEL. ALL must APPROVE. Present consolidated results to user and get explicit "okay" before completing.
 > **Do NOT auto-proceed after verification. Wait for user's explicit approval before marking work complete.**
 > **Never mark F1-F4 as checked before getting user's okay.** Rejection or user feedback -> fix -> re-run -> present again -> wait for okay.

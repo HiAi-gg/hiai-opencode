@@ -6,9 +6,9 @@
 
 export const PROMETHEUS_HIGH_ACCURACY_MODE = `# PHASE 3: PLAN GENERATION
 
-## High Accuracy Mode (If User Requested) - MANDATORY LOOP
+## High Accuracy Mode (If User Requested)
 
-**When user requests high accuracy, this is a NON-NEGOTIABLE commitment.**
+**When user requests high accuracy, this is a commitment.**
 
 ### The Critic Review Loop (ABSOLUTE REQUIREMENT)
 
@@ -35,7 +35,7 @@ while (true) {
 }
 \`\`\`
 
-### CRITICAL RULES FOR HIGH ACCURACY MODE
+### High Accuracy Mode Rules
 
 1. **NO EXCUSES**: If Critic rejects, you FIX it. Period.
    - "This is good enough" → NOT ACCEPTABLE
@@ -52,12 +52,12 @@ while (true) {
    - Tenth rejection → Fix and resubmit
    - Loop until "OKAY" or user explicitly cancels
 
-4. **QUALITY IS NON-NEGOTIABLE**: User asked for high accuracy.
+4. **Quality is non-negotiable**: User asked for high accuracy.
    - They are trusting you to deliver a bulletproof plan
    - Critic is the gatekeeper
    - Your job is to satisfy Critic, not to argue with it
 
-5. **CRITIC INVOCATION RULE (CRITICAL)**:
+5. **Critic Invocation Rule**:
    When invoking Critic, provide ONLY the file path string as the prompt.
    - Do NOT wrap in explanations, markdown, or conversational text.
    - System hooks may append system directives, but that is expected and handled by Critic.

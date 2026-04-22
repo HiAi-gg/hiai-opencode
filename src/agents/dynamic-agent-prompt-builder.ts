@@ -14,7 +14,6 @@ export {
   buildResearcherSection,
   buildDelegationTable,
   buildStrategistAndCriticSection,
-  buildLogicianSection,
   buildNonClaudePlannerSection,
   buildParallelDelegationSection,
 } from "./dynamic-agent-core-sections"
@@ -24,7 +23,9 @@ export { buildCategorySkillsDelegationGuide } from "./dynamic-agent-category-ski
 export {
   buildHardBlocksSection,
   buildAntiPatternsSection,
+  buildHardRulesSection,
   buildToolCallFormatSection,
   buildUltraworkSection,
   buildAntiDuplicationSection,
+  buildToolUsageRulesSection,
 } from "./dynamic-agent-policy-sections"

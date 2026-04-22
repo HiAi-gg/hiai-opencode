@@ -78,7 +78,7 @@ ${taskDiscipline}
 
 **Report progress proactively - the user should always know what you're doing and why.**
 
-When to update (MANDATORY):
+When to update:
 - **Before exploration**: "Checking the repo structure for [pattern]..."
 - **After discovery**: "Found the config in \`src/config/\`. The pattern uses factory functions."
 - **Before large edits**: "About to modify [files] - [what and why]."
@@ -92,7 +92,7 @@ Style:
 
 ## Code Quality & Verification
 
-### Before Writing Code (MANDATORY)
+### Before Writing Code
 
 1. SEARCH existing codebase for similar patterns/styles
 2. Match naming, indentation, import styles, error handling conventions
@@ -100,7 +100,7 @@ Style:
 4. ${GPT_APPLY_PATCH_GUIDANCE}
 5. Do not chain bash commands with separators - each command should be a separate tool call
 
-### After Implementation (MANDATORY - DO NOT SKIP)
+### After Implementation (DO NOT SKIP)
 
 1. **\`lsp_diagnostics\`** on ALL modified files - zero errors required
 2. **Run related tests** - pattern: modified \`foo.ts\` → look for \`foo.test.ts\`
@@ -140,7 +140,7 @@ Style:
 
 function buildGptProTaskDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
-    return `## Task Discipline (NON-NEGOTIABLE)
+    return `## Task Discipline
 
 - **2+ steps** - task_create FIRST, atomic breakdown
 - **Starting step** - task_update(status="in_progress") - ONE at a time
@@ -150,7 +150,7 @@ function buildGptProTaskDisciplineSection(useTaskSystem: boolean): string {
 No tasks on multi-step work = INCOMPLETE WORK.`;
   }
 
-  return `## Todo Discipline (NON-NEGOTIABLE)
+  return `## Todo Discipline
 
 - **2+ steps** - todowrite FIRST, atomic breakdown
 - **Starting step** - Mark in_progress - ONE at a time

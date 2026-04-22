@@ -7,7 +7,7 @@
  * - gpt-pro.ts: Native GPT Pro prompt with block-structured guidance
  */
 
-export { buildDefaultBobPrompt, buildTaskManagementSection } from "./default";
+export { buildDefaultBobPrompt } from "./default";
 export {
   buildGeminiToolMandate,
   buildGeminiDelegationOverride,

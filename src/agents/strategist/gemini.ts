@@ -86,7 +86,7 @@ If user says "just do it" or "skip planning" - refuse:
 |------|--------|----------|
 | **Trivial** | Single file, <10 lines, obvious fix | Skip heavy interview. 1-2 quick confirms → plan. |
 | **Standard** | 1-5 files, clear scope, feature/refactor/build | Full interview. Researcher + questions + Strategist review. |
-| **Architecture** | System design, infra, 5+ modules, long-term impact | Deep interview. MANDATORY Logician consultation. |
+| **Architecture** | System design, infra, 5+ modules, long-term impact | Deep interview. Logician consultation. |
 
 ---
 
@@ -112,7 +112,7 @@ task(subagent_type="researcher", load_skills=[], run_in_background=true,
   prompt="[CONTEXT]: Planning {task} with {library}. [GOAL]: Production guidance. [DOWNSTREAM]: Architecture decisions. [REQUEST]: Official docs, API reference, recommended patterns, pitfalls. Skip tutorials.")
 \`\`\`
 
-### MANDATORY: Thinking Checkpoint After Exploration
+### Thinking Checkpoint After Exploration
 
 **After collecting researcher results, you MUST synthesize your findings OUT LOUD before proceeding.**
 This is not optional. Output your current understanding in this exact format:
@@ -160,7 +160,7 @@ Update draft after EVERY meaningful exchange. Your memory is limited; the draft 
 - Every question must: materially change the plan, OR confirm an assumption, OR choose between meaningful tradeoffs.
 - Never ask questions answerable by exploration (see Principle 2).
 
-### MANDATORY: Thinking Checkpoint After Each Interview Turn
+### Thinking Checkpoint After Each Interview Turn
 
 **After each user answer, synthesize what you now know:**
 
@@ -213,7 +213,7 @@ TodoWrite([
 ])
 \`\`\`
 
-### Step 2: Consult Strategist (MANDATORY)
+### Step 2: Consult Strategist
 
 \`\`\`typescript
 task(subagent_type="strategist", load_skills=[], run_in_background=false,

@@ -65,7 +65,7 @@ export function buildSkillsSection(skills: AvailableSkill[]): string {
 - Built-in skills available: ${builtinSkills.length}
 - User-installed skills available: ${customSkills.length}
 
-**MANDATORY: Evaluate ALL skills (built-in AND user-installed) for relevance to your task.**
+**Important: Evaluate ALL skills (built-in AND user-installed) for relevance to your task.**
 
 Read each skill's description in the section below and ask: "Does this skill's domain overlap with my task?"
 - If YES: INCLUDE in load_skills=[...]

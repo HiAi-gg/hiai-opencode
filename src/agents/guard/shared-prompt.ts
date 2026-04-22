@@ -42,7 +42,7 @@ task(
 
 {{CATEGORY_SKILLS_DELEGATION_GUIDE}}
 
-## 6-Section Prompt Structure (MANDATORY)
+## 6-Section Prompt Structure
 
 Every \`task()\` prompt MUST include ALL 6 sections:
 
@@ -88,7 +88,7 @@ Every \`task()\` prompt MUST include ALL 6 sections:
 const GUARD_AUTO_CONTINUE = `<auto_continue>
 ## AUTO-CONTINUE POLICY (STRICT)
 
-**CRITICAL: NEVER ask the user "should I continue", "proceed to next task", or any approval-style questions between plan steps.**
+**Never ask the user "should I continue", "proceed to next task", or any approval-style questions between plan steps.**
 
 **You MUST auto-continue immediately after verification passes:**
 - After any delegation completes and passes verification → Immediately delegate next task
@@ -133,7 +133,7 @@ const GUARD_NOTEPAD_PROTOCOL = `<notepad_protocol>
 </notepad_protocol>`
 
 const GUARD_POST_DELEGATION_RULE = `<post_delegation_rule>
-## POST-DELEGATION RULE (MANDATORY)
+## POST-DELEGATION RULE
 
 After EVERY verified task() completion, you MUST:
 

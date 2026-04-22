@@ -93,7 +93,7 @@ ${taskDiscipline}
 
 **Report progress proactively - the user should always know what you're doing and why.**
 
-When to update (MANDATORY):
+When to update:
 - **Before exploration**: "Checking the repo structure for [pattern]..."
 - **After discovery**: "Found the config in \`src/config/\`. The pattern uses factory functions."
 - **Before large edits**: "About to modify [files] - [what and why]."
@@ -107,13 +107,13 @@ Style:
 
 ## Code Quality & Verification
 
-### Before Writing Code (MANDATORY)
+### Before Writing Code
 
 1. SEARCH existing codebase for similar patterns/styles
 2. Match naming, indentation, import styles, error handling conventions
 3. Default to ASCII. Add comments only for non-obvious blocks
 
-### After Implementation (MANDATORY - DO NOT SKIP)
+### After Implementation (DO NOT SKIP)
 
 **THIS IS THE STEP YOU ARE MOST TEMPTED TO SKIP. DO NOT SKIP IT.**
 
@@ -169,7 +169,7 @@ If ANY answer is no → GO BACK AND DO IT. Do not claim completion.
 
 function buildGeminiTaskDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
-    return `## Task Discipline (NON-NEGOTIABLE)
+    return `## Task Discipline 
 
 **You WILL forget to track tasks if not forced. This section forces you.**
 
@@ -181,7 +181,7 @@ function buildGeminiTaskDisciplineSection(useTaskSystem: boolean): string {
 No tasks on multi-step work = INCOMPLETE WORK. The user tracks your progress through tasks.`
   }
 
-  return `## Todo Discipline (NON-NEGOTIABLE)
+  return `## Todo Discipline 
 
 **You WILL forget to track todos if not forced. This section forces you.**
 

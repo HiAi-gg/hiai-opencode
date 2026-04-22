@@ -80,7 +80,7 @@ ${skillsSection}
 
 ---
 
-### MANDATORY: Category + Skill Selection Protocol
+### Category + Skill Selection Protocol
 
 **STEP 1: Select Category**
 - Read each category's description
@@ -129,12 +129,10 @@ task(category="visual-engineering", load_skills=["frontend-ui-ux"], prompt="Rede
 task(category="quick", load_skills=[], prompt="Redesign the sidebar layout with new spacing...")
 \`\`\`
 
-| Task Domain | MUST Use Category |
-|---|---|
-| UI, styling, animations, layout, design | \`visual-engineering\` |
-| Hard logic, architecture decisions, algorithms | \`ultrabrain\` |
-| Autonomous research + end-to-end implementation | \`deep\` |
-| Single-file typo, trivial config change | \`quick\` |
+**UI, styling, animations, layout, design** → \`visual-engineering\`
+**Hard logic, architecture decisions, algorithms** → \`ultrabrain\`
+**Autonomous research + end-to-end implementation** → \`deep\`
+**Single-file typo, trivial config change** → \`quick\`
 
 **When in doubt about category, it is almost never \`quick\` or \`unspecified-*\`. Match the domain.**`
 }

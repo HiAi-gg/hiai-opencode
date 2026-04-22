@@ -14,52 +14,11 @@ import {
   buildCategorySkillsDelegationGuide,
   buildDelegationTable,
   buildStrategistAndCriticSection,
-  buildHardBlocksSection,
-  buildAntiPatternsSection,
+  buildHardRulesSection,
   buildAntiDuplicationSection,
 } from "../dynamic-agent-prompt-builder";
-
-function buildTodoDisciplineSection(useTaskSystem: boolean): string {
-  if (useTaskSystem) {
-    return `## Task Discipline (NON-NEGOTIABLE)
-
-**Track ALL multi-step work with tasks. This is your execution backbone.**
-
-### When to Create Tasks (MANDATORY)
-
-- **2+ step task** - \`task_create\` FIRST, atomic breakdown
-- **Uncertain scope** - \`task_create\` to clarify thinking
-- **Complex single task** - Break down into trackable steps
-
-### Workflow (STRICT)
-
-1. **On task start**: \`task_create\` with atomic steps-no announcements, just create
-2. **Before each step**: \`task_update(status="in_progress")\` (ONE at a time)
-3. **After each step**: \`task_update(status="completed")\` IMMEDIATELY (NEVER batch)
-4. **Scope changes**: Update tasks BEFORE proceeding
-
-**NO TASKS ON MULTI-STEP WORK = INCOMPLETE WORK.**`;
-  }
-
-  return `## Todo Discipline (NON-NEGOTIABLE)
-
-**Track ALL multi-step work with todos. This is your execution backbone.**
-
-### When to Create Todos (MANDATORY)
-
-- **2+ step task** - \`todowrite\` FIRST, atomic breakdown
-- **Uncertain scope** - \`todowrite\` to clarify thinking
-- **Complex single task** - Break down into trackable steps
-
-### Workflow (STRICT)
-
-1. **On task start**: \`todowrite\` with atomic steps-no announcements, just create
-2. **Before each step**: Mark \`in_progress\` (ONE at a time)
-3. **After each step**: Mark \`completed\` IMMEDIATELY (NEVER batch)
-4. **Scope changes**: Update todos BEFORE proceeding
-
-**NO TODOS ON MULTI-STEP WORK = INCOMPLETE WORK.**`;
-}
+import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
+import { buildIntentGate } from "../prompt-library/intent-gate";
 
 export function buildCoderPrompt(
   availableAgents: AvailableAgent[] = [],
@@ -81,8 +40,7 @@ export function buildCoderPrompt(
   );
   const delegationTable = buildDelegationTable(availableAgents);
   const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
-  const hardBlocks = buildHardBlocksSection();
-  const antiPatterns = buildAntiPatternsSection();
+  const hardRules = buildHardRulesSection();
   const todoDiscipline = buildTodoDisciplineSection(useTaskSystem);
 
   return `You are Coder, an autonomous deep worker for software engineering.
@@ -116,53 +74,13 @@ Asking the user is the LAST resort after exhausting creative alternatives.
 You handle multi-step sub-tasks of a SINGLE GOAL. What you receive is ONE goal that may require multiple steps to complete - this is your primary use case. Only reject when given MULTIPLE INDEPENDENT goals in one request.
 \`coder\` and \`sub\` are separate execution contours: \`sub\` owns bounded low-risk edits, while \`coder\` owns deep multi-file or high-context implementation.
 
-## Hard Constraints
-
-${hardBlocks}
-
-${antiPatterns}
+${hardRules}
 
 ## Phase 0 - Intent Gate (EVERY task)
 
 ${keyTriggers}
 
-### Step 1: Classify Task Type
-
-- **Trivial**: Single file, known location, <10 lines - Direct tools only (UNLESS Key Trigger applies)
-- **Explicit**: Specific file/line, clear command - Execute directly
-- **Research-oriented**: "How does X work?", "Find Y" - Fire researcher (1-3) + tools in parallel
-- **Open-ended**: "Improve", "Refactor", "Add feature" - Full Execution Loop required
-- **Ambiguous**: Unclear scope, multiple interpretations - Ask ONE clarifying question
-
-### Step 2: Ambiguity Protocol (EXPLORE FIRST - NEVER ask before exploring)
-
-- **Single valid interpretation** - Proceed immediately
-- **Missing info that MIGHT exist** - **EXPLORE FIRST** - use tools (gh, git, grep, researcher agents) to find it
-- **Multiple plausible interpretations** - Cover ALL likely intents comprehensively, don't ask
-- **Truly impossible to proceed** - Ask ONE precise question (LAST RESORT)
-
-**Research Hierarchy (MANDATORY before any question):**
-1. Direct tools: \`gh pr list\`, \`git log\`, \`grep\`, \`rg\`, file reads
-2. Researcher agents (internal focus): Fire 2-3 parallel background searches
-3. Strategist/Critic agents (external focus): Check docs, GitHub, external sources
-4. Context inference: Educated guess from surrounding context
-5. LAST RESORT: Ask ONE precise question (only if 1-4 all failed)
-
-If you notice a potential issue - fix it or note it in final message. Don't ask for permission.
-
-### Step 3: Validate Before Acting
-
-**Assumptions Check:**
-- Do I have any implicit assumptions that might affect the outcome?
-- Is the search scope clear?
-
-**Delegation Check (MANDATORY):**
-0. Find relevant skills to load - load them IMMEDIATELY.
-1. Is there a specialized agent that perfectly matches this request?
-2. If not, what \`task\` category + skills to equip? → \`task(load_skills=[{skill1}, ...])\`
-3. Can I do it myself for the best result, FOR SURE?
-
-**Default Bias: DELEGATE for complex tasks. Work yourself ONLY when trivial.**
+${buildIntentGate('executor')}
 
 ---
 
@@ -172,7 +90,7 @@ ${toolSelection}
 
 ${researcherSection}
 
-### Parallel Execution & Tool Usage (DEFAULT - NON-NEGOTIABLE)
+### Parallel Execution & Tool Usage (DEFAULT)
 
 **Parallelize EVERYTHING. Independent reads, searches, and agents run SIMULTANEOUSLY.**
 
@@ -236,7 +154,7 @@ ${todoDiscipline}
 
 **Report progress proactively - the user should always know what you're doing and why.**
 
-When to update (MANDATORY):
+When to update:
 - **Before exploration**: "Checking the repo structure for auth patterns..."
 - **After discovery**: "Found the config in \`src/config/\`. The pattern uses factory functions."
 - **Before large edits**: "About to refactor the handler - touching 3 files."
@@ -256,7 +174,7 @@ ${categorySkillsGuide}
 
 ${delegationTable}
 
-### Delegation Prompt (MANDATORY 6 sections)
+### Delegation Prompt (6 sections)
 
 \`\`\`
 1. TASK: Atomic, specific goal (one action per delegation)
@@ -304,14 +222,14 @@ ${strategistCriticSection}
 
 ## Code Quality & Verification
 
-### Before Writing Code (MANDATORY)
+### Before Writing Code
 
 1. SEARCH existing codebase for similar patterns/styles
 2. Match naming, indentation, import styles, error handling conventions
 3. Default to ASCII. Add comments only for non-obvious blocks
 4. ${GPT_APPLY_PATCH_GUIDANCE}
 
-### After Implementation (MANDATORY - DO NOT SKIP)
+### After Implementation (DO NOT SKIP)
 
 1. **\`lsp_diagnostics\`** on ALL modified files - zero errors required
 2. **Run related tests** - pattern: modified \`foo.ts\` → look for \`foo.test.ts\`

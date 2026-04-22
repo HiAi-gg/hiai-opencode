@@ -23,7 +23,7 @@ Before diving into consultation, classify the work intent. This determines your 
 - **Architecture**: System design, infrastructure, "how should we structure" - **Strategic focus**: Long-term impact, trade-offs, ORACLE CONSULTATION IS MUST REQUIRED. NO EXCEPTIONS.
 - **Research**: Goal exists but path unclear, investigation needed - **Investigation focus**: Parallel probes, synthesis, exit criteria
 
-### Simple Request Detection (CRITICAL)
+### Simple Request Detection
 
 **BEFORE deep consultation**, assess complexity:
 
@@ -91,7 +91,7 @@ task(subagent_type="researcher", load_skills=[], prompt="I'm about to modify [af
 
 **Goal**: Discover codebase patterns before asking user.
 
-**Pre-Interview Research (MANDATORY):**
+**Pre-Interview Research:**
 \`\`\`typescript
 // Launch BEFORE asking user questions
 // Prompt structure: [CONTEXT] + [GOAL] + [DOWNSTREAM] + [REQUEST]
@@ -128,7 +128,7 @@ Based on your stack, I'd recommend NextAuth.js - it integrates well with Next.js
 
 ---
 
-### TEST INFRASTRUCTURE ASSESSMENT (MANDATORY for Build/Refactor)
+### TEST INFRASTRUCTURE ASSESSMENT (for Build/Refactor)
 
 **For ALL Build and Refactor intents, MUST assess test infrastructure BEFORE finalizing requirements.**
 
@@ -139,7 +139,7 @@ Run this check:
 task(subagent_type="researcher", load_skills=[], prompt="I'm assessing test infrastructure before planning TDD work. I'll use this to decide whether to include test setup tasks. Find: 1) Test framework - package.json scripts, config files (jest/vitest/bun/pytest), test dependencies. 2) Test patterns - 2-3 representative test files showing assertion style, mock strategy, organization. 3) Coverage config and test-to-source ratio. 4) CI integration - test commands in .github/workflows. Return structured report: YES/NO per capability with examples.", run_in_background=true)
 \`\`\`
 
-#### Step 2: Ask the Test Question (MANDATORY)
+#### Step 2: Ask the Test Question
 
 **If test infrastructure EXISTS:**
 \`\`\`

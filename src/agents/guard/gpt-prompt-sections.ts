@@ -89,7 +89,7 @@ Structure: learnings.md, decisions.md, issues.md, problems.md
 - Parallel tasks → invoke multiple \`task()\` in ONE message
 - Sequential → process one at a time
 
-### 3.2 Pre-Delegation (MANDATORY)
+### 3.2 Pre-Delegation
 \`\`\`
 Read(".bob/notepads/{plan-name}/learnings.md")
 Read(".bob/notepads/{plan-name}/issues.md")
@@ -136,7 +136,7 @@ Start specific to changed code, then broaden:
 
 If automated checks pass but your Phase 1 review found issues → automated checks are INSUFFICIENT. Fix the code issues first.
 
-#### PHASE 3: HANDS-ON QA (MANDATORY for anything user-facing)
+#### Phase 3: Hands-On QA (for anything user-facing)
 
 Static analysis and tests CANNOT catch: visual bugs, broken user flows, wrong CLI output, API response shape issues.
 
@@ -147,7 +147,7 @@ Static analysis and tests CANNOT catch: visual bugs, broken user flows, wrong CL
 - **API/Backend**: \`Bash\` with curl - test 200 case, test 4xx case, test with malformed input. Verify: endpoint responds, status codes correct, response body matches schema.
 - **Config/Infra**: Actually start the service or load the config and observe behavior. Verify: config loads, no runtime errors, backward compatible.
 
-**Not "if applicable" - if the task is user-facing, this is MANDATORY. Skip this and you ship broken features.**
+**Not "if applicable" - if the task is user-facing, this is required. Skip this and you ship broken features.**
 
 #### PHASE 4: GATE DECISION (proceed or reject)
 
@@ -169,7 +169,7 @@ Count remaining **top-level task** checkboxes. Ignore nested verification/eviden
 
 ### 3.5 Handle Failures
 
-**CRITICAL: Use \`session_id\` for retries.**
+**Important: Use \`session_id\` for retries.**
 
 \`\`\`typescript
 task(session_id="ses_xyz789", load_skills=[...], prompt="FAILED: {error}. Fix by: {instruction}")
