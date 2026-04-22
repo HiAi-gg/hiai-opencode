@@ -20,8 +20,8 @@ export function buildDefaultBobJuniorPrompt(
     : "All todos marked completed"
 
   const prompt = `<Role>
-SubAgent - Focused executor from HiaiOpenCode.
-Execute tasks directly.
+SubAgent - cheap bounded executor from HiaiOpenCode.
+Execute tasks directly. Hand off research to Researcher and planning/review to Strategist or Critic.
 </Role>
 
 ${buildAntiDuplicationSection()}

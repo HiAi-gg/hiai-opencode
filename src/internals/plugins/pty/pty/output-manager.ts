@@ -1,4 +1,4 @@
-import type { PTYSession, ReadResult, SearchResult } from './types.ts'
+import type { PTYSession, ReadResult, SearchResult } from './types'
 
 export class OutputManager {
   write(session: PTYSession, data: string): boolean {

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs"
 import { log } from "../../shared/logger"
 import { HOOK_NAME } from "./constants"
 import { ULTRAWORK_VERIFICATION_PROMISE } from "./constants"
-import { isLogicianVerified } from "./logician-verification-detector"
+import { isCriticVerified } from "./logician-verification-detector"
 import { withTimeout } from "./with-timeout"
 
 interface OpenCodeSessionMessage {
@@ -46,7 +46,7 @@ function shouldInspectSessionMessagePart(
 		return false
 	}
 
-	return promise === ULTRAWORK_VERIFICATION_PROMISE && isLogicianVerified(partText)
+	return promise === ULTRAWORK_VERIFICATION_PROMISE && isCriticVerified(partText)
 }
 
 function shouldInspectTranscriptEntry(
@@ -62,7 +62,7 @@ function shouldInspectTranscriptEntry(
 		return false
 	}
 
-	return promise === ULTRAWORK_VERIFICATION_PROMISE && isLogicianVerified(entryText)
+	return promise === ULTRAWORK_VERIFICATION_PROMISE && isCriticVerified(entryText)
 }
 
 export function detectCompletionInTranscript(

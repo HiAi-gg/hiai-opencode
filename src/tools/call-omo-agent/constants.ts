@@ -1,17 +1,19 @@
-export const ALLOWED_AGENTS = [
-  "explore",
-  "librarian",
-  "logician",
+export const PRIMARY_ALLOWED_AGENTS = [
+  "researcher",
+  "strategist",
   "coder",
-  "pre-plan",
   "critic",
-  "ui",
+  "multimodal",
 ] as const
 
-export const CALL_OMO_AGENT_DESCRIPTION = `Spawn explore/librarian agent or custom agents. run_in_background REQUIRED (true=async with task_id, false=sync).
+export const ALLOWED_AGENTS = [
+  ...PRIMARY_ALLOWED_AGENTS,
+] as const
 
-Built-in agents:
-{agents}
+export const CALL_OMO_AGENT_DESCRIPTION = `Spawn canonical agents or custom agents. run_in_background REQUIRED (true=async with task_id, false=sync).
+
+Canonical built-in agents:
+{primary_agents}
 
 Custom agents registered via user or project agent directories are also supported.
 

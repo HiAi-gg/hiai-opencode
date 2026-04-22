@@ -1,6 +1,6 @@
-import type { PTYSession } from './types.ts'
+import type { PTYSession } from './types'
 import type { OpencodeClient } from '@opencode-ai/sdk'
-import { NOTIFICATION_LINE_TRUNCATE, NOTIFICATION_TITLE_TRUNCATE } from '../constants.ts'
+import { NOTIFICATION_LINE_TRUNCATE, NOTIFICATION_TITLE_TRUNCATE } from '../constants'
 
 export class NotificationManager {
   private client: OpencodeClient | null = null

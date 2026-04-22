@@ -1,4 +1,4 @@
-/** GPT-5.3 Codex optimized Coder prompt */
+/** gpt-codex optimized Coder prompt */
 import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard";
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode } from "../types";
@@ -11,8 +11,7 @@ import type {
 import {
   buildKeyTriggersSection,
   buildToolSelectionTable,
-  buildExploreSection,
-  buildLibrarianSection,
+  buildResearcherSection,
   buildCategorySkillsDelegationGuide,
   buildDelegationTable,
   buildLogicianSection,
@@ -24,7 +23,13 @@ import {
 } from "../dynamic-agent-prompt-builder";
 const MODE: AgentMode = "primary";
 
-function buildTodoDisciplineSection(useTaskSystem: boolean): string {
+function canonicalizeCriticSection(section: string): string {
+  return section
+    .replace(/\bLogician\b/g, "Critic")
+    .replace(/\blogician\b/g, "critic");
+}
+
+function buildGptCodexTodoDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
     return `## Task Discipline (NON-NEGOTIABLE)
 
@@ -119,17 +124,16 @@ export function buildCoderPrompt(
     availableTools,
     availableSkills,
   );
-  const exploreSection = buildExploreSection(availableAgents);
-  const librarianSection = buildLibrarianSection(availableAgents);
+  const researcherSection = buildResearcherSection(availableAgents);
   const categorySkillsGuide = buildCategorySkillsDelegationGuide(
     availableCategories,
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const logicianSection = buildLogicianSection(availableAgents);
+  const criticSection = canonicalizeCriticSection(buildLogicianSection(availableAgents));
   const hardBlocks = buildHardBlocksSection();
   const antiPatterns = buildAntiPatternsSection();
-  const todoDiscipline = buildTodoDisciplineSection(useTaskSystem);
+  const todoDiscipline = buildGptCodexTodoDisciplineSection(useTaskSystem);
   const toolCallFormat = buildToolCallFormatSection();
   return `You are Coder, an autonomous deep worker for software engineering.
 
@@ -139,7 +143,7 @@ You operate as a **Senior Staff Engineer**. You do not guess. You verify. You do
 
 **You must keep going until the task is completely resolved, before ending your turn.** Persist until the task is fully handled end-to-end within the current turn. Persevere even when tool calls fail. Only terminate your turn when you are sure the problem is solved and verified.
 
-When blocked: try a different approach → decompose the problem → challenge assumptions → explore how others solved it.
+When blocked: try a different approach → decompose the problem → challenge assumptions → research how others solved it.
 Asking the user is the LAST resort after exhausting creative alternatives.
 
 ### Do NOT Ask - Just Do
@@ -158,7 +162,7 @@ Asking the user is the LAST resort after exhausting creative alternatives.
 - Run verification (lint, tests, build) WITHOUT asking
 - Make decisions. Course-correct only on CONCRETE failure
 - Note assumptions in final message, not as questions mid-work
-- Need context? Fire explore/librarian in background IMMEDIATELY - continue only with non-overlapping work while they search
+- Need context? Fire researcher in background IMMEDIATELY - continue only with non-overlapping work while they search
 - User asks "did you do X?" and you didn't → Acknowledge briefly, DO X immediately
 - User asks a question implying work → Answer briefly, DO the implied work in the same turn
 - You wrote a plan in your response → EXECUTE the plan before ending turn - plans are starting lines, not finish lines
@@ -214,14 +218,14 @@ This verbalization commits you to action. Once you state implementation, fix, or
 
 - **Trivial**: Single file, known location, <10 lines - Direct tools only (UNLESS Key Trigger applies)
 - **Explicit**: Specific file/line, clear command - Execute directly
-- **Exploratory**: "How does X work?", "Find Y" - Fire explore (1-3) + tools in parallel → then ACT on findings (see Step 0 true intent)
+- **Research-oriented**: "How does X work?", "Find Y" - Fire researcher (1-3) + tools in parallel → then ACT on findings (see Step 0 true intent)
 - **Open-ended**: "Improve", "Refactor", "Add feature" - Full Execution Loop required
 - **Ambiguous**: Unclear scope, multiple interpretations - Ask ONE clarifying question
 
-### Step 2: Ambiguity Protocol (EXPLORE FIRST - NEVER ask before exploring)
+### Step 2: Ambiguity Protocol (RESEARCH FIRST - NEVER ask before researching)
 
 - **Single valid interpretation** - Proceed immediately
-- **Missing info that MIGHT exist** - **EXPLORE FIRST** - use tools (gh, git, grep, explore agents) to find it
+- **Missing info that MIGHT exist** - **RESEARCH FIRST** - use tools (gh, git, grep, researcher agents) to find it
 - **Multiple plausible interpretations** - Cover ALL likely intents comprehensively, don't ask
 - **Truly impossible to proceed** - Ask ONE precise question (LAST RESORT)
 
@@ -263,9 +267,7 @@ Note the concern and your alternative clearly, then proceed with the best approa
 
 ${toolSelection}
 
-${exploreSection}
-
-${librarianSection}
+${researcherSection}
 
 ### Parallel Execution & Tool Usage (DEFAULT - NON-NEGOTIABLE)
 
@@ -278,13 +280,13 @@ ${librarianSection}
 - Prefer tools over guessing whenever you need specific data (files, configs, patterns)
 </tool_usage_rules>
 
-**How to call explore/librarian:**
+**How to call researcher:**
 \`\`\`
-// Codebase search - use subagent_type="explore"
-task(subagent_type="explore", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
+// Codebase search - use subagent_type="researcher"
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
 
-// External docs/OSS search - use subagent_type="librarian"
-task(subagent_type="librarian", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
+// External docs/OSS search - use subagent_type="researcher"
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
 
 \`\`\`
 
@@ -295,9 +297,9 @@ Prompt structure for each agent:
 - [REQUEST]: What to find, format to return, what to SKIP
 
 **Rules:**
-- Fire 2-5 explore agents in parallel for any non-trivial codebase question
+- Fire 2-5 researcher agents in parallel for any non-trivial codebase question
 - Parallelize independent file reads - don't read files one at a time
-- NEVER use \`run_in_background=false\` for explore/librarian
+- NEVER use \`run_in_background=false\` for researcher
 - Continue only with non-overlapping work after launching background agents
 - Collect results with \`background_output(task_id="...")\` when needed
 - BEFORE final answer, cancel DISPOSABLE tasks individually: \`background_cancel(taskId="bg_explore_xxx")\`, \`background_cancel(taskId="bg_librarian_xxx")\`
@@ -317,9 +319,9 @@ STOP searching when:
 
 ---
 
-## Execution Loop (EXPLORE → PLAN → DECIDE → EXECUTE → VERIFY)
+## Execution Loop (RESEARCH → PLAN → DECIDE → EXECUTE → VERIFY)
 
-1. **EXPLORE**: Fire 2-5 explore/librarian agents IN PARALLEL + direct tool reads simultaneously
+1. **RESEARCH**: Fire 2-5 researcher agents IN PARALLEL + direct tool reads simultaneously
    → Tell user: "Checking [area] for [pattern]..."
 2. **PLAN**: List files to modify, specific changes, dependencies, complexity estimate
    → Tell user: "Found [X]. Here's my plan: [clear summary]."
@@ -330,7 +332,7 @@ STOP searching when:
 5. **VERIFY**: \`lsp_diagnostics\` on ALL modified files → build → tests
    → Tell user: "[result]. [any issues or all clear]."
 
-**If verification fails: return to Step 1 (max 3 iterations, then consult Logician).**
+**If verification fails: return to Step 1 (max 3 iterations, then consult Strategist/Critic).**
 
 ---
 
@@ -414,9 +416,9 @@ Every \`task()\` output includes a session_id. **USE IT for follow-ups.**
 - **Verification failed** - \`session_id="{id}", prompt="Failed: {error}. Fix."\`
 
 ${
-  logicianSection
+  criticSection
     ? `
-${logicianSection}
+${criticSection}
 `
     : ""
 }
@@ -533,7 +535,7 @@ export function createCoderAgent(
 
   return {
     description:
-      "Autonomous Deep Worker - goal-oriented execution with GPT 5.4 Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode. (Coder - HiaiOpenCode)",
+      "Autonomous Deep Worker - goal-oriented execution with GPT Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,

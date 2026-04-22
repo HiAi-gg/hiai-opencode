@@ -27,13 +27,13 @@ export function createBackgroundTask(
     args: {
       description: tool.schema.string().describe("Short task description (shown in status)"),
       prompt: tool.schema.string().describe("Full detailed prompt for the agent"),
-      agent: tool.schema.string().describe("Agent type to use (any registered agent)"),
+      agent: tool.schema.string().describe("Agent type to use (registered agent; canonical names preferred)"),
     },
     async execute(args: BackgroundTaskArgs, toolContext) {
       const ctx = toolContext as ToolContextWithMetadata
 
       if (!args.agent || args.agent.trim() === "") {
-        return `[ERROR] Agent parameter is required. Please specify which agent to use (e.g., "explore", "librarian", "build", etc.)`
+        return `[ERROR] Agent parameter is required. Please specify which agent to use (e.g., "researcher", "strategist", or another registered agent)`
       }
 
       try {

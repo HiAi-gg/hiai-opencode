@@ -19,32 +19,31 @@ import {
   type PermissionValue,
 } from "../../shared/permission-compat"
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard"
-
+import { CLOSURE_SCHEMA_PROMPT } from "../../shared/closure-protocol"
 import { buildDefaultBobJuniorPrompt } from "./default"
 import { buildGptBobJuniorPrompt } from "./gpt"
-import { buildGpt54BobJuniorPrompt } from "./gpt-5-4"
-import { buildGpt53CodexBobJuniorPrompt } from "./gpt-5-3-codex"
+import { buildGptProBobJuniorPrompt } from "./gpt-pro"
+import { buildGptCodexBobJuniorPrompt } from "./gpt-codex"
 import { buildGeminiBobJuniorPrompt } from "./gemini"
 
 const MODE: AgentMode = "subagent"
 
 // Core tools that SubAgent must NEVER have access to
-// Note: call_omo_agent is ALLOWED so subagents can spawn explore/librarian
+// Note: call_omo_agent is ALLOWED so subagents can spawn Researcher
 const BLOCKED_TOOLS = ["task"]
 const GPT_BLOCKED_TOOLS = ["task", "apply_patch"]
 
 export const BOB_JUNIOR_DEFAULTS = {
-  model: "anthropic/claude-sonnet-4-6",
   temperature: 0.1,
 } as const
 
-export type BobJuniorPromptSource = "default" | "gpt" | "gpt-5-4" | "gpt-5-3-codex" | "gemini"
+export type BobJuniorPromptSource = "default" | "gpt" | "gpt-pro" | "gpt-codex" | "gemini"
 
 export function getBobJuniorPromptSource(model?: string): BobJuniorPromptSource {
   if (model && isGptModel(model)) {
     const lower = model.toLowerCase()
-    if (lower.includes("gpt-5.4") || lower.includes("gpt-5-4")) return "gpt-5-4"
-    if (lower.includes("gpt-5.3-codex") || lower.includes("gpt-5-3-codex")) return "gpt-5-3-codex"
+    if (lower.includes("pro") || lower.includes("gpt-5")) return "gpt-pro"
+    if (lower.includes("codex")) return "gpt-codex"
     return "gpt"
   }
   if (model && isGeminiModel(model)) {
@@ -64,15 +63,14 @@ export function buildBobJuniorPrompt(
   const source = getBobJuniorPromptSource(model)
 
   switch (source) {
-    case "gpt-5-4":
-      return buildGpt54BobJuniorPrompt(useTaskSystem, promptAppend)
-    case "gpt-5-3-codex":
-      return buildGpt53CodexBobJuniorPrompt(useTaskSystem, promptAppend)
+    case "gpt-pro":
+      return buildGptProBobJuniorPrompt(useTaskSystem, promptAppend)
+    case "gpt-codex":
+      return buildGptCodexBobJuniorPrompt(useTaskSystem, promptAppend)
     case "gpt":
       return buildGptBobJuniorPrompt(useTaskSystem, promptAppend)
     case "gemini":
       return buildGeminiBobJuniorPrompt(useTaskSystem, promptAppend)
-    case "default":
     default:
       return buildDefaultBobJuniorPrompt(useTaskSystem, promptAppend)
   }
@@ -88,11 +86,11 @@ export function createBobJuniorAgentWithOverrides(
   }
 
   const overrideModel = (override as { model?: string } | undefined)?.model
-  const model = overrideModel ?? systemDefaultModel ?? BOB_JUNIOR_DEFAULTS.model
+  const model = overrideModel ?? systemDefaultModel ?? ""
   const temperature = override?.temperature ?? BOB_JUNIOR_DEFAULTS.temperature
 
   const promptAppend = override?.prompt_append
-  const prompt = buildBobJuniorPrompt(model, useTaskSystem, promptAppend)
+  const prompt = buildBobJuniorPrompt(model, useTaskSystem, promptAppend) + "\n\n" + CLOSURE_SCHEMA_PROMPT
   const blockedTools = isGptModel(model) ? GPT_BLOCKED_TOOLS : BLOCKED_TOOLS
 
   const baseRestrictions = createAgentToolRestrictions(blockedTools)
@@ -112,7 +110,7 @@ export function createBobJuniorAgentWithOverrides(
 
   const base: AgentConfig = {
     description: override?.description ??
-      "Focused task executor. Same discipline, no delegation. (SubAgent - HiaiOpenCode)",
+      "Cheap bounded executor. Same discipline, no delegation. (SubAgent - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature,

@@ -41,8 +41,9 @@ function buildPromptGenerationParams(model: DelegatedModelConfig | undefined): R
   }
 }
 
-function isLogicianAgent(agentToUse: string): boolean {
-  return stripInvisibleAgentCharacters(agentToUse).toLowerCase() === "logician"
+function isStrategistAgent(agentToUse: string): boolean {
+  const normalizedAgent = stripInvisibleAgentCharacters(agentToUse).toLowerCase()
+  return normalizedAgent === "strategist"
 }
 
 function isUnexpectedEofError(error: unknown): boolean {
@@ -101,12 +102,12 @@ export async function sendSyncPrompt(
   try {
     await deps.promptWithModelSuggestionRetry(client, promptArgs)
   } catch (promptError) {
-    if (isLogicianAgent(input.agentToUse) && isUnexpectedEofError(promptError)) {
+    if (isStrategistAgent(input.agentToUse) && isUnexpectedEofError(promptError)) {
       try {
         await deps.promptSyncWithModelSuggestionRetry(client, promptArgs)
         return null
-      } catch (logicianRetryError) {
-        promptError = logicianRetryError
+      } catch (strategistRetryError) {
+        promptError = strategistRetryError
       }
     }
 

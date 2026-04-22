@@ -40,7 +40,7 @@ Generate plan to: \`.bob/plans/{name}.md\`
 - [Finding 1]: [Implication]
 - [Finding 2]: [Recommendation]
 
-### Pre-Plan Review
+### Strategist Review
 **Identified Gaps** (addressed):
 - [Gap 1]: [How resolved]
 - [Gap 2]: [How resolved]
@@ -62,7 +62,7 @@ Generate plan to: \`.bob/plans/{name}.md\`
 - [Non-negotiable requirement]
 
 ### Must NOT Have (Guardrails)
-- [Explicit exclusion from Pre-Plan review]
+- [Explicit exclusion from Strategist review]
 - [AI slop pattern to avoid]
 - [Scope boundary]
 
@@ -126,7 +126,7 @@ Wave 3 (After Wave 2 - integration + UI):
 └── Task 20: UI request log + build (depends: 16) [visual-engineering]
 
 Wave FINAL (After ALL tasks \u2014 4 parallel reviews, then user okay):
-\u251c\u2500\u2500 Task F1: Plan compliance audit (logician)
+\u251c\u2500\u2500 Task F1: Plan compliance audit (critic)
 \u251c\u2500\u2500 Task F2: Code quality review (unspecified-high)
 \u251c\u2500\u2500 Task F3: Real manual QA (unspecified-high)
 \u2514\u2500\u2500 Task F4: Scope fidelity check (deep)
@@ -154,7 +154,7 @@ Max Concurrent: 7 (Waves 1 & 2)
 - **2**: **7** - T8 → \`deep\`, T9 → \`unspecified-high\`, T10 → \`unspecified-high\`, T11 → \`deep\`, T12 → \`visual-engineering\`, T13 → \`quick\`, T14 → \`unspecified-high\`
 - **3**: **6** - T15 → \`deep\`, T16 → \`visual-engineering\`, T17-T19 → \`quick\`, T20 → \`visual-engineering\`
 - **4**: **4** - T21 → \`deep\`, T22 → \`unspecified-high\`, T23 → \`deep\`, T24 → \`git\`
-- **FINAL**: **4** - F1 → \`logician\`, F2 → \`unspecified-high\`, F3 → \`unspecified-high\`, F4 → \`deep\`
+- **FINAL**: **4** - F1 → \`critic\`, F2 → \`unspecified-high\`, F3 → \`unspecified-high\`, F4 → \`deep\`
 
 ---
 
@@ -284,7 +284,7 @@ Max Concurrent: 7 (Waves 1 & 2)
 > **Do NOT auto-proceed after verification. Wait for user's explicit approval before marking work complete.**
 > **Never mark F1-F4 as checked before getting user's okay.** Rejection or user feedback -> fix -> re-run -> present again -> wait for okay.
 
-- [ ] F1. **Plan Compliance Audit** \u2014 \`logician\`
+- [ ] F1. **Plan Compliance Audit** \u2014 \`critic\`
   Read the plan end-to-end. For each "Must Have": verify implementation exists (read file, curl endpoint, run command). For each "Must NOT Have": search codebase for forbidden patterns \u2014 reject with file:line if found. Check evidence files exist in .bob/evidence/. Compare deliverables against plan.
   Output: \`Must Have [N/N] | Must NOT Have [N/N] | Tasks [N/N] | VERDICT: APPROVE/REJECT\`
 

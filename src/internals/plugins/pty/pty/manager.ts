@@ -2,11 +2,11 @@ import type { OpencodeClient } from '@opencode-ai/sdk'
 import { semver } from 'bun'
 import { Terminal } from 'bun-pty'
 import { version as bunPtyVersion } from 'bun-pty/package.json'
-import { NotificationManager } from './notification-manager.ts'
-import { OutputManager } from './output-manager.ts'
-import { SessionLifecycleManager } from './session-lifecycle.ts'
-import type { PTYSessionInfo, ReadResult, SearchResult, SpawnOptions } from './types.ts'
-import { withSession } from './utils.ts'
+import { NotificationManager } from './notification-manager'
+import { OutputManager } from './output-manager'
+import { SessionLifecycleManager } from './session-lifecycle'
+import type { PTYSessionInfo, ReadResult, SearchResult, SpawnOptions } from './types'
+import { withSession } from './utils'
 
 // Monkey-patch bun-pty to fix race condition in _startReadLoop
 // Temporary workaround until https://github.com/sursaone/bun-pty/pull/37 is merged

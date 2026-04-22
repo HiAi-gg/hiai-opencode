@@ -7,10 +7,105 @@ export interface AgentConfig {
   description?: string;
 }
 
+// Canonical 12-agent model exposed by schema/default config.
+export const CANONICAL_AGENT_NAMES = [
+  "bob",
+  "guard",
+  "strategist",
+  "critic",
+  "coder",
+  "sub",
+  "researcher",
+  "multimodal",
+  "quality-guardian",
+  "platform-manager",
+  "brainstormer",
+  "agent-skills",
+] as const;
+
+export type CanonicalAgentName = (typeof CANONICAL_AGENT_NAMES)[number];
+
+// Backward-compatible input aliases. These should only be used at config boundaries.
+export const LEGACY_AGENT_ALIAS_NAMES = [
+  "general",
+  "zoe",
+  "build",
+  "pre-plan",
+  "logician",
+  "librarian",
+  "explore",
+  "ui",
+  "code-reviewer",
+  "systematic-debugger",
+  "mindmodel",
+  "ledger-creator",
+  "bootstrapper",
+  "project-initializer",
+] as const;
+
+export type LegacyAgentAliasName = (typeof LEGACY_AGENT_ALIAS_NAMES)[number];
+
+export const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<
+  LegacyAgentAliasName,
+  CanonicalAgentName
+> = {
+  general: "bob",
+  zoe: "bob",
+  build: "bob",
+  "pre-plan": "strategist",
+  logician: "strategist",
+  librarian: "researcher",
+  explore: "researcher",
+  ui: "multimodal",
+  "code-reviewer": "quality-guardian",
+  "systematic-debugger": "quality-guardian",
+  mindmodel: "platform-manager",
+  "ledger-creator": "platform-manager",
+  bootstrapper: "platform-manager",
+  "project-initializer": "platform-manager",
+};
+
+export type KnownAgentName = CanonicalAgentName | LegacyAgentAliasName;
+
+export interface FallbackEntry {
+  providers: string[];
+  model: string;
+  variant?: string;
+  reasoningEffort?: string;
+  temperature?: number;
+  top_p?: number;
+  maxTokens?: number;
+  thinking?: { type: "enabled" | "disabled"; budgetTokens?: number };
+}
+
+export interface ModelRequirement {
+  fallbackChain: FallbackEntry[];
+  variant?: string;
+  requiresModel?: string;
+  requiresAnyModel?: boolean;
+  requiresProvider?: string[];
+}
+
+// Keep extensibility for custom agent ids while surfacing canonical names in types.
+export type AgentConfigMap = Partial<Record<KnownAgentName, AgentConfig>> &
+  Record<string, AgentConfig>;
+export type AgentRequirementMap = Partial<Record<KnownAgentName, ModelRequirement>> &
+  Record<string, ModelRequirement>;
+
+export interface HeuristicModelFamilyDefinition {
+  family: string;
+  includes?: string[];
+  pattern?: string; // Stored as string in JSON, converted to RegExp in code
+  variants?: string[];
+  reasoningEfforts?: string[];
+  supportsThinking?: boolean;
+}
+
 export interface CategoryConfig {
   model: string;
   variant?: string;
   description?: string;
+  fallbackChain?: FallbackEntry[];
 }
 
 export interface McpServerConfig {
@@ -63,8 +158,12 @@ export interface OllamaConfig {
 
 export interface HiaiOpencodeConfig {
   $schema?: string;
-  agents?: Record<string, AgentConfig>;
+  agents?: AgentConfigMap;
+  agentRequirements?: AgentRequirementMap;
   categories?: Record<string, CategoryConfig>;
+  categoryRequirements?: Record<string, ModelRequirement>;
+  claudeModelAliases?: Record<string, string>;
+  modelFamilies?: HeuristicModelFamilyDefinition[];
   mcp?: Record<string, McpServerConfig>;
   lsp?: Record<string, LspServerConfig>;
   subtask2?: Subtask2Config;

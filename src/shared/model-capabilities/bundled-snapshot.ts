@@ -1,4 +1,4 @@
-import bundledModelCapabilitiesSnapshotJson from "../../generated/model-capabilities.generated.json"
+import bundledModelCapabilitiesSnapshotJson from "../../config/data/model-capabilities.json"
 
 import type { ModelCapabilitiesSnapshot } from "./types"
 

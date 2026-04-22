@@ -1,7 +1,9 @@
 import { stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
 import { ULTRAWORK_VERIFICATION_PROMISE } from "./constants"
 
-export interface LogicianVerificationEvidence {
+const VERIFICATION_GATE_AGENT_KEYS = new Set(["critic"])
+
+export interface CriticVerificationEvidence {
 	agent: string
 	promise: string
 	sessionID?: string
@@ -12,7 +14,15 @@ const PROMISE_TAG_PATTERN = /<promise>[ \t]*(\S+?)[ \t]*<\/promise>/is
 const TASK_METADATA_PATTERN = /<task_metadata>[ \t]*([\s\S]*?)[ \t]*<\/task_metadata>/is
 const SESSION_ID_LINE_PATTERN = /^session_id:[ \t]*(\S+)$/im
 
-export function parseLogicianVerificationEvidence(text: string): LogicianVerificationEvidence | undefined {
+function normalizeVerificationGateAgentKey(agentName: string): string {
+	return stripInvisibleAgentCharacters(agentName).trim().toLowerCase()
+}
+
+function isVerificationGateAgent(agentName: string): boolean {
+	return VERIFICATION_GATE_AGENT_KEYS.has(normalizeVerificationGateAgentKey(agentName))
+}
+
+export function parseCriticVerificationEvidence(text: string): CriticVerificationEvidence | undefined {
 	const trimmedText = text.trim()
 	if (!trimmedText) {
 		return undefined
@@ -49,23 +59,30 @@ export function parseLogicianVerificationEvidence(text: string): LogicianVerific
 	return { agent, promise, sessionID }
 }
 
-export function isLogicianVerified(text: string): boolean {
-	const evidence = parseLogicianVerificationEvidence(text)
+export type LogicianVerificationEvidence = CriticVerificationEvidence
+
+export const parseLogicianVerificationEvidence = parseCriticVerificationEvidence
+
+export function isCriticVerified(text: string): boolean {
+	const evidence = parseCriticVerificationEvidence(text)
 	if (!evidence) {
 		return false
 	}
 
-	const isLogicianAgent = stripInvisibleAgentCharacters(evidence.agent).toLowerCase() === "logician"
 	const isVerifiedPromise = evidence.promise === ULTRAWORK_VERIFICATION_PROMISE
 
-	return isLogicianAgent && isVerifiedPromise
+	return isVerificationGateAgent(evidence.agent) && isVerifiedPromise
 }
 
-export function extractLogicianSessionID(text: string): string | undefined {
-	const evidence = parseLogicianVerificationEvidence(text)
-	if (!evidence || stripInvisibleAgentCharacters(evidence.agent).toLowerCase() !== "logician") {
+export const isLogicianVerified = isCriticVerified
+
+export function extractCriticSessionID(text: string): string | undefined {
+	const evidence = parseCriticVerificationEvidence(text)
+	if (!evidence || !isVerificationGateAgent(evidence.agent)) {
 		return undefined
 	}
 
 	return evidence.sessionID
 }
+
+export const extractLogicianSessionID = extractCriticSessionID

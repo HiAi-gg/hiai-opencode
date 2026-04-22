@@ -3,7 +3,26 @@ import { join } from "node:path";
 import { parse } from "jsonc-parser";
 import { HiaiOpencodeConfigSchema } from "./platform-schema.js";
 import { defaultConfig } from "./defaults.js";
-import type { HiaiOpencodeConfig } from "./types.js";
+import bundledDefaults from "./default-config.json";
+import {
+  LEGACY_AGENT_ALIAS_TO_CANONICAL,
+  type CanonicalAgentName,
+  type HiaiOpencodeConfig,
+} from "./types.js";
+
+const LEGACY_AGENT_ALIAS_LOOKUP = new Map<string, CanonicalAgentName>(
+  Object.entries(LEGACY_AGENT_ALIAS_TO_CANONICAL).map(([alias, canonical]) => [
+    alias.toLowerCase(),
+    canonical,
+  ]),
+);
+
+const BASE_CONFIG = normalizeAgentAliases(
+  deepMerge(
+    defaultConfig as unknown as Record<string, unknown>,
+    bundledDefaults as unknown as Record<string, unknown>,
+  ) as HiaiOpencodeConfig,
+);
 
 const CONFIG_FILENAMES = [
   "hiai-opencode.json",
@@ -44,6 +63,89 @@ function findConfigFile(searchDirs: string[]): string | null {
   return null;
 }
 
+function toCanonicalAgentName(name: string): string {
+  return LEGACY_AGENT_ALIAS_LOOKUP.get(name.toLowerCase()) ?? name;
+}
+
+function normalizeAgentKeyedRecord<T>(
+  record?: Record<string, T>,
+): Record<string, T> | undefined {
+  if (!record) return record;
+
+  const normalized: Record<string, T> = {};
+  const aliasEntries: Array<[string, T]> = [];
+
+  for (const [rawName, config] of Object.entries(record)) {
+    const canonicalName = toCanonicalAgentName(rawName);
+    if (canonicalName === rawName) {
+      normalized[rawName] = config;
+      continue;
+    }
+    aliasEntries.push([canonicalName, config]);
+  }
+
+  // Explicit canonical/custom entries win over deprecated aliases.
+  for (const [canonicalName, config] of aliasEntries) {
+    if (!(canonicalName in normalized)) {
+      normalized[canonicalName] = config;
+    }
+  }
+
+  return normalized;
+}
+
+function normalizeAgentAliases(config: HiaiOpencodeConfig): HiaiOpencodeConfig {
+  const normalizedAgents = normalizeAgentKeyedRecord(config.agents);
+  const normalizedRequirements = normalizeAgentKeyedRecord(
+    config.agentRequirements,
+  );
+
+  return {
+    ...config,
+    ...(normalizedAgents ? { agents: normalizedAgents } : {}),
+    ...(normalizedRequirements
+      ? { agentRequirements: normalizedRequirements }
+      : {}),
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeCompactLspConfig(rawConfig: unknown): unknown {
+  if (!isRecord(rawConfig)) return rawConfig;
+  const rawLsp = rawConfig.lsp;
+  if (!isRecord(rawLsp)) return rawConfig;
+
+  const normalizedLsp: Record<string, unknown> = {};
+  const baseLsp = BASE_CONFIG.lsp ?? {};
+
+  for (const [serverId, rawEntry] of Object.entries(rawLsp)) {
+    if (!isRecord(rawEntry)) continue;
+
+    const normalizedEntry: Record<string, unknown> = { ...rawEntry };
+    const baseEntry = baseLsp[serverId];
+
+    if (!Array.isArray(normalizedEntry.command) && baseEntry?.command) {
+      normalizedEntry.command = [...baseEntry.command];
+    }
+
+    if (!Array.isArray(normalizedEntry.extensions) && baseEntry?.extensions) {
+      normalizedEntry.extensions = [...baseEntry.extensions];
+    }
+
+    if (Array.isArray(normalizedEntry.command) && Array.isArray(normalizedEntry.extensions)) {
+      normalizedLsp[serverId] = normalizedEntry;
+    }
+  }
+
+  return {
+    ...rawConfig,
+    lsp: normalizedLsp,
+  };
+}
+
 export function loadConfig(projectDir: string): HiaiOpencodeConfig {
   const searchDirs = [
     projectDir,
@@ -53,15 +155,17 @@ export function loadConfig(projectDir: string): HiaiOpencodeConfig {
 
   const configPath = findConfigFile(searchDirs);
 
-  if (!configPath) return defaultConfig;
+  if (!configPath) return BASE_CONFIG;
 
   const raw = readFileSync(configPath, "utf-8");
   const parsed = parse(raw);
-  const validated = HiaiOpencodeConfigSchema.parse(parsed);
+  const normalizedParsed = normalizeCompactLspConfig(parsed);
+  const validated = HiaiOpencodeConfigSchema.parse(normalizedParsed);
+  const normalized = normalizeAgentAliases(validated);
 
   return deepMerge(
-    defaultConfig as Record<string, unknown>,
-    validated as Record<string, unknown>,
+    BASE_CONFIG as unknown as Record<string, unknown>,
+    normalized as unknown as Record<string, unknown>,
   ) as HiaiOpencodeConfig;
 }
 

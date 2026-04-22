@@ -99,7 +99,7 @@ export function collectPendingBuiltinAgents(input: {
       config = { ...config, variant: resolvedVariant }
     }
 
-    if (agentName === "librarian") {
+    if (agentName === "researcher") {
       config = applyEnvironmentContext(config, directory, { disableOmoEnv })
     }
 

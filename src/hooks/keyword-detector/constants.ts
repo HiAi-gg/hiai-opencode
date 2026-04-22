@@ -28,17 +28,18 @@ export const KEYWORD_DETECTORS: KeywordDetector[] = [
     message: `[analyze-mode]
 ANALYSIS MODE. Gather context before diving deep:
 CONTEXT GATHERING (parallel):
-- 1-2 explore agents (codebase patterns, implementations)
-- 1-2 librarian agents (if external library involved)
+- 1-2 researcher agents (codebase patterns, implementations)
+- 1-2 researcher agents (official docs, OSS examples, if external library involved)
 - Direct tools: Grep, AST-grep, LSP for targeted searches
 
 IF COMPLEX - DO NOT STRUGGLE ALONE. Consult specialists:
-- **Logician**: Conventional problems (architecture, debugging, complex logic)
+- **Strategist**: Architecture, planning, and complex design choices
+- **Critic**: Debugging, verification, and high-risk review
 - **Artistry**: Non-conventional problems (different approach needed)
 
 SYNTHESIZE findings before proceeding.
 ---
 MANDATORY delegate_task params: ALWAYS include load_skills=[] and run_in_background when calling delegate_task.
-Example: delegate_task(subagent_type="explore", prompt="...", run_in_background=true, load_skills=[])`,
+Example: delegate_task(subagent_type="researcher", prompt="...", run_in_background=true, load_skills=[])`,
   },
 ]

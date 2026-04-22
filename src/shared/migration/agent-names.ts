@@ -1,63 +1,83 @@
 export const AGENT_NAME_MAP: Record<string, string> = {
-  // Bob variants → "bob"
+  // Bob variants (subsumes General, Zoe, Build)
   omo: "bob",
-  OmO: "bob",
-  Bob: "bob",
-  "Bob (Ultraworker)": "bob",
   bob: "bob",
+  "bob (ultraworker)": "bob",
+  "bob - ultraworker": "bob",
+  general: "bob",
+  zoe: "bob",
+  build: "bob",
 
-  // Coder variants → "coder"
-  "Coder (Deep Agent)": "coder",
+  // Coder variants
+  coder: "coder",
+  "coder (deep agent)": "coder",
+  "coder - deep agent": "coder",
 
-  // Strategist variants → "strategist"
-  "OmO-Plan": "strategist",
+  // Strategist variants (subsumes pre-plan/logician/athena)
   "omo-plan": "strategist",
-  "Planner-Bob": "strategist",
   "planner-bob": "strategist",
-  "Strategist - Plan Builder": "strategist",
-  "Strategist (Plan Builder)": "strategist",
   strategist: "strategist",
+  "strategist - plan builder": "strategist",
+  "strategist (plan builder)": "strategist",
+  "pre-plan": "strategist",
+  "plan-consultant": "strategist",
+  "pre-plan - plan consultant": "strategist",
+  "pre-plan (plan consultant)": "strategist",
+  logician: "strategist",
+  athena: "strategist",
+  "athena-junior": "strategist",
 
-  // Guard variants → "guard"
-  "orchestrator-bob": "guard",
-  Guard: "guard",
-  "Guard (Plan Executor)": "guard",
-  guard: "guard",
-
-  // Pre-Plan variants → "pre-plan"
-  "plan-consultant": "pre-plan",
-  "Pre-Plan - Plan Consultant": "pre-plan",
-  "Pre-Plan (Plan Consultant)": "pre-plan",
-  "pre-plan": "pre-plan",
-
-  // Critic variants → "critic"
-  "Critic - Plan Critic": "critic",
-  "Critic (Plan Critic)": "critic",
+  // Critic remains explicit and canonical
   critic: "critic",
+  "critic - plan critic": "critic",
+  "critic (plan critic)": "critic",
 
-  // SubAgent → "sub"
-  "SubAgent": "sub",
-  "sub": "sub",
+  // Guard variants
+  "orchestrator-bob": "guard",
+  guard: "guard",
+  "guard (plan executor)": "guard",
+  "guard - plan executor": "guard",
 
-  // Already lowercase - passthrough
-  build: "build",
-  logician: "logician",
-  librarian: "librarian",
-  explore: "explore",
-  "ui": "ui",
+  // Researcher variants (subsumes Librarian, Explore)
+  librarian: "researcher",
+  explore: "researcher",
+  researcher: "researcher",
+  "researcher - codebase explorer": "researcher",
+
+  // Quality Guardian variants (subsumes Code-Reviewer, Systematic-Debugger)
+  "code-reviewer": "quality-guardian",
+  "systematic-debugger": "quality-guardian",
+  "quality-guardian": "quality-guardian",
+  "quality guardian - verifier": "quality-guardian",
+
+  // Platform Manager variants (subsumes Ledger, Bootstrapper, Initializer, Mindmodel)
+  "ledger-creator": "platform-manager",
+  "bootstrapper": "platform-manager",
+  "project-initializer": "platform-manager",
+  "mindmodel": "platform-manager",
+  "platform-manager": "platform-manager",
+  "platform manager - utility": "platform-manager",
+
+  // SubAgent
+  subagent: "sub",
+  sub: "sub",
+
+  // Multimodal (runtime key remains "ui" for compatibility)
+  ui: "ui",
+  multimodal: "ui",
 }
 
 export const BUILTIN_AGENT_NAMES = new Set([
-  "bob", 
-  "logician",
-  "librarian",
-  "explore",
+  "bob",
+  "coder",
+  "strategist",
+  "critic",
+  "researcher",
   "ui",
-  "pre-plan", 
-  "critic", 
-  "strategist", 
-  "guard", 
-  "build",
+  "quality-guardian",
+  "platform-manager",
+  "guard",
+  "sub",
 ])
 
 export function migrateAgentNames(

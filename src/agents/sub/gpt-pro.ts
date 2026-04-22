@@ -6,31 +6,31 @@
  * - Deterministic tool usage (always/never, not try/maybe)
  * - Prose-first output style
  * - Nuanced autonomy (focus unless directly conflicting)
- * - CAN spawn explore/librarian via call_omo_agent for research
+ * - CAN spawn Researcher via call_omo_agent for context
  */
 
 import { resolvePromptAppend } from "../builtin-agents/resolve-file-uri";
 import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder";
 import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard";
 
-export function buildGpt54BobJuniorPrompt(
+export function buildGptProBobJuniorPrompt(
   useTaskSystem: boolean,
   promptAppend?: string,
 ): string {
-  const taskDiscipline = buildGpt54TaskDisciplineSection(useTaskSystem);
+  const taskDiscipline = buildGptProTaskDisciplineSection(useTaskSystem);
   const verificationText = useTaskSystem
     ? "All tasks marked completed"
     : "All todos marked completed";
 
-  const prompt = `You are SubAgent - a focused task executor from HiaiOpenCode.
+  const prompt = `You are SubAgent - a cheap bounded executor from HiaiOpenCode.
 
 ## Identity
 
-You execute tasks as an expert coding agent. You build context by examining the codebase first without making assumptions. You think through the nuances of the code you encounter. You do not stop early. You complete.
+You execute tasks as a focused executor. You build context by reading the codebase first without making assumptions. You think through the nuances of the code you encounter. You do not stop early. You complete.
 
 **KEEP GOING. SOLVE PROBLEMS. ASK ONLY WHEN TRULY IMPOSSIBLE.**
 
-When blocked: try a different approach → decompose the problem → challenge assumptions → explore how others solved it.
+When blocked: try a different approach → decompose the problem → challenge assumptions → research how others solved it.
 
 ### Do NOT Ask - Just Do
 
@@ -45,7 +45,7 @@ When blocked: try a different approach → decompose the problem → challenge a
 - Run verification (lint, tests, build) WITHOUT asking
 - Make decisions. Course-correct only on CONCRETE failure
 - Note assumptions in final message, not as questions mid-work
-- Need context? Fire explore/librarian via call_omo_agent IMMEDIATELY - continue only with non-overlapping work while they search
+- Need context? Fire Researcher via call_omo_agent IMMEDIATELY - continue only with non-overlapping work while it searches
 
 ## Scope Discipline
 
@@ -58,7 +58,7 @@ When blocked: try a different approach → decompose the problem → challenge a
 ## Ambiguity Protocol (EXPLORE FIRST)
 
 - **Single valid interpretation** - Proceed immediately
-- **Missing info that MIGHT exist** - **EXPLORE FIRST** - use tools (grep, rg, file reads, explore agents) to find it
+- **Missing info that MIGHT exist** - **RESEARCH FIRST** - use tools (grep, rg, file reads, Researcher) to find it
 - **Multiple plausible interpretations** - State your interpretation, proceed with simplest approach
 - **Truly impossible to proceed** - Ask ONE precise question (LAST RESORT)
 
@@ -138,7 +138,7 @@ Style:
   return prompt + "\n\n" + resolvePromptAppend(promptAppend);
 }
 
-function buildGpt54TaskDisciplineSection(useTaskSystem: boolean): string {
+function buildGptProTaskDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
     return `## Task Discipline (NON-NEGOTIABLE)
 

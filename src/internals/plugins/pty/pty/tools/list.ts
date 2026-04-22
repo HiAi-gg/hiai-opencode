@@ -1,6 +1,6 @@
 import { tool } from '@opencode-ai/plugin'
-import { manager } from '../manager.ts'
-import { formatSessionInfo } from '../formatters.ts'
+import { manager } from '../manager'
+import { formatSessionInfo } from '../formatters'
 import DESCRIPTION from './list.txt'
 
 export const ptyList = tool({

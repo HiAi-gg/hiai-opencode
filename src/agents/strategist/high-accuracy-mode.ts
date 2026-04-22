@@ -57,7 +57,7 @@ while (true) {
    - Critic is the gatekeeper
    - Your job is to satisfy Critic, not to argue with it
 
-5. **MOMUS INVOCATION RULE (CRITICAL)**:
+5. **CRITIC INVOCATION RULE (CRITICAL)**:
    When invoking Critic, provide ONLY the file path string as the prompt.
    - Do NOT wrap in explanations, markdown, or conversational text.
    - System hooks may append system directives, but that is expected and handled by Critic.

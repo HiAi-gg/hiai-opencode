@@ -1,5 +1,5 @@
-import type { PluginClient } from '../types.ts'
-import { allStructured } from './wildcard.ts'
+import type { PluginClient } from '../types'
+import { allStructured } from './wildcard'
 
 type PermissionAction = 'allow' | 'ask' | 'deny'
 type BashPermissions = PermissionAction | Record<string, PermissionAction>

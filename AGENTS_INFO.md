@@ -1,147 +1,63 @@
 # HiaiOpenCode Agent Registry & Analysis
 
-This document provides a comprehensive analysis of the 22 expert agents within the HiaiOpenCode platform. It details their roles, sources, model optimizations, and includes direct links to their prompt definitions.
+This document describes the current canonical 12-agent model first. Legacy aliases are kept only as migration notes so the active system is clear at a glance.
 
 ---
 
-## 🧬 Agent Source Distribution
+## Canonical 12-Agent Model
 
-| Source | Role | Count |
-| :--- | :--- | :--- |
-| **OH-MY-OPENAGENT** | Core Orchestration & Specialists | 14 |
-| **MICODE** | Platform & Continuity Specialists | 4 |
-| **SUPERPOWERS** | Quality Control & Debugging | 2 |
-| **AGENT-SKILLS** | Tactical & Skill Management | 2 |
+| Agent | Role | Current implementation files |
+|---|---|---|
+| `bob` | Orchestrator and delegation hub | `src/agents/bob.ts`, `src/agents/bob/default.ts`, `src/agents/bob/gemini.ts`, `src/agents/bob/gpt-pro.ts` |
+| `guard` | Workflow enforcer and closure validator | `src/agents/guard/agent.ts`, `src/agents/guard/default.ts`, `src/agents/guard/gemini.ts`, `src/agents/guard/gpt.ts` |
+| `strategist` | Planning, architecture, and scope control | `src/agents/strategist/system-prompt.ts`, `src/agents/strategist/gemini.ts`, `src/agents/strategist/gpt.ts`, `src/agents/strategist/high-accuracy-mode.ts` |
+| `critic` | High-risk review gate | Config and routing are wired through `src/config/defaults.ts`, `src/shared/agent-tool-restrictions.ts`, `src/agents/strategist/high-accuracy-mode.ts`, and `src/agents/coder/gpt-pro.ts` |
+| `coder` | Implementation and deep work | `src/agents/coder/agent.ts`, `src/agents/coder/gpt.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts` |
+| `sub` | Bounded delegated executor | `src/agents/sub/agent.ts`, `src/agents/sub/default.ts`, `src/agents/sub/gemini.ts`, `src/agents/sub/gpt.ts`, `src/agents/sub/gpt-codex.ts`, `src/agents/sub/gpt-pro.ts` |
+| `researcher` | Repo and external research | `src/agents/researcher.ts` |
+| `multimodal` | Image, PDF, and layout analysis | `src/agents/ui.ts` |
+| `quality-guardian` | Review and structured debugging | `src/agents/quality-guardian.ts` |
+| `platform-manager` | Continuity, bootstrap, and mindmodel orchestration | `src/agents/platform-manager.ts` |
+| `brainstormer` | Early ideation and concept shaping | Registered through `src/config/defaults.ts` and `src/agents/builtin-agents.ts` |
+| `agent-skills` | Skill discovery and routing | Registered through `src/config/defaults.ts` and `src/agents/builtin-agents.ts` |
 
----
+### Current Model-Specific Prompting
 
-## 🚀 Model-Specific Prompting (Hardcoded Logic)
-
-The system dynamically selects or overlays prompt instructions based on the target model to mitigate specific model weaknesses (hallucination, premature completion, or "AI slop").
-
-### ♊ Gemini Optimizations
-Gemini models are treated with "Aggressive Optimism" countermeasures.
-- **Tool-Call Mandates**: Explicit blocks (e.g., `<TOOL_CALL_MANDATE>`) force the model to acknowledge that its internal reasoning is unreliable.
-- **Thinking Checkpoints**: Mandatory output blocks like `🔍 Thinking Checkpoint` force the model to synthesize findings before moving to the next phase.
-- **Anti-Optimism Checkpoints**: Forces the model to verify tasks (LSP diagnostics, tests) before claiming completion.
-- **Sources**:
-  - [Bob Gemini Overlay](file:///mnt/ai_data/hiai-opencode/src/agents/bob/gemini.ts)
-  - [Strategist Gemini Variant](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/gemini.ts)
-  - [SubAgent Gemini Variant](file:///mnt/ai_data/hiai-opencode/src/agents/sub/gemini.ts)
-
-### 🤖 GPT & Codex Optimizations
-GPT models focus on structural clarity and "Senior Engineer" identity.
-- **8-Block Architecture**: Prompts are structured into 8 specific XML-tagged blocks (`<identity>`, `<intent>`, `<explore>`, etc.) to guide GPT's attention.
-- **Patch Guard**: Denies usage of `apply_patch` for GPT models as it is deemed unreliable.
-- **Preamble Suppression**: Suppresses "AI slop" (e.g., "Certainly!", "I can help with that") in favor of immediate action.
-- **Sources**:
-  - [Bob GPT-5.4 Variant](file:///mnt/ai_data/hiai-opencode/src/agents/bob/gpt-5-4.ts)
-  - [Strategist GPT Variant](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/gpt.ts)
-  - [SubAgent Codex Variant](file:///mnt/ai_data/hiai-opencode/src/agents/sub/gpt-5-3-codex.ts)
-  - [GPT Patch Guard](file:///mnt/ai_data/hiai-opencode/src/agents/gpt-apply-patch-guard.ts)
+- Gemini overlays live in `src/agents/bob/gemini.ts`, `src/agents/strategist/gemini.ts`, and `src/agents/sub/gemini.ts`.
+- GPT and Codex prompting now uses `src/agents/bob/gpt-pro.ts`, `src/agents/strategist/gpt.ts`, `src/agents/coder/gpt-pro.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/sub/gpt.ts`, `src/agents/sub/gpt-codex.ts`, and `src/agents/sub/gpt-pro.ts`.
+- `src/agents/gpt-apply-patch-guard.ts` remains the patch guard for GPT-family prompting.
+- Legacy model-specific files are archived and are not part of the live runtime inventory.
 
 ---
 
-## 🤖 Core Agents (Orchestration Layer)
+## Legacy Alias Notes
 
-### 1. Bob (The Orchestrator)
-- **Source**: [bob.ts](file:///mnt/ai_data/hiai-opencode/src/agents/bob.ts)
-- **Role**: Primary stakeholder. Handles high-level intent, research, and delegation.
-- **Prompting**: Dynamic construction based on available tools/agents.
-- **Model Logic**: Uses specific overlays for Gemini (`src/agents/bob/gemini.ts`) and a native rewrite for GPT-5.4 (`src/agents/bob/gpt-5-4.ts`).
+Legacy names are accepted at config boundaries only:
 
-### 2. Strategist (The Planning Consultant)
-- **Source**: [system-prompt.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/system-prompt.ts)
-- **Role**: Plan generation and requirements gathering.
-- **Prompting**: Assembled from modular components: [identity-constraints.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/identity-constraints.ts), [interview-mode.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/interview-mode.ts), [plan-generation.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/plan-generation.ts).
-- **Model Logic**: Redirects to [gpt.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/gpt.ts) or [gemini.ts](file:///mnt/ai_data/hiai-opencode/src/agents/strategist/gemini.ts) depending on the target model.
-
-### 3. Coder (The Builder)
-- **Source**: [agent.ts](file:///mnt/ai_data/hiai-opencode/src/agents/coder/agent.ts)
-- **Role**: Goal-oriented implementation. Matches existing naming and architecture patterns.
-- **Key Files**: Includes autonomous deep-work logic and `lsp_diagnostics` mandates.
-
-### 4. Guard (The Conductor)
-- **Source**: [agent.ts](file:///mnt/ai_data/hiai-opencode/src/agents/guard/agent.ts)
-- **Role**: Master orchestrator for todo-list execution. Ensures delegation compliance.
+- `general`, `zoe`, `build` -> `bob`
+- `pre-plan`, `logician`, `plan-consultant` -> `strategist`
+- `librarian`, `explore` -> `researcher`
+- `ui` -> `multimodal`
+- `code-reviewer`, `systematic-debugger` -> `quality-guardian`
+- `mindmodel`, `ledger-creator`, `bootstrapper`, `project-initializer` -> `platform-manager`
 
 ---
 
-## 🛠️ Specialist Agents (Technical Support)
+## Prompting Overview
 
-### 5. Logician (Complexity Advisor)
-- **Source**: [logician.ts](file:///mnt/ai_data/hiai-opencode/src/agents/logician.ts)
-- **Role**: Read-only strategic advisor for architecture and hard bugs. Uses "Oracle" persona.
+### Gemini Optimizations
 
-### 6. Librarian (Reference Specialist)
-- **Source**: [librarian.ts](file:///mnt/ai_data/hiai-opencode/src/agents/librarian.ts)
-- **Role**: External source researcher. MUST provide GitHub permalinks as evidence.
+Gemini models use the current overlays above to keep tool use explicit and avoid premature completion.
 
-### 7. Explore (Contextual Grep)
-- **Source**: [explore.ts](file:///mnt/ai_data/hiai-opencode/src/agents/explore.ts)
-- **Role**: Internal codebase navigation. Mandates structured XML output blocks.
+### GPT & Codex Optimizations
 
-### 8. UI Expert / Multimodal Looker
-- **Source**: [ui.ts](file:///mnt/ai_data/hiai-opencode/src/agents/ui.ts)
-- **Role**: Analyzes images, PDFs, and layouts. Returns extracted data directly to the orchestrator.
-
-### 9. Pre-Plan (Plan Consultant)
-- **Source**: [pre-plan.ts](file:///mnt/ai_data/hiai-opencode/src/agents/pre-plan.ts)
-- **Role**: Identifies hidden intentions and scope creep before planning. Generates `MUST`/`MUST NOT` directives.
-
-### 10. Critic (Work Plan Reviewer)
-- **Source**: [critic.ts](file:///mnt/ai_data/hiai-opencode/src/agents/critic.ts)
-- **Role**: Evaluates executability of plans. Focuses on blocking issues (limit: 3 issues per turn).
-
-### 11. Sub-Agent (Focused Executor)
-- **Source**: [agent.ts](file:///mnt/ai_data/hiai-opencode/src/agents/sub/agent.ts)
-- **Model Variants**:
-  - [Default](file:///mnt/ai_data/hiai-opencode/src/agents/sub/default.ts)
-  - [Gemini](file:///mnt/ai_data/hiai-opencode/src/agents/sub/gemini.ts)
-  - [Codex](file:///mnt/ai_data/hiai-opencode/src/agents/sub/gpt-5-3-codex.ts)
-  - [GPT-5.4](file:///mnt/ai_data/hiai-opencode/src/agents/sub/gpt-5-4.ts)
+GPT and Codex models use the current `gpt-pro.ts` / `gpt-codex.ts` files, plus the patch guard, to keep the prompt structure compact and direct.
 
 ---
 
-## 🏗️ Platform Specialists (Micode)
+## Source Files
 
-### 12. Mindmodel (Pattern Catalog)
-- **Source**: [platform-adapter.ts](file:///mnt/ai_data/hiai-opencode/src/agents/platform-adapter.ts)
-- **Role**: Orchestrates 7 analysis agents (mm-stack-detector, etc.) to generate `.mindmodel/`.
-
-### 13. Ledger-Creator (Continuity)
-- **Source**: [platform-adapter.ts](file:///mnt/ai_data/hiai-opencode/src/agents/platform-adapter.ts)
-- **Role**: Session state preservation. Writes `CONTINUITY_{session}.md`.
-
-### 14. Bootstrapper (Branch Explorer)
-- **Source**: [platform-adapter.ts](file:///mnt/ai_data/hiai-opencode/src/agents/platform-adapter.ts)
-- **Role**: JSON-only JSON branch generator for brainstorming.
-
-### 15. Project-Initializer (Scaffolding)
-- **Source**: [platform-adapter.ts](file:///mnt/ai_data/hiai-opencode/src/agents/platform-adapter.ts)
-- **Role**: Generates `ARCHITECTURE.md` and `CODE_STYLE.md` in parallel discover mode.
-
----
-
-## ⚖️ Quality & Integration Agents (Superpowers / Skills)
-
-### 16. Code-Reviewer
-- **Source**: Integrated via Superpowers plugin. Formal post-implementation review.
-
-### 17. Systematic-Debugger
-- **Source**: Integrated via Superpowers plugin. Logical regression analysis.
-
-### 18. Brainstormer
-- **Source**: Integrated via Agent-Skills. High-level ideation.
-
-### 19. Agent-Skills
-- **Source**: Integrated via Agent-Skills. Skill management and discovery.
-
-### 20. General
-- **Source**: Core Fallback. Multi-purpose generalist.
-
-### 21. Zoe
-- **Source**: Core Fallback. Interactive feedback agent.
-
-### 22. Build
-- **Source**: Core Fallback. Basic tool/build executor.
+- `src/config/schema/agent-names.ts` defines the canonical 12-agent names and compatibility aliases.
+- `src/config/types.ts` documents the canonical list and alias mapping target.
+- `src/config/defaults.ts` provides the current default model assignments for the canonical agents.
+- `src/agents/builtin-agents.ts` wires the canonical runtime agents.

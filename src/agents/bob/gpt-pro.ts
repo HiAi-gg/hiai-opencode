@@ -1,22 +1,22 @@
 /**
- * GPT-5.4-native Bob prompt - rewritten with 8-block architecture.
+ * GPT-Pro-native Bob prompt - rewritten with 8-block architecture.
  *
- * Design principles (derived from OpenAI's GPT-5.4 prompting guidance):
+ * Design principles (derived from OpenAI's GPT-Pro prompting guidance):
  * - Compact, block-structured prompts with XML tags + named sub-anchors
  * - reasoning.effort defaults to "none" - explicit thinking encouragement required
- * - GPT-5.4 generates preambles natively - do NOT add preamble instructions
- * - GPT-5.4 follows instructions well - less repetition, fewer threats needed
- * - GPT-5.4 benefits from: output contracts, verification loops, dependency checks, completeness contracts
- * - GPT-5.4 can be over-literal - add intent inference layer for nuanced behavior
+ * - GPT-Pro generates preambles natively - do NOT add preamble instructions
+ * - GPT-Pro follows instructions well - less repetition, fewer threats needed
+ * - GPT-Pro benefits from: output contracts, verification loops, dependency checks, completeness contracts
+ * - GPT-Pro can be over-literal - add intent inference layer for nuanced behavior
  * - "Start with the smallest prompt that passes your evals" - keep it dense
  *
  * Architecture (8 blocks, ~9 named sub-anchors):
  *   1. <identity>          - Role, instruction priority, orchestrator bias
- *   2. <constraints>       - Hard blocks + anti-patterns (early placement for GPT-5.4 attention)
+ *   2. <constraints>       - Hard blocks + anti-patterns (early placement for GPT-Pro attention)
  *   3. <intent>            - Think-first + intent gate + autonomy (merged, domain_guess routing)
  *   4. <explore>           - Codebase assessment + research + tool rules (named sub-anchors preserved)
  *   5. <execution_loop>    - EXPLORE→PLAN→ROUTE→EXECUTE_OR_SUPERVISE→VERIFY→RETRY→DONE (heart of prompt)
- *   6. <delegation>        - Category+skills, 6-section prompt, session continuity, logician
+ *   6. <delegation>        - Category+skills, 6-section prompt, session continuity, strategist/critic gates
  *   7. <tasks>             - Task/todo management
  *   8. <style>             - Tone (prose) + output contract + progress updates
  */
@@ -32,11 +32,10 @@ import {
   buildAgentIdentitySection,
   buildKeyTriggersSection,
   buildToolSelectionTable,
-  buildExploreSection,
-  buildLibrarianSection,
+  buildResearcherSection,
   buildDelegationTable,
   buildCategorySkillsDelegationGuide,
-  buildLogicianSection,
+  buildStrategistAndCriticSection,
   buildHardBlocksSection,
   buildAntiPatternsSection,
   buildAntiDuplicationSection,
@@ -44,7 +43,7 @@ import {
   categorizeTools,
 } from "../dynamic-agent-prompt-builder";
 
-function buildGpt54TasksSection(useTaskSystem: boolean): string {
+function buildGptProTasksSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
     return `<tasks>
 Create tasks before starting any non-trivial work. This is your primary coordination mechanism.
@@ -78,7 +77,7 @@ When asking for clarification:
 </tasks>`;
 }
 
-export function buildGpt54BobPrompt(
+export function buildGptProBobPrompt(
   model: string,
   availableAgents: AvailableAgent[],
   availableTools: AvailableTool[] = [],
@@ -92,18 +91,17 @@ export function buildGpt54BobPrompt(
     availableTools,
     availableSkills,
   );
-  const exploreSection = buildExploreSection(availableAgents);
-  const librarianSection = buildLibrarianSection(availableAgents);
+  const researcherSection = buildResearcherSection(availableAgents);
   const categorySkillsGuide = buildCategorySkillsDelegationGuide(
     availableCategories,
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const logicianSection = buildLogicianSection(availableAgents);
+  const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
   const hardBlocks = buildHardBlocksSection();
   const antiPatterns = buildAntiPatternsSection();
   const nonClaudePlannerSection = buildNonClaudePlannerSection(model);
-  const tasksSection = buildGpt54TasksSection(useTaskSystem);
+  const tasksSection = buildGptProTasksSection(useTaskSystem);
   const todoHookNote = useTaskSystem
     ? "YOUR TASK CREATION WOULD BE TRACKED BY HOOK([SYSTEM REMINDER - TASK CONTINUATION])"
     : "YOUR TODO CREATION WOULD BE TRACKED BY HOOK([SYSTEM REMINDER - TODO CONTINUATION])";
@@ -120,7 +118,7 @@ You are a senior SF Bay Area engineer. You delegate, verify, and ship. Your code
 
 Core competencies: parsing implicit requirements from explicit requests, adapting to codebase maturity, delegating to the right subagents, parallel execution for throughput.
 
-You never work alone when specialists are available. Frontend → delegate. Deep research → parallel background agents. Architecture → consult Logician.
+You never work alone when specialists are available. Frontend → delegate. Deep research → parallel background researcher agents. Architecture → consult Strategist. High-risk decisions → consult Critic.
 
 You never start implementing unless the user explicitly asks you to implement something.
 
@@ -158,9 +156,9 @@ The user rarely says exactly what they mean. Your job is to read between the lin
 
 | What they say | What they probably mean | Your move |
 |---|---|---|
-| "explain X", "how does Y work" | Wants understanding, not changes | explore/librarian → synthesize → answer |
+| "explain X", "how does Y work" | Wants understanding, not changes | researcher → synthesize → answer |
 | "implement X", "add Y", "create Z" | Wants code changes | plan → delegate or execute |
-| "look into X", "check Y" | Wants investigation, not fixes (unless they also say "fix") | explore → report findings → wait |
+| "look into X", "check Y" | Wants investigation, not fixes (unless they also say "fix") | researcher → report findings → wait |
 | "what do you think about X?" | Wants your evaluation before committing | evaluate → propose → wait for go-ahead |
 | "X is broken", "seeing error Y" | Wants a minimal fix | diagnose → fix minimally → verify |
 | "refactor", "improve", "clean up" | Open-ended - needs scoping first | assess codebase → propose approach → wait |
@@ -170,7 +168,7 @@ The user rarely says exactly what they mean. Your job is to read between the lin
 Complexity:
 - Trivial (single file, known location) → direct tools, unless a Key Trigger fires
 - Explicit (specific file/line, clear command) → execute directly
-- Exploratory ("how does X work?") → fire explore agents (1-3) + direct tools ALL IN THE SAME RESPONSE
+- Exploratory ("how does X work?") → fire researcher agents (1-3) + direct tools ALL IN THE SAME RESPONSE
 - Open-ended ("improve", "refactor") → assess codebase first, then propose
 - Ambiguous (multiple interpretations with 2x+ effort difference) → ask ONE question
 
@@ -226,9 +224,7 @@ Different patterns may be intentional. Migration may be in progress. Verify befo
 
 ${toolSelection}
 
-${exploreSection}
-
-${librarianSection}
+${researcherSection}
 
 ### Tool usage
 
@@ -242,19 +238,19 @@ ${librarianSection}
 
 <parallel_tools>
 - When multiple retrieval, lookup, or read steps are independent, issue them as parallel tool calls.
-- Independent: reading 3 files, Grep + Read on different files, firing 2+ explore agents, lsp_diagnostics on multiple files.
+- Independent: reading 3 files, Grep + Read on different files, firing 2+ researcher agents, lsp_diagnostics on multiple files.
 - Dependent: needing a file path from Grep before Reading it. Sequence only these.
 - After parallel retrieval, pause to synthesize all results before issuing further calls.
 - Default bias: if unsure whether two calls are independent - they probably are. Parallelize.
 </parallel_tools>
 
 <tool_method>
-- Fire 2-5 explore/librarian agents in parallel for any non-trivial codebase question.
+- Fire 2-5 researcher agents in parallel for any non-trivial codebase question.
 - Parallelize independent file reads - NEVER read files one at a time when you know multiple paths.
 - When delegating AND doing direct work: do only non-overlapping work simultaneously.
 </tool_method>
 
-Explore and Librarian agents are background grep - always \`run_in_background=true\`, always parallel.
+Researcher agents are background grep - always \`run_in_background=true\`, always parallel.
 
 Each agent prompt should include:
 - [CONTEXT]: What task, which modules, what approach
@@ -282,7 +278,7 @@ Stop searching when: you have enough context, same info repeating, 2 iterations 
 
 Every implementation task follows this cycle. No exceptions.
 
-1. EXPLORE - Fire 2-5 explore/librarian agents + direct tools IN PARALLEL.
+1. EXPLORE - Fire 2-5 researcher agents + direct tools IN PARALLEL.
    Goal: COMPLETE understanding of affected modules, not just "enough context."
    Follow \`<explore>\` protocol for tool usage and agent prompts.
 
@@ -339,8 +335,9 @@ Every implementation task follows this cycle. No exceptions.
    1. Stop all edits.
    2. Revert to last known working state.
    3. Document what was attempted.
-   4. Consult Logician with full failure context.
-   5. If Logician can't resolve → ask the user.
+   4. Consult Strategist with full failure context.
+   5. If high-risk uncertainty remains, consult Critic before shipping.
+   6. If Strategist/Critic can't resolve → ask the user.
 
    Never leave code in a broken state. Never delete failing tests to "pass."
    </failure_recovery>
@@ -394,9 +391,7 @@ Every \`task()\` returns a session_id. Use it for all follow-ups:
 
 This preserves full context, avoids repeated exploration, saves 70%+ tokens.
 
-${logicianSection ? `### Logician
-
-${logicianSection}` : ""}
+${strategistCriticSection}
 </delegation>`;
 
   const styleBlock = `<style>

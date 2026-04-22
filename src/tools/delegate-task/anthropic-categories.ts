@@ -3,6 +3,10 @@ import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
 const UNSPECIFIED_LOW_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on tasks that don't fit specific categories but require moderate effort.
 
+<Routing_Policy>
+Executor contour: sub (cheap bounded execution). Escalate only if depth exceeds bounded scope.
+</Routing_Policy>
+
 <Selection_Gate>
 BEFORE selecting this category, VERIFY ALL conditions:
 1. Task does NOT fit: quick (trivial), visual-engineering (UI), ultrabrain (deep logic), artistry (creative), writing (docs)
@@ -15,7 +19,7 @@ This is NOT a default choice - it's for genuinely unclassifiable moderate-effort
 </Category_Context>
 
 <Caller_Warning>
-THIS CATEGORY USES A MID-TIER MODEL (claude-sonnet-4-6).
+THIS CATEGORY USES A MID-TIER MODEL (the selected mid-tier model).
 
 **PROVIDE CLEAR STRUCTURE:**
 1. MUST DO: Enumerate required actions explicitly
@@ -25,6 +29,10 @@ THIS CATEGORY USES A MID-TIER MODEL (claude-sonnet-4-6).
 
 const UNSPECIFIED_HIGH_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on tasks that don't fit specific categories but require substantial effort.
+
+<Routing_Policy>
+Executor contour: coder (deep execution). Use only when substantial, cross-module effort is justified.
+</Routing_Policy>
 
 <Selection_Gate>
 BEFORE selecting this category, VERIFY ALL conditions:
@@ -41,14 +49,14 @@ If task is unclassifiable but moderate-effort, use unspecified-low instead.
 export const ANTHROPIC_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "unspecified-low",
-    config: { model: "anthropic/claude-sonnet-4-6" },
-    description: "Tasks that don't fit other categories, low effort required",
+    config: {},
+    description: "Unclassifiable moderate tasks with bounded scope. Uses sub execution contour.",
     promptAppend: UNSPECIFIED_LOW_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "unspecified-high",
-    config: { model: "anthropic/claude-opus-4-6", variant: "max" },
-    description: "Tasks that don't fit other categories, high effort required",
+    config: {},
+    description: "Unclassifiable substantial tasks across modules. Uses coder execution contour.",
     promptAppend: UNSPECIFIED_HIGH_CATEGORY_PROMPT_APPEND,
   },
 ]

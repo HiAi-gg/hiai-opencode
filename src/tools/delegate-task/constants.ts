@@ -12,7 +12,7 @@ export {
 
 /**
  * System prompt prepended to plan agent invocations.
- * Instructs the plan agent to first gather context via explore/librarian agents,
+ * Instructs the plan agent to first gather context via researcher agents,
  * then summarize user requirements and clarify uncertainties before proceeding.
  * Also MANDATES dependency graphs, parallel execution analysis, and category+skill recommendations.
  */
@@ -21,8 +21,8 @@ BEFORE you begin planning, you MUST first understand the user's request deeply.
 
 MANDATORY CONTEXT GATHERING PROTOCOL:
 1. Launch background agents to gather context:
-   - call_omo_agent(description="Explore codebase patterns", subagent_type="explore", run_in_background=true, prompt="<search for relevant patterns, files, and implementations in the codebase related to user's request>")
-   - call_omo_agent(description="Research documentation", subagent_type="librarian", run_in_background=true, prompt="<search for external documentation, examples, and best practices related to user's request>")
+   - call_omo_agent(description="Explore codebase patterns", subagent_type="researcher", run_in_background=true, prompt="<search for relevant patterns, files, and implementations in the codebase related to user's request>")
+   - call_omo_agent(description="Research documentation", subagent_type="researcher", run_in_background=true, prompt="<search for external documentation, examples, and best practices related to user's request>")
 
 2. After gathering context, ALWAYS present:
    - **User Request Summary**: Concise restatement of what the user is asking for
@@ -122,6 +122,10 @@ WHY THIS MATTERS:
 FOR EVERY TASK, YOU MUST RECOMMEND:
 1. Which CATEGORY to use for delegation
 2. Which SKILLS to load for the delegated agent
+3. Which EXECUTOR contour is expected from that category:
+   - quick/writing/unspecified-low -> sub (cheap bounded execution)
+   - deep/ultrabrain/visual-engineering/artistry/unspecified-high -> coder (deep execution)
+   - use subagent_type="critic" explicitly for review-gate passes
 `
 
 export const PLAN_AGENT_SYSTEM_PREPEND_STATIC_AFTER_SKILLS = `### REQUIRED OUTPUT FORMAT

@@ -1,7 +1,7 @@
-import { tool } from '@opencode-ai/plugin'
-import { manager } from '../manager.ts'
-import { checkCommandPermission } from '../permissions.ts'
-import { buildSessionNotFoundError } from '../utils.ts'
+import { tool, type ToolDefinition } from '@opencode-ai/plugin'
+import { manager } from '../manager'
+import { checkCommandPermission } from '../permissions'
+import { buildSessionNotFoundError } from '../utils'
 import DESCRIPTION from './write.txt'
 
 const ETX = String.fromCharCode(3)
@@ -53,7 +53,7 @@ function parseCommand(commandLine: string): { command: string; args: string[] } 
   return { command, args }
 }
 
-export const ptyWrite = tool({
+export const ptyWrite: ToolDefinition = tool({
   description: DESCRIPTION,
   args: {
     id: tool.schema.string().describe('The PTY session ID (e.g., pty_a1b2c3d4)'),

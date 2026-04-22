@@ -1,7 +1,7 @@
 import type { PluginInput } from "@opencode-ai/plugin"
 import { log } from "../../shared/logger"
 import { HOOK_NAME } from "./constants"
-import { extractLogicianSessionID, isLogicianVerified } from "./logician-verification-detector"
+import { extractCriticSessionID, isCriticVerified } from "./logician-verification-detector"
 import type { RalphLoopState } from "./types"
 import { handleFailedVerification } from "./verification-failure-handler"
 import { withTimeout } from "./with-timeout"
@@ -27,7 +27,7 @@ function collectAssistantText(message: OpenCodeSessionMessage): string {
 	return text
 }
 
-async function detectLogicianVerificationFromParentSession(
+async function detectCriticVerificationFromParentSession(
 	ctx: PluginInput,
 	parentSessionID: string,
 	directory: string,
@@ -60,19 +60,19 @@ async function detectLogicianVerificationFromParentSession(
 			}
 
 			const assistantText = collectAssistantText(message)
-			if (!isLogicianVerified(assistantText)) {
+			if (!isCriticVerified(assistantText)) {
 				continue
 			}
 
-			const detectedLogicianSessionID = extractLogicianSessionID(assistantText)
-			if (detectedLogicianSessionID) {
-				return detectedLogicianSessionID
+			const detectedCriticSessionID = extractCriticSessionID(assistantText)
+			if (detectedCriticSessionID) {
+				return detectedCriticSessionID
 			}
 		}
 
 		return undefined
 	} catch (error) {
-		log(`[${HOOK_NAME}] Failed to scan parent session for logician verification evidence`, {
+		log(`[${HOOK_NAME}] Failed to scan parent session for critic verification evidence`, {
 			parentSessionID,
 			error: String(error),
 		})
@@ -111,7 +111,7 @@ export async function handlePendingVerification(
 
 	if (matchesParentSession || (verificationSessionID && matchesVerificationSession)) {
 		if (!verificationSessionID && state.session_id) {
-			const recoveredVerificationSessionID = await detectLogicianVerificationFromParentSession(
+			const recoveredVerificationSessionID = await detectCriticVerificationFromParentSession(
 				ctx,
 				state.session_id,
 				directory,
@@ -144,7 +144,7 @@ export async function handlePendingVerification(
 		}
 	}
 
-	log(`[${HOOK_NAME}] Waiting for logician verification`, {
+	log(`[${HOOK_NAME}] Waiting for critic verification`, {
 		sessionID,
 		verificationSessionID,
 		iteration: state.iteration,

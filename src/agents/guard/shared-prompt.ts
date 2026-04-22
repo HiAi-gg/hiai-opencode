@@ -9,7 +9,7 @@ export interface GuardPromptSections {
   criticalRules: string
 }
 
-const ATLAS_DELEGATION_SYSTEM = `<delegation_system>
+const GUARD_DELEGATION_SYSTEM = `<delegation_system>
 ## How to Delegate
 
 Use \`task()\` with EITHER category OR agent (mutually exclusive):
@@ -85,7 +85,7 @@ Every \`task()\` prompt MUST include ALL 6 sections:
 **If your prompt is under 30 lines, it's TOO SHORT.**
 </delegation_system>`
 
-const ATLAS_AUTO_CONTINUE = `<auto_continue>
+const GUARD_AUTO_CONTINUE = `<auto_continue>
 ## AUTO-CONTINUE POLICY (STRICT)
 
 **CRITICAL: NEVER ask the user "should I continue", "proceed to next task", or any approval-style questions between plan steps.**
@@ -108,7 +108,7 @@ const ATLAS_AUTO_CONTINUE = `<auto_continue>
 **This is NOT optional. This is core to your role as orchestrator.**
 </auto_continue>`
 
-const ATLAS_NOTEPAD_PROTOCOL = `<notepad_protocol>
+const GUARD_NOTEPAD_PROTOCOL = `<notepad_protocol>
 ## Notepad System
 
 **Purpose**: Subagents are STATELESS. Notepad is your cumulative intelligence.
@@ -132,7 +132,7 @@ const ATLAS_NOTEPAD_PROTOCOL = `<notepad_protocol>
 - Notepad: \`.bob/notepads/{name}/\` (READ/APPEND)
 </notepad_protocol>`
 
-const ATLAS_POST_DELEGATION_RULE = `<post_delegation_rule>
+const GUARD_POST_DELEGATION_RULE = `<post_delegation_rule>
 ## POST-DELEGATION RULE (MANDATORY)
 
 After EVERY verified task() completion, you MUST:
@@ -151,15 +151,15 @@ export function buildGuardPrompt(sections: GuardPromptSections): string {
 
 ${buildAntiDuplicationSection()}
 
-${ATLAS_DELEGATION_SYSTEM}
+${GUARD_DELEGATION_SYSTEM}
 
-${ATLAS_AUTO_CONTINUE}
+${GUARD_AUTO_CONTINUE}
 
 ${sections.workflow}
 
 ${sections.parallelExecution}
 
-${ATLAS_NOTEPAD_PROTOCOL}
+${GUARD_NOTEPAD_PROTOCOL}
 
 ${sections.verificationRules}
 
@@ -167,6 +167,6 @@ ${sections.boundaries}
 
 ${sections.criticalRules}
 
-${ATLAS_POST_DELEGATION_RULE}
+${GUARD_POST_DELEGATION_RULE}
 `
 }

@@ -2,7 +2,10 @@ import type { DelegateTaskArgs } from "./types"
 import type { ExecutorContext } from "./executor-types"
 import type { DelegatedModelConfig } from "./types"
 import { isPlanFamily } from "./constants"
-import { BOB_JUNIOR_AGENT } from "./sub-agent"
+import {
+  SUB_AGENT_CONFIG_KEY,
+  resolveCanonicalDelegateAgentKey,
+} from "./sub-agent"
 import { applyCategoryParams } from "./delegated-model-config"
 import { resolveEffectiveFallbackEntry } from "./fallback-entry-resolution"
 import { applyFallbackEntrySettings } from "./fallback-entry-settings"
@@ -38,19 +41,21 @@ export async function resolveSubagentExecution(
     return { agentToUse: "", categoryModel: undefined, error: `Agent name cannot be empty.` }
   }
 
-  const agentName = sanitizeSubagentType(args.subagent_type)
+  const requestedAgentName = sanitizeSubagentType(args.subagent_type)
+  const requestedCanonicalAgentKey = resolveCanonicalDelegateAgentKey(requestedAgentName)
 
-  if (agentName.toLowerCase() === BOB_JUNIOR_AGENT.toLowerCase()) {
+  if (requestedCanonicalAgentKey === SUB_AGENT_CONFIG_KEY) {
     return {
       agentToUse: "",
       categoryModel: undefined,
-      error: `Cannot use subagent_type="${BOB_JUNIOR_AGENT}" directly. Use category parameter instead (e.g., ${categoryExamples}).
+      error: `Cannot use subagent_type="${args.subagent_type}" directly. Use category parameter instead (e.g., ${categoryExamples}).
 
 SubAgent is spawned automatically when you specify a category. Pick the appropriate category for your task domain.`,
     }
   }
 
-  if (isPlanFamily(agentName) && isPlanFamily(parentAgent)) {
+  const canonicalParentAgent = parentAgent ? resolveCanonicalDelegateAgentKey(parentAgent) : undefined
+  if (isPlanFamily(requestedCanonicalAgentKey) && isPlanFamily(canonicalParentAgent)) {
     return {
       agentToUse: "",
       categoryModel: undefined,
@@ -60,7 +65,7 @@ Create the work plan directly - that's your job as the planning agent.`,
     }
   }
 
-  let agentToUse = agentName
+  let agentToUse = requestedAgentName
   let categoryModel: DelegatedModelConfig | undefined
   let fallbackChain: FallbackEntry[] | undefined = undefined
 
@@ -86,16 +91,25 @@ Create the work plan directly - that's your job as the planning agent.`,
       return {
         agentToUse: "",
         categoryModel: undefined,
-        error: `Unknown agent: "${agentToUse}". Available agents: ${listCallableAgentNames(mergedAgents)}`,
+        error: `Unknown agent: "${requestedAgentName}". Available agents: ${listCallableAgentNames(mergedAgents)}`,
       }
     }
 
     agentToUse = stripAgentListSortPrefix(matchedAgent.name)
 
-    const agentConfigKey = getAgentConfigKey(agentToUse)
-    const agentOverride = agentOverrides?.[agentConfigKey as keyof typeof agentOverrides]
-      ?? (agentOverrides ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === agentConfigKey)?.[1] : undefined)
-    const agentRequirement = AGENT_MODEL_REQUIREMENTS[agentConfigKey]
+    const matchedAgentConfigKey = getAgentConfigKey(agentToUse).toLowerCase()
+    const canonicalAgentConfigKey = resolveCanonicalDelegateAgentKey(agentToUse).toLowerCase()
+    const agentConfigLookupKeys = Array.from(new Set([
+      canonicalAgentConfigKey,
+      matchedAgentConfigKey,
+    ]))
+
+    const agentOverride = agentOverrides
+      ? Object.entries(agentOverrides).find(([key]) => agentConfigLookupKeys.includes(key.toLowerCase()))?.[1]
+      : undefined
+    const agentRequirement = agentConfigLookupKeys
+      .map((key) => AGENT_MODEL_REQUIREMENTS[key])
+      .find((requirement): requirement is NonNullable<typeof requirement> => requirement !== undefined)
     const agentCategoryConfig = agentOverride?.category
       ? userCategories?.[agentOverride.category]
       : undefined

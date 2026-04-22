@@ -4,14 +4,13 @@ import type { CategoriesConfig, GitMasterConfig } from "../config/schema"
 import type { LoadedSkill } from "../features/opencode-skill-loader/types"
 import type { BrowserAutomationProvider } from "../config/schema"
 import { createBobAgent } from "./bob"
-import { createLogicianAgent, ORACLE_PROMPT_METADATA } from "./logician"
-import { createLibrarianAgent, LIBRARIAN_PROMPT_METADATA } from "./librarian"
-import { createExploreAgent, EXPLORE_PROMPT_METADATA } from "./explore"
+import { createCriticAgent, criticPromptMetadata } from "./critic/agent"
 import { createMultimodalLookerAgent, MULTIMODAL_LOOKER_PROMPT_METADATA } from "./ui"
-import { createPrePlanAgent, prePlanPromptMetadata } from "./pre-plan"
 import { createGuardAgent, guardPromptMetadata } from "./guard"
-import { createCriticAgent, criticPromptMetadata } from "./critic"
 import { createCoderAgent } from "./coder"
+import { createPlatformManagerAgent, platformManagerPromptMetadata } from "./platform-manager"
+import { createQualityGuardianAgent, qualityGuardianPromptMetadata } from "./quality-guardian"
+import { createResearcherAgent, researcherPromptMetadata } from "./researcher"
 import { createBobJuniorAgentWithOverrides } from "./sub"
 import type { AvailableCategory } from "./dynamic-agent-prompt-builder"
 import {
@@ -26,20 +25,21 @@ import { collectPendingBuiltinAgents } from "./builtin-agents/general-agents"
 import { maybeCreateBobConfig } from "./builtin-agents/bob-agent"
 import { maybeCreateCoderConfig } from "./builtin-agents/coder-agent"
 import { maybeCreateGuardConfig } from "./builtin-agents/guard-agent"
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure-protocol"
 
 type AgentSource = AgentFactory | AgentConfig
 
 const agentSources: Record<BuiltinAgentName, AgentSource> = {
   "bob": createBobAgent,
   "coder": createCoderAgent,
-  "logician": createLogicianAgent,
-  librarian: createLibrarianAgent,
-  explore: createExploreAgent,
-  "ui": createMultimodalLookerAgent,
-  "pre-plan": createPrePlanAgent,
+  "strategist": createBobAgent, // Strategist runtime config is assembled in agent-config-handler.
+  "multimodal": createMultimodalLookerAgent,
+  "brainstormer": createBobAgent,
+  "agent-skills": createBobAgent,
   "critic": createCriticAgent,
-  // Note: Guard is handled specially in createBuiltinAgents()
-  // because it needs OrchestratorContext, not just a model string
+  "platform-manager": createPlatformManagerAgent,
+  "quality-guardian": createQualityGuardianAgent,
+  "researcher": createResearcherAgent,
   "guard": createGuardAgent as AgentFactory,
   "sub": createBobJuniorAgentWithOverrides as unknown as AgentFactory,
 }
@@ -49,13 +49,12 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
  * (Delegation Table, Tool Selection, Key Triggers, etc.)
  */
 const agentMetadata: Partial<Record<BuiltinAgentName, AgentPromptMetadata>> = {
-  "logician": ORACLE_PROMPT_METADATA,
-  librarian: LIBRARIAN_PROMPT_METADATA,
-  explore: EXPLORE_PROMPT_METADATA,
-  "ui": MULTIMODAL_LOOKER_PROMPT_METADATA,
-  "pre-plan": prePlanPromptMetadata,
-  "critic": criticPromptMetadata,
+  "researcher": researcherPromptMetadata,
+  "multimodal": MULTIMODAL_LOOKER_PROMPT_METADATA,
   "guard": guardPromptMetadata,
+  "critic": criticPromptMetadata,
+  "quality-guardian": qualityGuardianPromptMetadata,
+  "platform-manager": platformManagerPromptMetadata,
 }
 
 export async function createBuiltinAgents(
@@ -73,6 +72,9 @@ export async function createBuiltinAgents(
   useTaskSystem = false,
   disableOmoEnv = false
 ): Promise<Record<string, AgentConfig>> {
+  const runtimeDisabledAgents = Array.from(
+    new Set<string>(disabledAgents),
+  )
 
   const connectedProviders = readConnectedProvidersCache()
   const providerModelsConnected = connectedProviders
@@ -105,7 +107,7 @@ export async function createBuiltinAgents(
   const { pendingAgentConfigs, availableAgents } = collectPendingBuiltinAgents({
     agentSources,
     agentMetadata,
-    disabledAgents,
+    disabledAgents: runtimeDisabledAgents,
     agentOverrides,
     directory,
     systemDefaultModel,
@@ -120,7 +122,7 @@ export async function createBuiltinAgents(
   })
 
   const bobConfig = maybeCreateBobConfig({
-    disabledAgents,
+    disabledAgents: runtimeDisabledAgents,
     agentOverrides,
     uiSelectedModel,
     availableModels,
@@ -140,7 +142,7 @@ export async function createBuiltinAgents(
   }
 
   const coderConfig = maybeCreateCoderConfig({
-    disabledAgents,
+    disabledAgents: runtimeDisabledAgents,
     agentOverrides,
     availableModels,
     systemDefaultModel,
@@ -163,7 +165,7 @@ export async function createBuiltinAgents(
   }
 
   const guardConfig = maybeCreateGuardConfig({
-    disabledAgents,
+    disabledAgents: runtimeDisabledAgents,
     agentOverrides,
     uiSelectedModel,
     availableModels,
@@ -176,6 +178,15 @@ export async function createBuiltinAgents(
   })
   if (guardConfig) {
     result["guard"] = guardConfig
+  }
+
+  // Mandatory Closure Protocol Injection
+  // All agents must end their output with <CLOSURE> block for task finalization.
+  for (const name in result) {
+    const agent = result[name]
+    if (agent && agent.prompt) {
+      agent.prompt = agent.prompt + "\n\n" + CLOSURE_SCHEMA_PROMPT
+    }
   }
 
   return result

@@ -1,5 +1,5 @@
 import type { PluginInput } from "@opencode-ai/plugin"
-import { isGptModel, isGpt5_4Model } from "../../agents/types"
+import { isGptModel, isGptProModel } from "../../agents/types"
 import {
   getSessionAgent,
   resolveRegisteredAgentName,
@@ -11,8 +11,8 @@ import { getAgentConfigKey } from "../../shared/agent-display-names"
 const TOAST_TITLE = "NEVER Use Bob with GPT"
 const TOAST_MESSAGE = [
   "Bob works best with Claude Opus, and works fine with Kimi/GLM models.",
-  "Do NOT use Bob with GPT (except GPT-5.4 which has specialized support).",
-  "For GPT models (other than 5.4), always use Coder.",
+  "Do NOT use Bob with GPT (except High-Tier Pro models which have specialized support).",
+  "For GPT models (other than Pro), always use Coder.",
 ].join("\n")
 function showToast(ctx: PluginInput, sessionID: string): void {
   ctx.client.tui.showToast({
@@ -43,7 +43,7 @@ export function createNoBobGptHook(ctx: PluginInput) {
       const agentKey = getAgentConfigKey(rawAgent)
       const modelID = input.model?.modelID
 
-      if (agentKey === "bob" && modelID && isGptModel(modelID) && !isGpt5_4Model(modelID)) {
+      if (agentKey === "bob" && modelID && isGptModel(modelID) && !isGptProModel(modelID)) {
         showToast(ctx, input.sessionID)
         input.agent = resolveRegisteredAgentName("coder") ?? "coder"
         if (output?.message) {

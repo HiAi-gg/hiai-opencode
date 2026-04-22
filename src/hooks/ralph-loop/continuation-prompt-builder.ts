@@ -23,26 +23,26 @@ const ULTRAWORK_VERIFICATION_PROMPT = `${SYSTEM_DIRECTIVE_PREFIX} - ULTRAWORK LO
 You already emitted <promise>{{INITIAL_PROMISE}}</promise>. This does NOT finish the loop yet.
 
 REQUIRED NOW:
-- Call Logician using task(subagent_type="logician", load_skills=[], run_in_background=false, ...)
-- Ask Logician to verify whether the original task is actually complete
-- Include the original task in the Logician request
-- Explicitly tell Logician to review skeptically and critically, and to look for reasons the task may still be incomplete or wrong
-- The system will inspect the Logician session directly for the verification result
-- If Logician does not verify, continue fixing the task and do not consider it complete
+- Call Critic using task(subagent_type="critic", load_skills=[], run_in_background=false, ...)
+- Ask Critic to verify whether the original task is actually complete
+- Include the original task in the Critic request
+- Explicitly tell Critic to review skeptically and critically, and to look for reasons the task may still be incomplete or wrong
+- The system will inspect the Critic session directly for the verification result
+- If Critic does not verify, continue fixing the task and do not consider it complete
 
 Original task:
 {{PROMPT}}`
 
 const ULTRAWORK_VERIFICATION_FAILED_PROMPT = `${SYSTEM_DIRECTIVE_PREFIX} - ULTRAWORK LOOP VERIFICATION FAILED {{ITERATION}}/{{MAX}}]
 
-Logician did not emit <promise>VERIFIED</promise>. Verification failed.
+Critic did not emit <promise>VERIFIED</promise>. Verification failed.
 
 REQUIRED NOW:
-- Verification failed. Fix the task until Logician's review is satisfied
-- Logician does not lie. Treat the verification result as ground truth
+- Verification failed. Fix the task until Critic's review is satisfied
+- Critic does not lie. Treat the verification result as ground truth
 - Do not claim completion early or argue with the failed verification
-- After fixing the remaining issues, request Logician review again using task(subagent_type="logician", load_skills=[], run_in_background=false, ...)
-- Include the original task in the Logician request and tell Logician to review skeptically and critically
+- After fixing the remaining issues, request Critic review again using task(subagent_type="critic", load_skills=[], run_in_background=false, ...)
+- Include the original task in the Critic request and tell Critic to review skeptically and critically
 - Only when the work is ready for review again, output: <promise>{{PROMISE}}</promise>
 
 Original task:

@@ -21,6 +21,29 @@ function agentByKey(agentResult: Record<string, unknown>, key: string): AgentWit
     | undefined;
 }
 
+function applyPermissionToAgentKeys(args: {
+  agentResult: Record<string, unknown>;
+  keys: string[];
+  apply: (agent: AgentWithPermission) => void;
+}): void {
+  const seen = new Set<AgentWithPermission>();
+  for (const key of args.keys) {
+    const agent = agentByKey(args.agentResult, key);
+    if (!agent || seen.has(agent)) {
+      continue;
+    }
+    seen.add(agent);
+    args.apply(agent);
+  }
+}
+
+const RESEARCH_AGENT_KEYS = ["researcher"];
+const MULTIMODAL_AGENT_KEYS = ["multimodal", "ui"];
+const BOB_AGENT_KEYS = ["bob", "general", "build", "zoe"];
+const STRATEGIST_AGENT_KEYS = ["strategist", "plan-consultant"];
+const CRITIC_AGENT_KEYS = ["critic"];
+const SUB_AGENT_KEYS = ["sub", "subagent"];
+
 export function applyToolConfig(params: {
   config: Record<string, unknown>;
   pluginConfig: HiaiOpenCodeConfig;
@@ -59,69 +82,107 @@ export function applyToolConfig(params: {
     isCliRunMode ? "deny" :
     "allow";
 
-  const librarian = agentByKey(params.agentResult, "librarian");
-  if (librarian) {
-    librarian.permission = { ...librarian.permission, "grep_app_*": "allow" };
-  }
-  const looker = agentByKey(params.agentResult, "ui");
-  if (looker) {
-    looker.permission = { ...looker.permission, task: "deny", look_at: "deny" };
-  }
-  const guard = agentByKey(params.agentResult, "guard");
-  if (guard) {
-    guard.permission = {
-      ...guard.permission,
-      task: "allow",
-      call_omo_agent: "deny",
-      "task_*": "allow",
-      teammate: "allow",
-      ...denyTodoTools,
-    };
-  }
-  const bob = agentByKey(params.agentResult, "bob");
-  if (bob) {
-    bob.permission = {
-      ...bob.permission,
-      call_omo_agent: "deny",
-      task: "allow",
-      question: questionPermission,
-      "task_*": "allow",
-      teammate: "allow",
-      ...denyTodoTools,
-    };
-  }
-  const coder = agentByKey(params.agentResult, "coder");
-  if (coder) {
-    coder.permission = {
-      ...coder.permission,
-      call_omo_agent: "deny",
-      task: "allow",
-      question: questionPermission,
-      ...denyTodoTools,
-    };
-  }
-  const strategist = agentByKey(params.agentResult, "strategist");
-  if (strategist) {
-    strategist.permission = {
-      ...strategist.permission,
-      call_omo_agent: "deny",
-      task: "allow",
-      question: questionPermission,
-      "task_*": "allow",
-      teammate: "allow",
-      ...denyTodoTools,
-    };
-  }
-  const junior = agentByKey(params.agentResult, "sub");
-  if (junior) {
-    junior.permission = {
-      ...junior.permission,
-      task: "allow",
-      "task_*": "allow",
-      teammate: "allow",
-      ...denyTodoTools,
-    };
-  }
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: RESEARCH_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = { ...agent.permission, "grep_app_*": "allow" };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: MULTIMODAL_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = { ...agent.permission, task: "deny", look_at: "deny" };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: ["guard"],
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        task: "allow",
+        call_omo_agent: "deny",
+        "task_*": "allow",
+        teammate: "allow",
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: BOB_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_omo_agent: "deny",
+        task: "allow",
+        question: questionPermission,
+        "task_*": "allow",
+        teammate: "allow",
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: ["coder"],
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_omo_agent: "deny",
+        task: "allow",
+        question: questionPermission,
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: STRATEGIST_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_omo_agent: "deny",
+        task: "allow",
+        question: questionPermission,
+        "task_*": "allow",
+        teammate: "allow",
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: CRITIC_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_omo_agent: "deny",
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: SUB_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        task: "allow",
+        "task_*": "allow",
+        teammate: "allow",
+        ...denyTodoTools,
+      };
+    },
+  });
 
   params.config.permission = {
     webfetch: "allow",

@@ -1,4 +1,4 @@
-import type { PTYSessionInfo } from './types.ts'
+import type { PTYSessionInfo } from './types'
 
 export function formatSessionInfo(session: PTYSessionInfo): string[] {
   const exitInfo = session.exitCode !== undefined ? ` | exit: ${session.exitCode}` : ''

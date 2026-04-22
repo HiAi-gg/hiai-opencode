@@ -1,11 +1,12 @@
 import { consumeToolMetadata } from "../features/tool-metadata-store"
 import type { CreatedHooks } from "../create-hooks"
 import { log } from "../shared"
-import { stripInvisibleAgentCharacters } from "../shared/agent-display-names"
+import { getAgentConfigKey, stripInvisibleAgentCharacters } from "../shared/agent-display-names"
 import type { PluginContext } from "./types"
 import { readState, writeState } from "../hooks/ralph-loop/storage"
 
 const VERIFICATION_ATTEMPT_PATTERN = /<ulw_verification_attempt_id>(.*?)<\/ulw_verification_attempt_id>/i
+const ULTRAWORK_VERIFICATION_GATE_AGENT_KEYS = new Set(["critic"])
 
 function getMetadataString(metadata: Record<string, unknown> | undefined, keys: string[]): string | undefined {
   for (const key of keys) {
@@ -24,6 +25,24 @@ function getPluginDirectory(ctx: PluginContext): string | null {
   }
 
   return null
+}
+
+function normalizeAgentKey(agentName: string | undefined): string | undefined {
+  if (typeof agentName !== "string") {
+    return undefined
+  }
+
+  const stripped = stripInvisibleAgentCharacters(agentName).trim()
+  if (!stripped) {
+    return undefined
+  }
+  const normalized = stripInvisibleAgentCharacters(getAgentConfigKey(stripped)).trim().toLowerCase()
+  return normalized.length > 0 ? normalized : undefined
+}
+
+function isUltraworkVerificationAgent(agentName: string | undefined): boolean {
+  const normalized = normalizeAgentKey(agentName)
+  return normalized ? ULTRAWORK_VERIFICATION_GATE_AGENT_KEYS.has(normalized) : false
 }
 
 export function createToolExecuteAfterHandler(args: {
@@ -61,7 +80,7 @@ export function createToolExecuteAfterHandler(args: {
       const verificationAttemptId = prompt?.match(VERIFICATION_ATTEMPT_PATTERN)?.[1]?.trim()
       const loopState = directory ? readState(directory) : null
       const isVerificationContext =
-        (agent ? stripInvisibleAgentCharacters(agent) : agent) === "logician"
+        isUltraworkVerificationAgent(agent)
         && !!sessionId
         && !!directory
         && loopState?.active === true
@@ -73,7 +92,7 @@ export function createToolExecuteAfterHandler(args: {
         tool: input.tool,
         agent,
         parentSessionID: input.sessionID,
-        logicianSessionID: sessionId,
+        criticSessionID: sessionId,
         hasPromptInMetadata: typeof prompt === "string",
         extractedVerificationAttemptId: verificationAttemptId,
       })
@@ -87,9 +106,9 @@ export function createToolExecuteAfterHandler(args: {
           ...loopState,
           verification_session_id: sessionId,
         })
-        log("[tool-execute-after] Stored logician verification session via attempt match", {
+        log("[tool-execute-after] Stored critic verification session via attempt match", {
           parentSessionID: input.sessionID,
-          logicianSessionID: sessionId,
+          criticSessionID: sessionId,
           verificationAttemptId,
         })
       } else if (isVerificationContext && !verificationAttemptId) {
@@ -97,9 +116,9 @@ export function createToolExecuteAfterHandler(args: {
           ...loopState,
           verification_session_id: sessionId,
         })
-        log("[tool-execute-after] Fallback: stored logician verification session without attempt match", {
+        log("[tool-execute-after] Fallback: stored critic verification session without attempt match", {
           parentSessionID: input.sessionID,
-          logicianSessionID: sessionId,
+          criticSessionID: sessionId,
           hasPromptInMetadata: typeof prompt === "string",
           expectedAttemptId: loopState.verification_attempt_id,
           extractedAttemptId: verificationAttemptId,

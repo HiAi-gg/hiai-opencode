@@ -143,7 +143,7 @@ export function createRalphLoopEventHandler(
 
 				if (state.verification_pending) {
 					if (!verificationSessionID && matchesParentSession) {
-						log(`[${HOOK_NAME}] Verification pending without tracked logician session, running recovery check`, {
+						log(`[${HOOK_NAME}] Verification pending without tracked critic session, running recovery check`, {
 							sessionID,
 							iteration: state.iteration,
 						})

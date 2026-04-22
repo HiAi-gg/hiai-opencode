@@ -4,8 +4,8 @@
 
 set -euo pipefail
 
-# Find root
-ROOT="$(dirname "$(readlink -f "$0")")/.."
+# Find root (directory containing AGENTS.md)
+ROOT="$(dirname "$(dirname "$(readlink -f "$0")")")"
 cd "$ROOT"
 
 source scripts/opencode_env.sh
@@ -65,10 +65,9 @@ done
 
 # 5. Build hiai-opencode
 echo "==> [onboard] Installing hiai-opencode dependencies..."
-cd "$ROOT/hiai-opencode"
+# We are already in ROOT from line 9
 bun install
 bun run build
-cd "$ROOT"
 
 # 6. Path Dynamicization (Fix hardcoded /mnt/ai_data)
 if [[ "$ROOT" != "/mnt/ai_data" ]]; then

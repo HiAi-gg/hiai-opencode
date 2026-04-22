@@ -56,22 +56,38 @@ export const AgentOverrideConfigSchema = z.object({
 })
 
 export const AgentOverridesSchema = z.object({
-  build: AgentOverrideConfigSchema.optional(),
-  plan: AgentOverrideConfigSchema.optional(),
+  // Canonical 12 agents
   "bob": AgentOverrideConfigSchema.optional(),
+  "guard": AgentOverrideConfigSchema.optional(),
+  "strategist": AgentOverrideConfigSchema.optional(),
+  "critic": AgentOverrideConfigSchema.optional(),
   "coder": AgentOverrideConfigSchema.extend({
     allow_non_gpt_model: z.boolean().optional(),
   }).optional(),
   "sub": AgentOverrideConfigSchema.optional(),
+  researcher: AgentOverrideConfigSchema.optional(),
+  "multimodal": AgentOverrideConfigSchema.optional(),
+  "quality-guardian": AgentOverrideConfigSchema.optional(),
+  "platform-manager": AgentOverrideConfigSchema.optional(),
+  brainstormer: AgentOverrideConfigSchema.optional(),
+  "agent-skills": AgentOverrideConfigSchema.optional(),
+  // Compatibility aliases
+  build: AgentOverrideConfigSchema.optional(),
+  plan: AgentOverrideConfigSchema.optional(),
   "OpenCode-Builder": AgentOverrideConfigSchema.optional(),
-  "strategist": AgentOverrideConfigSchema.optional(),
+  general: AgentOverrideConfigSchema.optional(),
+  zoe: AgentOverrideConfigSchema.optional(),
   "pre-plan": AgentOverrideConfigSchema.optional(),
-  "critic": AgentOverrideConfigSchema.optional(),
   "logician": AgentOverrideConfigSchema.optional(),
   librarian: AgentOverrideConfigSchema.optional(),
   explore: AgentOverrideConfigSchema.optional(),
-  "ui": AgentOverrideConfigSchema.optional(),
-  "guard": AgentOverrideConfigSchema.optional(),
+  ui: AgentOverrideConfigSchema.optional(),
+  "code-reviewer": AgentOverrideConfigSchema.optional(),
+  "systematic-debugger": AgentOverrideConfigSchema.optional(),
+  mindmodel: AgentOverrideConfigSchema.optional(),
+  "ledger-creator": AgentOverrideConfigSchema.optional(),
+  bootstrapper: AgentOverrideConfigSchema.optional(),
+  "project-initializer": AgentOverrideConfigSchema.optional(),
 })
 
 export type AgentOverrideConfig = z.infer<typeof AgentOverrideConfigSchema>

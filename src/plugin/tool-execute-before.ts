@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto"
 import { getMainSessionID } from "../features/claude-code-session-state"
 import { clearBoulderState } from "../features/boulder-state"
 import { log } from "../shared"
-import { stripInvisibleAgentCharacters } from "../shared/agent-display-names"
+import { getAgentConfigKey, stripInvisibleAgentCharacters } from "../shared/agent-display-names"
 import { resolveSessionAgent } from "./session-agent-resolver"
 import { parseRalphLoopArguments } from "../hooks/ralph-loop/command-arguments"
 import { ULTRAWORK_VERIFICATION_PROMISE } from "../hooks/ralph-loop/constants"
@@ -22,6 +22,24 @@ function getLoopCommandArguments(args: Record<string, unknown>, command: "ralph-
   return rawName.replace(new RegExp(`^/?(${command})\\s*`, "i"), "")
 }
 
+const ULTRAWORK_VERIFICATION_GATE_AGENT_KEYS = new Set(["critic"])
+
+function normalizeAgentKey(agentName: string | undefined): string | undefined {
+  if (typeof agentName !== "string") {
+    return undefined
+  }
+  const stripped = stripInvisibleAgentCharacters(agentName).trim()
+  if (!stripped) {
+    return undefined
+  }
+  return stripInvisibleAgentCharacters(getAgentConfigKey(stripped)).trim().toLowerCase()
+}
+
+function isUltraworkVerificationAgent(agentName: string | undefined): boolean {
+  const normalized = normalizeAgentKey(agentName)
+  return normalized ? ULTRAWORK_VERIFICATION_GATE_AGENT_KEYS.has(normalized) : false
+}
+
 export function createToolExecuteBeforeHandler(args: {
   ctx: PluginContext
   hooks: CreatedHooks
@@ -31,7 +49,7 @@ export function createToolExecuteBeforeHandler(args: {
 ) => Promise<void> {
   const { ctx, hooks } = args
 
-  function buildUltraworkLogicianVerificationPrompt(prompt: string, originalTask: string, verificationAttemptId: string): string {
+  function buildUltraworkCriticVerificationPrompt(prompt: string, originalTask: string, verificationAttemptId: string): string {
     const verificationPrompt = [
       "You are verifying the active ULTRAWORK loop result for this session.",
       "",
@@ -114,16 +132,16 @@ export function createToolExecuteBeforeHandler(args: {
         typeof argsObject.subagent_type === "string" ? stripInvisibleAgentCharacters(argsObject.subagent_type) : undefined
       const prompt = typeof argsObject.prompt === "string" ? argsObject.prompt : ""
       const loopState = typeof ctx.directory === "string" ? readState(ctx.directory) : null
-      const shouldInjectLogicianVerification =
-        normalizedSubagentType === "logician"
+      const shouldInjectCriticVerification =
+        isUltraworkVerificationAgent(normalizedSubagentType)
         && loopState?.active === true
         && loopState.ultrawork === true
         && loopState.verification_pending === true
         && loopState.session_id === input.sessionID
 
-      if (shouldInjectLogicianVerification) {
+      if (shouldInjectCriticVerification) {
         const verificationAttemptId = randomUUID()
-        log("[tool-execute-before] Injecting ULW logician verification attempt", {
+        log("[tool-execute-before] Injecting ULW critic verification attempt", {
           sessionID: input.sessionID,
           callID: input.callID,
           verificationAttemptId,
@@ -135,7 +153,7 @@ export function createToolExecuteBeforeHandler(args: {
           verification_session_id: undefined,
         })
         argsObject.run_in_background = false
-        argsObject.prompt = buildUltraworkLogicianVerificationPrompt(
+        argsObject.prompt = buildUltraworkCriticVerificationPrompt(
           prompt,
           loopState.prompt,
           verificationAttemptId,

@@ -113,7 +113,6 @@ backup_context_bundle() {
     AGENTS.md \
     docs/runbooks/opencode_autonomy.md \
     infra/opencode \
-    scripts/opencode_run.sh \
     scripts/opencode_smoke.sh \
     scripts/opencode_wrapper.sh \
     scripts/opencode_note.sh \

@@ -1,5 +1,8 @@
 import { tool, type PluginInput, type ToolDefinition } from "@opencode-ai/plugin"
-import { ALLOWED_AGENTS, CALL_OMO_AGENT_DESCRIPTION } from "./constants"
+import {
+  CALL_OMO_AGENT_DESCRIPTION,
+  PRIMARY_ALLOWED_AGENTS,
+} from "./constants"
 import type { AllowedAgentType, CallOmoAgentArgs, ToolContextWithMetadata } from "./types"
 import type { BackgroundManager } from "../../features/background-agent"
 import type { CategoriesConfig, AgentOverrides } from "../../config/schema"
@@ -83,12 +86,24 @@ export function createCallOmoAgent(
   agentOverrides?: AgentOverrides,
   userCategories?: CategoriesConfig,
 ): ToolDefinition {
-  const agentDescriptions = ALLOWED_AGENTS.map(
-    (name) => `- ${name}: Specialized agent for ${name} tasks`,
-  ).join("\n");
+  const primaryAgentDescriptions = PRIMARY_ALLOWED_AGENTS.map((name) => {
+    switch (name) {
+      case "researcher":
+        return "- researcher: Canonical agent for codebase exploration and research";
+      case "strategist":
+        return "- strategist: Canonical agent for planning and reasoning";
+      case "coder":
+        return "- coder: Canonical agent for implementation work";
+      case "critic":
+        return "- critic: Canonical agent for review and verification";
+      case "multimodal":
+        return "- multimodal: Canonical agent for visual and multimodal tasks";
+    }
+  }).join("\n");
+
   const description = CALL_OMO_AGENT_DESCRIPTION.replace(
-    "{agents}",
-    agentDescriptions,
+    "{primary_agents}",
+    primaryAgentDescriptions,
   );
 
   return tool({
@@ -103,7 +118,7 @@ export function createCallOmoAgent(
       subagent_type: tool.schema
         .string()
         .describe(
-          "The agent to invoke. Supports built-in agents and any custom agents registered at runtime.",
+          "The agent to invoke. Canonical names are preferred; compatibility aliases and custom agents are also accepted.",
         ),
       run_in_background: tool.schema
         .boolean()
@@ -123,7 +138,7 @@ export function createCallOmoAgent(
 
       const callableAgents = await resolveCallableAgents(ctx.client);
 
-      // Strip ZWSP and case-insensitive agent validation - allows "Explore", "EXPLORE", "explore" etc.
+      // Strip ZWSP and case-insensitive agent validation - allows canonical names and compatibility aliases.
       const strippedAgentType = stripInvisibleAgentCharacters(args.subagent_type)
       if (
         !callableAgents.some(

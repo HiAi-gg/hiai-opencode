@@ -17,6 +17,27 @@ const registeredAgentNames = new Set<string>()
 const registeredAgentAliases = new Map<string, string>()
 
 const ZERO_WIDTH_CHARACTERS_REGEX = /[\u200B\u200C\u200D\uFEFF]/g
+const LEGACY_AGENT_KEY_TO_CANONICAL: Record<string, string> = {
+  general: "bob",
+  build: "bob",
+  zoe: "bob",
+  "pre-plan": "strategist",
+  "plan-consultant": "strategist",
+  explore: "researcher",
+  librarian: "researcher",
+  logician: "critic",
+  "code-reviewer": "quality-guardian",
+  "systematic-debugger": "quality-guardian",
+  "ledger-creator": "platform-manager",
+  bootstrapper: "platform-manager",
+  "project-initializer": "platform-manager",
+  mindmodel: "platform-manager",
+  subagent: "sub",
+  ui: "multimodal",
+}
+const CANONICAL_AGENT_COMPATIBILITY_KEYS: Record<string, string[]> = {
+  multimodal: ["ui"],
+}
 
 function normalizeRegisteredAgentName(name: string): string {
   return name.replace(ZERO_WIDTH_CHARACTERS_REGEX, "").toLowerCase()
@@ -26,19 +47,60 @@ function normalizeStoredAgentName(name: string): string {
   return name.replace(ZERO_WIDTH_CHARACTERS_REGEX, "")
 }
 
-export function registerAgentName(name: string): void {
+function addRegisteredAlias(key: string, alias: string, force = false): void {
+  if (!key) {
+    return
+  }
+  registeredAgentNames.add(key)
+  if (force || !registeredAgentAliases.has(key)) {
+    registeredAgentAliases.set(key, alias)
+  }
+}
+
+function canonicalizeAgentKey(agentKey: string): string {
+  return LEGACY_AGENT_KEY_TO_CANONICAL[agentKey] ?? agentKey
+}
+
+function appendLookupKey(keys: string[], value: string): void {
+  if (!value || keys.includes(value)) {
+    return
+  }
+  keys.push(value)
+}
+
+function getAgentLookupKeys(name: string): string[] {
+  const keys: string[] = []
   const normalizedName = normalizeRegisteredAgentName(name)
-  registeredAgentNames.add(normalizedName)
-  if (!registeredAgentAliases.has(normalizedName)) {
-    registeredAgentAliases.set(normalizedName, name)
+  const configKey = normalizeRegisteredAgentName(getAgentConfigKey(name))
+
+  appendLookupKey(keys, normalizedName)
+  appendLookupKey(keys, configKey)
+
+  const canonicalFromName = canonicalizeAgentKey(normalizedName)
+  const canonicalFromConfig = canonicalizeAgentKey(configKey)
+  appendLookupKey(keys, canonicalFromName)
+  appendLookupKey(keys, canonicalFromConfig)
+
+  for (const key of [...keys]) {
+    for (const compatibilityKey of CANONICAL_AGENT_COMPATIBILITY_KEYS[key] ?? []) {
+      appendLookupKey(keys, compatibilityKey)
+    }
   }
 
+  return keys
+}
+
+export function registerAgentName(name: string): void {
+  const normalizedName = normalizeRegisteredAgentName(name)
   const configKey = normalizeRegisteredAgentName(getAgentConfigKey(name))
-  if (configKey !== normalizedName) {
-    registeredAgentNames.add(configKey)
-    if (!registeredAgentAliases.has(configKey)) {
-      registeredAgentAliases.set(configKey, name)
-    }
+  const canonicalConfigKey = canonicalizeAgentKey(configKey)
+  const forceCanonicalAlias = canonicalConfigKey === configKey
+
+  addRegisteredAlias(normalizedName, name)
+  addRegisteredAlias(configKey, name)
+  addRegisteredAlias(canonicalConfigKey, name, forceCanonicalAlias)
+  for (const compatibilityKey of CANONICAL_AGENT_COMPATIBILITY_KEYS[canonicalConfigKey] ?? []) {
+    addRegisteredAlias(compatibilityKey, name, forceCanonicalAlias)
   }
 }
 
@@ -51,17 +113,11 @@ export function resolveRegisteredAgentName(name: string | undefined): string | u
     return undefined
   }
 
-  const normalizedName = normalizeRegisteredAgentName(name)
-  const directMatch = registeredAgentAliases.get(normalizedName)
-  if (directMatch !== undefined) return directMatch
-
-  // Resolve legacy/capitalized agent names (e.g. "Bob (Ultraworker)")
-  // to their config key, then look up the registered alias for that key.
-  const configKey = getAgentConfigKey(name)
-  const normalizedConfigKey = normalizeRegisteredAgentName(configKey)
-  if (normalizedConfigKey !== normalizedName) {
-    const aliasMatch = registeredAgentAliases.get(normalizedConfigKey)
-    if (aliasMatch !== undefined) return aliasMatch
+  for (const lookupKey of getAgentLookupKeys(name)) {
+    const aliasMatch = registeredAgentAliases.get(lookupKey)
+    if (aliasMatch !== undefined) {
+      return aliasMatch
+    }
   }
 
   return normalizeStoredAgentName(name)

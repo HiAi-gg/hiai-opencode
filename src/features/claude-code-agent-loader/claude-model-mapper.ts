@@ -3,11 +3,16 @@ import { normalizeModelID } from "../../shared/model-normalization"
 
 const ANTHROPIC_PREFIX = "anthropic/"
 
-const CLAUDE_CODE_ALIAS_MAP = new Map<string, string>([
-  ["sonnet", `${ANTHROPIC_PREFIX}claude-sonnet-4-6`],
-  ["opus", `${ANTHROPIC_PREFIX}claude-opus-4-6`],
-  ["haiku", `${ANTHROPIC_PREFIX}claude-haiku-4-5`],
-])
+let CLAUDE_CODE_ALIAS_MAP = new Map<string, string>();
+
+/**
+ * Initializes Claude model aliases from the provided configuration.
+ */
+export function initializeClaudeAliases(aliases?: Record<string, string>) {
+  if (aliases) {
+    CLAUDE_CODE_ALIAS_MAP = new Map(Object.entries(aliases));
+  }
+}
 
 function mapClaudeModelString(model: string | undefined): string | undefined {
   if (!model) return undefined

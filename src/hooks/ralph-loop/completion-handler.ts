@@ -45,7 +45,7 @@ export async function handleDetectedCompletion(
 		await ctx.client.tui?.showToast?.({
 			body: {
 				title: "ULTRAWORK LOOP",
-				message: "DONE detected. Logician verification is now required.",
+				message: "DONE detected. Critic verification is now required.",
 				variant: "info",
 				duration: 5000,
 			},

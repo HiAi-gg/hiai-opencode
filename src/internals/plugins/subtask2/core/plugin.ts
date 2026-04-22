@@ -1,4 +1,4 @@
-import type { Plugin } from "@opencode-ai/plugin";
+import type { Plugin, PluginInput } from "@opencode-ai/plugin";
 import { setClient, setConfigs, setPluginConfig } from "./state";
 import { loadConfig } from "../utils/config";
 import { log, clearLog } from "../utils/logger";
@@ -13,7 +13,7 @@ import { handleSessionIdle } from "../hooks/session-idle-hook";
  * Minimal plugin factory that registers hooks and initializes state
  */
 
-export const createPlugin: Plugin = async ctx => {
+export const createPlugin = (async (ctx: PluginInput) => {
   clearLog();
   const configs = await buildManifest();
   const pluginConfig = await loadConfig();
@@ -49,4 +49,4 @@ export const createPlugin: Plugin = async ctx => {
       }
     },
   };
-};
+}) as unknown as Plugin;

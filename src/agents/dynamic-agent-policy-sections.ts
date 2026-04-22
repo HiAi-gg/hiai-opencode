@@ -11,7 +11,7 @@ export function buildHardBlocksSection(): string {
     "- Speculate about unread code - **Never**",
     "- Leave code in broken state after failures - **Never**",
     "- `background_cancel(all=true)` - **Never.** Always cancel individually by taskId.",
-    "- Delivering final answer before collecting Logician result - **Never.**",
+    "- Delivering final answer before collecting Critic result when a review gate was requested - **Never.**",
   ]
 
   return `## Hard Blocks (NEVER violate)
@@ -27,8 +27,8 @@ export function buildAntiPatternsSection(): string {
     "- **Search**: Firing agents for single-line typos or obvious syntax errors",
     "- **Debugging**: Shotgun debugging, random changes",
     "- **Background Tasks**: Polling `background_output` on running tasks - end response and wait for notification",
-    "- **Delegation Duplication**: Delegating exploration to explore/librarian and then manually doing the same search yourself",
-    "- **Logician**: Delivering answer without collecting Logician results",
+    "- **Delegation Duplication**: Delegating research to researcher and then manually doing the same search yourself",
+    "- **Critic**: Delivering answer without collecting Critic results when a review gate was requested",
   ]
 
   return `## Anti-Patterns (BLOCKING violations)
@@ -93,7 +93,7 @@ export function buildUltraworkSection(
   }
 
   if (agents.length > 0) {
-    const ultraworkAgentPriority = ["explore", "librarian", "plan", "logician"]
+    const ultraworkAgentPriority = ["researcher", "strategist", "critic"]
     const sortedAgents = [...agents].sort((left, right) => {
       const leftIndex = ultraworkAgentPriority.indexOf(left.name)
       const rightIndex = ultraworkAgentPriority.indexOf(right.name)
@@ -109,14 +109,14 @@ export function buildUltraworkSection(
       return leftIndex - rightIndex
     })
 
-    lines.push("**Agents** (for specialized consultation/exploration):")
+    lines.push("**Agents** (for specialized consultation and research):")
     for (const agent of sortedAgents) {
       const shortDescription =
         agent.description.length > 120
           ? `${agent.description.slice(0, 120)}...`
           : agent.description
       const suffix =
-        agent.name === "explore" || agent.name === "librarian" ? " (multiple)" : ""
+        agent.name === "researcher" ? " (multiple/background)" : ""
       lines.push(`- \`${agent.name}${suffix}\`: ${shortDescription}`)
     }
   }
@@ -128,12 +128,12 @@ export function buildAntiDuplicationSection(): string {
   return `<Anti_Duplication>
 ## Anti-Duplication Rule (CRITICAL)
 
-Once you delegate exploration to explore/librarian agents, **DO NOT perform the same search yourself**.
+Once you delegate research to researcher, **DO NOT perform the same search yourself**.
 
 ### What this means:
 
 **FORBIDDEN:**
-- After firing explore/librarian, manually grep/search for the same information
+- After firing researcher, manually grep/search for the same information
 - Re-doing the research the agents were just tasked with
 - "Just quickly checking" the same files the background agents are checking
 
@@ -161,11 +161,11 @@ When you need the delegated results but they're not ready:
 
 \`\`\`typescript
 // WRONG: After delegating, re-doing the search
-task(subagent_type="explore", run_in_background=true, ...)
+task(subagent_type="researcher", run_in_background=true, ...)
 // Then immediately grep for the same thing yourself - FORBIDDEN
 
 // CORRECT: Continue non-overlapping work
-task(subagent_type="explore", run_in_background=true, ...)
+task(subagent_type="researcher", run_in_background=true, ...)
 // Work on a different, unrelated file while they search
 // End your response and wait for the notification
 \`\`\`

@@ -21,7 +21,6 @@ import { loadConfig, resolveEnvVars } from "./config/loader"
 import type { HiaiOpencodeConfig } from "./config/types"
 
 import { createPlugin as createSubtask2Plugin } from "./internals/plugins/subtask2/core/plugin"
-import { PTYPlugin } from "./internals/plugins/pty/plugin"
 import WebsearchCitedPlugin, { 
   WebsearchCitedGooglePlugin, 
   WebsearchCitedOpenAIPlugin 
@@ -44,6 +43,16 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
 
   const pluginConfig = loadPluginConfig(ctx.directory, ctx)
   const internalConfig: HiaiOpencodeConfig = loadConfig(ctx.directory)
+
+  // Initialize model requirements from configuration
+  const { initializeModelRequirements } = await import("./shared/model-requirements");
+  initializeModelRequirements(internalConfig);
+
+  const { initializeClaudeAliases } = await import("./features/claude-code-agent-loader/claude-model-mapper");
+  initializeClaudeAliases(internalConfig.claudeModelAliases);
+
+  const { initializeModelHeuristics } = await import("./shared/model-capability-heuristics");
+  initializeModelHeuristics(internalConfig);
 
   const tmuxIntegrationEnabled = isTmuxIntegrationEnabled(pluginConfig)
   if (tmuxIntegrationEnabled) {
@@ -101,7 +110,13 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
 
   // --- Internal Plugins Integration ---
   const subtask2Result = await createSubtask2Plugin(ctx)
-  const ptyResult = await PTYPlugin(ctx)
+  let ptyResult: any = { tool: {}, event: null };
+  try {
+    const mod = await import("./internals/plugins/pty/plugin");
+    ptyResult = await mod.PTYPlugin(ctx);
+  } catch (err) {
+    console.error("[hiai-opencode] PTYPlugin failed to load:", err);
+  }
   const websearchResult = await WebsearchCitedPlugin(ctx)
   const websearchGoogleResult = await WebsearchCitedGooglePlugin(ctx)
   const websearchOpenAIResult = await WebsearchCitedOpenAIPlugin(ctx)
@@ -208,7 +223,8 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   return combinedResult
 }
 
-export default HiaiOpenCodePlugin
+export const server: Plugin = HiaiOpenCodePlugin
+export default server
 
 export type {
   HiaiOpenCodeConfig,

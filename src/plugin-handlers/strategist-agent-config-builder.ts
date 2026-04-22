@@ -9,6 +9,7 @@ import {
   resolveModelPipeline,
 } from "../shared";
 import { resolveCategoryConfig } from "./category-config-resolver";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure-protocol";
 
 type StrategistOverride = Record<string, unknown> & {
   category?: string;
@@ -98,7 +99,7 @@ export async function buildStrategistAgentConfig(params: {
     ...(resolvedModel ? { model: resolvedModel } : {}),
     ...(variantToUse ? { variant: variantToUse } : {}),
     mode: "primary",
-    prompt: getStrategistPrompt(resolvedModel, params.disabledTools),
+    prompt: getStrategistPrompt(resolvedModel, params.disabledTools) + "\n\n" + CLOSURE_SCHEMA_PROMPT,
     permission: PROMETHEUS_PERMISSION,
     description: `${(params.configAgentPlan?.description as string) ?? "Plan agent"} (Strategist - HiaiOpenCode)`,
     color: (params.configAgentPlan?.color as string) ?? "#FF5722",

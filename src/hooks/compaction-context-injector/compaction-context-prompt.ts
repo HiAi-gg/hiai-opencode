@@ -39,13 +39,13 @@ When summarizing this session, you MUST include the following sections in your s
 - If no explicit constraints exist, write "None"
 
 ## 7. Agent Verification State (Critical for Reviewers)
-- **Current Agent**: What agent is running (critic, logician, etc.)
+- **Current Agent**: What agent is running (critic, strategist, researcher, etc.)
 - **Verification Progress**: Files already verified/validated
 - **Pending Verifications**: Files still needing verification
 - **Previous Rejections**: If reviewer agent, what was rejected and why
 - **Acceptance Status**: Current state of review process
 
-This section is CRITICAL for reviewer agents (critic, logician) to maintain continuity.
+This section is CRITICAL for reviewer agents (critic, strategist) to maintain continuity.
 
 ## 8. Delegated Agent Sessions
 - List ALL background agent tasks spawned during this session

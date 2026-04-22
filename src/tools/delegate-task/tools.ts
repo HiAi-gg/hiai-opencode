@@ -69,21 +69,21 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
   
   **CORRECT - Using subagent_type:**
   \`\`\`
-  task(subagent_type="explore", load_skills=[], description="Find patterns", prompt="...", run_in_background=true)
+  task(subagent_type="researcher", load_skills=[], description="Find patterns", prompt="...", run_in_background=true)
   \`\`\`
   
   REQUIRED: Provide ONE of:
-  - category: For task delegation (uses SubAgent with category-optimized model)
-  - subagent_type: For direct agent invocation (explore, librarian, logician, etc.)
+  - category: For task delegation (routes to the appropriate bounded executor profile)
+  - subagent_type: For direct agent invocation (\`researcher\`, \`strategist\`, \`critic\`, etc.)
   
   **DO NOT provide both.** If category is provided, subagent_type is ignored.
   
   - load_skills: ALWAYS REQUIRED. Pass [] if no skills needed, or ["skill-1", "skill-2"] for category tasks.
-  - category: Use predefined category → Spawns SubAgent with category config
+  - category: Use predefined category → routes to the appropriate canonical executor
     Available categories:
   ${categoryList}
-  - subagent_type: Use specific agent directly (explore, librarian, logician, pre-plan, critic)
-  - run_in_background: REQUIRED. true=async (returns task_id), false=sync (waits). Use background=true ONLY for parallel exploration with 5+ independent queries.
+  - subagent_type: Use a specific canonical agent directly (\`researcher\`, \`strategist\`, \`critic\`, \`multimodal\`, etc.)
+  - run_in_background: REQUIRED. true=async (returns task_id), false=sync (waits). Use background=true primarily for parallel researcher work or other non-blocking delegated tasks.
   - session_id: Existing Task session to continue (from previous task output). Continues agent with FULL CONTEXT PRESERVED - saves tokens, maintains continuity.
   - command: The command that triggered this task (optional, for slash command tracking).
   

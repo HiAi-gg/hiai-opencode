@@ -69,50 +69,36 @@ export function buildToolSelectionTable(
   }
 
   rows.push("")
-  rows.push("**Default flow**: explore/librarian (background) + tools → logician (if required)")
+  rows.push(
+    "**Default flow**: researcher (background) + tools → strategist (if required) → critic (high-risk gate)",
+  )
 
   return rows.join("\n")
 }
 
-export function buildExploreSection(agents: AvailableAgent[]): string {
-  const exploreAgent = agents.find((agent) => agent.name === "explore")
-  if (!exploreAgent) {
+export function buildResearcherSection(agents: AvailableAgent[]): string {
+  const researcherAgent = agents.find((agent) => agent.name === "researcher")
+  if (!researcherAgent) {
     return ""
   }
 
-  const useWhen = exploreAgent.metadata.useWhen || []
-  const avoidWhen = exploreAgent.metadata.avoidWhen || []
+  const useWhen = researcherAgent.metadata.useWhen || []
+  const avoidWhen = researcherAgent.metadata.avoidWhen || []
 
-  return `### Explore Agent = Contextual Grep
+  return `### Researcher Agent = Contextual & Reference Grep
 
-Use it as a **peer tool**, not a fallback. Fire liberally for discovery, not for files you already know.
+Use it as a **peer tool**, not a fallback. Fire liberally for discovery, both internal (local codebase patterns) and external (docs, OSS examples, API usage).
 
-**Delegation Trust Rule:** Once you fire an explore agent for a search, do **not** manually perform that same search yourself. Use direct tools only for non-overlapping work or when you intentionally skipped delegation.
-
-**Use Direct Tools when:**
-${avoidWhen.map((entry) => `- ${entry}`).join("\n")}
-
-**Use Explore Agent when:**
-${useWhen.map((entry) => `- ${entry}`).join("\n")}`
-}
-
-export function buildLibrarianSection(agents: AvailableAgent[]): string {
-  const librarianAgent = agents.find((agent) => agent.name === "librarian")
-  if (!librarianAgent) {
-    return ""
-  }
-
-  const useWhen = librarianAgent.metadata.useWhen || []
-
-  return `### Librarian Agent = Reference Grep
-
-Search **external references** (docs, OSS, web). Fire proactively when unfamiliar libraries are involved.
+**Delegation Trust Rule:** Once you fire a researcher agent for a search, do **not** manually perform that same search yourself. Use direct tools only for non-overlapping work or when you intentionally skipped delegation.
 
 **Contextual Grep (Internal)** - search OUR codebase, find patterns in THIS repo, project-specific logic.
 **Reference Grep (External)** - search EXTERNAL resources, official API docs, library best practices, OSS implementation examples.
 
-**Trigger phrases** (fire librarian immediately):
-${useWhen.map((entry) => `- "${entry}"`).join("\n")}`
+**Use Direct Tools when:**
+${avoidWhen.map((entry) => `- ${entry}`).join("\n")}
+
+**Use Researcher Agent when:**
+${useWhen.map((entry) => `- ${entry}`).join("\n")}`
 }
 
 export function buildDelegationTable(agents: AvailableAgent[]): string {
@@ -127,47 +113,68 @@ export function buildDelegationTable(agents: AvailableAgent[]): string {
   return rows.join("\n")
 }
 
-export function buildLogicianSection(agents: AvailableAgent[]): string {
-  const logicianAgent = agents.find((agent) => agent.name === "logician")
-  if (!logicianAgent) {
+export function buildStrategistAndCriticSection(agents: AvailableAgent[]): string {
+  const strategistAgent = agents.find((agent) => agent.name === "strategist");
+  const criticAgent = agents.find((agent) => agent.name === "critic")
+
+  if (!strategistAgent && !criticAgent) {
     return ""
   }
 
-  const useWhen = logicianAgent.metadata.useWhen || []
-  const avoidWhen = logicianAgent.metadata.avoidWhen || []
+  const strategistUseWhen = strategistAgent?.metadata.useWhen || []
+  const strategistAvoidWhen = strategistAgent?.metadata.avoidWhen || []
+  const criticUseWhen = criticAgent?.metadata.useWhen || []
+  const criticAvoidWhen = criticAgent?.metadata.avoidWhen || []
+  const strategistLabel = "Strategist"
 
-  return `<Logician_Usage>
-## Logician - Read-Only High-IQ Consultant
+  const strategistSection = strategistAgent
+    ? `### WHEN to Consult ${strategistLabel} (FIRST, then implement):
 
-Logician is a read-only, expensive, high-quality reasoning model for debugging and architecture. Consultation only.
+${strategistUseWhen.map((entry) => `- ${entry}`).join("\n")}
 
-### WHEN to Consult (Logician FIRST, then implement):
+### WHEN NOT to Consult ${strategistLabel}:
 
-${useWhen.map((entry) => `- ${entry}`).join("\n")}
+${strategistAvoidWhen.map((entry) => `- ${entry}`).join("\n")}`
+    : ""
 
-### WHEN NOT to Consult:
+  const criticSection = criticAgent
+    ? `### WHEN to Consult Critic (explicit review gate):
 
-${avoidWhen.map((entry) => `- ${entry}`).join("\n")}
+${criticUseWhen.map((entry) => `- ${entry}`).join("\n")}
+
+### WHEN NOT to Consult Critic:
+
+${criticAvoidWhen.map((entry) => `- ${entry}`).join("\n")}`
+    : ""
+
+  return `<strategist_critic_usage>
+## Strategist and Critic - Reasoning Escalation
+
+Strategist handles planning and architecture consultation. Critic is an explicit high-accuracy review gate. Consultation only.
+
+${strategistSection}
+
+${criticSection}
 
 ### Usage Pattern:
-Briefly announce "Consulting Logician for [reason]" before invocation.
+Briefly announce "Consulting Strategist for [reason]" or "Consulting Critic for [reason]" before invocation.
 
 **Exception**: This is the ONLY case where you announce before acting. For all other work, start immediately without status updates.
 
-### Logician Background Task Policy:
+### Background Task Policy:
 
-**Collect Logician results before your final answer. No exceptions.**
+**Collect Strategist/Critic results before your final answer. No exceptions.**
 
-**Logician-dependent implementation is BLOCKED until Logician finishes.**
+**Strategist/Critic-dependent implementation is BLOCKED until those results finish.**
 
-- If you asked Logician for architecture/debugging direction that affects the fix, do not implement before Logician result arrives.
-- While waiting, only do non-overlapping prep work. Never ship implementation decisions Logician was asked to decide.
-- Never "time out and continue anyway" for Logician-dependent tasks.
+- If you asked Strategist/Critic for direction that affects the fix, do not implement before results arrive.
+- While waiting, only do non-overlapping prep work. Never ship implementation decisions they were asked to decide.
+- Never "time out and continue anyway" for Strategist/Critic-dependent tasks.
 
-- Logician takes minutes. When done with your own work: **end your response** - wait for the \`<system-reminder>\`.
-- Do NOT poll \`background_output\` on a running Logician. The notification will come.
-- Never cancel Logician.
-</Logician_Usage>`
+- Strategist/Critic may take minutes. When done with your own work: **end your response** - wait for the \`<system-reminder>\`.
+- Do NOT poll \`background_output\` on a running Strategist/Critic task. The notification will come.
+- Never cancel Strategist/Critic consultation tasks.
+</strategist_critic_usage>`
 }
 
 export function buildNonClaudePlannerSection(model: string): string {
@@ -176,16 +183,16 @@ export function buildNonClaudePlannerSection(model: string): string {
     return ""
   }
 
-  return `### Plan Agent Dependency (Non-Claude)
+  return `### Strategist Dependency (Non-Claude)
 
-Multi-step task? **ALWAYS consult Plan Agent first.** Do NOT start implementation without a plan.
+Multi-step task? **ALWAYS consult Strategist first.** Do NOT start implementation without a plan.
 
 - Single-file fix or trivial change → proceed directly
-- Anything else (2+ steps, unclear scope, architecture) → \`task(subagent_type="plan", ...)\` FIRST
-- Use \`session_id\` to resume the same Plan Agent - ask follow-up questions aggressively
-- If ANY part of the task is ambiguous, ask Plan Agent before guessing
+- Anything else (2+ steps, unclear scope, architecture) → \`task(subagent_type="strategist", ...)\` FIRST
+- Use \`session_id\` to resume the same Strategist session - ask follow-up questions aggressively
+- If ANY part of the task is ambiguous, ask Strategist before guessing
 
-Plan Agent returns a structured work breakdown with parallel execution opportunities. Follow it.`
+Strategist returns a structured work breakdown with parallel execution opportunities. Follow it.`
 }
 
 export function buildParallelDelegationSection(
@@ -209,8 +216,9 @@ export function buildParallelDelegationSection(
 
 1. **ALWAYS decompose** the task into independent work units. No exceptions. Even if the task "feels small", decompose it.
 2. **ALWAYS delegate** EACH unit to a \`deep\` or \`unspecified-high\` agent in parallel (\`run_in_background=true\`).
-3. **NEVER work sequentially.** If 4 independent units exist, spawn 4 agents simultaneously. Not 1 at a time. Not 2 then 2.
-4. **NEVER implement directly** when delegation is possible. You write prompts, not code.
+3. **Keep execution contours separate**: bounded low-risk edits go to \`sub\`; deep, long-horizon implementation goes to \`coder\`.
+4. **NEVER work sequentially.** If 4 independent units exist, spawn 4 agents simultaneously. Not 1 at a time. Not 2 then 2.
+5. **NEVER implement directly** when delegation is possible. You write prompts, not code.
 
 **YOUR PROMPT TO EACH AGENT MUST INCLUDE:**
 - GOAL with explicit success criteria (what "done" looks like)
@@ -224,7 +232,11 @@ export function buildParallelDelegationSection(
 |---|---|
 | Write code yourself | Delegate to \`deep\` or \`unspecified-high\` agent |
 | Handle 3 changes sequentially | Spawn 3 agents in parallel |
+| Send cheap bounded edits to coder | Route those to \`sub\` |
 | "Quickly fix this one thing" | Still delegate - your "quick fix" is slower and worse than a subagent's |
 
 **Your value is orchestration, decomposition, and quality control. Delegating with crystal-clear prompts IS your work.**`
 }
+
+// Backward-compatible alias while call sites migrate away from legacy naming.
+export const buildLogicianSection = buildStrategistAndCriticSection

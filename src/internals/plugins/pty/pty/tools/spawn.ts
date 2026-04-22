@@ -1,6 +1,6 @@
-import { tool } from '@opencode-ai/plugin'
-import { manager } from '../manager.ts'
-import { checkCommandPermission, checkWorkdirPermission } from '../permissions.ts'
+import { tool, type ToolDefinition } from '@opencode-ai/plugin'
+import { manager } from '../manager'
+import { checkCommandPermission, checkWorkdirPermission } from '../permissions'
 import DESCRIPTION from './spawn.txt'
 
 const NOTIFY_ON_EXIT_INSTRUCTIONS = [
@@ -12,7 +12,7 @@ const NOTIFY_ON_EXIT_INSTRUCTIONS = [
   `</system_reminder>`,
 ].join('\n')
 
-export const ptySpawn = tool({
+export const ptySpawn: ToolDefinition = tool({
   description: DESCRIPTION,
   args: {
     command: tool.schema.string().describe('The command/executable to run'),

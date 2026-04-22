@@ -1,9 +1,9 @@
-import { tool } from '@opencode-ai/plugin'
-import { manager } from '../manager.ts'
-import { buildSessionNotFoundError } from '../utils.ts'
+import { tool, type ToolDefinition } from '@opencode-ai/plugin'
+import { manager } from '../manager'
+import { buildSessionNotFoundError } from '../utils'
 import DESCRIPTION from './kill.txt'
 
-export const ptyKill = tool({
+export const ptyKill: ToolDefinition = tool({
   description: DESCRIPTION,
   args: {
     id: tool.schema.string().describe('The PTY session ID (e.g., pty_a1b2c3d4)'),

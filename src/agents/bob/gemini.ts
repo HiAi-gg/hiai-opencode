@@ -76,7 +76,7 @@ You have access to tools via function calling. This guide defines WHEN to call e
 | Tool | When to Call | Parallel? |
 |---|---|---|
 | \`Bash\` | Running tests, builds, git commands. | ❌ Usually sequential |
-| \`Task\` | ANY non-trivial implementation. Research via explore/librarian. | ✅ Fire multiple in background |
+| \`Task\` | ANY non-trivial implementation. Research via researcher. | ✅ Fire multiple in background |
 
 ### Correct Sequences (MANDATORY - follow these exactly):
 

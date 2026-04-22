@@ -34,19 +34,19 @@ export const ULW_LOOP_TEMPLATE = `You are starting an ULTRAWORK Loop - a self-re
 
 1. You will work on the task continuously
 2. When you believe the work is complete, output: \`<promise>{{COMPLETION_PROMISE}}</promise>\`
-3. That does NOT finish the loop yet. The system will require Logician verification
-4. The loop only ends after the system confirms Logician verified the result
+3. That does NOT finish the loop yet. The system will require Critic verification
+4. The loop only ends after the system confirms Critic verified the result
 5. The iteration limit is 500 for ultrawork mode, 100 for normal mode
 
 ## Rules
 
 - Focus on finishing the task completely
-- After you emit the completion promise, run Logician verification when instructed
-- Do not treat DONE as final completion until Logician verifies it
+- After you emit the completion promise, run Critic verification when instructed
+- Do not treat DONE as final completion until Critic verifies it
 
 ## Exit Conditions
 
-1. **Verified Completion**: Logician verifies the result and the system confirms it
+1. **Verified Completion**: Critic verifies the result and the system confirms it
 2. **Cancel**: User runs \`/cancel-ralph\`
 
 ## Your Task

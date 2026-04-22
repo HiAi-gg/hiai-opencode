@@ -92,10 +92,10 @@
 | Category | Model | Domain |
 |----------|-------|--------|
 | visual-engineering | gemini-3.1-pro high | Frontend, UI/UX |
-| ultrabrain | gpt-5.4 xhigh | Hard logic |
-| deep | gpt-5.4 medium | Autonomous problem-solving |
+| ultrabrain | gpt-pro xhigh | Hard logic |
+| deep | gpt-pro medium | Autonomous problem-solving |
 | artistry | gemini-3.1-pro high | Creative approaches |
-| quick | gpt-5.4-mini | Trivial tasks |
+| quick | gpt-mini | Trivial tasks |
 | unspecified-low | claude-sonnet-4-6 | Moderate effort |
 | unspecified-high | claude-opus-4-6 max | High effort |
 | writing | gemini-3-flash | Documentation |

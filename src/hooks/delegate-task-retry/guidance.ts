@@ -34,7 +34,7 @@ export function buildRetryGuidance(errorInfo: DetectedError): string {
  task(
    description="Task description",
    prompt="Detailed prompt...",
-   category="unspecified-low",  // OR subagent_type="explore"
+   category="unspecified-low",  // OR subagent_type="researcher"
    run_in_background=false,
    load_skills=[]
  )

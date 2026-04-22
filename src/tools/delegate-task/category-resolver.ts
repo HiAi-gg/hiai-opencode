@@ -3,7 +3,11 @@ import type { DelegateTaskArgs } from "./types"
 import type { ExecutorContext } from "./executor-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { mergeCategories } from "../../shared/merge-categories"
-import { BOB_JUNIOR_AGENT } from "./sub-agent"
+import {
+  BOB_JUNIOR_AGENT,
+  CODER_AGENT_CONFIG_KEY,
+  SUB_AGENT_CONFIG_KEY,
+} from "./sub-agent"
 import { resolveCategoryConfig } from "./categories"
 import { parseModelString } from "./model-string-parser"
 import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
@@ -12,6 +16,7 @@ import { buildFallbackChainFromModels, findMostSpecificFallbackEntry } from "../
 import { CONFIG_BASENAME } from "../../shared/plugin-identity"
 import { getAvailableModelsForDelegateTask } from "./available-models"
 import { resolveModelForDelegateTask } from "./model-selection"
+import { getAgentDisplayName } from "../../shared/agent-display-names"
 
 import type { CategoryConfig } from "../../config/schema"
 import type { DelegatedModelConfig } from "./types"
@@ -38,13 +43,48 @@ export interface CategoryResolutionResult {
   error?: string
 }
 
+const SUB_EXECUTOR_CATEGORIES = new Set(["quick", "writing", "unspecified-low"])
+const CODER_EXECUTOR_CATEGORIES = new Set([
+  "deep",
+  "ultrabrain",
+  "visual-engineering",
+  "artistry",
+  "unspecified-high",
+])
+
+function resolveCategoryExecutorAgentKey(
+  categoryName: string,
+  config: CategoryConfig,
+): typeof SUB_AGENT_CONFIG_KEY | typeof CODER_AGENT_CONFIG_KEY {
+  const normalizedCategoryName = categoryName.trim().toLowerCase()
+  if (SUB_EXECUTOR_CATEGORIES.has(normalizedCategoryName)) {
+    return SUB_AGENT_CONFIG_KEY
+  }
+  if (CODER_EXECUTOR_CATEGORIES.has(normalizedCategoryName)) {
+    return CODER_AGENT_CONFIG_KEY
+  }
+
+  const reasoningEffort = config.reasoningEffort?.toLowerCase()
+  if (reasoningEffort && ["medium", "high", "xhigh"].includes(reasoningEffort)) {
+    return CODER_AGENT_CONFIG_KEY
+  }
+  if (config.thinking?.type === "enabled") {
+    return CODER_AGENT_CONFIG_KEY
+  }
+  if (typeof config.max_prompt_tokens === "number" && config.max_prompt_tokens >= 12000) {
+    return CODER_AGENT_CONFIG_KEY
+  }
+
+  return SUB_AGENT_CONFIG_KEY
+}
+
 export async function resolveCategoryExecution(
   args: DelegateTaskArgs,
   executorCtx: ExecutorContext,
   inheritedModel: string | undefined,
   systemDefaultModel: string | undefined
 ): Promise<CategoryResolutionResult> {
-  const { client, userCategories, bobJuniorModel } = executorCtx
+  const { client, userCategories, bobJuniorModel, agentOverrides } = executorCtx
 
   const categoryName = args.category!
   const enabledCategories = mergeCategories(userCategories)
@@ -108,8 +148,19 @@ Available categories: ${allCategoryNames}`,
     }
   }
 
+  const categoryExecutorAgentKey = resolveCategoryExecutorAgentKey(categoryName, resolved.config)
+  const categoryExecutorAgentName = categoryExecutorAgentKey === SUB_AGENT_CONFIG_KEY
+    ? BOB_JUNIOR_AGENT
+    : getAgentDisplayName(CODER_AGENT_CONFIG_KEY)
+  const categoryExecutorOverride = agentOverrides?.[categoryExecutorAgentKey as keyof typeof agentOverrides]
+    ?? (agentOverrides
+      ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === categoryExecutorAgentKey)?.[1]
+      : undefined)
+
   const requirement = CATEGORY_MODEL_REQUIREMENTS[args.category!]
-  const normalizedConfiguredFallbackModels = normalizeFallbackModels(resolved.config.fallback_models)
+  const normalizedConfiguredFallbackModels = normalizeFallbackModels(
+    categoryExecutorOverride?.fallback_models ?? resolved.config.fallback_models
+  )
   let actualModel: string | undefined
   let modelInfo: ModelFallbackInfo | undefined
   let categoryModel: DelegatedModelConfig | undefined
@@ -117,20 +168,23 @@ Available categories: ${allCategoryNames}`,
   let fallbackEntry: FallbackEntry | undefined
   let matchedFallback = false
 
-  const overrideModel = bobJuniorModel
+  const overrideModel = categoryExecutorAgentKey === SUB_AGENT_CONFIG_KEY
+    ? (bobJuniorModel ?? categoryExecutorOverride?.model)
+    : categoryExecutorOverride?.model
   const explicitCategoryModel = userCategories?.[args.category!]?.model
 
   if (!requirement) {
-    // Precedence: explicit category model > sub default > category resolved model
-    // This keeps `sub.model` useful as a global default while allowing
-    // per-category overrides via `categories[category].model`.
+    // Precedence: explicit category model > routed executor override model > category resolved model.
+    // This preserves per-category overrides while allowing separate defaults for sub and coder.
     actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model
     if (actualModel) {
       modelInfo = explicitCategoryModel || overrideModel
         ? { model: actualModel, type: "user-defined", source: "override" }
         : { model: actualModel, type: "system-default", source: "system-default" }
       const parsedModel = parseModelString(actualModel)
-      const variantToUse = userCategories?.[args.category!]?.variant ?? resolved.config.variant
+      const variantToUse = userCategories?.[args.category!]?.variant
+        ?? categoryExecutorOverride?.variant
+        ?? resolved.config.variant
       categoryModel = parsedModel
         ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
         : undefined
@@ -152,7 +206,9 @@ Available categories: ${allCategoryNames}`,
       if (userModelOverride) {
         actualModel = userModelOverride
         const parsedModel = parseModelString(userModelOverride)
-        const variantToUse = userCategories?.[args.category!]?.variant ?? resolved.config.variant
+        const variantToUse = userCategories?.[args.category!]?.variant
+          ?? categoryExecutorOverride?.variant
+          ?? resolved.config.variant
         categoryModel = parsedModel
           ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
           : undefined
@@ -178,7 +234,7 @@ Available categories: ${allCategoryNames}`,
           modelInfo: undefined,
           actualModel: undefined,
           isUnstableAgent: false,
-          error: `Invalid model format "${actualModel}". Expected "provider/model" format (e.g., "anthropic/claude-sonnet-4-6").`,
+          error: `Invalid model format "${actualModel}". Expected "provider/model" format (e.g., "anthropic/claude-3-5-sonnet-latest").`,
         }
       }
 
@@ -199,7 +255,10 @@ Available categories: ${allCategoryNames}`,
       modelInfo = { model: actualModel, type, source }
 
       const parsedModel = parseModelString(actualModel)
-      const variantToUse = userCategories?.[args.category!]?.variant ?? resolvedVariant ?? resolved.config.variant
+      const variantToUse = userCategories?.[args.category!]?.variant
+        ?? categoryExecutorOverride?.variant
+        ?? resolvedVariant
+        ?? resolved.config.variant
       categoryModel = parsedModel
         ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
         : undefined
@@ -258,7 +317,10 @@ Available categories: ${categoryNames.join(", ")}`,
   if (categoryModel && effectiveEntry) {
     categoryModel = {
       ...categoryModel,
-      variant: userCategories?.[args.category!]?.variant ?? effectiveEntry.variant ?? categoryModel.variant,
+      variant: userCategories?.[args.category!]?.variant
+        ?? categoryExecutorOverride?.variant
+        ?? effectiveEntry.variant
+        ?? categoryModel.variant,
       reasoningEffort: effectiveEntry.reasoningEffort ?? categoryModel.reasoningEffort,
       temperature: effectiveEntry.temperature ?? categoryModel.temperature,
       top_p: effectiveEntry.top_p ?? categoryModel.top_p,
@@ -268,7 +330,7 @@ Available categories: ${categoryNames.join(", ")}`,
   }
 
   return {
-    agentToUse: BOB_JUNIOR_AGENT,
+    agentToUse: categoryExecutorAgentName,
     categoryModel,
     categoryPromptAppend,
     maxPromptTokens: resolved.config.max_prompt_tokens,

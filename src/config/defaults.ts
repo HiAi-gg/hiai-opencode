@@ -5,48 +5,22 @@ import type { HiaiOpencodeConfig } from "./types.js";
 
 export const defaultConfig: HiaiOpencodeConfig = {
   agents: {
-    // --- Tier 1: Core Orchestration ---
-    "bob": { model: "openrouter/anthropic/claude-3.5-opus" },
-    "strategist": { model: "openrouter/z-ai/glm-5.1" },
-    "coder": { model: "openrouter/anthropic/claude-3.5-sonnet" },
-    "guard": { model: "openrouter/openai/gpt-4o" },
-    general: { model: "openrouter/anthropic/claude-3.5-sonnet" },
-
-    // --- Tier 2: Specialized Assistance ---
-    "zoe": { model: "openrouter/google/gemini-3.1-flash" },
-    "sub": { model: "openrouter/google/gemini-3.1-flash" },
-    "logician": { model: "openrouter/anthropic/claude-3.5-opus" },
-    explore: { model: "openrouter/google/gemini-3.1-flash" },
-    librarian: { model: "openrouter/google/gemini-3.1-flash" },
-    "pre-plan": { model: "openrouter/openai/gpt-4o" },
-    "critic": { model: "openrouter/qwen/qwen2.5-72b-instruct" },
-    "ui": { model: "openrouter/google/gemini-3.1-pro-vision" },
-
-    // --- Tier 3: Building & Refactoring ---
-    build: { model: "openrouter/anthropic/claude-3.5-sonnet" },
-    mindmodel: { model: "openrouter/google/gemini-3.1-flash" },
-    "ledger-creator": { model: "openrouter/google/gemini-3.1-flash" },
-    bootstrapper: { model: "openrouter/google/gemini-3.1-flash" },
-    "project-initializer": { model: "openrouter/openai/gpt-4o" },
-
-    // --- Tier 4: Quality & Debugging ---
-    "code-reviewer": { model: "openrouter/anthropic/claude-3.5-sonnet" },
-    "systematic-debugger": { model: "openrouter/anthropic/claude-3.5-sonnet" },
-    brainstormer: { model: "openrouter/google/gemini-3.1-flash" },
-    "agent-skills": { model: "openrouter/google/gemini-3.1-flash" },
+    bob: { model: "hiai-high" },
+    guard: { model: "hiai-mid" },
+    strategist: { model: "hiai-high" },
+    critic: { model: "hiai-high" },
+    coder: { model: "hiai-mid" },
+    sub: { model: "hiai-fast" },
+    researcher: { model: "hiai-fast" },
+    multimodal: { model: "hiai-vision" },
+    "quality-guardian": { model: "hiai-mid" },
+    "platform-manager": { model: "hiai-fast" },
+    brainstormer: { model: "hiai-fast" },
+    "agent-skills": { model: "hiai-fast" },
   },
-
-  categories: {
-    "visual-engineering": { model: "openrouter/google/gemini-2.0-pro-exp-02-05", variant: "high" },
-    artistry: { model: "openrouter/google/gemini-2.0-pro-exp-02-05", variant: "high" },
-    ultrabrain: { model: "openrouter/openai/gpt-4o", variant: "xhigh" },
-    deep: { model: "openrouter/openai/o1", variant: "medium" },
-    quick: { model: "openrouter/anthropic/claude-3-5-haiku" },
-    writing: { model: "openrouter/kimi/kimi-latest" },
-    git: { model: "openrouter/anthropic/claude-3-5-haiku" },
-    "unspecified-low": { model: "openrouter/google/gemini-2.0-flash" },
-    "unspecified-high": { model: "openrouter/anthropic/claude-3.5-sonnet", variant: "max" },
-  },
+  agentRequirements: {},
+  categories: {},
+  categoryRequirements: {},
 
   mcp: {
     playwright: {
@@ -133,7 +107,7 @@ export const defaultConfig: HiaiOpencodeConfig = {
   },
   ollama: {
     enabled: false,
-    model: "qwen3.5:4b",
+    model: "{env:OLLAMA_MODEL:-qwen3.5:4b}",
     baseUrl: "http://localhost:11434",
     purpose: "helper",
   },

@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "../types";
-import { isGpt5_4Model, isGpt5_3CodexModel } from "../types";
+import { isGptProModel, isGptCodexModel } from "../types";
 import type {
   AvailableAgent,
   AvailableTool,
@@ -11,21 +11,21 @@ import { categorizeTools, buildAgentIdentitySection } from "../dynamic-agent-pro
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard";
 
 import { buildCoderPrompt as buildGptPrompt } from "./gpt";
-import { buildCoderPrompt as buildGpt53CodexPrompt } from "./gpt-5-3-codex";
-import { buildCoderPrompt as buildGpt54Prompt } from "./gpt-5-4";
+import { buildCoderPrompt as buildGptCodexPrompt } from "./gpt-codex";
+import { buildCoderPrompt as buildGptProPrompt } from "./gpt-pro";
 
 const MODE: AgentMode = "primary";
 
-export type CoderPromptSource = "gpt-5-4" | "gpt-5-3-codex" | "gpt";
+export type CoderPromptSource = "gpt-pro" | "gpt-codex" | "gpt";
 
 export function getCoderPromptSource(
   model?: string,
 ): CoderPromptSource {
-  if (model && isGpt5_4Model(model)) {
-    return "gpt-5-4";
+  if (model && isGptProModel(model)) {
+    return "gpt-pro";
   }
-  if (model && isGpt5_3CodexModel(model)) {
-    return "gpt-5-3-codex";
+  if (model && isGptCodexModel(model)) {
+    return "gpt-codex";
   }
   return "gpt";
 }
@@ -58,8 +58,8 @@ function buildDynamicCoderPrompt(ctx?: CoderContext): string {
 
   let basePrompt: string;
   switch (source) {
-    case "gpt-5-4":
-      basePrompt = buildGpt54Prompt(
+    case "gpt-pro":
+      basePrompt = buildGptProPrompt(
         agents,
         tools,
         skills,
@@ -67,8 +67,8 @@ function buildDynamicCoderPrompt(ctx?: CoderContext): string {
         useTaskSystem,
       );
       break;
-    case "gpt-5-3-codex":
-      basePrompt = buildGpt53CodexPrompt(
+    case "gpt-codex":
+      basePrompt = buildGptCodexPrompt(
         agents,
         tools,
         skills,
@@ -90,7 +90,7 @@ function buildDynamicCoderPrompt(ctx?: CoderContext): string {
 
   const agentIdentity = buildAgentIdentitySection(
     "Coder",
-    "Autonomous deep worker for software engineering from HiaiOpenCode",
+    "High-depth executor for software engineering from HiaiOpenCode",
   );
 
   return `${agentIdentity}\n${basePrompt}`;
@@ -117,7 +117,7 @@ export function createCoderAgent(
 
   return {
     description:
-      "Autonomous Deep Worker - goal-oriented execution with GPT Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode. (Coder - HiaiOpenCode)",
+      "High-depth executor - autonomous software engineering work with `gpt-pro`, `gpt-codex`, or `gpt`. Uses researcher for context gathering, escalates architecture/review gates via strategist/critic, and preserves a strict split where bounded low-risk edits belong to sub. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,
@@ -148,12 +148,13 @@ export const coderPromptMetadata: AgentPromptMetadata = {
     },
   ],
   useWhen: [
-    "Task requires deep exploration before implementation",
+    "Task requires deep research before implementation",
     "User wants autonomous end-to-end completion",
-    "Complex multi-file changes needed",
+    "Complex multi-file or high-context changes needed",
   ],
   avoidWhen: [
     "Simple single-step tasks",
+    "Bounded low-risk edits that fit the sub contour",
     "Tasks requiring user confirmation at each step",
     "When orchestration across multiple agents is needed (use Guard)",
   ],

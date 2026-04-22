@@ -1,3 +1,5 @@
+import { AGENT_NAME_MAP } from "./migration/agent-names"
+
 /**
  * Agent config keys to display names mapping.
  * Config keys are lowercase (e.g., "bob", "guard").
@@ -13,17 +15,13 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "bob": "Bob - Ultraworker",
   "coder": "Coder - Deep Agent",
   "strategist": "Strategist - Plan Builder",
+  "critic": "Critic - Plan Critic",
+  "researcher": "Researcher - Codebase Explorer",
+  "quality-guardian": "Quality Guardian - Verifier",
+  "platform-manager": "Platform Manager - Utility",
   "guard": "Guard - Plan Executor",
   "sub": "SubAgent",
-  "pre-plan": "Pre-Plan - Plan Consultant",
-  "critic": "Critic - Plan Critic",
-  athena: "Athena - Council",
-  "athena-junior": "Athena-Junior - Council",
-  "logician": "logician",
-  librarian: "librarian",
-  explore: "explore",
   "ui": "ui",
-  "council-member": "council-member",
 }
 
 const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {
@@ -44,8 +42,9 @@ export function stripAgentListSortPrefix(agentName: string): string {
 }
 
 export function getAgentRuntimeName(configKey: string): string {
-  const displayName = getAgentDisplayName(configKey)
-  const prefix = AGENT_LIST_SORT_PREFIXES[configKey.toLowerCase()]
+  const canonicalKey = resolveKnownAgentConfigKey(configKey) ?? configKey
+  const displayName = getAgentDisplayName(canonicalKey)
+  const prefix = AGENT_LIST_SORT_PREFIXES[canonicalKey.toLowerCase()]
 
   return prefix ? `${prefix}${displayName}` : displayName
 }
@@ -56,6 +55,12 @@ export function getAgentRuntimeName(configKey: string): string {
  * Returns original key if not found.
  */
 export function getAgentDisplayName(configKey: string): string {
+  const resolvedConfigKey = resolveKnownAgentConfigKey(configKey)
+  if (resolvedConfigKey !== undefined) {
+    const resolvedDisplayName = AGENT_DISPLAY_NAMES[resolvedConfigKey]
+    if (resolvedDisplayName !== undefined) return resolvedDisplayName
+  }
+
   // Try exact match first
   const exactMatch = AGENT_DISPLAY_NAMES[configKey]
   if (exactMatch !== undefined) return exactMatch
@@ -88,19 +93,30 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "coder (deep agent)": "coder",
   "strategist (plan builder)": "strategist",
   "guard (plan executor)": "guard",
-  "pre-plan (plan consultant)": "pre-plan",
+  "pre-plan (plan consultant)": "strategist",
   "critic (plan critic)": "critic",
-  "athena (council)": "athena",
-  "athena-junior (council)": "athena-junior",
+  "athena (council)": "strategist",
+  "athena-junior (council)": "strategist",
+  "researcher (codebase explorer)": "researcher",
+  "quality guardian (verifier)": "quality-guardian",
+  "platform manager (utility)": "platform-manager",
 }
 
 function resolveKnownAgentConfigKey(agentName: string): string | undefined {
   const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase()
+  if (!lower) return undefined
+
   const reversed = REVERSE_DISPLAY_NAMES[lower]
   if (reversed !== undefined) return reversed
+
   const legacy = LEGACY_DISPLAY_NAMES[lower]
   if (legacy !== undefined) return legacy
+
+  const migrated = AGENT_NAME_MAP[lower]
+  if (migrated !== undefined) return migrated
+
   if (AGENT_DISPLAY_NAMES[lower] !== undefined) return lower
+
   return undefined
 }
 

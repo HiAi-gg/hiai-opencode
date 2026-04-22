@@ -3,7 +3,7 @@ import type { BuiltinSkill } from "../types"
 export const reviewWorkSkill: BuiltinSkill = {
 	name: "review-work",
 	description:
-		"Post-implementation review orchestrator. Launches 5 parallel background sub-agents: Logician (goal/constraint verification), Logician (code quality), Logician (security), unspecified-high (hands-on QA execution), unspecified-high (context mining from GitHub/git/Slack/Notion). All must pass for review to pass. MUST USE after completing any significant implementation work. Triggers: 'review work', 'review my work', 'review changes', 'QA my work', 'verify implementation', 'check my work', 'validate changes', 'post-implementation review'.",
+		"Post-implementation review orchestrator. Launches 5 parallel background sub-agents: critic (goal/constraint verification), critic (code quality), critic (security), unspecified-high (hands-on QA execution), researcher (context mining from GitHub/git/Slack/Notion). All must pass for review to pass. MUST USE after completing any significant implementation work. Triggers: 'review work', 'review my work', 'review changes', 'QA my work', 'verify implementation', 'check my work', 'validate changes', 'post-implementation review'.",
 	template: `# Review Work - 5-Agent Parallel Review Orchestrator
 
 Launch 5 specialized sub-agents in parallel to review completed implementation work from every angle. All 5 must pass for the review to pass. If even ONE fails, the review fails.
@@ -12,11 +12,11 @@ The 5 agents cover complementary concerns - together they form a comprehensive r
 
 | # | Agent | Type | Role | Focus Level |
 |---|-------|------|------|-------------|
-| 1 | Goal Verifier | Logician | Did we build what was asked? | MAIN |
+| 1 | Goal Verifier | critic | Did we build what was asked? | MAIN |
 | 2 | QA Executor | unspecified-high | Does it actually work? | MAIN |
-| 3 | Code Reviewer | Logician | Is the code well-written? | MAIN |
-| 4 | Security Auditor | Logician | Is it secure? | SUB |
-| 5 | Context Miner | unspecified-high | Did we miss any context? | MAIN |
+| 3 | Code Reviewer | critic | Is the code well-written? | MAIN |
+| 4 | Security Auditor | critic | Is it secure? | SUB |
+| 5 | Context Miner | researcher | Did we miss any context? | MAIN |
 
 ---
 
@@ -31,7 +31,7 @@ Before launching agents, collect these inputs. Extract from conversation history
 - **BACKGROUND**: Why this work was needed. Business context, user stories, related systems, prior decisions that informed the approach.
 - **CHANGED_FILES**: Auto-collect via \`git diff --name-only HEAD~1\` or against the appropriate base (branch point, specific commit).
 - **DIFF**: Auto-collect via \`git diff HEAD~1\` or against the appropriate base.
-- **FILE_CONTENTS**: Read the full content of each changed file (not just the diff). Logician agents cannot read files - they need full context in the prompt.
+- **FILE_CONTENTS**: Read the full content of each changed file (not just the diff). critic agents cannot read files - they need full context in the prompt.
 - **RUN_COMMAND**: How to start/run the application. Check \`package.json\` scripts, \`Makefile\`, \`docker-compose.yml\`, or ask the user.
 
 </required_inputs>
@@ -62,19 +62,19 @@ For GOAL, CONSTRAINTS, BACKGROUND - review the full conversation history. The us
 
 Launch ALL 5 in a single turn. Every agent uses \`run_in_background=true\`. No sequential launches. No waiting between them.
 
-**Logician agents receive everything in the prompt** (they cannot read files or run commands). Include DIFF + FILE_CONTENTS + all context directly in the prompt text.
+**Critic agents receive everything in the prompt** (they cannot read files or run commands). Include DIFF + FILE_CONTENTS + all context directly in the prompt text.
 
 **unspecified-high agents are autonomous** - they can read files, run commands, and use tools. Give them goals and pointers, not raw content dumps.
 
 ---
 
-### Agent 1: Goal & Constraint Verification (Logician) - MAIN
+### Agent 1: Goal & Constraint Verification (Critic) - MAIN
 
 This agent answers: "Did we build exactly what was asked, within the rules we were given?"
 
 \`\`\`
 task(
-  subagent_type="logician",
+  subagent_type="critic",
   run_in_background=true,
   load_skills=[],
   description="Verify implementation against original goal and constraints",
@@ -257,13 +257,13 @@ OUTPUT FORMAT:
 
 ---
 
-### Agent 3: Code Quality Review (Logician) - MAIN
+### Agent 3: Code Quality Review (Critic) - MAIN
 
 This agent answers: "Is the code well-written, maintainable, and consistent with the codebase?"
 
 \`\`\`
 task(
-  subagent_type="logician",
+  subagent_type="critic",
   run_in_background=true,
   load_skills=[],
   description="Review overall code quality, patterns, and architecture",
@@ -332,7 +332,7 @@ OUTPUT FORMAT:
 
 ---
 
-### Agent 4: Security Review (Logician) - SUB
+### Agent 4: Security Review (Critic) - SUB
 
 This agent answers: "Are there security vulnerabilities in these changes?"
 
@@ -340,7 +340,7 @@ This is supplementary - it focuses exclusively on security. It does NOT comment 
 
 \`\`\`
 task(
-  subagent_type="logician",
+  subagent_type="critic",
   run_in_background=true,
   load_skills=[],
   description="Security-focused review of implementation changes",
@@ -513,10 +513,10 @@ Compile the final report in this format:
 
 | # | Review Area | Agent Type | Verdict | Confidence |
 |---|------------|------------|---------|------------|
-| 1 | Goal & Constraint Verification | Logician | PASS/FAIL | HIGH/MED/LOW |
+| 1 | Goal & Constraint Verification | Critic | PASS/FAIL | HIGH/MED/LOW |
 | 2 | QA Execution | unspecified-high | PASS/FAIL | HIGH/MED/LOW |
-| 3 | Code Quality | Logician | PASS/FAIL | HIGH/MED/LOW |
-| 4 | Security (supplementary) | Logician | PASS/FAIL | Severity |
+| 3 | Code Quality | Critic | PASS/FAIL | HIGH/MED/LOW |
+| 4 | Security (supplementary) | Critic | PASS/FAIL | Severity |
 | 5 | Context Mining | unspecified-high | PASS/FAIL | HIGH/MED/LOW |
 
 ## Blocking Issues

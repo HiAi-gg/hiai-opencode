@@ -1,9 +1,9 @@
-import { tool } from '@opencode-ai/plugin'
-import { manager } from '../manager.ts'
-import { DEFAULT_READ_LIMIT, MAX_LINE_LENGTH } from '../../shared/constants.ts'
-import { buildSessionNotFoundError } from '../utils.ts'
-import { formatLine } from '../formatters.ts'
-import type { PTYSessionInfo } from '../types.ts'
+import { tool, type ToolDefinition } from '@opencode-ai/plugin'
+import { manager } from '../manager'
+import { DEFAULT_READ_LIMIT, MAX_LINE_LENGTH } from '../../shared/constants'
+import { buildSessionNotFoundError } from '../utils'
+import { formatLine } from '../formatters'
+import type { PTYSessionInfo } from '../types'
 import DESCRIPTION from './read.txt'
 
 const NOTIFY_ON_EXIT_REMINDER = [
@@ -189,7 +189,7 @@ function validateRegex(pattern: string): boolean {
   }
 }
 
-export const ptyRead = tool({
+export const ptyRead: ToolDefinition = tool({
   description: DESCRIPTION,
   args: {
     id: tool.schema.string().describe('The PTY session ID (e.g., pty_a1b2c3d4)'),

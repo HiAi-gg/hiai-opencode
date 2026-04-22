@@ -309,7 +309,7 @@ export async function applyAgentConfig(params: {
       ...agentConfig,
       ...Object.fromEntries(
         Object.entries(builtinAgents).filter(
-          ([key]) => key !== "bob" && key !== "coder" && key !== "guard",
+          ([key]) => key !== "bob" && key !== "coder" && key !== "guard" && key !== "strategist" && key !== "sub",
         ),
       ),
       // Precedence: later entries override earlier (project > global > user > plugin)

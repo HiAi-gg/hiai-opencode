@@ -29,7 +29,7 @@ Performs intelligent, deterministic refactoring with full codebase awareness. Un
 1. **Understands your intent** - Analyzes what you actually want to achieve
 2. **Maps the codebase** - Builds a definitive codemap before touching anything
 3. **Assesses risk** - Evaluates test coverage and determines verification strategy
-4. **Plans meticulously** - Creates a detailed plan with Plan agent
+4. **Plans meticulously** - Creates a detailed plan with Strategist
 5. **Executes precisely** - Step-by-step refactoring with LSP and AST-grep
 6. **Verifies constantly** - Runs tests after each change to ensure zero regression
 
@@ -80,10 +80,10 @@ Should I proceed with [recommendation], or would you prefer differently?
 
 \`\`\`
 TodoWrite([
-  {"id": "phase-1", "content": "PHASE 1: Codebase Analysis - launch parallel explore agents", "status": "pending", "priority": "high"},
+  {"id": "phase-1", "content": "PHASE 1: Codebase Analysis - launch parallel researcher agents", "status": "pending", "priority": "high"},
   {"id": "phase-2", "content": "PHASE 2: Build Codemap - map dependencies and impact zones", "status": "pending", "priority": "high"},
   {"id": "phase-3", "content": "PHASE 3: Test Assessment - analyze test coverage and verification strategy", "status": "pending", "priority": "high"},
-  {"id": "phase-4", "content": "PHASE 4: Plan Generation - invoke Plan agent for detailed refactoring plan", "status": "pending", "priority": "high"},
+  {"id": "phase-4", "content": "PHASE 4: Plan Generation - invoke Strategist for detailed refactoring plan", "status": "pending", "priority": "high"},
   {"id": "phase-5", "content": "PHASE 5: Execute Refactoring - step-by-step with continuous verification", "status": "pending", "priority": "high"},
   {"id": "phase-6", "content": "PHASE 6: Final Verification - full test suite and regression check", "status": "pending", "priority": "high"}
 ])
@@ -95,14 +95,14 @@ TodoWrite([
 
 **Mark phase-1 as in_progress.**
 
-## 1.1: Launch Parallel Explore Agents (BACKGROUND)
+## 1.1: Launch Parallel Researcher Agents (BACKGROUND)
 
 Fire ALL of these simultaneously using \`call_omo_agent\`:
 
 \`\`\`
 // Agent 1: Find the refactoring target
 call_omo_agent(
-  subagent_type="explore",
+  subagent_type="researcher",
   run_in_background=true,
   prompt="Find all occurrences and definitions of [TARGET]. 
   Report: file paths, line numbers, usage patterns."
@@ -110,7 +110,7 @@ call_omo_agent(
 
 // Agent 2: Find related code
 call_omo_agent(
-  subagent_type="explore", 
+  subagent_type="researcher", 
   run_in_background=true,
   prompt="Find all code that imports, uses, or depends on [TARGET].
   Report: dependency chains, import graphs."
@@ -118,7 +118,7 @@ call_omo_agent(
 
 // Agent 3: Find similar patterns
 call_omo_agent(
-  subagent_type="explore",
+  subagent_type="researcher",
   run_in_background=true,
   prompt="Find similar code patterns to [TARGET] in the codebase.
   Report: analogous implementations, established conventions."
@@ -126,7 +126,7 @@ call_omo_agent(
 
 // Agent 4: Find tests
 call_omo_agent(
-  subagent_type="explore",
+  subagent_type="researcher",
   run_in_background=true,
   prompt="Find all test files related to [TARGET].
   Report: test file paths, test case names, coverage indicators."
@@ -134,7 +134,7 @@ call_omo_agent(
 
 // Agent 5: Architecture context
 call_omo_agent(
-  subagent_type="explore",
+  subagent_type="researcher",
   run_in_background=true,
   prompt="Find architectural patterns and module organization around [TARGET].
   Report: module boundaries, layer structure, design patterns in use."
@@ -275,7 +275,7 @@ ls -la *_test.go
 \`\`\`
 // Find all tests related to target
 call_omo_agent(
-  subagent_type="explore",
+  subagent_type="researcher",
   run_in_background=false,  // Need this synchronously
   prompt="Analyze test coverage for [TARGET]:
   1. Which test files cover this code?
@@ -338,15 +338,15 @@ After each refactoring step:
 
 ---
 
-# PHASE 4: PLAN GENERATION (PLAN AGENT)
+# PHASE 4: PLAN GENERATION (STRATEGIST)
 
 **Mark phase-4 as in_progress.**
 
-## 4.1: Invoke Plan Agent
+## 4.1: Invoke Strategist
 
 \`\`\`
 Task(
-  subagent_type="plan",
+  subagent_type="strategist",
   prompt="Create a detailed refactoring plan:
 
   ## Refactoring Goal
@@ -375,7 +375,7 @@ Task(
 
 ## 4.2: Review and Validate Plan
 
-After receiving plan from Plan agent:
+After receiving plan from Strategist:
 
 1. **Verify completeness**: All identified files addressed?
 2. **Verify safety**: Each step reversible?
@@ -384,7 +384,7 @@ After receiving plan from Plan agent:
 
 ## 4.3: Register Detailed Todos
 
-Convert Plan agent output into granular todos:
+Convert Strategist output into granular todos:
 
 \`\`\`
 TodoWrite([
@@ -465,7 +465,7 @@ If ANY verification fails:
 4. **OPTIONS**:
    - Fix the issue and retry
    - Skip this step (if optional)
-   - Consult logician agent for help
+   - Consult critic agent for help
    - Ask user for guidance
 
 **NEVER proceed to next step with broken tests.**
@@ -598,16 +598,16 @@ Use \`ast_grep_search\` and \`ast_grep_replace\` for structural transformations.
 **Critical**: Always \`dryRun=true\` first, review, then execute.
 
 ## Agents
-- \`explore\`: Parallel codebase pattern discovery
-- \`plan\`: Detailed refactoring plan generation
-- \`logician\`: Read-only consultation for complex architectural decisions and debugging
-- \`librarian\`: **Use proactively** when encountering deprecated methods or library migration tasks. Query official docs and OSS examples for modern replacements.
+- \`researcher\`: Parallel codebase pattern discovery
+- \`strategist\`: Detailed refactoring plan generation
+- \`critic\`: Read-only consultation for complex architectural decisions and debugging
+- \`researcher\`: **Use proactively** when encountering deprecated methods or library migration tasks. Query official docs and OSS examples for modern replacements.
 
 ## Deprecated Code & Library Migration
 When you encounter deprecated methods/APIs during refactoring:
-1. Fire \`librarian\` to find the recommended modern alternative
+1. Fire \`researcher\` to find the recommended modern alternative
 2. **DO NOT auto-upgrade to latest version** unless user explicitly requests migration
-3. If user requests library migration, use \`librarian\` to fetch latest API docs before making changes
+3. If user requests library migration, use \`researcher\` to fetch latest API docs before making changes
 
 ---
 

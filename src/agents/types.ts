@@ -3,7 +3,7 @@ import type { AgentConfig } from "@opencode-ai/sdk";
 /**
  * Agent mode determines UI model selection behavior:
  * - "primary": Respects user's UI-selected model (bob, guard)
- * - "subagent": Uses own fallback chain, ignores UI selection (logician, explore, etc.)
+ * - "subagent": Uses own fallback chain, ignores UI selection (researcher, quality-guardian, etc.)
  * - "all": Available in both contexts (OpenCode compatibility)
  */
 export type AgentMode = "primary" | "subagent" | "all";
@@ -79,14 +79,14 @@ export function isGptModel(model: string): boolean {
   return modelName.includes("gpt");
 }
 
-export function isGpt5_4Model(model: string): boolean {
+export function isGptProModel(model: string): boolean {
   const modelName = extractModelName(model).toLowerCase();
-  return modelName.includes("gpt-5.4") || modelName.includes("gpt-5-4");
+  return modelName.includes("gpt") && (modelName.includes("pro") || modelName.includes("-4") || modelName.includes("-5"));
 }
 
-export function isGpt5_3CodexModel(model: string): boolean {
+export function isGptCodexModel(model: string): boolean {
   const modelName = extractModelName(model).toLowerCase();
-  return modelName.includes("gpt-5.3-codex") || modelName.includes("gpt-5-3-codex");
+  return modelName.includes("codex");
 }
 
 const GEMINI_PROVIDERS = ["google/", "google-vertex/"];
@@ -117,13 +117,15 @@ export function isGeminiModel(model: string): boolean {
 export type BuiltinAgentName =
   | "bob"
   | "coder"
-  | "logician"
-  | "librarian"
-  | "explore"
-  | "ui"
-  | "pre-plan"
+  | "strategist"
   | "critic"
+  | "multimodal"
+  | "brainstormer"
+  | "agent-skills"
   | "guard"
+  | "platform-manager"
+  | "quality-guardian"
+  | "researcher"
   | "sub";
 
 export type OverridableAgentName = "build" | BuiltinAgentName;

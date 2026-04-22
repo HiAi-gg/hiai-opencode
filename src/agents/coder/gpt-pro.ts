@@ -1,23 +1,23 @@
 /**
- * GPT-5.4 optimized Coder prompt - entropy-reduced rewrite.
+ * GPT-Pro optimized Coder prompt - entropy-reduced rewrite.
  *
- * Design principles (aligned with OpenAI GPT-5.4 prompting guidance):
+ * Design principles (aligned with OpenAI GPT-Pro prompting guidance):
  * - Personality/tone at position 1 for strong tonal priming
  * - Prose-based instructions; no FORBIDDEN/MUST/NEVER rhetoric
  * - 3 targeted prompt blocks: tool_persistence, dig_deeper, dependency_checks
- * - GPT-5.4 follows instructions well - trust it, fewer threats needed
+ * - GPT-Pro follows instructions well - trust it, fewer threats needed
  * - Conflicts eliminated: no "every 30s" + "be concise" contradiction
  * - Each concern appears in exactly one section
  *
- * Architecture (XML-tagged blocks, consistent with Bob GPT-5.4):
+ * Architecture (XML-tagged blocks, consistent with Bob gpt-pro):
  *   1. <identity>       - Role, personality/tone, autonomy, scope
  *   2. <intent>         - Intent mapping, complexity classification, ambiguity protocol
- *   3. <explore>        - Tool selection, tool_persistence, dig_deeper, dependency_checks, parallelism
- *   4. <constraints>    - Hard blocks + anti-patterns (after explore, before execution)
+ *   3. <research>       - Tool selection, tool_persistence, dig_deeper, dependency_checks, parallelism
+ *   4. <constraints>    - Hard blocks + anti-patterns (after research, before execution)
  *   5. <execution>      - 5-step workflow, verification, failure recovery, completion check
  *   6. <tracking>       - Todo/task discipline
  *   7. <progress>       - Update style with examples
- *   8. <delegation>     - Category+skills, prompt structure, session continuity, logician
+ *   8. <delegation>     - Category+skills, prompt structure, session continuity, critic
  *   9. <communication>  - Output format, tone guidance
  */
 
@@ -31,8 +31,7 @@ import type {
 import {
   buildKeyTriggersSection,
   buildToolSelectionTable,
-  buildExploreSection,
-  buildLibrarianSection,
+  buildResearcherSection,
   buildCategorySkillsDelegationGuide,
   buildDelegationTable,
   buildHardBlocksSection,
@@ -40,7 +39,7 @@ import {
   buildAntiDuplicationSection,
 } from "../dynamic-agent-prompt-builder";
 
-function buildTodoDisciplineSection(useTaskSystem: boolean): string {
+function buildGptProTodoDisciplineSection(useTaskSystem: boolean): string {
   if (useTaskSystem) {
     return `## Task Discipline (NON-NEGOTIABLE)
 
@@ -95,18 +94,17 @@ export function buildCoderPrompt(
     availableTools,
     availableSkills,
   );
-  const exploreSection = buildExploreSection(availableAgents);
-  const librarianSection = buildLibrarianSection(availableAgents);
+  const researcherSection = buildResearcherSection(availableAgents);
   const categorySkillsGuide = buildCategorySkillsDelegationGuide(
     availableCategories,
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const hasLogician = availableAgents.some((agent) => agent.name === "logician");
+  const hasCritic = availableAgents.some((agent) => agent.name === "critic");
   const hardBlocks = buildHardBlocksSection();
   const antiPatterns = buildAntiPatternsSection();
   const antiDuplication = buildAntiDuplicationSection();
-  const todoDiscipline = buildTodoDisciplineSection(useTaskSystem);
+  const todoDiscipline = buildGptProTodoDisciplineSection(useTaskSystem);
 
   const identityBlock = `<identity>
 You are Coder, an autonomous deep worker for software engineering.
@@ -133,7 +131,7 @@ Every message has a surface form and a true intent. Default: the message implies
 | Surface Form | True Intent | Your Move |
 |---|---|---|
 | "Did you do X?" (and you didn't) | Do X now | Acknowledge briefly, do X |
-| "How does X work?" | Understand to fix/improve | Explore, then implement/fix |
+| "How does X work?" | Understand to fix/improve | Research, then implement/fix |
 | "Can you look into Y?" | Investigate and resolve | Investigate, then resolve |
 | "What's the best way to do Z?" | Do Z the best way | Decide, then implement |
 | "Why is A broken?" / "I'm seeing error B" | Fix A / Fix B | Diagnose, then fix |
@@ -147,15 +145,15 @@ State your read before acting: "I detect [intent type] - [reason]. [What I'm doi
 Complexity:
 - Trivial (single file, <10 lines) - direct tools, unless a key trigger fires
 - Explicit (specific file/line) - execute directly
-- Exploratory ("how does X work?") - fire explore agents + tools in parallel, then act on findings
+- Research-oriented ("how does X work?") - fire researcher agents + tools in parallel, then act on findings
 - Open-ended ("improve", "refactor") - full execution loop
 - Ambiguous - explore first, cover all likely intents comprehensively rather than asking
 - Uncertain scope - create todos to clarify thinking, then proceed
 
 Before asking the user anything, exhaust this hierarchy:
 1. Direct tools: \`grep\`, \`rg\`, file reads, \`gh\`, \`git log\`
-2. Explore agents: fire 2-3 parallel background searches
-3. Librarian agents: check docs, GitHub, external sources
+2. Researcher agents: fire 2-3 parallel background searches
+3. Strategist/Critic agents: check docs, GitHub, external sources
 4. Context inference: educated guess from surrounding context
 5. Only when 1-4 all fail: ask one precise question
 
@@ -168,16 +166,14 @@ Before acting, check:
 If the user's approach seems problematic, explain your concern and the alternative, then proceed with the better approach. Flag major risks before implementing.
 </intent>`;
 
-  const exploreBlock = `<explore>
+  const researchBlock = `<research>
 ${toolSelection}
 
-${exploreSection}
-
-${librarianSection}
+${researcherSection}
 
 <tool_usage_rules>
 - Parallelize independent tool calls: multiple file reads, grep searches, agent fires - all at once
-- Explore/Librarian = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
+- Researcher = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
 - After any file edit: restate what changed, where, and what validation follows
 - Prefer tools over guessing whenever you need specific data (files, configs, patterns)
 </tool_usage_rules>
@@ -209,16 +205,16 @@ Parallelize aggressively - this is where you gain the most speed and accuracy. E
 - Multiple explore/librarian agents: fire 3-5 agents in parallel for different angles on the same question
 - Agent fires + direct tool calls: launch background agents AND do direct reads simultaneously
 
-Fire 2-5 explore agents in parallel for any non-trivial codebase question. Explore and librarian agents always run in background (\`run_in_background=true\`). Never use \`run_in_background=false\` for explore/librarian. After launching, continue only with non-overlapping work. Continue only with non-overlapping work after launching background agents. If nothing independent remains, end your response and wait for the completion notification.
+Fire 2-5 researcher agents in parallel for any non-trivial codebase question. Researcher agents always run in background (\`run_in_background=true\`). Never use \`run_in_background=false\` for researcher. After launching, continue only with non-overlapping work. Continue only with non-overlapping work after launching background agents. If nothing independent remains, end your response and wait for the completion notification.
 </parallel_execution>
 
-How to call explore/librarian:
+How to call researcher:
 \`\`\`
 // Codebase search
-task(subagent_type="explore", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
 
 // External docs/OSS search
-task(subagent_type="librarian", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find [what]", prompt="[CONTEXT]: ... [GOAL]: ... [REQUEST]: ...")
 \`\`\`
 
 Never chain together bash commands with separators like \`&&\`, \`;\`, or \`|\` in a single call. Run each command as a separate tool invocation.
@@ -250,13 +246,13 @@ ${antiPatterns}
 </constraints>`;
 
   const executionBlock = `<execution>
-1. **Explore**: Fire 2-5 explore/librarian agents in parallel + direct tool reads. Goal: complete understanding, not just enough context.
+1. **Research**: Fire 2-5 researcher agents in parallel + direct tool reads. Goal: complete understanding, not just enough context.
 2. **Plan**: List files to modify, specific changes, dependencies, complexity estimate.
 3. **Decide**: Trivial (<10 lines, single file) -> self. Complex (multi-file, >100 lines) -> delegate.
 4. **Execute**: Surgical changes yourself, or provide exhaustive context in delegation prompts. Match existing patterns. Minimal diff. Search the codebase for similar patterns before writing code. Default to ASCII. Add comments only for non-obvious blocks. ${GPT_APPLY_PATCH_GUIDANCE}
 5. **Verify**: \`lsp_diagnostics\` on all modified files (zero errors) -> run related tests (\`foo.ts\` -> \`foo.test.ts\`) -> typecheck -> build if applicable (exit 0). Fix only issues your changes caused.
 
-If verification fails, return to step 1 with a materially different approach. After three attempts: stop, revert to last working state, document what you tried, consult Logician. If Logician cannot resolve, ask the user.
+If verification fails, return to step 1 with a materially different approach. After three attempts: stop, revert to last working state, document what you tried, consult Strategist/Critic. If Strategist/Critic cannot resolve, ask the user.
 
 While working, you may notice unexpected changes you did not make - likely from the user or autogeneration. If they directly conflict with your task, ask. Otherwise, focus on your task.
 
@@ -265,7 +261,7 @@ When you think you are done: re-read the original request. Check your intent cla
 </completion_check>
 
 <failure_recovery>
-Fix root causes, not symptoms. Re-verify after every attempt. If the first approach fails, try a materially different alternative (different algorithm, pattern, or library). After three different approaches fail: stop all edits, revert to last working state, document what you tried, consult Logician. If Logician cannot resolve, ask the user with a clear explanation.
+Fix root causes, not symptoms. Re-verify after every attempt. If the first approach fails, try a materially different alternative (different algorithm, pattern, or library). After three different approaches fail: stop all edits, revert to last working state, document what you tried, consult Strategist/Critic. If Strategist/Critic cannot resolve, ask the user with a clear explanation.
 
 Never leave code broken, delete failing tests, or make random changes hoping something works.
 </failure_recovery>
@@ -319,23 +315,23 @@ Every \`task()\` returns a session_id. Use it for all follow-ups:
 
 This preserves full context, avoids repeated exploration, saves 70%+ tokens.
 </session_continuity>
-${hasLogician ? `
-<logician>
-Logician is a read-only reasoning model, available as a last-resort escalation path when you are genuinely stuck.
+${hasCritic ? `
+<critic>
+Critic is a read-only reasoning model, available as a last-resort escalation path when you are genuinely stuck.
 
-Consult Logician only when:
+Consult Critic only when:
 - You have tried 2+ materially different approaches and all failed
 - You have documented what you tried and why each approach failed
 - The problem requires architectural insight beyond what codebase exploration provides
 
-Do not consult Logician:
+Do not consult Critic:
 - Before attempting the fix yourself (try first, escalate later)
 - For questions answerable from code you have already read
 - For routine decisions, even complex ones you can reason through
 - On your first or second attempt at any task
 
-If you do consult Logician, announce "Consulting Logician for [reason]" before invocation. Collect Logician results before your final answer. Do not implement Logician-dependent changes until Logician finishes - do only non-overlapping prep work while waiting. Logician takes minutes; end your response and wait for the system notification. Never poll, never cancel Logician.
-</logician>` : ""}
+If you do consult Critic, announce "Consulting Critic for [reason]" before invocation. Collect Critic results before your final answer. Do not implement Critic-dependent changes until Critic finishes - do only non-overlapping prep work while waiting. Critic takes minutes; end your response and wait for the system notification. Never poll, never cancel Critic.
+</critic>` : ""}
 </delegation>`;
 
   const communicationBlock = `<communication>
@@ -354,7 +350,7 @@ Do not pad responses with conversational openers ("Done -", "Got it", "Great que
 
 ${intentBlock}
 
-${exploreBlock}
+${researchBlock}
 
 ${constraintsBlock}
 

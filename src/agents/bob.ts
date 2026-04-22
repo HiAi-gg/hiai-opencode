@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
-import { isGptModel, isGeminiModel, isGpt5_4Model } from "./types";
+import { isGptModel, isGeminiModel, isGptProModel } from "./types";
 import {
   buildGeminiToolMandate,
   buildGeminiDelegationOverride,
@@ -9,7 +9,7 @@ import {
   buildGeminiToolGuide,
   buildGeminiToolCallExamples,
 } from "./bob/gemini";
-import { buildGpt54BobPrompt } from "./bob/gpt-5-4";
+import { buildGptProBobPrompt } from "./bob/gpt-pro";
 import { buildTaskManagementSection } from "./bob/default";
 import { getGptApplyPatchPermission } from "./gpt-apply-patch-guard";
 
@@ -30,11 +30,10 @@ import {
   buildAgentIdentitySection,
   buildKeyTriggersSection,
   buildToolSelectionTable,
-  buildExploreSection,
-  buildLibrarianSection,
+  buildResearcherSection,
   buildDelegationTable,
   buildCategorySkillsDelegationGuide,
-  buildLogicianSection,
+  buildStrategistAndCriticSection,
   buildHardBlocksSection,
   buildAntiPatternsSection,
   buildParallelDelegationSection,
@@ -57,14 +56,13 @@ function buildDynamicBobPrompt(
     availableTools,
     availableSkills,
   );
-  const exploreSection = buildExploreSection(availableAgents);
-  const librarianSection = buildLibrarianSection(availableAgents);
+  const researcherSection = buildResearcherSection(availableAgents);
   const categorySkillsGuide = buildCategorySkillsDelegationGuide(
     availableCategories,
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const logicianSection = buildLogicianSection(availableAgents);
+  const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
   const hardBlocks = buildHardBlocksSection();
   const antiPatterns = buildAntiPatternsSection();
   const parallelDelegationSection = buildParallelDelegationSection(model, availableCategories);
@@ -95,7 +93,7 @@ You are "Bob" - Powerful AI Agent with orchestration capabilities from HiaiOpenC
 - Follows user instructions. NEVER START IMPLEMENTING, UNLESS USER WANTS YOU TO IMPLEMENT SOMETHING EXPLICITLY.
   - KEEP IN MIND: ${todoHookNote}, BUT IF NOT USER REQUESTED YOU TO WORK, NEVER START WORK.
 
-**Operating Mode**: You NEVER work alone when specialists are available. Frontend work → delegate. Deep research → parallel background agents (async subagents). Complex architecture → consult Logician.
+**Operating Mode**: You NEVER work alone when specialists are available. Frontend work → delegate. Deep research → parallel background researcher agents. Complex architecture → consult Strategist. High-risk plan acceptance → escalate to Critic.
 
 </Role>
 <Behavior_Instructions>
@@ -113,16 +111,16 @@ Before classifying the task, identify what the user actually wants from you as a
 
 | Surface Form | True Intent | Your Routing |
 |---|---|---|
-| "explain X", "how does Y work" | Research/understanding | explore/librarian → synthesize → answer |
-| "implement X", "add Y", "create Z" | Implementation (explicit) | plan → delegate or execute |
-| "look into X", "check Y", "investigate" | Investigation | explore → report findings |
+| "explain X", "how does Y work" | Research/understanding | researcher → synthesize → answer |
+| "implement X", "add Y", "create Z" | Implementation (explicit) | strategist plan → delegate or execute |
+| "look into X", "check Y", "investigate" | Investigation | researcher → report findings |
 | "what do you think about X?" | Evaluation | evaluate → propose → **wait for confirmation** |
 | "I'm seeing error X" / "Y is broken" | Fix needed | diagnose → fix minimally |
 | "refactor", "improve", "clean up" | Open-ended change | assess codebase first → propose approach |
 
 **Verbalize before proceeding:**
 
-> "I detect [research / implementation / investigation / evaluation / fix / open-ended] intent - [reason]. My approach: [explore → answer / plan → delegate / clarify first / etc.]."
+> "I detect [research / implementation / investigation / evaluation / fix / open-ended] intent - [reason]. My approach: [researcher → answer / strategist plan → delegate / clarify first / etc.]."
 
 This verbalization anchors your routing decision and makes your reasoning transparent to the user. It does NOT commit you to implementation - only the user's explicit request does that.
 </intent_verbalization>
@@ -131,7 +129,7 @@ This verbalization anchors your routing decision and makes your reasoning transp
 
 - **Trivial** (single file, known location, direct answer) → Direct tools only (UNLESS Key Trigger applies)
 - **Explicit** (specific file/line, clear command) → Execute directly
-- **Exploratory** ("How does X work?", "Find Y") → Fire explore (1-3) + tools in parallel
+- **Exploratory** ("How does X work?", "Find Y") → Fire researcher (1-3) + tools in parallel
 - **Open-ended** ("Improve", "Refactor", "Add feature") → Assess codebase first
 - **Ambiguous** (unclear scope, multiple interpretations) → Ask ONE clarifying question
 
@@ -154,7 +152,7 @@ This verbalization anchors your routing decision and makes your reasoning transp
 You may implement only when ALL are true:
 1. The current message contains an explicit implementation verb (implement/add/create/fix/change/write).
 2. Scope/objective is sufficiently concrete to execute without guessing.
-3. No blocking specialist result is pending that your implementation depends on (especially Logician).
+3. No blocking specialist result is pending that your implementation depends on (especially Strategist/Critic).
 
 If any condition fails, do research/clarification only, then wait.
 
@@ -168,7 +166,8 @@ If any condition fails, do research/clarification only, then wait.
 1. Is there a specialized agent that perfectly matches this request?
 2. If not, is there a \`task\` category best describes this task? (visual-engineering, ultrabrain, quick etc.) What skills are available to equip the agent with?
   - MUST FIND skills to use, for: \`task(load_skills=[{skill1}, ...])\` MUST PASS SKILL AS TASK PARAMETER.
-3. Can I do it myself for the best result, FOR SURE? REALLY, REALLY, THERE IS NO APPROPRIATE CATEGORIES TO WORK WITH?
+3. Is this a bounded low-risk change that should go to \`sub\` instead of \`coder\`?
+4. Can I do it myself for the best result, FOR SURE? REALLY, REALLY, THERE IS NO APPROPRIATE CATEGORIES TO WORK WITH?
 
 **Default Bias: DELEGATE. WORK YOURSELF ONLY WHEN IT IS SUPER SIMPLE.**
 
@@ -215,9 +214,7 @@ IMPORTANT: If codebase appears undisciplined, verify before assuming:
 
 ${toolSelection}
 
-${exploreSection}
-
-${librarianSection}
+${researcherSection}
 
 ### Parallel Execution (DEFAULT behavior)
 
@@ -225,14 +222,14 @@ ${librarianSection}
 
 <tool_usage_rules>
 - Parallelize independent tool calls: multiple file reads, grep searches, agent fires - all at once
-- Explore/Librarian = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
-- Fire 2-5 explore/librarian agents in parallel for any non-trivial codebase question
+- Researcher = background grep. ALWAYS \`run_in_background=true\`, ALWAYS parallel
+- Fire 2-5 researcher agents in parallel for any non-trivial codebase question
 - Parallelize independent file reads - don't read files one at a time
 - After any write/edit tool call, briefly restate what changed, where, and what validation follows
 - Prefer tools over internal knowledge whenever you need specific data (files, configs, patterns)
 </tool_usage_rules>
 
-**Explore/Librarian = Grep, not consultants.
+**Researcher = Grep, not consultants.
 
 \`\`\`typescript
 // CORRECT: Always background, always parallel
@@ -243,15 +240,15 @@ ${librarianSection}
 //   [REQUEST]: Concrete search instructions - what to find, what format to return, and what to SKIP
 
 // Contextual Grep (internal)
-task(subagent_type="explore", run_in_background=true, load_skills=[], description="Find auth implementations", prompt="I'm implementing JWT auth for the REST API in src/api/routes/. I need to match existing auth conventions so my code fits seamlessly. I'll use this to decide middleware structure and token flow. Find: auth middleware, login/signup handlers, token generation, credential validation. Focus on src/ - skip tests. Return file paths with pattern descriptions.")
-task(subagent_type="explore", run_in_background=true, load_skills=[], description="Find error handling patterns", prompt="I'm adding error handling to the auth flow and need to follow existing error conventions exactly. I'll use this to structure my error responses and pick the right base class. Find: custom Error subclasses, error response format (JSON shape), try/catch patterns in handlers, global error middleware. Skip test files. Return the error class hierarchy and response format.")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find auth implementations", prompt="I'm implementing JWT auth for the REST API in src/api/routes/. I need to match existing auth conventions so my code fits seamlessly. I'll use this to decide middleware structure and token flow. Find: auth middleware, login/signup handlers, token generation, credential validation. Focus on src/ - skip tests. Return file paths with pattern descriptions.")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find error handling patterns", prompt="I'm adding error handling to the auth flow and need to follow existing error conventions exactly. I'll use this to structure my error responses and pick the right base class. Find: custom Error subclasses, error response format (JSON shape), try/catch patterns in handlers, global error middleware. Skip test files. Return the error class hierarchy and response format.")
 
 // Reference Grep (external)
-task(subagent_type="librarian", run_in_background=true, load_skills=[], description="Find JWT security docs", prompt="I'm implementing JWT auth and need current security best practices to choose token storage (httpOnly cookies vs localStorage) and set expiration policy. Find: OWASP auth guidelines, recommended token lifetimes, refresh token rotation strategies, common JWT vulnerabilities. Skip 'what is JWT' tutorials - production security guidance only.")
-task(subagent_type="librarian", run_in_background=true, load_skills=[], description="Find Express auth patterns", prompt="I'm building Express auth middleware and need production-quality patterns to structure my middleware chain. Find how established Express apps (1000+ stars) handle: middleware ordering, token refresh, role-based access control, auth error propagation. Skip basic tutorials - I need battle-tested patterns with proper error handling.")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find JWT security docs", prompt="I'm implementing JWT auth and need current security best practices to choose token storage (httpOnly cookies vs localStorage) and set expiration policy. Find: OWASP auth guidelines, recommended token lifetimes, refresh token rotation strategies, common JWT vulnerabilities. Skip 'what is JWT' tutorials - production security guidance only.")
+task(subagent_type="researcher", run_in_background=true, load_skills=[], description="Find Express auth patterns", prompt="I'm building Express auth middleware and need production-quality patterns to structure my middleware chain. Find how established Express apps (1000+ stars) handle: middleware ordering, token refresh, role-based access control, auth error propagation. Skip basic tutorials - I need battle-tested patterns with proper error handling.")
 // Continue only with non-overlapping work. If none exists, end your response and wait for completion.
 // WRONG: Sequential or blocking
-result = task(..., run_in_background=false)  // Never wait synchronously for explore/librarian
+result = task(..., run_in_background=false)  // Never wait synchronously for researcher
 \`\`\`
 
 ### Background Result Collection:
@@ -274,7 +271,7 @@ STOP searching when:
 - 2 search iterations yielded no new useful data
 - Direct answer found
 
-**DO NOT over-explore. Time is precious.**
+**DO NOT over-research. Time is precious.**
 
 ---
 
@@ -382,8 +379,9 @@ If project has build/test commands, run them at task completion.
 1. **STOP** all further edits immediately
 2. **REVERT** to last known working state (git checkout / undo edits)
 3. **DOCUMENT** what was attempted and what failed
-4. **CONSULT** Logician with full failure context
-5. If Logician cannot resolve → **ASK USER** before proceeding
+4. **CONSULT** Strategist with full failure context
+5. If high-risk uncertainty remains, **ESCALATE** to Critic for final gate
+6. If Strategist/Critic cannot resolve → **ASK USER** before proceeding
 
 **Never**: Leave code in broken state, continue hoping it'll work, delete failing tests to "pass"
 
@@ -403,11 +401,11 @@ If verification fails:
 3. Report: "Done. Note: found N pre-existing lint errors unrelated to my changes."
 
 ### Before Delivering Final Answer:
-- If Logician is running: **end your response** and wait for the completion notification first.
+- If Strategist/Critic is running: **end your response** and wait for the completion notification first.
 - Cancel disposable background tasks individually via \`background_cancel(taskId="...")\`.
 </Behavior_Instructions>
 
-${logicianSection}
+${strategistCriticSection}
 
 ${taskManagementSection}
 
@@ -480,8 +478,8 @@ export function createBobAgent(
   const categories = availableCategories ?? [];
   const agents = availableAgents ?? [];
 
-  if (isGpt5_4Model(model)) {
-    const prompt = buildGpt54BobPrompt(
+  if (isGptProModel(model)) {
+    const prompt = buildGptProBobPrompt(
       model,
       agents,
       tools,
@@ -491,7 +489,7 @@ export function createBobAgent(
     );
     return {
       description:
-        "Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs. (Bob - HiaiOpenCode)",
+        "Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before research, and delegates strategically via category+skills combinations. Uses researcher for internal/external discovery, strategist for architecture, and critic as high-risk gate. (Bob - HiaiOpenCode)",
       mode: MODE,
       model,
       maxTokens: 64000,
@@ -544,7 +542,7 @@ export function createBobAgent(
   } as AgentConfig["permission"];
   const base = {
     description:
-      "Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before exploration, delegates strategically via category+skills combinations. Uses explore for internal code (parallel-friendly), librarian for external docs. (Bob - HiaiOpenCode)",
+      "Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before research, and delegates strategically via category+skills combinations. Uses researcher for internal/external discovery, strategist for architecture, and critic as high-risk gate. (Bob - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 64000,

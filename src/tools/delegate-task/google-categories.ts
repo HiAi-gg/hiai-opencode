@@ -3,6 +3,10 @@ import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
 const VISUAL_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on VISUAL/UI tasks.
 
+<Routing_Policy>
+Executor contour: coder (deep execution). This category is not for cheap bounded edits.
+</Routing_Policy>
+
 <DESIGN_SYSTEM_WORKFLOW_MANDATE>
 ## YOU ARE A VISUAL ENGINEER. FOLLOW THIS WORKFLOW OR YOUR OUTPUT IS REJECTED.
 
@@ -92,6 +96,10 @@ AVOID: Generic fonts, purple gradients on white, predictable layouts, cookie-cut
 const ARTISTRY_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on HIGHLY CREATIVE / ARTISTIC tasks.
 
+<Routing_Policy>
+Executor contour: coder (deep execution). Reserve for high-effort creative work.
+</Routing_Policy>
+
 Artistic genius mindset:
 - Push far beyond conventional boundaries
 - Explore radical, unconventional directions
@@ -109,14 +117,14 @@ Approach:
 export const GOOGLE_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "visual-engineering",
-    config: { model: "google/gemini-3.1-pro", variant: "high" },
-    description: "Frontend, UI/UX, design, styling, animation",
+    config: {},
+    description: "Frontend and UI systems work with design-system discipline. Uses coder execution contour.",
     promptAppend: VISUAL_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "artistry",
-    config: { model: "google/gemini-3.1-pro", variant: "high" },
-    description: "Complex problem-solving with unconventional, creative approaches - beyond standard patterns",
+    config: {},
+    description: "High-effort creative problem solving beyond standard patterns. Uses coder execution contour.",
     promptAppend: ARTISTRY_CATEGORY_PROMPT_APPEND,
   },
 ]

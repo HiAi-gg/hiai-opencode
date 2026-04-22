@@ -1,7 +1,7 @@
 export { buildDefaultBobJuniorPrompt } from "./default"
 export { buildGptBobJuniorPrompt } from "./gpt"
-export { buildGpt54BobJuniorPrompt } from "./gpt-5-4"
-export { buildGpt53CodexBobJuniorPrompt } from "./gpt-5-3-codex"
+export { buildGptProBobJuniorPrompt } from "./gpt-pro"
+export { buildGptCodexBobJuniorPrompt } from "./gpt-codex"
 export { buildGeminiBobJuniorPrompt } from "./gemini"
 
 export {

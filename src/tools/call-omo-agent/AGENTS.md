@@ -4,20 +4,20 @@
 
 ## OVERVIEW
 
-23 files. The `call_omo_agent` tool — direct invocation of named agents (explore, librarian only). Distinct from `delegate-task`: no category system, no skill loading, no model selection. Fixed agent set, same execution modes (background/sync).
+23 files. The `call_omo_agent` tool — direct invocation of canonical agents (researcher, strategist, coder, critic, multimodal) plus compatibility aliases and custom agents. Distinct from `delegate-task`: no category system, no skill loading, no model selection. Fixed agent set, same execution modes (background/sync).
 
 ## DISTINCTION FROM delegate-task
 
 | Aspect | `call_omo_agent` | `delegate-task` (`task`) |
 |--------|-----------------|--------------------------|
-| Agent selection | Named agent (explore/librarian) | Category or subagent_type |
+| Agent selection | Canonical agent (preferred) or compatibility alias | Category or subagent_type |
 | Skill loading | None | `load_skills[]` supported |
 | Model selection | From agent's fallback chain | From category config |
 | Use case | Quick contextual grep | Full delegation with skills |
 
 ## ALLOWED AGENTS
 
-Only `explore` and `librarian` — enforced via `ALLOWED_AGENTS` constant in `constants.ts`. Case-insensitive validation.
+Canonical built-ins are preferred; compatibility aliases remain accepted via `ALLOWED_AGENTS` in `constants.ts`. Case-insensitive validation.
 
 ## EXECUTION MODES
 

@@ -8,16 +8,15 @@ import { getGptStrategistPrompt } from "./gpt"
 import { getGeminiStrategistPrompt } from "./gemini"
 import { isGptModel, isGeminiModel } from "../types"
 
+import { UNIFIED_STRATEGIST_PROMPT } from "../prompt-library/strategy"
+
 /**
  * Combined Strategist system prompt (Claude-optimized, default).
  * Assembled from modular sections for maintainability.
+ * Canonical model note: Strategist remains separate from Critic;
+ * Critic is the explicit high-accuracy review gate.
  */
-export const PROMETHEUS_SYSTEM_PROMPT = `${PROMETHEUS_IDENTITY_CONSTRAINTS}
-${PROMETHEUS_INTERVIEW_MODE}
-${PROMETHEUS_PLAN_GENERATION}
-${PROMETHEUS_HIGH_ACCURACY_MODE}
-${PROMETHEUS_PLAN_TEMPLATE}
-${PROMETHEUS_BEHAVIORAL_SUMMARY}`
+export const PROMETHEUS_SYSTEM_PROMPT = UNIFIED_STRATEGIST_PROMPT
 
 /**
  * Strategist planner permission configuration.
