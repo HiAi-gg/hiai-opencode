@@ -4,14 +4,25 @@ This file is for autonomous agents or tooling that need to install, configure, v
 
 ## Purpose
 
-`hiai-opencode` is an OpenCode plugin repository. It is not a standalone app. The normal workflow is:
+`hiai-opencode` is an OpenCode plugin repository published as `@hiai-gg/hiai-opencode`. It is not a standalone app. The normal workflow is:
 
-1. build the plugin
-2. register it in OpenCode
+1. install it through OpenCode or build it locally
+2. register `@hiai-gg/hiai-opencode` in OpenCode
 3. provide required environment variables
 4. verify agent and MCP runtime state
 
 ## Install Workflow
+
+### Native OpenCode Install
+
+Add the package name to OpenCode config. OpenCode installs npm plugins automatically at startup.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@hiai-gg/hiai-opencode"]
+}
+```
 
 ### Local Development Build
 
@@ -27,7 +38,7 @@ Add this to OpenCode config:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["hiai-opencode"]
+  "plugin": ["@hiai-gg/hiai-opencode"]
 }
 ```
 

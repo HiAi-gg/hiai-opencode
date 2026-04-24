@@ -47,16 +47,27 @@ Optional, depending on which services you want:
 
 ## Install
 
-From npm, once published:
+Recommended native OpenCode install, once published:
 
-```bash
-npm install hiai-opencode
+Add the npm package to your OpenCode config. OpenCode installs npm plugins automatically at startup.
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@hiai-gg/hiai-opencode"]
+}
 ```
 
-From GitHub:
+Then start OpenCode:
 
 ```bash
-npm install github:HiAi-gg/hiai-opencode
+opencode
+```
+
+Direct npm install is only needed for development or inspection:
+
+```bash
+npm install @hiai-gg/hiai-opencode
 ```
 
 For local development:
@@ -75,7 +86,7 @@ Add this to your OpenCode config:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["hiai-opencode"]
+  "plugin": ["@hiai-gg/hiai-opencode"]
 }
 ```
 
@@ -97,7 +108,7 @@ Register the plugin in OpenCode:
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["hiai-opencode"]
+  "plugin": ["@hiai-gg/hiai-opencode"]
 }
 ```
 
@@ -264,9 +275,24 @@ bun run prompts:measure
 Before publishing:
 
 1. run `bun run build`
-2. verify OpenCode loads the plugin
+2. run `npm pack --dry-run`
 3. verify `debug config`
 4. verify `mcp list`
+
+Publish:
+
+```bash
+npm publish --access public
+```
+
+User install after publish:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": ["@hiai-gg/hiai-opencode"]
+}
+```
 
 ## Documentation Map
 

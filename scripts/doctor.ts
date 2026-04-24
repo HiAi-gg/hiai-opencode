@@ -194,18 +194,18 @@ function checkOpenCodePluginLoad(): Check {
   }
   try {
     const out = execQuiet("opencode debug config 2>&1");
-    if (out.includes("hiai-opencode") || out.includes("HiaiOpenCode")) {
+    if (out.includes("@hiai-gg/hiai-opencode") || out.includes("hiai-opencode") || out.includes("HiaiOpenCode")) {
       return {
         name: "OpenCode plugin load",
         result: "pass",
-        detail: "hiai-opencode plugin detected in OpenCode config",
+        detail: "@hiai-gg/hiai-opencode plugin detected in OpenCode config",
       };
     }
     return {
       name: "OpenCode plugin load",
       result: "warn",
-      detail: "hiai-opencode plugin not detected in 'opencode debug config' output",
-      fix: "Add 'hiai-opencode' to the plugins array in your OpenCode config (~/.config/opencode/opencode.json)",
+      detail: "@hiai-gg/hiai-opencode plugin not detected in 'opencode debug config' output",
+      fix: "Add '@hiai-gg/hiai-opencode' to the plugins array in your OpenCode config; OpenCode installs npm plugins automatically at startup",
     };
   } catch (e: unknown) {
     const errMsg = e instanceof Error ? e.message : String(e);
@@ -213,7 +213,7 @@ function checkOpenCodePluginLoad(): Check {
       name: "OpenCode plugin load",
       result: "warn",
       detail: `could not verify plugin load: ${errMsg.slice(0, 100)}`,
-      fix: "Ensure OpenCode config has 'hiai-opencode' in plugins array",
+      fix: "Ensure OpenCode config has '@hiai-gg/hiai-opencode' in plugins array",
     };
   }
 }

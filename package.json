@@ -1,5 +1,5 @@
 {
-  "name": "hiai-opencode",
+  "name": "@hiai-gg/hiai-opencode",
   "version": "1.0.0",
   "description": "Unified OpenCode plugin — canonical 12-agent model with bundled skills, MCP integrations, LSP, and permissions in one install.",
   "type": "module",

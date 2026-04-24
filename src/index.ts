@@ -17,6 +17,7 @@ import { createFirstMessageVariantGate } from "./shared/first-message-variant"
 import { injectServerAuthIntoClient, log } from "./shared"
 import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config"
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
+import { PLUGIN_NAME } from "./shared/plugin-identity"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
 
@@ -166,7 +167,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   const websearchOpenAIResult = await WebsearchCitedOpenAIPlugin(ctx)
 
   const combinedResult = {
-    name: "hiai-opencode",
+    name: PLUGIN_NAME,
     ...pluginInterface,
 
     // Merge Tools

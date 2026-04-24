@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "hiai-opencode",
+      "name": "@hiai-gg/hiai-opencode",
       "dependencies": {
         "@ast-grep/napi": "^0.37.0",
         "@modelcontextprotocol/sdk": "^1.12.0",

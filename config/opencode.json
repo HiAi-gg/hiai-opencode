@@ -1,4 +1,4 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["hiai-opencode"]
+  "plugin": ["@hiai-gg/hiai-opencode"]
 }
