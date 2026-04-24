@@ -33,6 +33,7 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
   "bob": createBobAgent,
   "coder": createCoderAgent,
   "strategist": createBobAgent, // Strategist runtime config is assembled in agent-config-handler.
+  "designer": createBobAgent,
   "multimodal": createMultimodalLookerAgent,
   "brainstormer": createBobAgent,
   "agent-skills": createBobAgent,

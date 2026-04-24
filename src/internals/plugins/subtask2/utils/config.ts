@@ -1,12 +1,17 @@
 /// <reference types="bun-types" />
 
+import { mkdirSync } from "fs";
 import { dirname, join } from "path";
+import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import type { Subtask2Config } from "../types";
 
 // Re-export from prompts.ts for backwards compatibility
 export { DEFAULT_RETURN_PROMPT as DEFAULT_PROMPT } from "./prompts";
 
-const CONFIG_PATH = `${Bun.env.HOME ?? ""}/.config/opencode/subtask2.jsonc`;
+const CONFIG_PATH = join(
+  getOpenCodeConfigDir({ binary: "opencode" }),
+  "subtask2.jsonc"
+);
 
 /**
  * Cached README content
@@ -79,6 +84,7 @@ export async function loadConfig(): Promise<Subtask2Config> {
     }
   } catch {}
 
+  mkdirSync(dirname(CONFIG_PATH), { recursive: true });
   await Bun.write(
     CONFIG_PATH,
     `{

@@ -55,7 +55,7 @@ const QUICK_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on SMALL / QUICK tasks.
 
 <Routing_Policy>
-Executor contour: sub (cheap bounded execution). Escalate only when blocked by depth or cross-system complexity.
+Executor contour: coder (fast bounded execution). Keep the implementation narrow and escalate only when the task truly becomes deep or cross-system.
 </Routing_Policy>
 
 Efficient execution mindset:
@@ -122,7 +122,7 @@ export const OPENAI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "quick",
     config: {},
-    description: "Cheap bounded execution: single-file fixes, typos, and simple modifications. Uses sub contour.",
+    description: "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses coder execution contour.",
     promptAppend: QUICK_CATEGORY_PROMPT_APPEND,
   },
 ]

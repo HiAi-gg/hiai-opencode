@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { parse } from "jsonc-parser";
 import { HiaiOpencodeConfigSchema } from "./platform-schema.js";
 import { defaultConfig } from "./defaults.js";
-import bundledDefaults from "./default-config.json";
 import {
   LEGACY_AGENT_ALIAS_TO_CANONICAL,
   type CanonicalAgentName,
@@ -17,12 +16,7 @@ const LEGACY_AGENT_ALIAS_LOOKUP = new Map<string, CanonicalAgentName>(
   ]),
 );
 
-const BASE_CONFIG = normalizeAgentAliases(
-  deepMerge(
-    defaultConfig as unknown as Record<string, unknown>,
-    bundledDefaults as unknown as Record<string, unknown>,
-  ) as HiaiOpencodeConfig,
-);
+const BASE_CONFIG = normalizeAgentAliases(defaultConfig);
 
 const CONFIG_FILENAMES = [
   "hiai-opencode.json",

@@ -94,7 +94,7 @@ export function applyToolConfig(params: {
     agentResult: params.agentResult,
     keys: MULTIMODAL_AGENT_KEYS,
     apply: (agent) => {
-      agent.permission = { ...agent.permission, task: "deny", look_at: "deny" };
+      agent.permission = { ...agent.permission, task: "deny", look_at: "allow" };
     },
   });
 

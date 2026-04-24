@@ -24,6 +24,14 @@ import { StartWorkConfigSchema } from "./start-work"
 import { FastApplyConfigSchema } from "./fast-apply"
 import { WebsearchConfigSchema } from "./websearch"
 
+const AuthConfigSchema = z.object({
+  googleSearch: z.string().optional(),
+  openai: z.string().optional(),
+  openrouter: z.string().optional(),
+  stitch: z.string().optional(),
+  firecrawl: z.string().optional(),
+}).optional()
+
 export const HiaiOpenCodeConfigSchema = z.object({
   $schema: z.string().optional(),
   /** Enable new task system (default: false) */
@@ -63,6 +71,7 @@ export const HiaiOpenCodeConfigSchema = z.object({
   notification: NotificationConfigSchema.optional(),
   model_capabilities: ModelCapabilitiesConfigSchema.optional(),
   babysitting: BabysittingConfigSchema.optional(),
+  auth: AuthConfigSchema,
   git_master: GitMasterConfigSchema.default({
     commit_footer: true,
     include_co_authored_by: true,

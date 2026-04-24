@@ -25,14 +25,14 @@ const LEGACY_AGENT_KEY_TO_CANONICAL: Record<string, string> = {
   "plan-consultant": "strategist",
   explore: "researcher",
   librarian: "researcher",
-  logician: "critic",
-  "code-reviewer": "quality-guardian",
-  "systematic-debugger": "quality-guardian",
+  logician: "strategist",
+  "code-reviewer": "critic",
+  "systematic-debugger": "critic",
   "ledger-creator": "platform-manager",
   bootstrapper: "platform-manager",
   "project-initializer": "platform-manager",
   mindmodel: "platform-manager",
-  subagent: "sub",
+  subagent: "coder",
   ui: "multimodal",
 }
 const CANONICAL_AGENT_COMPATIBILITY_KEYS: Record<string, string[]> = {

@@ -12,24 +12,23 @@ import { AGENT_NAME_MAP } from "./migration/agent-names"
  * type selector dropdown. Use ` - ` (space-dash-space) instead of `(...)`.
  */
 export const AGENT_DISPLAY_NAMES: Record<string, string> = {
-  "bob": "Bob - Ultraworker",
-  "coder": "Coder - Deep Agent",
-  "strategist": "Strategist - Plan Builder",
-  "critic": "Critic - Plan Critic",
-  "researcher": "Researcher - Codebase Explorer",
-  "quality-guardian": "Quality Guardian - Verifier",
-  "platform-manager": "Platform Manager - Utility",
-  "guard": "Guard - Plan Executor",
-  "sub": "SubAgent",
-  "ui": "ui",
+  "bob": "Bob",
+  "coder": "Coder",
+  "strategist": "Strategist",
+  "critic": "Critic",
+  "designer": "Designer",
+  "researcher": "Researcher",
+  "quality-guardian": "Quality Guardian",
+  "platform-manager": "Manager",
+  "brainstormer": "Brainstormer",
+  "agent-skills": "Agent Skills",
+  "guard": "Guard",
+  "sub": "Sub",
+  "multimodal": "Vision",
+  "ui": "Vision",
 }
 
-const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {
-  "bob": "\u200B",
-  "coder": "\u200B\u200B",
-  "strategist": "\u200B\u200B\u200B",
-  "guard": "\u200B\u200B\u200B\u200B",
-}
+const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {}
 
 const INVISIBLE_AGENT_CHARACTERS_REGEX = /[\u200B\u200C\u200D\uFEFF]/g
 
@@ -90,16 +89,32 @@ const REVERSE_DISPLAY_NAMES: Record<string, string> = Object.fromEntries(
 // Old configs/sessions may reference these names; resolve them to config keys.
 const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "bob (ultraworker)": "bob",
+  "bob - ultraworker": "bob",
   "coder (deep agent)": "coder",
+  "coder - deep agent": "coder",
   "strategist (plan builder)": "strategist",
+  "strategist - plan builder": "strategist",
   "guard (plan executor)": "guard",
+  "guard - plan executor": "guard",
   "pre-plan (plan consultant)": "strategist",
   "critic (plan critic)": "critic",
+  "critic - plan critic": "critic",
+  "designer": "designer",
   "athena (council)": "strategist",
   "athena-junior (council)": "strategist",
   "researcher (codebase explorer)": "researcher",
+  "researcher - codebase explorer": "researcher",
   "quality guardian (verifier)": "quality-guardian",
+  "quality guardian - verifier": "quality-guardian",
+  "manager": "platform-manager",
   "platform manager (utility)": "platform-manager",
+  "platform manager - utility": "platform-manager",
+  "brainstormer - idea explorer": "brainstormer",
+  "agent skills - skill composer": "agent-skills",
+  "subagent": "sub",
+  "ui": "multimodal",
+  "vision": "multimodal",
+  "ui - multimodal": "multimodal",
 }
 
 function resolveKnownAgentConfigKey(agentName: string): string | undefined {

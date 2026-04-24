@@ -1,5 +1,7 @@
 /// <reference types="bun-types" />
 
+import { join } from "path";
+import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import type { CommandConfig } from "../types";
 import {
   parseFrontmatter,
@@ -13,10 +15,9 @@ import {
 
 export async function buildManifest(): Promise<Record<string, CommandConfig>> {
   const manifest: Record<string, CommandConfig> = {};
-  const home = Bun.env.HOME ?? "";
   const dirs = [
-    `${home}/.config/opencode/command`,
-    `${Bun.env.PWD ?? "."}/.opencode/command`,
+    join(getOpenCodeConfigDir({ binary: "opencode" }), "command"),
+    join(Bun.env.PWD ?? ".", ".opencode", "command"),
   ];
 
   for (const dir of dirs) {

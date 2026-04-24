@@ -29,7 +29,7 @@ export function buildMcpConfig(mcp: Record<string, McpServerConfig>): Record<str
     mempalace: {
       enabled: true,
       type: "local",
-      command: ["bash", resolveBundledMcp("mempalace.sh")].filter(Boolean),
+      command: ["node", resolveBundledMcp("mempalace.mjs"), "--palace", "./.opencode/palace"].filter(Boolean),
       timeout: 60000,
     },
   };

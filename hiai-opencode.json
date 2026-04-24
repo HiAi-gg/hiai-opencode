@@ -1,35 +1,33 @@
 {
-  "_description": "HiaiOpenCode Configuration: Define agent-model mappings and performance categories. Reference environment variables using {env:VAR_NAME} syntax. MODEL FORMATS: 1. OpenRouter (Recommended): 'openrouter/company/model' (e.g., 'openrouter/anthropic/claude-3.5-sonnet'). 2. Direct API calls: 'anthropic/model', 'openai/model', 'google/model', 'zai-coding-plan/model', 'kimi-for-coding/model', 'vercel/model'.",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts.",
   "$schema": "./config/hiai-opencode.schema.json",
   "agents": {
     "bob": { "model": "openrouter/anthropic/claude-3.5-opus" },
-    "guard": { "model": "openrouter/openai/gpt-4o" },
-    "strategist": { "model": "openrouter/z-ai/glm-5.1" },
-    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct" },
     "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
-    "sub": { "model": "openrouter/google/gemini-2.0-flash" },
+    "strategist": { "model": "openrouter/anthropic/claude-3.5-haiku" },
+    "guard": { "model": "openrouter/openai/gpt-4o" },
+    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct" },
+    "designer": { "model": "openrouter/google/gemini-3.1-pro" },
     "researcher": { "model": "openrouter/google/gemini-2.0-flash" },
-    "multimodal": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05" },
-    "quality-guardian": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
-    "platform-manager": { "model": "openrouter/google/gemini-2.0-flash" },
+    "manager": { "model": "openrouter/google/gemini-2.0-flash" },
     "brainstormer": { "model": "openrouter/google/gemini-2.0-flash" },
-    "agent-skills": { "model": "openrouter/google/gemini-2.0-flash" }
+    "vision": { "model": "openrouter/google/gemini-3.1-pro" }
   },
   "categories": {
     "visual-engineering": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
     "artistry": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
     "ultrabrain": { "model": "openrouter/openai/gpt-4o", "variant": "xhigh" },
-    "deep": { "model": "openrouter/openai/o1", "variant": "medium" },
-    "quick": { "model": "openrouter/anthropic/claude-3-5-haiku" },
-    "writing": { "model": "openrouter/kimi/kimi-latest" },
-    "git": { "model": "openrouter/anthropic/claude-3-5-haiku" },
-    "unspecified-low": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "deep": { "model": "openrouter/anthropic/claude-3.5-sonnet", "variant": "medium" },
+    "quick": { "model": "openrouter/google/gemini-2.0-flash" },
+    "writing": { "model": "openrouter/openai/gpt-4o-mini" },
+    "git": { "model": "openrouter/google/gemini-2.0-flash" },
+    "unspecified-low": { "model": "openrouter/anthropic/claude-3.5-haiku" },
     "unspecified-high": { "model": "openrouter/anthropic/claude-3.5-opus", "variant": "max" }
   },
   "auth": {
-    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
-    "openai": "{env:OPENAI_API_KEY}",
     "openrouter": "{env:OPENROUTER_API_KEY}",
+    "openai": "{env:OPENAI_API_KEY}",
+    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
     "stitch": "{env:STITCH_AI_API_KEY}",
     "firecrawl": "{env:FIRECRAWL_API_KEY}",
     "context7": "{env:CONTEXT7_API_KEY}"
@@ -41,13 +39,13 @@
     "purpose": "helper"
   },
   "mcp": {
-    "context7": { "enabled": true },
-    "mempalace": { "enabled": true },
-    "rag": { "enabled": true },
     "playwright": { "enabled": true },
     "stitch": { "enabled": true },
     "sequential-thinking": { "enabled": true },
-    "firecrawl": { "enabled": true }
+    "firecrawl": { "enabled": true },
+    "rag": { "enabled": true },
+    "mempalace": { "enabled": true },
+    "context7": { "enabled": true }
   },
   "lsp": {
     "typescript": { "enabled": true },

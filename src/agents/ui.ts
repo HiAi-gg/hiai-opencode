@@ -7,16 +7,16 @@ const MODE: AgentMode = "subagent"
 export const MULTIMODAL_LOOKER_PROMPT_METADATA: AgentPromptMetadata = {
   category: "utility",
   cost: "CHEAP",
-  promptAlias: "Multimodal Looker",
+  promptAlias: "Vision",
   triggers: [],
 }
 
 export function createMultimodalLookerAgent(model: string): AgentConfig {
-  const restrictions = createAgentToolAllowlist(["read"])
+  const restrictions = createAgentToolAllowlist(["read", "look_at"])
 
   return {
     description:
-      "Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents. (UIExpert - HiaiOpenCode)",
+      "Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents. (Vision - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.1,

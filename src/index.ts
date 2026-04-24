@@ -1,4 +1,6 @@
 import type { Plugin } from "@opencode-ai/plugin"
+import { existsSync } from "node:fs"
+import { join } from "node:path"
 
 import type { HookName } from "./config"
 
@@ -13,6 +15,7 @@ import { loadPluginConfig } from "./plugin-config"
 import { createModelCacheState } from "./plugin-state"
 import { createFirstMessageVariantGate } from "./shared/first-message-variant"
 import { injectServerAuthIntoClient, log } from "./shared"
+import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config"
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
@@ -25,8 +28,40 @@ import WebsearchCitedPlugin, {
   WebsearchCitedGooglePlugin, 
   WebsearchCitedOpenAIPlugin 
 } from "./internals/plugins/websearch-cited/index"
+import { createBuiltinSkills } from "./features/builtin-skills"
+import {
+  materializeBuiltinSkills,
+  materializePluginSkillDirectories,
+} from "./features/builtin-skills/materialize"
 
 let activePluginDispose: PluginDispose | null = null
+
+function configureBundledBunPtyLibrary(): void {
+  if (process.env.BUN_PTY_LIB?.trim()) {
+    return
+  }
+
+  const libraryName =
+    process.platform === "win32"
+      ? "rust_pty.dll"
+      : process.platform === "darwin"
+        ? process.arch === "arm64"
+          ? "librust_pty_arm64.dylib"
+          : "librust_pty.dylib"
+        : process.arch === "arm64"
+          ? "librust_pty_arm64.so"
+          : "librust_pty.so"
+
+  const candidates = [
+    join(import.meta.dirname, "..", "node_modules", "bun-pty", "rust-pty", "target", "release", libraryName),
+    join(import.meta.dirname, "..", "..", "bun-pty", "rust-pty", "target", "release", libraryName),
+  ]
+
+  const resolved = candidates.find((candidate) => existsSync(candidate))
+  if (resolved) {
+    process.env.BUN_PTY_LIB = resolved
+  }
+}
 
 const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   log("[HiaiOpenCodePlugin] ENTRY - plugin loading", {
@@ -41,15 +76,23 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   injectServerAuthIntoClient(ctx.client)
   await activePluginDispose?.()
 
-  const pluginConfig = loadPluginConfig(ctx.directory, ctx)
   const internalConfig: HiaiOpencodeConfig = loadConfig(ctx.directory)
+  const pluginConfig = hydratePluginConfigWithPlatformDefaults(
+    loadPluginConfig(ctx.directory, ctx),
+    internalConfig,
+  )
+
+  materializeBuiltinSkills(
+    createBuiltinSkills({
+      browserProvider: pluginConfig.browser_automation_engine?.provider ?? "playwright",
+      disabledSkills: new Set(pluginConfig.disabled_skills ?? []),
+    }),
+  )
+  materializePluginSkillDirectories(join(import.meta.dirname, ".."))
 
   // Initialize model requirements from configuration
   const { initializeModelRequirements } = await import("./shared/model-requirements");
   initializeModelRequirements(internalConfig);
-
-  const { initializeClaudeAliases } = await import("./features/claude-code-agent-loader/claude-model-mapper");
-  initializeClaudeAliases(internalConfig.claudeModelAliases);
 
   const { initializeModelHeuristics } = await import("./shared/model-capability-heuristics");
   initializeModelHeuristics(internalConfig);
@@ -112,6 +155,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   const subtask2Result = await createSubtask2Plugin(ctx)
   let ptyResult: any = { tool: {}, event: null };
   try {
+    configureBundledBunPtyLibrary()
     const mod = await import("./internals/plugins/pty/plugin");
     ptyResult = await mod.PTYPlugin(ctx);
   } catch (err) {

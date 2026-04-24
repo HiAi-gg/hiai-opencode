@@ -7,6 +7,7 @@ import { AGENT_NAME_MAP } from "../shared/migration";
 import { registerAgentName } from "../features/claude-code-session-state";
 import {
   discoverConfigSourceSkills,
+  deduplicateSkillsByName,
   discoverGlobalAgentsSkills,
   discoverOpencodeGlobalSkills,
   discoverOpencodeProjectSkills,
@@ -30,12 +31,85 @@ import {
   filterProtectedAgentOverrides,
 } from "./agent-override-protection";
 import { buildStrategistAgentConfig } from "./strategist-agent-config-builder";
-import { buildPlanDemoteConfig } from "./plan-model-inheritance";
 
 type AgentConfigRecord = Record<string, Record<string, unknown> | undefined> & {
   build?: Record<string, unknown>;
   plan?: Record<string, unknown>;
 };
+
+const CANONICAL_VISIBLE_AGENT_NAMES = [
+  "Bob",
+  "Coder",
+  "Strategist",
+  "Guard",
+  "Critic",
+  "Designer",
+  "Researcher",
+  "Manager",
+  "Brainstormer",
+  "Vision",
+] as const;
+
+const RUNTIME_AGENT_DESCRIPTIONS: Partial<Record<string, string>> = {
+  "Bob":
+    "Primary orchestrator for end-to-end task execution, delegation, and high-level workflow control. (Bob - HiaiOpenCode)",
+  "Coder":
+    "High-depth executor for multi-file implementation, substantial refactors, and technical delivery. (Coder - HiaiOpenCode)",
+  "Strategist":
+    "Planning and architecture agent for decomposition, sequencing, and decision framing before execution. (Strategist - HiaiOpenCode)",
+  "Guard":
+    "Execution supervisor that routes work, enforces discipline, and keeps delegated flows on track. (Guard - HiaiOpenCode)",
+  "Critic":
+    "High-accuracy review gate for implementation quality, correctness, and plan validation. (Critic - HiaiOpenCode)",
+  "Designer":
+    "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction. (Designer - HiaiOpenCode)",
+  "Researcher":
+    "Specialized in codebase exploration and external documentation research. (Researcher - HiaiOpenCode)",
+  "Manager":
+    "Unified platform management agent for session continuity, project initialization, and mindmodel orchestration. (Manager - HiaiOpenCode)",
+  "Brainstormer":
+    "Idea exploration agent for divergent thinking, option generation, and concept shaping before execution. (Brainstormer - HiaiOpenCode)",
+  "Vision":
+    "Multimodal analysis agent for images, PDFs, diagrams, and other media that require interpretation beyond plain text. (Vision - HiaiOpenCode)",
+  "Agent Skills":
+    "System agent for skill registry, discovery, and capability orchestration. Not for direct user-facing work. (Agent Skills - HiaiOpenCode)",
+  "Sub":
+    "Compatibility wrapper for bounded low-risk execution now folded into Coder's execution contour. (Sub - HiaiOpenCode)",
+  "Quality Guardian":
+    "Compatibility wrapper for review functions now folded into Critic. (Quality Guardian - HiaiOpenCode)",
+};
+
+function forceVisiblePrimaryAgent(agent: unknown, name: string): unknown {
+  if (typeof agent !== "object" || agent === null) {
+    return agent;
+  }
+
+  const base = agent as Record<string, unknown>;
+  return {
+    ...base,
+    name,
+    hidden: false,
+    mode: "primary",
+    ...(typeof base.description === "string" && base.description.trim().length > 0
+      ? {}
+      : { description: RUNTIME_AGENT_DESCRIPTIONS[name] }),
+  };
+}
+
+function forceHiddenCompatibilityAgent(agent: unknown, name: string): unknown {
+  const base =
+    typeof agent === "object" && agent !== null
+      ? (agent as Record<string, unknown>)
+      : {};
+
+  return {
+    ...base,
+    name,
+    hidden: true,
+    mode: "subagent",
+    description: RUNTIME_AGENT_DESCRIPTIONS[name] ?? base.description,
+  };
+}
 
 function getConfiguredDefaultAgent(config: Record<string, unknown>): string | undefined {
   const defaultAgent = config.default_agent;
@@ -91,6 +165,7 @@ export async function applyAgentConfig(params: {
     ...discoveredUserSkills,
     ...discoveredGlobalAgentsSkills,
   ];
+  const deduplicatedDiscoveredSkills = deduplicateSkillsByName(allDiscoveredSkills);
 
   const browserProvider =
     params.pluginConfig.browser_automation_engine?.provider ?? "playwright";
@@ -161,7 +236,7 @@ export async function applyAgentConfig(params: {
     currentModel,
     params.pluginConfig.categories,
     params.pluginConfig.git_master,
-    allDiscoveredSkills,
+    deduplicatedDiscoveredSkills,
     customAgentSummaries,
     browserProvider,
     currentModel,
@@ -184,7 +259,6 @@ export async function applyAgentConfig(params: {
     params.pluginConfig.bob_agent?.default_builder_enabled ?? false;
   const plannerEnabled = params.pluginConfig.bob_agent?.planner_enabled ?? true;
   const replacePlan = params.pluginConfig.bob_agent?.replace_plan ?? true;
-  const shouldDemotePlan = plannerEnabled && replacePlan;
   const configuredDefaultAgent = getConfiguredDefaultAgent(params.config);
 
   if (isBobEnabled && builtinAgents.bob) {
@@ -223,6 +297,10 @@ export async function applyAgentConfig(params: {
       agentConfig["guard"] = builtinAgents.guard;
     }
 
+    if (builtinAgents.designer) {
+      agentConfig["designer"] = builtinAgents.designer;
+    }
+
     agentConfig["sub"] = createBobJuniorAgentWithOverrides(
       params.pluginConfig.agents?.["sub"],
       (builtinAgents.guard as { model?: string } | undefined)?.model,
@@ -248,7 +326,7 @@ export async function applyAgentConfig(params: {
           Object.entries(configAgent)
             .filter(([key]) => {
               if (key === "build") return false;
-              if (key === "plan" && shouldDemotePlan) return false;
+              if (key === "plan") return false;
               if (key in builtinAgents) return false;
               return true;
             })
@@ -264,13 +342,6 @@ export async function applyAgentConfig(params: {
     const migratedBuild = configAgent?.build
       ? migrateAgentConfig(configAgent.build as Record<string, unknown>)
       : {};
-
-    const planDemoteConfig = shouldDemotePlan
-      ? buildPlanDemoteConfig(
-          agentConfig["strategist"] as Record<string, unknown> | undefined,
-          params.pluginConfig.agents?.plan as Record<string, unknown> | undefined,
-        )
-      : undefined;
 
     const protectedBuiltinAgentNames = createProtectedAgentNameSet([
       ...Object.keys(agentConfig),
@@ -322,7 +393,6 @@ export async function applyAgentConfig(params: {
       ...filterDisabledAgents(filteredOpencodeConfigAgents),
       ...filteredConfigAgents,
       build: { ...migratedBuild, mode: "subagent", hidden: true },
-      ...(planDemoteConfig ? { plan: planDemoteConfig } : {}),
     };
   } else {
     const protectedBuiltinAgentNames = createProtectedAgentNameSet(
@@ -359,7 +429,9 @@ export async function applyAgentConfig(params: {
 
     const defaultedConfigAgents = configAgent
       ? Object.fromEntries(
-          Object.entries(configAgent).map(([key, value]) => {
+          Object.entries(configAgent)
+            .filter(([key]) => key !== "plan")
+            .map(([key, value]) => {
             if (!value) return [key, value];
             const migrated = migrateAgentConfig(value as Record<string, unknown>);
             if (!migrated.mode) migrated.mode = "subagent";
@@ -389,6 +461,36 @@ export async function applyAgentConfig(params: {
     params.config.agent = reorderAgentsByPriority(
       params.config.agent as Record<string, unknown>,
     );
+
+    const normalizedAgents = params.config.agent as Record<string, unknown>;
+    for (const name of CANONICAL_VISIBLE_AGENT_NAMES) {
+      if (name in normalizedAgents) {
+        normalizedAgents[name] = forceVisiblePrimaryAgent(
+          normalizedAgents[name],
+          name,
+        );
+      }
+    }
+
+    for (const hiddenName of ["Agent Skills", "Quality Guardian", "Sub"] as const) {
+      if (hiddenName in normalizedAgents) {
+        normalizedAgents[hiddenName] = forceHiddenCompatibilityAgent(
+          normalizedAgents[hiddenName],
+          hiddenName,
+        );
+      }
+    }
+
+    normalizedAgents["build"] = {
+      name: "build",
+      mode: "subagent",
+      hidden: true,
+    };
+    normalizedAgents["plan"] = {
+      name: "plan",
+      mode: "subagent",
+      hidden: true,
+    };
   }
 
   const agentResult = params.config.agent as Record<string, unknown>;

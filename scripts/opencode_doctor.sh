@@ -8,7 +8,7 @@ if [[ -f "$SCRIPT_DIR/opencode_env.sh" ]]; then
 elif [[ -f "$SCRIPT_DIR/scripts/opencode_env.sh" ]]; then
   source "$SCRIPT_DIR/scripts/opencode_env.sh"
 else
-  export ROOT="/mnt/ai_data"
+  export ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 fi
 LOG_DIR="$ROOT/logs/opencode/doctor"
 STAMP="$(date +%Y%m%d_%H%M%S)"
@@ -34,7 +34,9 @@ fi
 echo "wrapper_contract=ok (path: $OPENCODE_PATH)"
 
 echo "[2/7] wrapper contract"
-rg -n "opencode_start.sh|opencode_wrapper.sh" /usr/local/bin/opencode
+if [[ -f "$OPENCODE_PATH" ]]; then
+  rg -n "opencode_start.sh|opencode_wrapper.sh" "$OPENCODE_PATH" || true
+fi
 test -x "$ROOT/opencode_start.sh" && echo "  - opencode_start.sh: ok"
 test -x "$ROOT/scripts/opencode_wrapper.sh" && echo "  - opencode_wrapper.sh: ok"
 test -x "$ROOT/scripts/opencode_sync_skills.sh" && echo "  - opencode_sync_skills.sh: ok"
@@ -47,19 +49,15 @@ node --version
 opencode --version
 echo "runtime=ok"
 
-echo "[4/7] docker socket (host)"
-test -S /var/run/docker.sock && ls -l /var/run/docker.sock && echo "docker_socket=ok"
-docker ps --format '{{.Names}}\t{{.Status}}' | head -5 || true
-
-echo "[5/7] stitch auth state"
+echo "[4/7] stitch auth state"
 if [[ -f "$HOME/.stitch-mcp-auto/config.json" && -f "$HOME/.stitch-mcp-auto/tokens.json" ]]; then
   echo "stitch_auth=ok"
 else
-  echo "stitch_auth=missing (copy from infra/opencode/stitch/)" >&2
+  echo "stitch_auth=missing" >&2
 fi
 
-echo "[6/7] smoke"
+echo "[5/7] smoke"
 bash "$ROOT/scripts/opencode_smoke.sh"
 
-echo "[7/7] result"
+echo "[6/7] result"
 echo "doctor_status=pass"

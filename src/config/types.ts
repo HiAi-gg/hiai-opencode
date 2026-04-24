@@ -14,6 +14,7 @@ export const CANONICAL_AGENT_NAMES = [
   "strategist",
   "critic",
   "coder",
+  "designer",
   "sub",
   "researcher",
   "multimodal",
@@ -57,8 +58,8 @@ export const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<
   librarian: "researcher",
   explore: "researcher",
   ui: "multimodal",
-  "code-reviewer": "quality-guardian",
-  "systematic-debugger": "quality-guardian",
+  "code-reviewer": "critic",
+  "systematic-debugger": "critic",
   mindmodel: "platform-manager",
   "ledger-creator": "platform-manager",
   bootstrapper: "platform-manager",
@@ -162,7 +163,6 @@ export interface HiaiOpencodeConfig {
   agentRequirements?: AgentRequirementMap;
   categories?: Record<string, CategoryConfig>;
   categoryRequirements?: Record<string, ModelRequirement>;
-  claudeModelAliases?: Record<string, string>;
   modelFamilies?: HeuristicModelFamilyDefinition[];
   mcp?: Record<string, McpServerConfig>;
   lsp?: Record<string, LspServerConfig>;

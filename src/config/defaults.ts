@@ -1,31 +1,63 @@
 /**
  * Default config values for hiai-opencode
  */
+import { join } from "node:path";
 import type { HiaiOpencodeConfig } from "./types.js";
+import { MODEL_PRESETS } from "./models.js";
+
+function resolveAssetScript(...segments: string[]): string {
+  return join(import.meta.dirname, "..", "assets", ...segments);
+}
+
+function createNpmPackageCommand(pkg: string, ...args: string[]): string[] {
+  return ["node", resolveAssetScript("runtime", "npm-package-runner.mjs"), pkg, ...args];
+}
+
+function createUpstreamNpxCommand(pkg: string, ...args: string[]): string[] {
+  if (process.platform === "win32") {
+    return ["cmd", "/c", "npx", "-y", pkg, ...args];
+  }
+
+  return ["npx", "-y", pkg, ...args];
+}
 
 export const defaultConfig: HiaiOpencodeConfig = {
   agents: {
-    bob: { model: "hiai-high" },
-    guard: { model: "hiai-mid" },
-    strategist: { model: "hiai-high" },
-    critic: { model: "hiai-high" },
-    coder: { model: "hiai-mid" },
-    sub: { model: "hiai-fast" },
-    researcher: { model: "hiai-fast" },
-    multimodal: { model: "hiai-vision" },
-    "quality-guardian": { model: "hiai-mid" },
-    "platform-manager": { model: "hiai-fast" },
-    brainstormer: { model: "hiai-fast" },
-    "agent-skills": { model: "hiai-fast" },
+    bob: { model: MODEL_PRESETS.high },
+    guard: { model: MODEL_PRESETS.ultrahigh },
+    strategist: { model: MODEL_PRESETS.strategist },
+    critic: { model: MODEL_PRESETS.critic },
+    coder: { model: MODEL_PRESETS.mid },
+    designer: {
+      model: "openrouter/google/gemini-3.1-pro",
+      description: "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction. Best used when the task needs taste, composition, and design judgment rather than plain implementation. (Designer - HiaiOpenCode)",
+    },
+    sub: { model: MODEL_PRESETS.fast },
+    researcher: { model: MODEL_PRESETS.fast },
+    multimodal: { model: MODEL_PRESETS.vision },
+    "quality-guardian": { model: MODEL_PRESETS.mid },
+    "platform-manager": { model: MODEL_PRESETS.fast },
+    brainstormer: { model: MODEL_PRESETS.fast },
+    "agent-skills": { model: MODEL_PRESETS.fast },
   },
   agentRequirements: {},
-  categories: {},
+  categories: {
+    "visual-engineering": { model: MODEL_PRESETS.vision, variant: "high" },
+    artistry: { model: MODEL_PRESETS.vision, variant: "high" },
+    ultrabrain: { model: MODEL_PRESETS.ultrahigh, variant: "xhigh" },
+    deep: { model: MODEL_PRESETS.reasoning, variant: "medium" },
+    quick: { model: MODEL_PRESETS.fast },
+    writing: { model: MODEL_PRESETS.writing },
+    git: { model: MODEL_PRESETS.fast },
+    "unspecified-low": { model: MODEL_PRESETS.mid },
+    "unspecified-high": { model: MODEL_PRESETS.high, variant: "max" },
+  },
   categoryRequirements: {},
 
   mcp: {
     playwright: {
       enabled: true,
-      command: ["npx", "-y", "@playwright/mcp@latest"],
+      command: createNpmPackageCommand("@playwright/mcp@latest"),
       timeout: 600000,
     },
     stitch: {
@@ -37,12 +69,12 @@ export const defaultConfig: HiaiOpencodeConfig = {
     },
     "sequential-thinking": {
       enabled: true,
-      command: ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      command: createUpstreamNpxCommand("@modelcontextprotocol/server-sequential-thinking"),
       timeout: 600000,
     },
     firecrawl: {
       enabled: true,
-      command: ["npx", "-y", "firecrawl-mcp"],
+      command: createUpstreamNpxCommand("firecrawl-mcp"),
       timeout: 600000,
       environment: { FIRECRAWL_API_KEY: "{env:FIRECRAWL_API_KEY}" },
     },
@@ -61,7 +93,7 @@ export const defaultConfig: HiaiOpencodeConfig = {
     },
     mempalace: {
       enabled: true,
-      command: ["python", "-m", "mempalace.mcp_server", "--palace", "./.opencode/palace"],
+      command: ["node", resolveAssetScript("mcp", "mempalace.mjs"), "--palace", "./.opencode/palace"],
       timeout: 600000,
     },
   },
@@ -76,11 +108,11 @@ export const defaultConfig: HiaiOpencodeConfig = {
       extensions: [".svelte"],
     },
     eslint: {
-      command: ["vscode-eslint-language-server", "--stdio"],
+      command: createNpmPackageCommand("eslint-lsp", "--stdio"),
       extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".svelte"],
     },
     bash: {
-      command: ["bash-language-server", "start"],
+      command: createNpmPackageCommand("bash-language-server", "start"),
       extensions: [".sh", ".bash"],
     },
     pyright: {

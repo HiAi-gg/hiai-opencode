@@ -117,7 +117,7 @@ export function createCoderAgent(
 
   return {
     description:
-      "High-depth executor - autonomous software engineering work with `gpt-pro`, `gpt-codex`, or `gpt`. Uses researcher for context gathering, escalates architecture/review gates via strategist/critic, and preserves a strict split where bounded low-risk edits belong to sub. (Coder - HiaiOpenCode)",
+      "High-depth executor for autonomous software engineering work with `gpt-pro`, `gpt-codex`, or `gpt`. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic, and also owns the bounded execution contour used by quick, writing, and unspecified-low task categories. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,
@@ -154,7 +154,7 @@ export const coderPromptMetadata: AgentPromptMetadata = {
   ],
   avoidWhen: [
     "Simple single-step tasks",
-    "Bounded low-risk edits that fit the sub contour",
+    "Tasks where another specialist is a better fit than coder execution",
     "Tasks requiring user confirmation at each step",
     "When orchestration across multiple agents is needed (use Guard)",
   ],

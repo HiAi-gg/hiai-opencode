@@ -54,6 +54,14 @@ SubAgent is spawned automatically when you specify a category. Pick the appropri
     }
   }
 
+  if (requestedCanonicalAgentKey === "agent-skills") {
+    return {
+      agentToUse: "",
+      categoryModel: undefined,
+      error: `Cannot use subagent_type="${args.subagent_type}" directly. Agent Skills is a hidden system agent for skill registry and discovery, not a normal task executor.`,
+    }
+  }
+
   const canonicalParentAgent = parentAgent ? resolveCanonicalDelegateAgentKey(parentAgent) : undefined
   if (isPlanFamily(requestedCanonicalAgentKey) && isPlanFamily(canonicalParentAgent)) {
     return {

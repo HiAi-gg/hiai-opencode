@@ -96,8 +96,14 @@ export function createCallOmoAgent(
         return "- coder: Canonical agent for implementation work";
       case "critic":
         return "- critic: Canonical agent for review and verification";
+      case "designer":
+        return "- designer: Canonical agent for visual direction, interface design, and creative execution";
+      case "brainstormer":
+        return "- brainstormer: Canonical agent for ideation, option generation, and concept exploration";
+      case "platform-manager":
+        return "- platform-manager: Canonical agent for project setup, continuity, and platform management tasks";
       case "multimodal":
-        return "- multimodal: Canonical agent for visual and multimodal tasks";
+        return "- multimodal: Canonical agent for visual and multimodal tasks (runtime display name: Vision)";
     }
   }).join("\n");
 

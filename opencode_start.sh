@@ -8,8 +8,7 @@ if [[ -f "$SCRIPT_DIR/scripts/opencode_env.sh" ]]; then
 elif [[ -f "$SCRIPT_DIR/opencode_env.sh" ]]; then
   source "$SCRIPT_DIR/opencode_env.sh"
 else
-  # Fallback to hardcoded if env script not found
-  export ROOT="/mnt/ai_data"
+  export ROOT="$(dirname "$SCRIPT_DIR")"
   export SCRIPTS="$ROOT/scripts"
   export INFRA="$ROOT/infra"
 fi

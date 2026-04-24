@@ -8,19 +8,18 @@ if [[ -f "$SCRIPT_DIR/opencode_env.sh" ]]; then
 elif [[ -f "$SCRIPT_DIR/scripts/opencode_env.sh" ]]; then
   source "$SCRIPT_DIR/scripts/opencode_env.sh"
 else
-  export ROOT="/mnt/ai_data"
+  export ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
   export SCRIPTS="$ROOT/scripts"
   export INFRA="$ROOT/infra"
 fi
 EXPECTED_MCP=(
   playwright
   stitch
+  sequential-thinking
+  firecrawl
   rag
   mempalace
   context7
-  docker
-  sequential-thinking
-  firecrawl
 )
 
 bash "$ROOT/scripts/opencode_sync_skills.sh"
@@ -81,7 +80,7 @@ rm -f "$MCP_LOG"
 echo "[5/5] rag e2e call"
 python3 - <<'PY'
 import json, subprocess, os
-root = os.environ.get("ROOT", "/mnt/ai_data")
+root = os.environ["ROOT"]
 p = subprocess.Popen(
     ['node', os.path.join(root, 'scripts/opencode_rag_mcp.mjs')],
     stdin=subprocess.PIPE,

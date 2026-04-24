@@ -6,6 +6,11 @@ export function getClaudeConfigDir(): string {
   if (envConfigDir) {
     return envConfigDir
   }
+
+  const opencodeConfigDir = process.env.OPENCODE_CONFIG_DIR
+  if (opencodeConfigDir) {
+    return opencodeConfigDir
+  }
   
   return join(homedir(), ".claude")
 }

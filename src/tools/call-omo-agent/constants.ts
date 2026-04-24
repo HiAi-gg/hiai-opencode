@@ -3,6 +3,9 @@ export const PRIMARY_ALLOWED_AGENTS = [
   "strategist",
   "coder",
   "critic",
+  "designer",
+  "brainstormer",
+  "platform-manager",
   "multimodal",
 ] as const
 

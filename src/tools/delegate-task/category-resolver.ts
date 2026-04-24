@@ -4,9 +4,7 @@ import type { ExecutorContext } from "./executor-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { mergeCategories } from "../../shared/merge-categories"
 import {
-  BOB_JUNIOR_AGENT,
   CODER_AGENT_CONFIG_KEY,
-  SUB_AGENT_CONFIG_KEY,
 } from "./sub-agent"
 import { resolveCategoryConfig } from "./categories"
 import { parseModelString } from "./model-string-parser"
@@ -43,39 +41,12 @@ export interface CategoryResolutionResult {
   error?: string
 }
 
-const SUB_EXECUTOR_CATEGORIES = new Set(["quick", "writing", "unspecified-low"])
-const CODER_EXECUTOR_CATEGORIES = new Set([
-  "deep",
-  "ultrabrain",
-  "visual-engineering",
-  "artistry",
-  "unspecified-high",
-])
-
 function resolveCategoryExecutorAgentKey(
-  categoryName: string,
+  _categoryName: string,
   config: CategoryConfig,
-): typeof SUB_AGENT_CONFIG_KEY | typeof CODER_AGENT_CONFIG_KEY {
-  const normalizedCategoryName = categoryName.trim().toLowerCase()
-  if (SUB_EXECUTOR_CATEGORIES.has(normalizedCategoryName)) {
-    return SUB_AGENT_CONFIG_KEY
-  }
-  if (CODER_EXECUTOR_CATEGORIES.has(normalizedCategoryName)) {
-    return CODER_AGENT_CONFIG_KEY
-  }
-
-  const reasoningEffort = config.reasoningEffort?.toLowerCase()
-  if (reasoningEffort && ["medium", "high", "xhigh"].includes(reasoningEffort)) {
-    return CODER_AGENT_CONFIG_KEY
-  }
-  if (config.thinking?.type === "enabled") {
-    return CODER_AGENT_CONFIG_KEY
-  }
-  if (typeof config.max_prompt_tokens === "number" && config.max_prompt_tokens >= 12000) {
-    return CODER_AGENT_CONFIG_KEY
-  }
-
-  return SUB_AGENT_CONFIG_KEY
+): typeof CODER_AGENT_CONFIG_KEY {
+  void config
+  return CODER_AGENT_CONFIG_KEY
 }
 
 export async function resolveCategoryExecution(
@@ -84,7 +55,7 @@ export async function resolveCategoryExecution(
   inheritedModel: string | undefined,
   systemDefaultModel: string | undefined
 ): Promise<CategoryResolutionResult> {
-  const { client, userCategories, bobJuniorModel, agentOverrides } = executorCtx
+  const { client, userCategories, agentOverrides } = executorCtx
 
   const categoryName = args.category!
   const enabledCategories = mergeCategories(userCategories)
@@ -149,9 +120,7 @@ Available categories: ${allCategoryNames}`,
   }
 
   const categoryExecutorAgentKey = resolveCategoryExecutorAgentKey(categoryName, resolved.config)
-  const categoryExecutorAgentName = categoryExecutorAgentKey === SUB_AGENT_CONFIG_KEY
-    ? BOB_JUNIOR_AGENT
-    : getAgentDisplayName(CODER_AGENT_CONFIG_KEY)
+  const categoryExecutorAgentName = getAgentDisplayName(CODER_AGENT_CONFIG_KEY)
   const categoryExecutorOverride = agentOverrides?.[categoryExecutorAgentKey as keyof typeof agentOverrides]
     ?? (agentOverrides
       ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === categoryExecutorAgentKey)?.[1]
@@ -168,14 +137,12 @@ Available categories: ${allCategoryNames}`,
   let fallbackEntry: FallbackEntry | undefined
   let matchedFallback = false
 
-  const overrideModel = categoryExecutorAgentKey === SUB_AGENT_CONFIG_KEY
-    ? (bobJuniorModel ?? categoryExecutorOverride?.model)
-    : categoryExecutorOverride?.model
+  const overrideModel = categoryExecutorOverride?.model
   const explicitCategoryModel = userCategories?.[args.category!]?.model
 
   if (!requirement) {
     // Precedence: explicit category model > routed executor override model > category resolved model.
-    // This preserves per-category overrides while allowing separate defaults for sub and coder.
+    // This preserves per-category overrides while allowing category routing to stay on coder.
     actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model
     if (actualModel) {
       modelInfo = explicitCategoryModel || overrideModel

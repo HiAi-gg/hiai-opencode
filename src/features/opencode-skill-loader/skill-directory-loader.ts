@@ -4,6 +4,11 @@ import { resolveSymlinkAsync, isMarkdownFile } from "../../shared/file-utils"
 import type { LoadedSkill, SkillScope } from "./types"
 import { inferSkillNameFromFileName, loadSkillFromPath } from "./loaded-skill-from-path"
 
+function shouldIgnoreMarkdownEntry(name: string): boolean {
+  const lowerName = name.toLowerCase()
+  return lowerName === "readme.md"
+}
+
 export async function loadSkillsFromDir(options: {
   skillsDir: string
   scope: SkillScope
@@ -26,7 +31,8 @@ export async function loadSkillsFromDir(options: {
       !entry.name.startsWith(".") &&
       !entry.isDirectory() &&
       !entry.isSymbolicLink() &&
-      isMarkdownFile(entry)
+      isMarkdownFile(entry) &&
+      !shouldIgnoreMarkdownEntry(entry.name)
   )
 
   for (const entry of directories) {

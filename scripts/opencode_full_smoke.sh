@@ -3,7 +3,16 @@
 # Covers: binary, config, skills, LSP, plugins, MCP (all 8), e2e calls, stitch token, serve API
 set -euo pipefail
 
-ROOT="/mnt/ai_data"
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+if [[ -f "$SCRIPT_DIR/opencode_env.sh" ]]; then
+  source "$SCRIPT_DIR/opencode_env.sh"
+elif [[ -f "$SCRIPT_DIR/scripts/opencode_env.sh" ]]; then
+  source "$SCRIPT_DIR/scripts/opencode_env.sh"
+else
+  ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
+  export ROOT
+  export INFRA="$ROOT/infra"
+fi
 OPENCODE_BIN="$(command -v opencode 2>/dev/null || echo '')"
 PASS=0; FAIL=0; WARN=0
 LOG_DIR="$ROOT/logs/opencode/smoke"
@@ -127,7 +136,6 @@ EXPECTED_PLUGINS=(
   micode
   "@openspoon/subtask2"
   "oh-my-opencode"
-  "@tarquinen/opencode-dcp"
   "opencode-fast-apply"
   "opencode-pty"
   "@zenobius/opencode-skillful"
@@ -163,12 +171,11 @@ section "6/9  MCP SERVERS"
 EXPECTED_MCP=(
   playwright
   stitch
+  sequential-thinking
+  firecrawl
   rag
   mempalace
   context7
-  docker
-  sequential-thinking
-  firecrawl
 )
 
 MCP_LOG="$(mktemp)"
@@ -192,7 +199,7 @@ section "7/9  MCP E2E CALLS"
 
 # RAG e2e
 python3 - <<'PY'
-import json, subprocess, sys
+import json, subprocess, sys, os
 msgs = [
     {'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2024-11-05','capabilities':{},'clientInfo':{'name':'smoke','version':'1.0'}}},
     {'jsonrpc':'2.0','method':'notifications/initialized','params':{}},
@@ -203,7 +210,7 @@ for m in msgs:
     body = json.dumps(m).encode()
     wire += b'Content-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body
 
-p = subprocess.Popen(['node','/mnt/ai_data/scripts/opencode_rag_mcp.mjs'],
+p = subprocess.Popen(['node', os.path.join(os.environ['ROOT'], 'scripts', 'opencode_rag_mcp.mjs')],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 out, _ = p.communicate(wire, timeout=20)
 txt = out.decode(errors='ignore')
@@ -227,9 +234,10 @@ wire = b''
 for m in msgs:
     wire += json.dumps(m).encode() + b'\n'
 
-env = {**os.environ, 'MEMPALACE_PALACE_PATH': '/mnt/ai_data/cache/mempalace/opencode'}
+root = os.environ['ROOT']
+env = {**os.environ, 'MEMPALACE_PALACE_PATH': os.path.join(root, 'cache', 'mempalace', 'opencode')}
 p = subprocess.Popen(
-    ['bash', '/mnt/ai_data/scripts/opencode_mempalace_mcp.sh'],
+    ['node', os.path.join(root, 'assets', 'mcp', 'mempalace.mjs')],
     stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
 out, _ = p.communicate(wire, timeout=15)
 txt = out.decode(errors='ignore')
@@ -261,8 +269,8 @@ PY
 # ── 8. STITCH TOKEN ────────────────────────────────────────────────────────────
 section "8/9  STITCH TOKEN"
 python3 - <<'PY'
-import json, time, sys
-tokens_path = '/home/vlgalib/.stitch-mcp-auto/tokens.json'
+import json, time, sys, os
+tokens_path = os.path.expanduser('~/.stitch-mcp-auto/tokens.json')
 try:
     with open(tokens_path) as f:
         d = json.load(f)

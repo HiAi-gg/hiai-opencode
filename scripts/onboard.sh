@@ -20,20 +20,15 @@ if ! command -v bun &> /dev/null; then
 fi
 echo "==> [onboard] Bun version: $(bun --version)"
 
-# 2. Python 3.12 + Venv
-if ! command -v python3 &> /dev/null; then
-    echo "==> [onboard] Error: python3 not found. Please install Python 3.12+."
-    exit 1
+# 2. Optional Python / uv for MemPalace
+if command -v uv &> /dev/null; then
+    echo "==> [onboard] Found uv for upstream MemPalace support."
+elif command -v python3 &> /dev/null; then
+    echo "==> [onboard] Python detected. Install MemPalace separately if you want MCP memory support:"
+    echo "    python3 -m pip install mempalace"
+else
+    echo "==> [onboard] Python/uv not found. MemPalace MCP will stay unavailable until one is installed."
 fi
-
-if [[ ! -d "$VENV" ]]; then
-    echo "==> [onboard] Creating Python virtual environment in $VENV..."
-    python3 -m venv "$VENV"
-fi
-
-echo "==> [onboard] Installing Python dependencies (mempalace)..."
-"$VENV/bin/pip" install --upgrade pip
-"$VENV/bin/pip" install mempalace mcp-server-git # Adding some useful ones
 
 # 3. Node.js (for LSPs)
 if ! command -v node &> /dev/null; then
@@ -68,16 +63,6 @@ echo "==> [onboard] Installing hiai-opencode dependencies..."
 # We are already in ROOT from line 9
 bun install
 bun run build
-
-# 6. Path Dynamicization (Fix hardcoded /mnt/ai_data)
-if [[ "$ROOT" != "/mnt/ai_data" ]]; then
-    echo "==> [onboard] Fixing hardcoded paths from /mnt/ai_data to $ROOT..."
-    # Find all files with /mnt/ai_data and replace them, excluding node_modules and .git
-    grep -rIl "/mnt/ai_data" . --exclude-dir={node_modules,.git,dist} | while read -r file; do
-        echo "    Updating $file"
-        sed -i "s|/mnt/ai_data|$ROOT|g" "$file"
-    done
-fi
 
 echo "==> [onboard] Syncing skills..."
 bash scripts/opencode_sync_skills.sh || true

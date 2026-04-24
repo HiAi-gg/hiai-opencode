@@ -123,7 +123,7 @@ FOR EVERY TASK, YOU MUST RECOMMEND:
 1. Which CATEGORY to use for delegation
 2. Which SKILLS to load for the delegated agent
 3. Which EXECUTOR contour is expected from that category:
-   - quick/writing/unspecified-low -> sub (cheap bounded execution)
+   - quick/writing/unspecified-low -> coder (fast bounded execution)
    - deep/ultrabrain/visual-engineering/artistry/unspecified-high -> coder (deep execution)
    - use subagent_type="critic" explicitly for review-gate passes
 `

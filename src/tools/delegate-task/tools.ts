@@ -1,7 +1,6 @@
 import { tool, type ToolDefinition } from "@opencode-ai/plugin"
 import type { DelegateTaskArgs, DelegatedModelConfig, ToolContextWithMetadata, DelegateTaskToolOptions } from "./types"
 import { CATEGORY_DESCRIPTIONS } from "./constants"
-import { BOB_JUNIOR_AGENT } from "./sub-agent"
 import { mergeCategories } from "../../shared/merge-categories"
 import { log } from "../../shared/logger"
 import { buildSystemContent } from "./prompt-builder"
@@ -82,7 +81,7 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
   - category: Use predefined category → routes to the appropriate canonical executor
     Available categories:
   ${categoryList}
-  - subagent_type: Use a specific canonical agent directly (\`researcher\`, \`strategist\`, \`critic\`, \`multimodal\`, etc.)
+  - subagent_type: Use a specific canonical agent directly (\`researcher\`, \`strategist\`, \`critic\`, \`multimodal\`, \`designer\`, \`brainstormer\`, \`platform-manager\`, etc.)
   - run_in_background: REQUIRED. true=async (returns task_id), false=sync (waits). Use background=true primarily for parallel researcher work or other non-blocking delegated tasks.
   - session_id: Existing Task session to continue (from previous task output). Continues agent with FULL CONTEXT PRESERVED - saves tokens, maintains continuity.
   - command: The command that triggered this task (optional, for slash command tracking).
@@ -110,13 +109,13 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
       const ctx = toolContext as ToolContextWithMetadata
 
       if (args.category) {
-        if (args.subagent_type && args.subagent_type !== BOB_JUNIOR_AGENT) {
-          log("[task] category provided - overriding subagent_type to sub", {
+        if (args.subagent_type) {
+          log("[task] category provided - ignoring explicit subagent_type", {
             category: args.category,
             subagent_type: args.subagent_type,
           })
         }
-        args.subagent_type = BOB_JUNIOR_AGENT
+        args.subagent_type = undefined
       }
       // Auto-generate description from prompt when missing or empty
       if (!args.description || typeof args.description !== "string" || args.description.trim() === "") {

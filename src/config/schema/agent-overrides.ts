@@ -64,6 +64,7 @@ export const AgentOverridesSchema = z.object({
   "coder": AgentOverrideConfigSchema.extend({
     allow_non_gpt_model: z.boolean().optional(),
   }).optional(),
+  "designer": AgentOverrideConfigSchema.optional(),
   "sub": AgentOverrideConfigSchema.optional(),
   researcher: AgentOverrideConfigSchema.optional(),
   "multimodal": AgentOverrideConfigSchema.optional(),

@@ -1,5 +1,8 @@
 /// <reference types="bun-types" />
 
+import { join } from "path";
+import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
+
 /**
  * Commands: File loading
  */
@@ -7,10 +10,9 @@
 export async function loadCommandFile(
   name: string
 ): Promise<{ content: string; path: string } | null> {
-  const home = Bun.env.HOME ?? "";
   const dirs = [
-    `${home}/.config/opencode/command`,
-    `${Bun.env.PWD ?? "."}/.opencode/command`,
+    join(getOpenCodeConfigDir({ binary: "opencode" }), "command"),
+    join(Bun.env.PWD ?? ".", ".opencode", "command"),
   ];
 
   for (const dir of dirs) {

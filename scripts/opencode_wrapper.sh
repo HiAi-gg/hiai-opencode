@@ -8,7 +8,7 @@ if [[ -f "$SCRIPT_DIR/opencode_env.sh" ]]; then
 elif [[ -f "$SCRIPT_DIR/scripts/opencode_env.sh" ]]; then
   source "$SCRIPT_DIR/scripts/opencode_env.sh"
 else
-  export ROOT="/mnt/ai_data"
+  export ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 fi
 
 LOCK_DIR="$ROOT/logs/opencode/locks"

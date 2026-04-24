@@ -4,7 +4,7 @@
 
 ## OVERVIEW
 
-23 files. The `call_omo_agent` tool — direct invocation of canonical agents (researcher, strategist, coder, critic, multimodal) plus compatibility aliases and custom agents. Distinct from `delegate-task`: no category system, no skill loading, no model selection. Fixed agent set, same execution modes (background/sync).
+23 files. The `call_omo_agent` tool — direct invocation of canonical specialist agents (`researcher`, `strategist`, `coder`, `critic`, `designer`, `brainstormer`, `platform-manager`, `multimodal`) plus compatibility aliases and custom agents. Distinct from `delegate-task`: no category system, no skill loading, no model selection. Fixed agent set, same execution modes (background/sync).
 
 ## DISTINCTION FROM delegate-task
 

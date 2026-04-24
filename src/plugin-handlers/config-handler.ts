@@ -8,6 +8,8 @@ import { applyMcpConfig } from "./mcp-config-handler";
 import { applyProviderConfig } from "./provider-config-handler";
 import { loadPluginComponents } from "./plugin-components-loader";
 import { applyToolConfig } from "./tool-config-handler";
+import { buildLspConfig } from "../lsp";
+import { getPlatformLspDefaults } from "../shared/runtime-plugin-config";
 import { clearFormatterCache } from "../tools/hashline-edit/formatter-trigger"
 
 export { resolveCategoryConfig } from "./category-config-resolver";
@@ -40,6 +42,13 @@ export function createConfigHandler(deps: ConfigHandlerDeps) {
     applyToolConfig({ config, pluginConfig, agentResult });
     await applyMcpConfig({ config, pluginConfig, pluginComponents });
     await applyCommandConfig({ config, pluginConfig, ctx, pluginComponents });
+    const lspDefaults = getPlatformLspDefaults(pluginConfig);
+    if (Object.keys(lspDefaults).length > 0) {
+      config.lsp = {
+        ...((config.lsp as Record<string, unknown> | undefined) ?? {}),
+        ...buildLspConfig(lspDefaults),
+      };
+    }
 
     config.formatter = formatterConfig;
 

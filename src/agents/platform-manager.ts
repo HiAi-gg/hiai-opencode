@@ -15,7 +15,7 @@ export function createPlatformManagerAgent(model: string): AgentConfig {
 
   return {
     description:
-      "Unified platform management agent for session continuity, project initialization, and mindmodel orchestration. (Platform Manager - HiaiOpenCode)",
+      "Unified platform management agent for session continuity, project initialization, and mindmodel orchestration. (Manager - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.2,
@@ -29,7 +29,7 @@ createPlatformManagerAgent.mode = MODE;
 export const platformManagerPromptMetadata: AgentPromptMetadata = {
   category: "utility",
   cost: "CHEAP",
-  promptAlias: "Platform Manager",
+  promptAlias: "Manager",
   triggers: [
     {
       domain: "Session management",

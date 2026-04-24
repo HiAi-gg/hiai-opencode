@@ -4,7 +4,7 @@ const UNSPECIFIED_LOW_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on tasks that don't fit specific categories but require moderate effort.
 
 <Routing_Policy>
-Executor contour: sub (cheap bounded execution). Escalate only if depth exceeds bounded scope.
+Executor contour: coder (fast bounded execution). Keep the scope bounded unless the task clearly requires deep or cross-system work.
 </Routing_Policy>
 
 <Selection_Gate>
@@ -50,7 +50,7 @@ export const ANTHROPIC_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "unspecified-low",
     config: {},
-    description: "Unclassifiable moderate tasks with bounded scope. Uses sub execution contour.",
+    description: "Unclassifiable moderate tasks with bounded scope. Uses coder execution contour.",
     promptAppend: UNSPECIFIED_LOW_CATEGORY_PROMPT_APPEND,
   },
   {

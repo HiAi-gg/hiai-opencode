@@ -4,7 +4,7 @@ const WRITING_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on WRITING / PROSE tasks.
 
 <Routing_Policy>
-Executor contour: sub (cheap bounded execution) for focused docs and prose updates.
+Executor contour: coder (fast bounded execution) for focused docs and prose updates.
 </Routing_Policy>
 
 Wordsmith mindset:
@@ -34,7 +34,7 @@ export const KIMI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "writing",
     config: {},
-    description: "Documentation and prose tasks with bounded scope. Uses sub execution contour.",
+    description: "Documentation and prose tasks with bounded scope. Uses coder execution contour.",
     promptAppend: WRITING_CATEGORY_PROMPT_APPEND,
   },
 ]

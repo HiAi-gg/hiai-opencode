@@ -59,6 +59,9 @@ coverage/
 tmp/
 temp/
 .cache/
+.npm-cache/
+.runtime-cache/
+.tmp/
 
 # Large binary files (models, datasets, backups)
 models/

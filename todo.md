@@ -1044,3 +1044,649 @@ The `hiai-opencode` plugin (Bun-first, `/mnt/ai_data/hiai-opencode/`) replaces t
 - [x] **FIX-4:** `bun run build` passes (1445 modules, 5.1 MB)
 - [x] **FIX-5:** Bundle copied to `~/.cache/opencode/packages/hiai-opencode@latest/dist/`
 
+---
+
+# Open Source Readiness Backlog — Subagent Task Pack
+
+Created: 2026-04-24  
+Purpose: convert the current local/dev-focused plugin into a clean GitHub-ready OpenCode plugin that a new user or another agent can install, configure, verify, and modify without private context.
+
+Current baseline:
+
+- Root docs are now `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `LICENSE.md`, and this internal `todo.md`
+- `docs/` content was removed; an empty local folder may remain but should not be published
+- Visible agents should be: `Bob`, `Coder`, `Strategist`, `Guard`, `Critic`, `Designer`, `Researcher`, `Manager`, `Brainstormer`, `Vision`
+- Hidden/system compatibility agents should be: `Agent Skills`, `Sub`, `build`, `plan`
+- Category-based task execution should route through `Coder`
+- `quick`, `writing`, and `unspecified-low` should use Coder's fast bounded contour
+- `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` should use Coder's deep contour
+- `Agent Skills` must remain hidden and non-callable for normal user tasks
+
+Global validation gate for every task below:
+
+1. `bun run typecheck`
+2. `bun run build`
+3. No root docs contain Cyrillic text
+4. No publishable file contains local-private paths such as `C:\hiai`, `/mnt/ai_data`, or `.claude`
+5. Do not revert unrelated dirty worktree changes
+
+---
+
+## OSS-T1 — Build One `doctor` Command
+
+Owner: subagent  
+Category: `deep`  
+Suggested skills: `git-master`, `review-work`  
+Risk: medium  
+Primary files:
+
+- `package.json`
+- `scripts/opencode_doctor.sh`
+- `scripts/opencode_smoke.sh`
+- `scripts/opencode_full_smoke.sh`
+- new script if needed, preferably under `scripts/`
+- `README.md`
+- `AGENTS.md`
+
+Goal:
+
+Create one clear diagnostic entrypoint for open-source users. The command should tell a fresh user whether their local environment can run the plugin.
+
+Expected command shape:
+
+```bash
+bun run doctor
+```
+
+Required checks:
+
+- Node.js version is available and `>=18`
+- Bun version is available and `>=1.1.0`
+- OpenCode binary is available
+- plugin package builds
+- `opencode debug config` can load the plugin when available
+- expected visible agent names are present when OpenCode debug output is available
+- hidden/system agents are not visible as primary agents when OpenCode debug output is available
+- expected MCP names are registered in config
+- required env vars are detected or reported as missing by service
+- LSP helper commands are available or clearly reported as optional/missing
+
+Output contract:
+
+- Print a compact pass/warn/fail table
+- Exit `0` when required checks pass and only optional services are missing
+- Exit non-zero when build, OpenCode loading, or core agent registration fails
+- For every warning, print the exact env var or install step the user should fix
+
+Acceptance criteria:
+
+- `bun run doctor` exists in `package.json`
+- Running it from repo root does not require private machine paths
+- It degrades gracefully when OpenCode is not installed
+- It does not mutate user config or install global packages
+- It documents `FIRECRAWL_API_KEY`, `STITCH_AI_API_KEY`, `CONTEXT7_API_KEY`, `OPENROUTER_API_KEY`, Python/uv for MemPalace, and RAG endpoint requirements
+
+Verification:
+
+```bash
+bun run doctor
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T2 — Add Agent Routing Tests
+
+Owner: subagent  
+Category: `deep`  
+Suggested skills: `review-work`  
+Risk: high  
+Primary files:
+
+- `src/tools/delegate-task/category-resolver.ts`
+- `src/tools/delegate-task/subagent-resolver.ts`
+- `src/tools/delegate-task/sub-agent.ts`
+- `src/tools/call-omo-agent/constants.ts`
+- `src/features/claude-code-session-state/state.ts`
+- test files or a new lightweight test harness
+- `package.json`
+
+Goal:
+
+Add automated tests that lock the current routing rules so agent visibility and dispatch do not regress again.
+
+Required test cases:
+
+- `quick` category resolves to `Coder`
+- `writing` category resolves to `Coder`
+- `unspecified-low` category resolves to `Coder`
+- `deep` category resolves to `Coder`
+- `ultrabrain` category resolves to `Coder`
+- `visual-engineering` category resolves to `Coder`
+- `artistry` category resolves to `Coder`
+- `unspecified-high` category resolves to `Coder`
+- direct `subagent_type="agent-skills"` is rejected
+- direct `subagent_type="sub"` is rejected or migrated according to the current compatibility rule
+- `quality-guardian`, `code-reviewer`, and `systematic-debugger` resolve to `Critic`
+- `sub` and `subagent` aliases do not create a visible primary `Sub`
+- `designer`, `brainstormer`, `platform-manager`, and `multimodal` are allowed by `call_omo_agent`
+- `bob` and `guard` are not treated as ordinary direct specialist calls unless the code intentionally allows them
+
+Implementation notes:
+
+- Prefer direct unit tests around pure resolver functions where possible
+- If a function is hard to test because it reaches the OpenCode SDK, extract a small pure helper rather than mocking the whole runtime
+- Keep tests fast enough for local prepublish use
+
+Acceptance criteria:
+
+- A new script exists, for example `bun run test:routing`
+- Routing tests run without a live OpenCode TUI
+- Tests fail if category routing returns `Sub`
+- Tests fail if `Agent Skills` becomes callable as a normal executor
+
+Verification:
+
+```bash
+bun run test:routing
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T3 — Clean Public Agent Key Model
+
+Owner: subagent  
+Category: `deep`  
+Suggested skills: `review-work`  
+Risk: high  
+Primary files:
+
+- `src/config/types.ts`
+- `src/config/schema/agent-names.ts`
+- `src/config/schema/agent-overrides.ts`
+- `src/config/platform-schema.ts`
+- `src/config/defaults.ts`
+- `src/shared/agent-display-names.ts`
+- `src/shared/migration/agent-names.ts`
+- `hiai-opencode.json`
+- `README.md`
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+
+Goal:
+
+Separate public canonical names from internal compatibility keys. The user-facing model should be simple, while old config keys still migrate predictably.
+
+Desired public model:
+
+- `bob`
+- `coder`
+- `strategist`
+- `guard`
+- `critic`
+- `designer`
+- `researcher`
+- `manager`
+- `brainstormer`
+- `vision`
+
+Compatibility/internal model:
+
+- `platform-manager` should map to `manager`
+- `multimodal` and `ui` should map to `vision`
+- `quality-guardian`, `code-reviewer`, and `systematic-debugger` should map to `critic`
+- `sub` and `subagent` should map to `coder` or remain blocked as direct task targets
+- `agent-skills` remains hidden/system-only
+- `build` and `plan` remain hidden compatibility wrappers
+
+Sub-tasks:
+
+- Audit all schema files for old keys that are user-facing
+- Decide whether `manager` and `vision` can become accepted config keys now, with migration to internal runtime keys if needed
+- Keep backward compatibility for existing config files
+- Update example config so new users see only public names
+- Update docs to call out internal compatibility keys only in the migration section
+
+Acceptance criteria:
+
+- New user docs do not teach `platform-manager`, `multimodal`, or `quality-guardian` as primary names
+- Old config keys still resolve
+- `debug config` still shows display names `Manager` and `Vision`
+- Hidden/system agents are not presented as normal user choices
+
+Verification:
+
+```bash
+bun run typecheck
+bun run build
+bun run doctor
+```
+
+---
+
+## OSS-T4 — Package Dry-Run And Publish Surface Audit
+
+Owner: subagent  
+Category: `quick`  
+Suggested skills: `git-master`  
+Risk: medium  
+Primary files:
+
+- `package.json`
+- `.gitignore`
+- `README.md`
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+- `LICENSE.md`
+- `config/`
+- `assets/`
+- `skills/`
+
+Goal:
+
+Make `npm pack --dry-run` show a clean, intentional package with no local caches, private paths, stale docs, or accidental development artifacts.
+
+Sub-tasks:
+
+- Run `npm pack --dry-run` or equivalent
+- Inspect the package file list
+- Ensure `.npm-cache/`, `.runtime-cache/`, `.tmp/`, local `.opencode/`, and `node_modules/` are not included
+- Ensure `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `LICENSE.md`, `hiai-opencode.json`, `config/`, `assets/`, `skills/`, and `dist/` are included
+- Confirm deleted root docs are not referenced: `start.md`, `REGISTRY.md`, `AGENTS_INFO.md`
+- Confirm deleted `docs/phase8-prompt-diet-report.md` is not referenced by published docs
+- Confirm no `opencode-dcp` dependency remains in install graph
+
+Acceptance criteria:
+
+- Dry-run package contains only intentional runtime and documentation files
+- No cache directories are included
+- No private paths are included
+- `package.json` `files` list matches actual publication intent
+
+Verification:
+
+```bash
+npm pack --dry-run
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T5 — Add Plugin-Local `.env.example`
+
+Owner: subagent  
+Category: `writing`  
+Suggested skills: `writing-skills`  
+Risk: low  
+Primary files:
+
+- `.env.example`
+- `README.md`
+- `AGENTS.md`
+- `hiai-opencode.json`
+
+Goal:
+
+Create a plugin-local `.env.example` that a GitHub user can understand without any private machine context.
+
+Required env groups:
+
+- Model providers: `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `DEEPSEEK_API_KEY`, `GLM_API_KEY`, `MINIMAX_API_KEY`, `QWEN_API_KEY`
+- MCP services: `STITCH_AI_API_KEY`, `FIRECRAWL_API_KEY`, `CONTEXT7_API_KEY`
+- Search/browser helpers if used by defaults
+- Ollama: `OLLAMA_BASE_URL`, `OLLAMA_MODEL`
+- MemPalace: `MEMPALACE_PYTHON`, optional palace path if supported
+- RAG: endpoint/base URL if the plugin supports a configurable endpoint
+
+Rules:
+
+- No real keys
+- No local paths
+- Clear comments for required vs optional
+- Use English only
+- Keep comments concise enough to remain readable
+
+Acceptance criteria:
+
+- `.env.example` exists at repo root
+- README points to it
+- `AGENTS.md` points agents/tooling to it
+- The variable list matches MCP and model defaults
+
+Verification:
+
+```bash
+rg -n "C:\\\\hiai|/mnt/ai_data|YOUR_REAL_KEY" .env.example README.md AGENTS.md hiai-opencode.json
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T6 — Document MCP Install And Runtime Policy
+
+Owner: subagent  
+Category: `writing`  
+Suggested skills: `writing-skills`, `review-work`  
+Risk: medium  
+Primary files:
+
+- `README.md`
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+- `src/config/defaults.ts`
+- `src/mcp/index.ts`
+- `assets/mcp/*`
+- `assets/runtime/*`
+
+Goal:
+
+Make every MCP integration understandable for a new user and for another agent maintaining the plugin.
+
+Required service matrix:
+
+- `playwright`: local helper or local HTTP mode, npm package requirement, port if used
+- `stitch`: remote MCP, auth env requirement
+- `sequential-thinking`: upstream stdio via `npx -y @modelcontextprotocol/server-sequential-thinking`
+- `firecrawl`: `npx -y firecrawl-mcp`, `FIRECRAWL_API_KEY`, optional HTTP streamable mode
+- `rag`: external endpoint requirement
+- `mempalace`: upstream `python -m mempalace.mcp_server` or `uv`, Python 3.9+, optional palace path
+- `context7`: remote MCP and optional auth
+- `websearch`: remote MCP and auth/search requirements
+- `grep_app`: remote/local mode as implemented
+
+Sub-tasks:
+
+- Compare docs with `src/config/defaults.ts`
+- Compare docs with `src/mcp/index.ts`
+- Compare docs with `assets/mcp/*`
+- Remove any fake SSE or stale endpoint claims
+- Mark which services are registered by default and which require runtime availability
+- Explain Windows local spawn caveat and supported workaround
+
+Acceptance criteria:
+
+- README has a clear MCP table
+- AGENTS.md tells subagents exactly where to edit MCP defaults and launcher behavior
+- ARCHITECTURE.md explains remote vs local vs helper modes
+- No MCP doc contradicts actual config defaults
+
+Verification:
+
+```bash
+rg -n "8812|8813|/sse|fake|claude mcp|firecrawl|mempalace|sequential-thinking" README.md AGENTS.md ARCHITECTURE.md src/config/defaults.ts src/mcp/index.ts assets
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T7 — Rewrite `hiai-opencode.json` As A Real User Template
+
+Owner: subagent  
+Category: `writing`  
+Suggested skills: `writing-skills`  
+Risk: medium  
+Primary files:
+
+- `hiai-opencode.json`
+- `README.md`
+- `AGENTS.md`
+- `src/config/defaults.ts`
+- `src/config/models.ts`
+
+Goal:
+
+Make the root example config useful as a copyable user template, not a dump of internal defaults.
+
+Required sections:
+
+- Model presets guidance
+- Agent model override examples using public agent names
+- Category model override examples
+- MCP enable/disable examples
+- LSP enable/disable examples
+- Auth/env guidance that points to `.env.example`
+- Comments explaining where source defaults live in code
+
+Rules:
+
+- No local paths
+- No private provider keys
+- No stale names like `haiku`, `sonnet`, or `hiai-fast`
+- No `claudeModelAliases`
+- No hidden/system agents as normal examples
+- English only
+
+Acceptance criteria:
+
+- A new user can understand what to edit
+- The file is valid JSON or clearly documented JSONC if comments are used
+- Names match current runtime vocabulary: `Bob`, `Coder`, `Strategist`, `Guard`, `Critic`, `Designer`, `Researcher`, `Manager`, `Brainstormer`, `Vision`
+
+Verification:
+
+```bash
+rg -n "hiai-fast|sonnet|haiku|claudeModelAliases|C:\\\\hiai|/mnt/ai_data|quality-guardian|platform-manager|multimodal" hiai-opencode.json README.md AGENTS.md
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T8 — Add Documentation Hygiene Check
+
+Owner: subagent  
+Category: `quick`  
+Suggested skills: `git-master`  
+Risk: low  
+Primary files:
+
+- `package.json`
+- new script under `scripts/`
+- `README.md`
+- `AGENTS.md`
+- `ARCHITECTURE.md`
+- `LICENSE.md`
+- `hiai-opencode.json`
+
+Goal:
+
+Add an automated docs hygiene command that catches private paths, Russian text in public docs, stale file references, and deleted-doc references before publishing.
+
+Expected command shape:
+
+```bash
+bun run check:docs
+```
+
+Required checks:
+
+- No Cyrillic in `README.md`, `AGENTS.md`, `ARCHITECTURE.md`, `LICENSE.md`, `hiai-opencode.json`, `.env.example`
+- No `C:\hiai`
+- No `/mnt/ai_data`
+- No `.claude` in public docs/config unless explicitly documenting compatibility and not creating that directory
+- No references to `start.md`, `REGISTRY.md`, `AGENTS_INFO.md`, or `docs/phase8-prompt-diet-report.md`
+- No `file:///` local plugin paths
+
+Acceptance criteria:
+
+- `bun run check:docs` exists
+- It exits non-zero on violations
+- It prints file and line for each violation
+- It is documented in `AGENTS.md`
+
+Verification:
+
+```bash
+bun run check:docs
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T9 — Document Prompting Layers Near Source
+
+Owner: subagent  
+Category: `writing`  
+Suggested skills: `writing-skills`  
+Risk: low  
+Primary files:
+
+- new `src/agents/AGENTS.md` or `src/agents/prompting.md`
+- root `AGENTS.md`
+- `ARCHITECTURE.md`
+- `src/agents/*`
+- `src/plugin-handlers/*`
+
+Goal:
+
+Make prompt ownership clear for contributors and autonomous agents working inside `src/agents`.
+
+Required content:
+
+- `src/agents` is the main prompt authoring layer
+- Final runtime prompt can also include shared prompt-library blocks
+- Final runtime prompt can include model-specific overlays
+- Final runtime prompt can include environment context injection
+- Final runtime prompt can include `prompt_append`
+- Final runtime prompt can include closure protocol
+- Strategist prompt assembly has a separate builder path
+- Agent visibility, display name, and runtime description are handled outside source prompts
+
+Acceptance criteria:
+
+- Root `AGENTS.md` links to the source-level prompt guide
+- The guide tells contributors exactly where to edit Bob, Coder, Strategist, Guard, Critic, Vision, Manager, Researcher, Designer, and Brainstormer
+- The guide explains when to edit `src/plugin-handlers/agent-config-handler.ts`
+- The guide is English-only and has no local paths
+
+Verification:
+
+```bash
+bun run check:docs
+bun run typecheck
+bun run build
+```
+
+---
+
+## OSS-T10 — Windows Local MCP Runtime Strategy
+
+Owner: subagent  
+Category: `deep`  
+Suggested skills: `review-work`  
+Risk: high  
+Primary files:
+
+- `src/config/defaults.ts`
+- `src/mcp/index.ts`
+- `assets/mcp/*`
+- `assets/runtime/npm-package-runner.mjs`
+- `scripts/opencode_doctor.sh`
+- `README.md`
+- `AGENTS.md`
+
+Goal:
+
+Reduce or clearly isolate Windows `EPERM uv_spawn` failures for local MCP servers.
+
+Known affected services:
+
+- `sequential-thinking`
+- `mempalace`
+- `firecrawl`
+- local `npx`-backed helpers
+
+Investigation tasks:
+
+- Confirm whether OpenCode local MCP spawn fails only for `cmd`/`node` or for all local processes
+- Test whether prelaunching local HTTP/streamable servers avoids the issue
+- Test whether `node` wrapper scripts are more reliable than `cmd /c npx`
+- Test whether `bun x` or direct package binary execution is viable
+- Confirm whether Firecrawl HTTP streamable mode works with `HTTP_STREAMABLE_SERVER=true`
+- Confirm whether Sequential Thinking has an official HTTP mode or requires a proxy
+- Confirm MemPalace upstream stdio behavior through `python -m mempalace.mcp_server`
+
+Implementation options:
+
+- Add a documented `prelaunch` mode for local MCP helpers
+- Add a local bridge only when upstream stdio cannot be spawned by OpenCode
+- Keep upstream stdio defaults where they work reliably
+- Make `doctor` detect and report which mode works
+
+Acceptance criteria:
+
+- Windows users get a clear diagnostic instead of silent missing MCPs
+- Docs clearly state the supported mode for each local MCP
+- No fake local SSE URLs remain
+- `doctor` reports exact missing runtime or spawn issue
+
+Verification:
+
+```bash
+bun run doctor
+bun run typecheck
+bun run build
+opencode mcp list --print-logs --log-level INFO
+```
+
+---
+
+## OSS-T11 — Final Open Source Release Gate
+
+Owner: subagent  
+Category: `ultrabrain`  
+Suggested skills: `review-work`, `git-master`  
+Risk: high  
+Primary files:
+
+- all root docs
+- `package.json`
+- `hiai-opencode.json`
+- `src/config/*`
+- `src/tools/delegate-task/*`
+- `src/tools/call-omo-agent/*`
+- `src/plugin-handlers/*`
+- `assets/*`
+- `skills/*`
+
+Goal:
+
+Run a final release audit after OSS-T1 through OSS-T10 land.
+
+Required checks:
+
+- `bun run typecheck`
+- `bun run build`
+- `bun run doctor`
+- `bun run check:docs`
+- `bun run test:routing`
+- `npm pack --dry-run`
+- `opencode debug config` where available
+- `opencode mcp list --print-logs --log-level INFO` where available
+
+Manual audit checklist:
+
+- A fresh user can install from GitHub
+- A fresh user can find where to set model keys
+- A fresh user can find where to change agent prompts
+- A fresh user can find where to change MCP defaults
+- A fresh user can understand which MCPs require API keys or external runtimes
+- Another agent can read `AGENTS.md` and know what files to edit
+- Root docs are non-duplicative
+- Internal compatibility keys are not presented as primary user concepts
+- Hidden/system agents are not visible as normal primary agents
+- Published package contents are intentional
+
+Acceptance criteria:
+
+- All automated checks pass or have explicit documented blockers
+- Any blocker is recorded in this `todo.md` with owner, repro command, and next step
+- No new private machine paths are introduced
+- No stale deleted doc links are introduced

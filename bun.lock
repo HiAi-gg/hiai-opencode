@@ -9,7 +9,6 @@
         "@modelcontextprotocol/sdk": "^1.12.0",
         "@opencode-ai/plugin": "^1.4.0",
         "@opencode-ai/sdk": "^1.4.0",
-        "@tarquinen/opencode-dcp": "github:Opencode-DCP/opencode-dynamic-context-pruning",
         "bun-pty": "^0.4.8",
         "commander": "^13.1.0",
         "diff": "^7.0.0",
@@ -28,12 +27,11 @@
         "@types/js-yaml": "^4.0.9",
         "@types/picomatch": "^4.0.3",
         "bun-types": "^1.3.12",
+        "typescript": "^5.6.0",
       },
     },
   },
   "packages": {
-    "@anthropic-ai/tokenizer": ["@anthropic-ai/tokenizer@0.0.4", "", { "dependencies": { "@types/node": "^18.11.18", "tiktoken": "^1.0.10" } }, "sha512-EHRKbxlxlc8W4KCBEseByJ7YwyYCmgu9OyN59H9+IYIGPoKv8tXyQXinkeGDI+cI8Tiuz9wk2jZb/kK7AyvL7g=="],
-
     "@ast-grep/napi": ["@ast-grep/napi@0.37.0", "", { "optionalDependencies": { "@ast-grep/napi-darwin-arm64": "0.37.0", "@ast-grep/napi-darwin-x64": "0.37.0", "@ast-grep/napi-linux-arm64-gnu": "0.37.0", "@ast-grep/napi-linux-arm64-musl": "0.37.0", "@ast-grep/napi-linux-x64-gnu": "0.37.0", "@ast-grep/napi-linux-x64-musl": "0.37.0", "@ast-grep/napi-win32-arm64-msvc": "0.37.0", "@ast-grep/napi-win32-ia32-msvc": "0.37.0", "@ast-grep/napi-win32-x64-msvc": "0.37.0" } }, "sha512-Hb4o6h1Pf6yRUAX07DR4JVY7dmQw+RVQMW5/m55GoiAT/VRoKCWBtIUPPOnqDVhbx1Cjfil9b6EDrgJsUAujEQ=="],
 
     "@ast-grep/napi-darwin-arm64": ["@ast-grep/napi-darwin-arm64@0.37.0", "", { "os": "darwin", "cpu": "arm64" }, "sha512-QAiIiaAbLvMEg/yBbyKn+p1gX2/FuaC0SMf7D7capm/oG4xGMzdeaQIcSosF4TCxxV+hIH4Bz9e4/u7w6Bnk3Q=="],
@@ -75,8 +73,6 @@
     "@opencode-ai/sdk": ["@opencode-ai/sdk@1.4.6", "", { "dependencies": { "cross-spawn": "7.0.6" } }, "sha512-sQaVfEfQW3m3DeCVlurSTUjgIYdIk+gIfOys51MVFYzJHw+FyjjuAt7EKKA+LeZU5AiWGlpkIRa1rJo5KWMXCw=="],
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
-
-    "@tarquinen/opencode-dcp": ["@tarquinen/opencode-dcp@github:Opencode-DCP/opencode-dynamic-context-pruning#9860112", { "dependencies": { "@anthropic-ai/tokenizer": "^0.0.4", "@opencode-ai/sdk": "^1.4.3", "jsonc-parser": "^3.3.1", "zod": "^4.3.6" }, "peerDependencies": { "@opencode-ai/plugin": ">=1.4.3" } }, "Opencode-DCP-opencode-dynamic-context-pruning-9860112"],
 
     "@types/diff": ["@types/diff@7.0.2", "", {}, "sha512-JSWRMozjFKsGlEjiiKajUjIJVKuKdE3oVy2DNtK+fUo8q82nhFZ2CPQwicAIkXrofahDXrWJ7mjelvZphMS98Q=="],
 
@@ -288,13 +284,13 @@
 
     "statuses": ["statuses@2.0.2", "", {}, "sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw=="],
 
-    "tiktoken": ["tiktoken@1.0.22", "", {}, "sha512-PKvy1rVF1RibfF3JlXBSP0Jrcw2uq3yXdgcEXtKTYn3QJ/cBRBHDnrJ5jHky+MENZ6DIPwNUGWpkVx+7joCpNA=="],
-
     "toidentifier": ["toidentifier@1.0.1", "", {}, "sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA=="],
 
     "toml": ["toml@4.1.1", "", {}, "sha512-EBJnVBr3dTXdA89WVFoAIPUqkBjxPMwRqsfuo1r240tKFHXv3zgca4+NJib/h6TyvGF7vOawz0jGuryJCdNHrw=="],
 
     "type-is": ["type-is@2.0.1", "", { "dependencies": { "content-type": "^1.0.5", "media-typer": "^1.1.0", "mime-types": "^3.0.0" } }, "sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw=="],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "undici-types": ["undici-types@5.26.5", "", {}, "sha512-JlCMO+ehdEIKqlFxk6IfVoAUVmgz7cU7zD/h9XZ0qzeosSHmUJVOzSQvvYSYWXkFXC+IfLKSIffhv0sVZup6pA=="],
 

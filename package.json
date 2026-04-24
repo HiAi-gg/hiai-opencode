@@ -13,11 +13,17 @@
   },
   "files": [
     "dist/",
+    "src/",
     "skills/",
     "assets/",
     "config/",
+    "scripts/*.ts",
+    ".env.example",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
     "LICENSE.md",
-    "README.md"
+    "README.md",
+    "hiai-opencode.json"
   ],
   "keywords": [
     "opencode",
@@ -47,10 +53,13 @@
     "build:types": "tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "prompts:measure": "bun run scripts/measure_prompts.ts",
+    "doctor": "bun run scripts/doctor.ts",
+    "test:routing": "bun run scripts/test_routing.ts",
+    "check:docs": "bun run scripts/check_docs.ts",
+    "prepare": "bun run build",
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "@tarquinen/opencode-dcp": "github:Opencode-DCP/opencode-dynamic-context-pruning",
     "bun-pty": "^0.4.8",
     "@opencode-ai/plugin": "^1.4.0",
     "@opencode-ai/sdk": "^1.4.0",

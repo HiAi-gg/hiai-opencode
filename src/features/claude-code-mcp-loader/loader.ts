@@ -20,13 +20,24 @@ interface McpConfigPath {
 function getMcpConfigPaths(): McpConfigPath[] {
   const claudeConfigDir = getClaudeConfigDir()
   const cwd = process.cwd()
+  const explicitClaudeConfigDir =
+    process.env.CLAUDE_CONFIG_DIR?.trim() || process.env.OPENCODE_CONFIG_DIR?.trim()
 
-  return [
-    { path: join(homedir(), ".claude.json"), scope: "user" },
+  const candidates: McpConfigPath[] = [
+    ...(explicitClaudeConfigDir
+      ? []
+      : [{ path: join(homedir(), ".claude.json"), scope: "user" as const }]),
     { path: join(claudeConfigDir, ".mcp.json"), scope: "user" },
     { path: join(cwd, ".mcp.json"), scope: "project" },
     { path: join(cwd, ".claude", ".mcp.json"), scope: "local" },
   ]
+
+  const seen = new Set<string>()
+  return candidates.filter(({ path }) => {
+    if (seen.has(path)) return false
+    seen.add(path)
+    return true
+  })
 }
 
 async function loadMcpConfigFile(

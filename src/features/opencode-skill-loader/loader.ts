@@ -1,6 +1,6 @@
 import { join } from "path"
-import { homedir } from "os"
 import { getClaudeConfigDir } from "../../shared/claude-config-dir"
+import { getAgentsConfigDir } from "../../shared/agents-config-dir"
 import { getOpenCodeConfigDir } from "../../shared/opencode-config-dir"
 import { getOpenCodeSkillDirs } from "../../shared/opencode-command-dirs"
 import {
@@ -57,7 +57,7 @@ export async function loadProjectAgentsSkills(directory?: string): Promise<Recor
 }
 
 export async function loadGlobalAgentsSkills(): Promise<Record<string, CommandDefinition>> {
-  const agentsGlobalDir = join(homedir(), ".agents", "skills")
+  const agentsGlobalDir = join(getAgentsConfigDir(), "skills")
   const skills = await loadSkillsFromDir({ skillsDir: agentsGlobalDir, scope: "user" })
   return skillsToCommandDefinitionRecord(skills)
 }
@@ -167,6 +167,6 @@ export async function discoverProjectAgentsSkills(directory?: string): Promise<L
 }
 
 export async function discoverGlobalAgentsSkills(): Promise<LoadedSkill[]> {
-  const agentsGlobalDir = join(homedir(), ".agents", "skills")
+  const agentsGlobalDir = join(getAgentsConfigDir(), "skills")
   return loadSkillsFromDir({ skillsDir: agentsGlobalDir, scope: "user" })
 }

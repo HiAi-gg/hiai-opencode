@@ -31,6 +31,10 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   critic: "critic",
   "critic - plan critic": "critic",
   "critic (plan critic)": "critic",
+  "quality-guardian": "critic",
+  "quality guardian - verifier": "critic",
+  "code-reviewer": "critic",
+  "systematic-debugger": "critic",
 
   // Guard variants
   "orchestrator-bob": "guard",
@@ -44,26 +48,25 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   researcher: "researcher",
   "researcher - codebase explorer": "researcher",
 
-  // Quality Guardian variants (subsumes Code-Reviewer, Systematic-Debugger)
-  "code-reviewer": "quality-guardian",
-  "systematic-debugger": "quality-guardian",
-  "quality-guardian": "quality-guardian",
-  "quality guardian - verifier": "quality-guardian",
-
   // Platform Manager variants (subsumes Ledger, Bootstrapper, Initializer, Mindmodel)
   "ledger-creator": "platform-manager",
   "bootstrapper": "platform-manager",
   "project-initializer": "platform-manager",
   "mindmodel": "platform-manager",
   "platform-manager": "platform-manager",
+  manager: "platform-manager",
   "platform manager - utility": "platform-manager",
 
   // SubAgent
-  subagent: "sub",
-  sub: "sub",
+  subagent: "coder",
+  sub: "coder",
+
+  // Designer
+  designer: "designer",
 
   // Multimodal (runtime key remains "ui" for compatibility)
   ui: "ui",
+  vision: "ui",
   multimodal: "ui",
 }
 
@@ -72,12 +75,11 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "coder",
   "strategist",
   "critic",
+  "designer",
   "researcher",
   "ui",
-  "quality-guardian",
   "platform-manager",
   "guard",
-  "sub",
 ])
 
 export function migrateAgentNames(

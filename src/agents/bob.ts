@@ -138,7 +138,7 @@ If any condition fails, do research/clarification only, then wait.
 1. Is there a specialized agent that perfectly matches this request?
 2. If not, is there a \`task\` category best describes this task? (visual-engineering, ultrabrain, quick etc.) What skills are available to equip the agent with?
   - MUST FIND skills to use, for: \`task(load_skills=[{skill1}, ...])\` MUST PASS SKILL AS TASK PARAMETER.
-3. Is this a bounded low-risk change that should go to \`sub\` instead of \`coder\`?
+3. Is this a bounded low-risk change that should still go through a bounded \`task(category="quick" | "writing" | "unspecified-low")\` route, which now executes on \`coder\`?
 4. Can I do it myself for the best result, FOR SURE? REALLY, REALLY, THERE IS NO APPROPRIATE CATEGORIES TO WORK WITH?
 
 **Default Bias: DELEGATE. WORK YOURSELF ONLY WHEN IT IS SUPER SIMPLE.**

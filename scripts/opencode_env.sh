@@ -15,8 +15,13 @@ find_opencode_root() {
         fi
         current_dir="$(dirname "$current_dir")"
     done
-    # Fallback to /mnt/ai_data if nothing found (backwards compatibility)
-    echo "/mnt/ai_data"
+
+    if [[ -n "${PWD:-}" && -f "${PWD}/AGENTS.md" ]]; then
+        echo "$PWD"
+        return 0
+    fi
+
+    echo "$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")")"
 }
 
 # Core Path Constants
