@@ -41,6 +41,7 @@ export const McpServerConfigSchema = z.object({
   enabled: z.boolean().default(true),
   type: z.enum(["remote", "local"]).optional(),
   url: z.string().optional(),
+  headers: z.record(z.string(), z.string()).optional(),
   command: z.array(z.string()).optional(),
   timeout: z.number().optional(),
   environment: z.record(z.string(), z.string()).optional(),

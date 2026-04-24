@@ -1,5 +1,4 @@
 import { createWebsearchConfig } from "./websearch"
-import { context7 } from "./context7"
 import { grep_app } from "./grep-app"
 import type { HiaiOpenCodeConfig } from "../config/schema"
 
@@ -21,10 +20,6 @@ export function createBuiltinMcps(disabledMcps: string[] = [], config?: HiaiOpen
     if (websearchConfig) {
       mcps.websearch = websearchConfig
     }
-  }
-
-  if (!disabledMcps.includes("context7")) {
-    mcps.context7 = context7
   }
 
   if (!disabledMcps.includes("grep_app")) {

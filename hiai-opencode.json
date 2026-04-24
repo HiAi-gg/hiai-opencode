@@ -1,5 +1,5 @@
 {
-  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts.",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. MCP enable/disable lives in the mcp object below; default MCP definitions live in src/mcp/registry.ts. Source model defaults: src/config/defaults.ts and src/config/models.ts.",
   "$schema": "./config/hiai-opencode.schema.json",
   "agents": {
     "bob": { "model": "openrouter/anthropic/claude-3.5-opus" },

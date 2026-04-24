@@ -56,6 +56,7 @@ function configureBundledBunPtyLibrary(): void {
   const candidates = [
     join(import.meta.dirname, "..", "node_modules", "bun-pty", "rust-pty", "target", "release", libraryName),
     join(import.meta.dirname, "..", "..", "bun-pty", "rust-pty", "target", "release", libraryName),
+    join(import.meta.dirname, "..", "..", "..", "bun-pty", "rust-pty", "target", "release", libraryName),
   ]
 
   const resolved = candidates.find((candidate) => existsSync(candidate))

@@ -74,6 +74,37 @@ function resolvePythonForMempalace() {
   return null;
 }
 
+function resolvePythonForPip() {
+  for (const candidate of pythonCandidates()) {
+    const probe = spawnSync(
+      candidate.command,
+      [...candidate.args, "-m", "pip", "--version"],
+      { stdio: "ignore", timeout: 10000 },
+    );
+
+    if (probe.status === 0) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function shouldAutoInstall() {
+  const value = process.env.HIAI_MCP_AUTO_INSTALL?.trim().toLowerCase();
+  return value !== "0" && value !== "false" && value !== "no";
+}
+
+function installMempalaceWithPip(candidate) {
+  const result = spawnSync(
+    candidate.command,
+    [...candidate.args, "-m", "pip", "install", "--user", "mempalace"],
+    { stdio: "inherit", timeout: 300000 },
+  );
+
+  return result.status === 0 && canRunModule(candidate, "mempalace.mcp_server");
+}
+
 function resolveUvCacheRoot() {
   return process.env.UV_CACHE_DIR
     || join(resolveCacheRoot(), "hiai-opencode", "uv");
@@ -128,16 +159,28 @@ function main() {
   }
 
   const python = resolvePythonForMempalace();
-  if (!python) {
+  const fallbackPython =
+    python
+    || (shouldAutoInstall()
+      ? (() => {
+        const pipPython = resolvePythonForPip();
+        if (pipPython && installMempalaceWithPip(pipPython)) {
+          return pipPython;
+        }
+        return null;
+      })()
+      : null);
+
+  if (!fallbackPython) {
     console.error(
-      "[hiai-opencode] mempalace skipped: install uv or Python 3.9+ with `pip install mempalace`",
+      "[hiai-opencode] mempalace skipped: install uv or Python 3.9+ with `pip install --user mempalace`",
     );
     process.exit(0);
   }
 
   const child = spawn(
-    python.command,
-    [...python.args, "-m", "mempalace.mcp_server", "--palace", palacePath],
+    fallbackPython.command,
+    [...fallbackPython.args, "-m", "mempalace.mcp_server", "--palace", palacePath],
     {
       stdio: "inherit",
       env: {

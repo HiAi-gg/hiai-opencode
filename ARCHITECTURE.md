@@ -187,10 +187,10 @@ The final runtime prompt can also be affected by:
 
 ## Skills
 
-Two skill sources are combined:
+Two skill sources are wired into OpenCode:
 
-- project skills shipped in [skills](skills)
-- built-in skills materialized into the OpenCode-visible skill tree
+- project skill definitions in [skills](skills)
+- skill materialization into the OpenCode-visible skill tree
 
 Relevant files:
 
@@ -201,11 +201,11 @@ Relevant files:
 
 ### Definitions
 
-Default MCP definitions are in:
+Default MCP wiring is in:
 
-- [src/config/defaults.ts](src/config/defaults.ts)
+- [src/mcp/registry.ts](src/mcp/registry.ts)
 
-Fallback assembly for packaged MCP support is in:
+OpenCode MCP config assembly is in:
 
 - [src/mcp/index.ts](src/mcp/index.ts)
 
