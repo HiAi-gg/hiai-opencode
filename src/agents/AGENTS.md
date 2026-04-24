@@ -56,9 +56,8 @@ These files run after the prompt library and can override what was authored. Alw
 
 | What to change | Edit |
 |---|---|
-| Preset definitions (`fast`, `mid`, `high`, `vision`) | `src/config/models.ts` |
-| Per-agent default model | `src/config/defaults.ts` |
-| Per-category default model | `src/config/defaults.ts` |
+| Per-agent default model | `hiai-opencode.json` |
+| Per-category default model | `hiai-opencode.json` |
 | Config schema defaults | `src/config/types.ts` |
 
 ## Prompt Measurement

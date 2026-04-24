@@ -7,6 +7,7 @@ import { AGENT_NAME_MAP } from "../shared/migration";
 import { registerAgentName } from "../features/claude-code-session-state";
 import {
   discoverConfigSourceSkills,
+  discoverManagedPluginSkills,
   deduplicateSkillsByName,
   discoverGlobalAgentsSkills,
   discoverOpencodeGlobalSkills,
@@ -31,6 +32,7 @@ import {
   filterProtectedAgentOverrides,
 } from "./agent-override-protection";
 import { buildStrategistAgentConfig } from "./strategist-agent-config-builder";
+import { resolveSkillDiscoveryConfig } from "../plugin/skill-discovery-config";
 
 type AgentConfigRecord = Record<string, Record<string, unknown> | undefined> & {
   build?: Record<string, unknown>;
@@ -130,8 +132,9 @@ export async function applyAgentConfig(params: {
     },
   ) as typeof params.pluginConfig.disabled_agents;
 
-  const includeClaudeSkillsForAwareness = params.pluginConfig.claude_code?.skills ?? true;
+  const discovery = resolveSkillDiscoveryConfig(params.pluginConfig);
   const [
+    discoveredManagedPluginSkills,
     discoveredConfigSourceSkills,
     discoveredUserSkills,
     discoveredProjectSkills,
@@ -140,23 +143,27 @@ export async function applyAgentConfig(params: {
     discoveredOpencodeProjectSkills,
     discoveredGlobalAgentsSkills,
   ] = await Promise.all([
-    discoverConfigSourceSkills({
-      config: params.pluginConfig.skills,
-      configDir: params.ctx.directory,
-    }),
-    includeClaudeSkillsForAwareness ? discoverUserClaudeSkills() : Promise.resolve([]),
-    includeClaudeSkillsForAwareness
-       ? discoverProjectClaudeSkills(params.ctx.directory)
-       : Promise.resolve([]),
-    includeClaudeSkillsForAwareness
+    discoverManagedPluginSkills(),
+    discovery.config_sources
+      ? discoverConfigSourceSkills({
+        config: params.pluginConfig.skills,
+        configDir: params.ctx.directory,
+      })
+      : Promise.resolve([]),
+    discovery.global_claude ? discoverUserClaudeSkills() : Promise.resolve([]),
+    discovery.project_claude
+      ? discoverProjectClaudeSkills(params.ctx.directory)
+      : Promise.resolve([]),
+    discovery.project_agents
       ? discoverProjectAgentsSkills(params.ctx.directory)
       : Promise.resolve([]),
-    discoverOpencodeGlobalSkills(),
-    discoverOpencodeProjectSkills(params.ctx.directory),
-    includeClaudeSkillsForAwareness ? discoverGlobalAgentsSkills() : Promise.resolve([]),
+    discovery.global_opencode ? discoverOpencodeGlobalSkills() : Promise.resolve([]),
+    discovery.project_opencode ? discoverOpencodeProjectSkills(params.ctx.directory) : Promise.resolve([]),
+    discovery.global_agents ? discoverGlobalAgentsSkills() : Promise.resolve([]),
   ]);
 
   const allDiscoveredSkills = [
+    ...discoveredManagedPluginSkills,
     ...discoveredConfigSourceSkills,
     ...discoveredOpencodeProjectSkills,
     ...discoveredProjectSkills,

@@ -8,6 +8,7 @@ import type {
 
 import {
   discoverConfigSourceSkills,
+  discoverManagedPluginSkills,
   discoverUserClaudeSkills,
   discoverProjectClaudeSkills,
   discoverOpencodeGlobalSkills,
@@ -18,6 +19,7 @@ import {
 } from "../features/opencode-skill-loader"
 import { createBuiltinSkills } from "../features/builtin-skills"
 import { getSystemMcpServerNames } from "../features/claude-code-mcp-loader"
+import { resolveSkillDiscoveryConfig } from "./skill-discovery-config"
 
 export type SkillContext = {
   mergedSkills: LoadedSkill[]
@@ -71,21 +73,37 @@ export async function createSkillContext(args: {
     return true
   })
 
-  const includeClaudeSkills = pluginConfig.claude_code?.skills !== false
-  const [configSourceSkills, userSkills, globalSkills, projectSkills, opencodeProjectSkills, agentsProjectSkills, agentsGlobalSkills] =
+  const discovery = resolveSkillDiscoveryConfig(pluginConfig)
+  const [
+    managedPluginSkills,
+    configSourceSkills,
+    userSkills,
+    globalSkills,
+    projectSkills,
+    opencodeProjectSkills,
+    agentsProjectSkills,
+    agentsGlobalSkills,
+  ] =
     await Promise.all([
-      discoverConfigSourceSkills({
-        config: pluginConfig.skills,
-        configDir: directory,
-      }),
-      includeClaudeSkills ? discoverUserClaudeSkills() : Promise.resolve([]),
-      discoverOpencodeGlobalSkills(),
-      includeClaudeSkills ? discoverProjectClaudeSkills(directory) : Promise.resolve([]),
-      discoverOpencodeProjectSkills(directory),
-      discoverProjectAgentsSkills(directory),
-      discoverGlobalAgentsSkills(),
+      discoverManagedPluginSkills(),
+      discovery.config_sources
+        ? discoverConfigSourceSkills({
+          config: pluginConfig.skills,
+          configDir: directory,
+        })
+        : Promise.resolve([]),
+      discovery.global_claude ? discoverUserClaudeSkills() : Promise.resolve([]),
+      discovery.global_opencode ? discoverOpencodeGlobalSkills() : Promise.resolve([]),
+      discovery.project_claude ? discoverProjectClaudeSkills(directory) : Promise.resolve([]),
+      discovery.project_opencode ? discoverOpencodeProjectSkills(directory) : Promise.resolve([]),
+      discovery.project_agents ? discoverProjectAgentsSkills(directory) : Promise.resolve([]),
+      discovery.global_agents ? discoverGlobalAgentsSkills() : Promise.resolve([]),
     ])
 
+  const filteredManagedPluginSkills = filterProviderGatedSkills(
+    managedPluginSkills,
+    browserProvider,
+  )
   const filteredConfigSourceSkills = filterProviderGatedSkills(
     configSourceSkills,
     browserProvider,
@@ -109,7 +127,7 @@ export async function createSkillContext(args: {
   const mergedSkills = mergeSkills(
     builtinSkills,
     pluginConfig.skills,
-    filteredConfigSourceSkills,
+    [...filteredManagedPluginSkills, ...filteredConfigSourceSkills],
     [...filteredUserSkills, ...filteredAgentsGlobalSkills],
     filteredGlobalSkills,
     [...filteredProjectSkills, ...filteredAgentsProjectSkills],

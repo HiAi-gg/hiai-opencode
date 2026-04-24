@@ -12,6 +12,7 @@ import {
 import { loadBuiltinCommands } from "../features/builtin-commands";
 import {
   discoverConfigSourceSkills,
+  loadManagedPluginSkills,
   loadGlobalAgentsSkills,
   loadProjectAgentsSkills,
   loadUserSkills,
@@ -26,6 +27,7 @@ import {
   log,
 } from "../shared";
 import type { PluginComponents } from "./plugin-components-loader";
+import { resolveSkillDiscoveryConfig } from "../plugin/skill-discovery-config";
 
 export async function applyCommandConfig(params: {
   config: Record<string, unknown>;
@@ -39,10 +41,13 @@ export async function applyCommandConfig(params: {
   const systemCommands = (params.config.command as Record<string, unknown>) ?? {};
 
   const includeClaudeCommands = params.pluginConfig.claude_code?.commands ?? true;
-  const includeClaudeSkills = params.pluginConfig.claude_code?.skills ?? true;
+  const discovery = resolveSkillDiscoveryConfig(params.pluginConfig);
 
   const externalSkillPlugin = detectExternalSkillPlugin(params.ctx.directory);
-  if (includeClaudeSkills && externalSkillPlugin.detected) {
+  if (
+    (discovery.project_claude || discovery.global_claude || discovery.global_opencode) &&
+    externalSkillPlugin.detected
+  ) {
     log(getSkillPluginConflictWarning(externalSkillPlugin.pluginName!));
   }
 
@@ -52,6 +57,7 @@ export async function applyCommandConfig(params: {
     projectCommands,
     opencodeGlobalCommands,
     opencodeProjectCommands,
+    managedPluginSkills,
     userSkills,
     globalAgentsSkills,
     projectSkills,
@@ -59,24 +65,28 @@ export async function applyCommandConfig(params: {
     opencodeGlobalSkills,
     opencodeProjectSkills,
   ] = await Promise.all([
-    discoverConfigSourceSkills({
-      config: params.pluginConfig.skills,
-      configDir: params.ctx.directory,
-    }),
+    discovery.config_sources
+      ? discoverConfigSourceSkills({
+        config: params.pluginConfig.skills,
+        configDir: params.ctx.directory,
+      })
+      : Promise.resolve([]),
     includeClaudeCommands ? loadUserCommands() : Promise.resolve({}),
     includeClaudeCommands ? loadProjectCommands(params.ctx.directory) : Promise.resolve({}),
     loadOpencodeGlobalCommands(),
     loadOpencodeProjectCommands(params.ctx.directory),
-    includeClaudeSkills ? loadUserSkills() : Promise.resolve({}),
-    includeClaudeSkills ? loadGlobalAgentsSkills() : Promise.resolve({}),
-    includeClaudeSkills ? loadProjectSkills(params.ctx.directory) : Promise.resolve({}),
-    includeClaudeSkills ? loadProjectAgentsSkills(params.ctx.directory) : Promise.resolve({}),
-    loadOpencodeGlobalSkills(),
-    loadOpencodeProjectSkills(params.ctx.directory),
+    loadManagedPluginSkills(),
+    discovery.global_claude ? loadUserSkills() : Promise.resolve({}),
+    discovery.global_agents ? loadGlobalAgentsSkills() : Promise.resolve({}),
+    discovery.project_claude ? loadProjectSkills(params.ctx.directory) : Promise.resolve({}),
+    discovery.project_agents ? loadProjectAgentsSkills(params.ctx.directory) : Promise.resolve({}),
+    discovery.global_opencode ? loadOpencodeGlobalSkills() : Promise.resolve({}),
+    discovery.project_opencode ? loadOpencodeProjectSkills(params.ctx.directory) : Promise.resolve({}),
   ]);
 
   params.config.command = {
     ...builtinCommands,
+    ...managedPluginSkills,
     ...skillsToCommandDefinitionRecord(configSourceSkills),
     ...userCommands,
     ...userSkills,

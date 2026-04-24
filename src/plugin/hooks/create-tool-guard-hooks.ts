@@ -136,7 +136,7 @@ export function createToolGuardHooks(args: {
     : null
 
   const fastApply = isHookEnabled("fast-apply")
-    ? safeHook("fast-apply", () => createFastApplyHook(pluginConfig.fast_apply ?? { enabled: false, ollama_url: "http://localhost:11434", model: "qwen3.5:9b", timeout: 30000 }))
+    ? safeHook("fast-apply", () => createFastApplyHook(pluginConfig.fast_apply ?? { enabled: false, ollama_url: "", model: "", timeout: 30000 }))
     : null
 
   return {

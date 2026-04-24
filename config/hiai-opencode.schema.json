@@ -16,6 +16,23 @@
         "required": ["model"]
       }
     },
+    "agentRequirements": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "fallbackChain": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/fallbackEntry" }
+          },
+          "variant": { "type": "string" },
+          "requiresModel": { "type": "string" },
+          "requiresAnyModel": { "type": "boolean" },
+          "requiresProvider": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["fallbackChain"]
+      }
+    },
     "categories": {
       "type": "object",
       "additionalProperties": {
@@ -23,9 +40,45 @@
         "properties": {
           "model": { "type": "string" },
           "variant": { "type": "string" },
-          "description": { "type": "string" }
+          "description": { "type": "string" },
+          "fallbackChain": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/fallbackEntry" }
+          }
         },
         "required": ["model"]
+      }
+    },
+    "categoryRequirements": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "fallbackChain": {
+            "type": "array",
+            "items": { "$ref": "#/definitions/fallbackEntry" }
+          },
+          "variant": { "type": "string" },
+          "requiresModel": { "type": "string" },
+          "requiresAnyModel": { "type": "boolean" },
+          "requiresProvider": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": ["fallbackChain"]
+      }
+    },
+    "modelFamilies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "family": { "type": "string" },
+          "includes": { "type": "array", "items": { "type": "string" } },
+          "pattern": { "type": "string" },
+          "variants": { "type": "array", "items": { "type": "string" } },
+          "reasoningEfforts": { "type": "array", "items": { "type": "string" } },
+          "supportsThinking": { "type": "boolean" }
+        },
+        "required": ["family"]
       }
     },
     "mcp": {
@@ -36,6 +89,7 @@
           "enabled": { "type": "boolean", "default": true },
           "type": { "enum": ["remote", "local"] },
           "url": { "type": "string" },
+          "headers": { "type": "object", "additionalProperties": { "type": "string" } },
           "command": { "type": "array", "items": { "type": "string" } },
           "timeout": { "type": "number" },
           "environment": { "type": "object", "additionalProperties": { "type": "string" } }
@@ -69,6 +123,19 @@
         "disabled": { "type": "array", "items": { "type": "string" } }
       }
     },
+    "skill_discovery": {
+      "type": "object",
+      "description": "Controls which external skill directories are scanned. Defaults keep installs deterministic: hiai-opencode skills plus project .opencode/skills only.",
+      "properties": {
+        "config_sources": { "type": "boolean", "default": true },
+        "project_opencode": { "type": "boolean", "default": true },
+        "global_opencode": { "type": "boolean", "default": false },
+        "project_claude": { "type": "boolean", "default": false },
+        "global_claude": { "type": "boolean", "default": false },
+        "project_agents": { "type": "boolean", "default": false },
+        "global_agents": { "type": "boolean", "default": false }
+      }
+    },
     "permissions": {
       "type": "object",
       "properties": {
@@ -77,6 +144,51 @@
         "bash": { "type": "object", "additionalProperties": { "type": "string" } },
         "deny_paths": { "type": "array", "items": { "type": "string" } }
       }
+    },
+    "auth": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    },
+    "ollama": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "model": { "type": "string" },
+        "baseUrl": { "type": "string" },
+        "purpose": { "enum": ["verification", "helper", "fallback"] }
+      }
+    },
+    "fast_apply": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "ollama_url": { "type": "string" },
+        "model": { "type": "string" },
+        "timeout": { "type": "number" }
+      }
+    }
+  },
+  "definitions": {
+    "fallbackEntry": {
+      "type": "object",
+      "properties": {
+        "providers": { "type": "array", "items": { "type": "string" } },
+        "model": { "type": "string" },
+        "variant": { "type": "string" },
+        "reasoningEffort": { "type": "string" },
+        "temperature": { "type": "number" },
+        "top_p": { "type": "number" },
+        "maxTokens": { "type": "number" },
+        "thinking": {
+          "type": "object",
+          "properties": {
+            "type": { "enum": ["enabled", "disabled"] },
+            "budgetTokens": { "type": "number" }
+          },
+          "required": ["type"]
+        }
+      },
+      "required": ["providers", "model"]
     }
   }
 }

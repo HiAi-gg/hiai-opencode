@@ -42,6 +42,13 @@ if (shouldInstallBrowsers()) {
   const result = runNpx(["-y", "playwright@latest", "install", "chromium"])
   if (result.status !== 0) {
     console.error("[hiai-opencode] playwright browser install failed")
+    console.error("[hiai-opencode] Try: npx playwright install chromium")
+  }
+
+  if (process.platform === "linux") {
+    console.error("[hiai-opencode] Playwright Chromium may also need Linux system libraries.")
+    console.error("[hiai-opencode] If browser launch fails with libnspr4/libnss3/libgtk errors, run: sudo npx playwright install-deps chromium")
+    console.error("[hiai-opencode] Without sudo, use an existing browser by adding args in hiai-opencode.json, e.g. --browser chrome")
   }
 }
 

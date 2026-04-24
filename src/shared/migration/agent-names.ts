@@ -64,10 +64,10 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   // Designer
   designer: "designer",
 
-  // Multimodal (runtime key remains "ui" for compatibility)
-  ui: "ui",
-  vision: "ui",
-  multimodal: "ui",
+  // Multimodal / Vision
+  ui: "multimodal",
+  vision: "multimodal",
+  multimodal: "multimodal",
 }
 
 export const BUILTIN_AGENT_NAMES = new Set([
@@ -77,7 +77,7 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "critic",
   "designer",
   "researcher",
-  "ui",
+  "multimodal",
   "platform-manager",
   "guard",
 ])

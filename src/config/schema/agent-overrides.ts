@@ -79,6 +79,8 @@ export const AgentOverridesSchema = z.object({
   general: AgentOverrideConfigSchema.optional(),
   zoe: AgentOverrideConfigSchema.optional(),
   "pre-plan": AgentOverrideConfigSchema.optional(),
+  manager: AgentOverrideConfigSchema.optional(),
+  vision: AgentOverrideConfigSchema.optional(),
   "logician": AgentOverrideConfigSchema.optional(),
   librarian: AgentOverrideConfigSchema.optional(),
   explore: AgentOverrideConfigSchema.optional(),

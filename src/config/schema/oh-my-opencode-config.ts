@@ -17,6 +17,7 @@ import { ModelCapabilitiesConfigSchema } from "./model-capabilities"
 import { RalphLoopConfigSchema } from "./ralph-loop"
 import { RuntimeFallbackConfigSchema } from "./runtime-fallback"
 import { SkillsConfigSchema } from "./skills"
+import { SkillDiscoveryConfigSchema } from "./skill-discovery"
 import { BobConfigSchema } from "./bob"
 import { BobAgentConfigSchema } from "./bob-agent"
 import { TmuxConfigSchema } from "./tmux"
@@ -30,6 +31,7 @@ const AuthConfigSchema = z.object({
   openrouter: z.string().optional(),
   stitch: z.string().optional(),
   firecrawl: z.string().optional(),
+  context7: z.string().optional(),
 }).optional()
 
 export const HiaiOpenCodeConfigSchema = z.object({
@@ -60,6 +62,7 @@ export const HiaiOpenCodeConfigSchema = z.object({
   experimental: ExperimentalConfigSchema.optional(),
   auto_update: z.boolean().optional(),
   skills: SkillsConfigSchema.optional(),
+  skill_discovery: SkillDiscoveryConfigSchema.optional(),
   ralph_loop: RalphLoopConfigSchema.optional(),
   /**
    * Enable runtime fallback (default: false)

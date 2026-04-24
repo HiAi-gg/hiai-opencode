@@ -32,6 +32,8 @@ export const LEGACY_AGENT_ALIAS_NAMES = [
   "zoe",
   "build",
   "pre-plan",
+  "manager",
+  "vision",
   "logician",
   "librarian",
   "explore",
@@ -54,6 +56,8 @@ export const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<
   zoe: "bob",
   build: "bob",
   "pre-plan": "strategist",
+  manager: "platform-manager",
+  vision: "multimodal",
   logician: "strategist",
   librarian: "researcher",
   explore: "researcher",
@@ -135,6 +139,16 @@ export interface SkillsConfig {
   disabled?: string[];
 }
 
+export interface SkillDiscoveryConfig {
+  config_sources?: boolean;
+  project_opencode?: boolean;
+  global_opencode?: boolean;
+  project_claude?: boolean;
+  global_claude?: boolean;
+  project_agents?: boolean;
+  global_agents?: boolean;
+}
+
 export interface PermissionsConfig {
   read?: Record<string, string>;
   edit?: Record<string, string>;
@@ -148,6 +162,7 @@ export interface AuthKeys {
   openrouter?: string;
   stitch?: string;
   firecrawl?: string;
+  context7?: string;
 }
 
 export interface OllamaConfig {
@@ -168,6 +183,7 @@ export interface HiaiOpencodeConfig {
   lsp?: Record<string, LspServerConfig>;
   subtask2?: Subtask2Config;
   skills?: SkillsConfig;
+  skill_discovery?: SkillDiscoveryConfig;
   permissions?: PermissionsConfig;
   auth?: AuthKeys;
   ollama?: OllamaConfig;

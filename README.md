@@ -60,7 +60,7 @@ Minimum:
 
 Usually required:
 
-- `OPENROUTER_API_KEY` if you use the default model presets
+- at least one model provider connected in OpenCode for the model IDs you configure
 
 Optional, depending on which services you want:
 
@@ -73,99 +73,21 @@ Optional, depending on which services you want:
 
 ## Install
 
-Recommended native OpenCode install:
+### 1. Register the OpenCode plugin
 
 ```bash
 opencode plugin @hiai-gg/hiai-opencode@latest --global
 ```
 
-Optional DCP plugin:
+Optional Dynamic Context Pruning plugin:
 
 ```bash
 opencode plugin @tarquinen/opencode-dcp@latest --global
 ```
-
-Manual config alternative:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@hiai-gg/hiai-opencode"]
-}
-```
-
-Then start OpenCode:
-
-```bash
-opencode
-```
-
-Direct npm install is only needed for development or inspection:
-
-```bash
-npm install @hiai-gg/hiai-opencode
-```
-
-For local development:
-
-```bash
-git clone https://github.com/HiAi-gg/hiai-opencode.git
-cd hiai-opencode
-bun install
-bun run build
-```
-
-## Register The Plugin In OpenCode
-
-Use the OpenCode plugin CLI:
-
-```bash
-opencode plugin @hiai-gg/hiai-opencode@latest --global
-```
-
-If you also want Dynamic Context Pruning, install its separate plugin next:
-
-```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
-```
-
-If you prefer manual config, add the plugin package to your OpenCode config. OpenCode installs npm plugins automatically at startup.
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@hiai-gg/hiai-opencode"]
-}
-```
-
-The packaged minimal example lives in [config/opencode.json](config/opencode.json).
-
-The richer example config lives in [hiai-opencode.json](hiai-opencode.json).
 
 Do not put MCP server packages such as `firecrawl-mcp`, `@playwright/mcp`, or `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. `hiai-opencode` only provides the OpenCode-side launch wiring for them through its `mcp` config and helper launchers.
 
-## Quick Start
-
-```bash
-git clone https://github.com/HiAi-gg/hiai-opencode.git
-cd hiai-opencode
-bun install
-bun run build
-```
-
-Register the plugin in OpenCode:
-
-```bash
-opencode plugin @hiai-gg/hiai-opencode@latest --global
-```
-
-Optional:
-
-```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
-```
-
-Manual equivalent:
+Manual OpenCode config equivalent:
 
 ```json
 {
@@ -174,7 +96,27 @@ Manual equivalent:
 }
 ```
 
-Project-level service config goes in `hiai-opencode.json` at the project root or under `.opencode/`:
+The packaged minimal OpenCode example lives in [config/opencode.json](config/opencode.json).
+
+### 2. Create project config
+
+Create a project-level config file at `hiai-opencode.json` in the project root or at `.opencode/hiai-opencode.json`.
+
+Bash:
+
+```bash
+mkdir -p .opencode
+cp hiai-opencode.json .opencode/hiai-opencode.json
+```
+
+PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force .opencode
+Copy-Item .\hiai-opencode.json .\.opencode\hiai-opencode.json
+```
+
+If you installed only from npm/OpenCode and do not have this repository checked out, create `.opencode/hiai-opencode.json` with the service block below and adjust it later.
 
 ```json
 {
@@ -190,11 +132,51 @@ Project-level service config goes in `hiai-opencode.json` at the project root or
 }
 ```
 
-Then verify:
+By default, skill discovery is deterministic: `hiai-opencode` skills plus project-local `.opencode/skills` only. Global Claude/OpenCode/Agents skill folders are opt-in.
+
+### 3. Connect models and add service keys
+
+Model provider credentials belong to OpenCode Connect, not to `hiai-opencode`.
+This plugin only writes model IDs such as `openrouter/anthropic/claude-3.5-sonnet` into agent and category config.
+
+Use OpenCode Connect to authorize the providers behind your configured model IDs. Then add only the service keys for MCP or search integrations you actually use:
 
 ```bash
+export FIRECRAWL_API_KEY=...
+export STITCH_AI_API_KEY=...
+export CONTEXT7_API_KEY=...
+```
+
+See [Environment Variables And Keys](#environment-variables-and-keys) for the full list.
+
+### 4. Start and verify
+
+```bash
+opencode
+hiai-opencode mcp-status
 opencode debug config
 opencode mcp list --print-logs --log-level INFO
+```
+
+`opencode mcp list` may not show plugin-provided MCP servers in every OpenCode version. If that happens, use `opencode debug config` and startup logs as the source of truth.
+
+`hiai-opencode mcp-status` is the fastest visibility check. It does not change OpenCode config; it reports config location, enabled MCP services, missing keys, and basic local runtime availability.
+
+## Development Install
+
+Direct npm install is only needed for development or inspection:
+
+```bash
+npm install @hiai-gg/hiai-opencode
+```
+
+Local development:
+
+```bash
+git clone https://github.com/HiAi-gg/hiai-opencode.git
+cd hiai-opencode
+bun install
+bun run build
 ```
 
 ## Post-Install Bootstrap Prompt
@@ -209,6 +191,8 @@ Do not add MCP server packages to the OpenCode plugin list. Keep OpenCode plugin
 Check that @hiai-gg/hiai-opencode is registered. If Dynamic Context Pruning is requested, install @tarquinen/opencode-dcp as a separate OpenCode plugin.
 
 Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp object as the single switchboard for enabling or disabling MCP services.
+
+Keep skill discovery deterministic unless I explicitly ask for external skills. Leave global_opencode, project_claude, global_claude, project_agents, and global_agents disabled by default.
 
 Enable only services that can run on this machine:
 - playwright: requires node/npx; optionally set HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1 before first run if browser binaries are needed.
@@ -232,21 +216,17 @@ If a dependency is missing, install only user-level or project-local dependencie
 
 ### Models
 
-Model presets and role guidance:
-
-- [src/config/models.ts](src/config/models.ts)
-
-Runtime defaults for agents, categories, MCP, LSP:
-
-- [src/config/defaults.ts](src/config/defaults.ts)
-
-User-facing example config:
+Canonical runtime defaults for agents, categories, MCP, LSP, and model IDs:
 
 - [hiai-opencode.json](hiai-opencode.json)
 
-If you want to change which model a specific agent uses by default, edit `src/config/defaults.ts`.
+Runtime loader for the bundled canonical config:
 
-If you want to change the shared preset values like `fast`, `mid`, `high`, `vision`, or `reasoning`, edit `src/config/models.ts`.
+- [src/config/defaults.ts](src/config/defaults.ts)
+
+If you want to change which model a specific agent or category uses by default, edit `hiai-opencode.json`.
+
+Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 
 ### Prompting
 
@@ -281,6 +261,24 @@ Skill materialization logic:
 
 - [src/features/builtin-skills/materialize.ts](src/features/builtin-skills/materialize.ts)
 
+Skill discovery defaults:
+
+```json
+{
+  "skill_discovery": {
+    "config_sources": true,
+    "project_opencode": true,
+    "global_opencode": false,
+    "project_claude": false,
+    "global_claude": false,
+    "project_agents": false,
+    "global_agents": false
+  }
+}
+```
+
+This keeps clean installs reproducible and avoids accidentally mixing Codex, Claude, Antigravity, and global OpenCode skill collections. To opt into external skill folders, enable the specific source you want instead of turning everything on.
+
 ### MCP
 
 Default MCP registry:
@@ -304,21 +302,23 @@ LSP defaults are defined in:
 
 ## Environment Variables And Keys
 
-Important keys:
+Model provider keys are handled by OpenCode Connect. Do not add `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` to `hiai-opencode` config for normal model usage.
 
-- `OPENROUTER_API_KEY`
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `DEEPSEEK_API_KEY`
-- `GLM_API_KEY`
-- `MINIMAX_API_KEY`
-- `QWEN_API_KEY`
+Important service variables:
+
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
+- `GOOGLE_SEARCH_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
+- `MEMPALACE_PALACE_PATH`
+- `OPENCODE_RAG_URL`
+- `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
+- `HIAI_MCP_AUTO_INSTALL`
+
+Optional headless or non-Connect fallback variables are documented in [.env.example](.env.example), but they are not required for normal OpenCode model auth.
 
 Use [.env.example](.env.example) as the reference template. Create a local `.env` in your OpenCode environment or export these variables in your shell before startup.
 
@@ -350,18 +350,39 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 - `sequential-thinking`: launches `@modelcontextprotocol/server-sequential-thinking` through the helper npm runner.
 - `firecrawl`: launches `firecrawl-mcp` through the helper npm runner and requires `FIRECRAWL_API_KEY`.
 
+### Playwright On Minimal Linux Hosts
+
+`hiai-opencode mcp-status` can confirm that the Playwright MCP launcher is available, but it cannot guarantee that Chromium can start on a minimal Linux image.
+
+Playwright has two dependency layers:
+
+- Browser binary: install with `HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1` before OpenCode starts, or run `npx playwright install chromium`.
+- System libraries: if Chromium errors with missing packages like `libnspr4`, `libnss3`, `libatk-bridge`, or `libgtk-3`, install them with admin rights, usually `sudo npx playwright install-deps chromium`.
+
+If sudo is not available:
+
+- Use an already installed system browser by editing the Playwright command in `.opencode/hiai-opencode.json`, for example:
+
+```json
+{
+  "mcp": {
+    "playwright": {
+      "enabled": true,
+      "command": ["node", "{pluginRoot}/assets/mcp/playwright.mjs", "--browser", "chrome"],
+      "timeout": 600000
+    }
+  }
+}
+```
+
+- Try `--browser msedge` if Edge is installed.
+- Use a remote/CDP browser or the `agent-browser`/`playwright-cli` skill path if those tools are installed.
+- Use `curl` only as a degraded HTTP check. It does not replace browser interaction, screenshots, auth flows, or client-side app verification.
+
 ### Needs upstream runtime or extra setup
 
 - `mempalace`: prefers `uv`; otherwise uses Python. If `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher can run `python -m pip install --user mempalace` on first start.
 - `rag`: requires your own running endpoint
-
-### Additional OpenCode Plugin
-
-`opencode-dcp` is a separate OpenCode plugin, not an MCP server:
-
-```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
-```
 
 ### Important Windows note
 
@@ -371,6 +392,68 @@ On some Windows/OpenCode environments, local MCP process spawning can fail with 
 - the remaining issue is the host runtime's local process spawn behavior
 
 This most often affects `sequential-thinking` and `mempalace`, and sometimes local `npx`-backed tools.
+
+## Diagnostics
+
+The plugin now emits startup warnings for common misconfiguration, including:
+
+- `.opencode/opencode.json` containing `plugin: ["list"]`
+- enabled MCP integrations with missing required env vars such as `FIRECRAWL_API_KEY` or `STITCH_AI_API_KEY`
+
+Available CLI:
+
+```bash
+hiai-opencode mcp-status
+```
+
+Inside OpenCode, use the slash command:
+
+```text
+/mcp-status
+```
+
+Example output:
+
+```text
+MCP Servers:
+✅ playwright           - backend ok
+⚠️  rag                 - enabled, http://localhost:9002/tools/search not reachable
+✅ firecrawl            - backend ok
+❌ mempalace            - python not found
+⚠️  stitch              - enabled, API key missing (STITCH_AI_API_KEY)
+```
+
+Planned follow-up commands:
+
+- `hiai-opencode doctor`: report config location, MCP status, missing keys, and local dependency checks.
+- `hiai-opencode export-mcp`: generate a standard `.mcp.json` for hosts that do not expose plugin-provided MCP servers through `opencode mcp list`.
+
+Until those commands ship, use:
+
+```bash
+opencode debug config
+opencode mcp list --print-logs --log-level INFO
+```
+
+## Core Components And Upstream Projects
+
+`hiai-opencode` wires these projects and ideas into an OpenCode-friendly setup. Upstream projects remain independent; this table is attribution and orientation, not an ownership claim.
+
+| Component | Upstream | Notes |
+|---|---|---|
+| OpenCode host/runtime | [anomalyco/opencode](https://github.com/anomalyco/opencode) | plugin host and runtime target |
+| Core orchestration influences | [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) | architectural influence |
+| Planning / workflow influences | [obra/superpowers](https://github.com/obra/superpowers) | planning, review, and debugging ideas |
+| Specialist / platform influences | [vtemian/micode](https://github.com/vtemian/micode) | platform-style specialist behavior |
+| Agent skill ecosystem | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | tactical workflow skill ideas |
+| Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | installed separately |
+| MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external MCP/runtime |
+| Playwright MCP | [microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp) | external MCP |
+| Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
+| Firecrawl MCP | [firecrawl-ai/firecrawl-mcp-server](https://github.com/firecrawl-ai/firecrawl-mcp-server) | external MCP |
+| Context7 MCP | [upstash/context7-mcp](https://github.com/upstash/context7-mcp) | external MCP |
+| Websearch cited | [ghoulr/opencode-websearch-cited](https://github.com/ghoulr/opencode-websearch-cited) | search integration influence |
+| bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
 ## Build And Publish
 

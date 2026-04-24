@@ -62,6 +62,12 @@ export async function loadGlobalAgentsSkills(): Promise<Record<string, CommandDe
   return skillsToCommandDefinitionRecord(skills)
 }
 
+export async function loadManagedPluginSkills(): Promise<Record<string, CommandDefinition>> {
+  const skillsDir = join(getOpenCodeConfigDir({ binary: "opencode" }), ".hiai", "skills", "plugin")
+  const skills = await loadSkillsFromDir({ skillsDir, scope: "builtin" })
+  return skillsToCommandDefinitionRecord(skills)
+}
+
 export interface DiscoverSkillsOptions {
   includeClaudeCodePaths?: boolean
   directory?: string
@@ -169,4 +175,9 @@ export async function discoverProjectAgentsSkills(directory?: string): Promise<L
 export async function discoverGlobalAgentsSkills(): Promise<LoadedSkill[]> {
   const agentsGlobalDir = join(getAgentsConfigDir(), "skills")
   return loadSkillsFromDir({ skillsDir: agentsGlobalDir, scope: "user" })
+}
+
+export async function discoverManagedPluginSkills(): Promise<LoadedSkill[]> {
+  const skillsDir = join(getOpenCodeConfigDir({ binary: "opencode" }), ".hiai", "skills", "plugin")
+  return loadSkillsFromDir({ skillsDir, scope: "builtin" })
 }

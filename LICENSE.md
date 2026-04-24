@@ -20,6 +20,7 @@ Some are:
 
 | Component | Upstream | Notes |
 |---|---|---|
+| OpenCode host/runtime | [anomalyco/opencode](https://github.com/anomalyco/opencode) | plugin host and runtime target |
 | Core orchestration influences | [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) | important architectural influence |
 | Planning / workflow influences | [obra/superpowers](https://github.com/obra/superpowers) | planning, review, and debugging ideas |
 | Specialist / platform influences | [vtemian/micode](https://github.com/vtemian/micode) | platform-style specialist behavior |

@@ -1,89 +1,68 @@
 /**
- * Default config values for hiai-opencode
+ * Runtime defaults for hiai-opencode.
+ *
+ * Model defaults are intentionally not defined in TypeScript.
+ * The bundled hiai-opencode.json file is the single source of truth for:
+ * - agent models
+ * - category models
+ * - user-editable runtime defaults
  */
-import type { HiaiOpencodeConfig } from "./types.js";
-import { MODEL_PRESETS } from "./models.js";
-import { createDefaultMcpConfig } from "../mcp/registry.js";
-import { join } from "node:path";
+import { existsSync, readFileSync } from "node:fs"
+import { dirname, join, normalize } from "node:path"
+import type { HiaiOpencodeConfig } from "./types.js"
 
-export const defaultConfig: HiaiOpencodeConfig = {
-  agents: {
-    bob: { model: MODEL_PRESETS.high },
-    guard: { model: MODEL_PRESETS.ultrahigh },
-    strategist: { model: MODEL_PRESETS.strategist },
-    critic: { model: MODEL_PRESETS.critic },
-    coder: { model: MODEL_PRESETS.mid },
-    designer: {
-      model: "openrouter/google/gemini-3.1-pro",
-      description: "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction. Best used when the task needs taste, composition, and design judgment rather than plain implementation. (Designer - HiaiOpenCode)",
-    },
-    sub: { model: MODEL_PRESETS.fast },
-    researcher: { model: MODEL_PRESETS.fast },
-    multimodal: { model: MODEL_PRESETS.vision },
-    "quality-guardian": { model: MODEL_PRESETS.mid },
-    "platform-manager": { model: MODEL_PRESETS.fast },
-    brainstormer: { model: MODEL_PRESETS.fast },
-    "agent-skills": { model: MODEL_PRESETS.fast },
-  },
-  agentRequirements: {},
-  categories: {
-    "visual-engineering": { model: MODEL_PRESETS.vision, variant: "high" },
-    artistry: { model: MODEL_PRESETS.vision, variant: "high" },
-    ultrabrain: { model: MODEL_PRESETS.ultrahigh, variant: "xhigh" },
-    deep: { model: MODEL_PRESETS.reasoning, variant: "medium" },
-    quick: { model: MODEL_PRESETS.fast },
-    writing: { model: MODEL_PRESETS.writing },
-    git: { model: MODEL_PRESETS.fast },
-    "unspecified-low": { model: MODEL_PRESETS.mid },
-    "unspecified-high": { model: MODEL_PRESETS.high, variant: "max" },
-  },
-  categoryRequirements: {},
+function findPluginRoot(): string {
+  const candidates = [
+    // Source tree: src/config/defaults.ts -> repo root
+    join(import.meta.dirname, "..", ".."),
+    // Built package: dist/index.js bundle -> package root
+    join(import.meta.dirname, ".."),
+    // Non-bundled compiled output: dist/config/defaults.js -> package root
+    join(import.meta.dirname, "..", ".."),
+    dirname(process.argv[1] ?? ""),
+    process.cwd(),
+  ]
 
-  mcp: createDefaultMcpConfig(),
+  for (const candidate of candidates) {
+    const root = normalize(candidate)
+    if (existsSync(join(root, "hiai-opencode.json"))) {
+      return root
+    }
+  }
 
-  lsp: {
-    typescript: {
-      command: ["typescript-language-server", "--stdio"],
-      extensions: [".ts", ".tsx", ".mts", ".cts"],
-    },
-    svelte: {
-      command: ["svelteserver", "--stdio"],
-      extensions: [".svelte"],
-    },
-    eslint: {
-      command: ["node", join(import.meta.dirname, "..", "assets", "runtime", "npm-package-runner.mjs"), "eslint-lsp", "--stdio"],
-      extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".svelte"],
-    },
-    bash: {
-      command: ["node", join(import.meta.dirname, "..", "assets", "runtime", "npm-package-runner.mjs"), "bash-language-server", "start"],
-      extensions: [".sh", ".bash"],
-    },
-    pyright: {
-      command: ["pyright-langserver", "--stdio"],
-      extensions: [".py"],
-    },
-  },
+  throw new Error(
+    "[hiai-opencode] Cannot find bundled hiai-opencode.json. The package is incomplete.",
+  )
+}
 
-  subtask2: {
-    replace_generic: true,
-    generic_return: null,
-  },
+function expandPluginRootPlaceholders(value: unknown, pluginRoot: string): unknown {
+  if (typeof value === "string") {
+    return value.replaceAll("{pluginRoot}", pluginRoot)
+  }
 
-  skills: {
-    enabled: true,
-    disabled: [],
-  },
+  if (Array.isArray(value)) {
+    return value.map((item) => expandPluginRootPlaceholders(item, pluginRoot))
+  }
 
-  permissions: {
-    read: { "*": "allow", "*.env": "deny", "*.env.*": "deny", "*.env.example": "allow" },
-    edit: { "*": "allow" },
-    bash: { "*": "allow" },
-    deny_paths: ["**/backup/**", "**/secrets.*", "**/.env", "**/.env.*"],
-  },
-  ollama: {
-    enabled: false,
-    model: "{env:OLLAMA_MODEL:-qwen3.5:4b}",
-    baseUrl: "http://localhost:11434",
-    purpose: "helper",
-  },
-};
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, entry]) => [
+        key,
+        expandPluginRootPlaceholders(entry, pluginRoot),
+      ]),
+    )
+  }
+
+  return value
+}
+
+function loadBundledDefaultConfig(): HiaiOpencodeConfig {
+  const pluginRoot = findPluginRoot()
+  const configPath = join(pluginRoot, "hiai-opencode.json")
+  const raw = readFileSync(configPath, "utf-8")
+  const parsed = JSON.parse(raw) as HiaiOpencodeConfig
+
+  return expandPluginRootPlaceholders(parsed, pluginRoot) as HiaiOpencodeConfig
+}
+
+export const defaultConfig: HiaiOpencodeConfig = loadBundledDefaultConfig()

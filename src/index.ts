@@ -18,6 +18,7 @@ import { injectServerAuthIntoClient, log } from "./shared"
 import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config"
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
 import { PLUGIN_NAME } from "./shared/plugin-identity"
+import { warnIfListPluginEntry, warnMissingRequiredMcpEnv } from "./shared/startup-diagnostics"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
 
@@ -69,6 +70,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   log("[HiaiOpenCodePlugin] ENTRY - plugin loading", {
     directory: ctx.directory,
   })
+  warnIfListPluginEntry(ctx.directory)
 
   const skillPluginCheck = detectExternalSkillPlugin(ctx.directory)
   if (skillPluginCheck.detected && skillPluginCheck.pluginName) {
@@ -83,6 +85,10 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     loadPluginConfig(ctx.directory, ctx),
     internalConfig,
   )
+  warnMissingRequiredMcpEnv({
+    pluginConfig,
+    platformConfig: internalConfig,
+  })
 
   materializeBuiltinSkills(
     createBuiltinSkills({
@@ -220,29 +226,24 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     auth: {
       provider: "hiai-opencode",
       methods: [
-        { type: "api" as const, label: "Google API key" },
-        { type: "api" as const, label: "OpenAI API key" },
-        { type: "api" as const, label: "OpenRouter API key" },
+        { type: "api" as const, label: "Google Search API key" },
       ],
       loader: async (getAuth: any) => {
         const authData = await getAuth();
         const { registerGetAuth, GOOGLE_PROVIDER_ID, OPENAI_PROVIDER_ID, OPENROUTER_PROVIDER_ID } = await import("./internals/plugins/websearch-cited/index");
 
-        // Helper to get key from config or authData
-        const getKey = (label: string, configKey?: string) => {
-          const fromAuth = authData[label];
-          if (fromAuth) return fromAuth;
+        const getConfiguredKey = (configKey?: string) => {
           if (configKey) return resolveEnvVars(configKey);
           return undefined;
         };
 
-        const googleKey = getKey("Google API key", internalConfig.auth?.googleSearch);
-        const openaiKey = getKey("OpenAI API key", internalConfig.auth?.openai);
-        const openRouterKey = getKey("OpenRouter API key", internalConfig.auth?.openrouter);
+        const googleKey = authData["Google Search API key"] || getConfiguredKey(internalConfig.auth?.googleSearch);
+        const openaiKey = getConfiguredKey(internalConfig.auth?.openai);
+        const openRouterKey = getConfiguredKey(internalConfig.auth?.openrouter);
 
-        if (googleKey) registerGetAuth(GOOGLE_PROVIDER_ID, () => Promise.resolve(googleKey));
-        if (openaiKey) registerGetAuth(OPENAI_PROVIDER_ID, () => Promise.resolve(openaiKey));
-        if (openRouterKey) registerGetAuth(OPENROUTER_PROVIDER_ID, () => Promise.resolve(openRouterKey));
+        if (googleKey) registerGetAuth(GOOGLE_PROVIDER_ID, () => Promise.resolve({ type: "api", key: googleKey }));
+        if (openaiKey) registerGetAuth(OPENAI_PROVIDER_ID, () => Promise.resolve({ type: "api", key: openaiKey }));
+        if (openRouterKey) registerGetAuth(OPENROUTER_PROVIDER_ID, () => Promise.resolve({ type: "api", key: openRouterKey }));
 
         return {};
       },

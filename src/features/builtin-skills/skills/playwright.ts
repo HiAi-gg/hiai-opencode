@@ -5,11 +5,33 @@ export const playwrightSkill: BuiltinSkill = {
   description: "MUST USE for any browser-related tasks. Browser automation via Playwright MCP - verification, browsing, information gathering, web scraping, testing, screenshots, and all browser interactions.",
   template: `# Playwright Browser Automation
 
-This skill provides browser automation capabilities via the Playwright MCP server.`,
+This skill provides browser automation capabilities via the Playwright MCP server.
+
+## Required workflow
+
+1. Load this skill before calling \`skill_mcp\`.
+2. Use \`skill_mcp\` with \`mcp_name="playwright"\` for browser navigation, interaction, screenshots, and visual verification.
+3. If the host says \`MCP server "playwright" not found\`, do not conclude that Playwright is impossible. First report that the skill was not loaded or the Playwright MCP server was not registered in this session.
+4. If Chromium starts but fails with missing Linux libraries such as \`libnspr4\`, \`libnss3\`, \`libatk-bridge\`, \`libgtk-3\`, or similar, distinguish browser OS dependencies from MCP availability.
+
+## Linux dependency fallback
+
+Playwright has two dependency layers:
+
+- Browser binary: installable without sudo with \`npx playwright install chromium\` or by setting \`HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1\` before OpenCode starts.
+- System libraries: on minimal Linux images these usually require admin rights via \`sudo npx playwright install-deps chromium\` or OS package manager equivalents.
+
+If sudo is unavailable, try these alternatives before falling back to curl-only checks:
+
+- Use an already installed Chrome/Chromium/Edge by adding Playwright MCP args in \`hiai-opencode.json\`, for example \`--browser chrome\` or \`--browser msedge\`.
+- Use a remote/browser service or CDP-backed browser when available.
+- Switch the browser automation provider to \`agent-browser\` or \`playwright-cli\` if the workspace has those tools installed.
+
+Only use \`curl\` as a final degraded check. Clearly say that HTTP checks do not replace interactive browser verification.`,
   mcpConfig: {
     playwright: {
       command: "npx",
-      args: ["@playwright/mcp@latest"],
+      args: ["-y", "@playwright/mcp@latest"],
     },
   },
 }

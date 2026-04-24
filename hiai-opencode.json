@@ -1,32 +1,107 @@
 {
-  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. MCP enable/disable lives in the mcp object below; default MCP definitions live in src/mcp/registry.ts. Source model defaults: src/config/defaults.ts and src/config/models.ts.",
+  "_description": "Canonical hiai-opencode runtime config. Copy this file to .opencode/hiai-opencode.json and edit it there. This file is the user-facing source of truth for agent models, category models, MCP switches, LSP defaults, skill discovery, service auth placeholders, and local helper defaults. Model provider credentials are configured in OpenCode Connect; this file stores model IDs only.",
   "$schema": "./config/hiai-opencode.schema.json",
   "agents": {
-    "bob": { "model": "openrouter/anthropic/claude-3.5-opus" },
-    "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
-    "strategist": { "model": "openrouter/anthropic/claude-3.5-haiku" },
-    "guard": { "model": "openrouter/openai/gpt-4o" },
-    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct" },
-    "designer": { "model": "openrouter/google/gemini-3.1-pro" },
-    "researcher": { "model": "openrouter/google/gemini-2.0-flash" },
-    "manager": { "model": "openrouter/google/gemini-2.0-flash" },
-    "brainstormer": { "model": "openrouter/google/gemini-2.0-flash" },
-    "vision": { "model": "openrouter/google/gemini-3.1-pro" }
+    "bob": {
+      "model": "openrouter/anthropic/claude-3.5-opus",
+      "description": "Primary orchestrator for end-to-end task execution, delegation, and high-level workflow control."
+    },
+    "coder": {
+      "model": "openrouter/anthropic/claude-3.5-sonnet",
+      "description": "High-depth executor for multi-file implementation, substantial refactors, and technical delivery."
+    },
+    "strategist": {
+      "model": "openrouter/z-ai/glm-5.1",
+      "description": "Planning and architecture agent for decomposition, sequencing, and decision framing before execution."
+    },
+    "guard": {
+      "model": "openrouter/openai/gpt-4o",
+      "description": "Execution supervisor that routes work, enforces discipline, and keeps delegated flows on track."
+    },
+    "critic": {
+      "model": "openrouter/qwen/qwen2.5-72b-instruct",
+      "description": "High-accuracy review gate for implementation quality, correctness, and plan validation."
+    },
+    "designer": {
+      "model": "openrouter/google/gemini-3.1-pro",
+      "description": "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction."
+    },
+    "researcher": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Codebase exploration and external documentation research."
+    },
+    "platform-manager": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Manager. Unified platform management agent for session continuity, project initialization, and orchestration."
+    },
+    "brainstormer": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Idea exploration agent for divergent thinking, option generation, and concept shaping before execution."
+    },
+    "multimodal": {
+      "model": "openrouter/google/gemini-3.1-pro",
+      "description": "Vision. Multimodal analysis agent for images, PDFs, diagrams, and other non-text inputs."
+    },
+    "sub": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Hidden compatibility executor. Primary subtask execution is handled by Coder."
+    },
+    "quality-guardian": {
+      "model": "openrouter/anthropic/claude-3.5-sonnet",
+      "description": "Hidden compatibility review agent. Primary review work is handled by Critic."
+    },
+    "agent-skills": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Hidden system agent for skill registry, discovery, and capability orchestration."
+    }
   },
+  "agentRequirements": {},
   "categories": {
-    "visual-engineering": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
-    "artistry": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
-    "ultrabrain": { "model": "openrouter/openai/gpt-4o", "variant": "xhigh" },
-    "deep": { "model": "openrouter/anthropic/claude-3.5-sonnet", "variant": "medium" },
-    "quick": { "model": "openrouter/google/gemini-2.0-flash" },
-    "writing": { "model": "openrouter/openai/gpt-4o-mini" },
-    "git": { "model": "openrouter/google/gemini-2.0-flash" },
-    "unspecified-low": { "model": "openrouter/anthropic/claude-3.5-haiku" },
-    "unspecified-high": { "model": "openrouter/anthropic/claude-3.5-opus", "variant": "max" }
+    "visual-engineering": {
+      "model": "openrouter/google/gemini-2.0-pro-exp-02-05",
+      "variant": "high",
+      "description": "Frontend and UI systems work with design-system discipline. Uses Coder deep execution contour."
+    },
+    "artistry": {
+      "model": "openrouter/google/gemini-2.0-pro-exp-02-05",
+      "variant": "high",
+      "description": "High-effort creative problem solving beyond standard patterns. Uses Coder deep execution contour."
+    },
+    "ultrabrain": {
+      "model": "openrouter/openai/gpt-4o",
+      "variant": "xhigh",
+      "description": "Hard logic and architecture tasks. Uses Coder deep execution contour."
+    },
+    "deep": {
+      "model": "openrouter/openai/o1",
+      "variant": "medium",
+      "description": "Deep autonomous implementation with full context buildup. Uses Coder deep execution contour."
+    },
+    "quick": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses Coder fast execution contour."
+    },
+    "writing": {
+      "model": "openrouter/kimi/kimi-latest",
+      "description": "Documentation and prose tasks with bounded scope. Uses Coder fast execution contour."
+    },
+    "git": {
+      "model": "openrouter/google/gemini-2.0-flash",
+      "description": "Git, commit, diff, and repository hygiene tasks."
+    },
+    "unspecified-low": {
+      "model": "openrouter/anthropic/claude-3.5-sonnet",
+      "description": "Unclassifiable moderate tasks with bounded scope. Uses Coder fast execution contour."
+    },
+    "unspecified-high": {
+      "model": "openrouter/anthropic/claude-3.5-opus",
+      "variant": "max",
+      "description": "Unclassifiable substantial tasks across modules. Uses Coder deep execution contour."
+    }
   },
+  "categoryRequirements": {},
+  "modelFamilies": [],
   "auth": {
-    "openrouter": "{env:OPENROUTER_API_KEY}",
-    "openai": "{env:OPENAI_API_KEY}",
     "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
     "stitch": "{env:STITCH_AI_API_KEY}",
     "firecrawl": "{env:FIRECRAWL_API_KEY}",
@@ -34,25 +109,106 @@
   },
   "ollama": {
     "enabled": false,
-    "model": "qwen3.5:4b",
-    "baseUrl": "http://localhost:11434",
+    "model": "{env:OLLAMA_MODEL:-qwen3.5:4b}",
+    "baseUrl": "{env:OLLAMA_BASE_URL:-http://localhost:11434}",
     "purpose": "helper"
   },
+  "fast_apply": {
+    "enabled": false,
+    "ollama_url": "{env:OLLAMA_BASE_URL:-http://localhost:11434}",
+    "model": "{env:OLLAMA_MODEL:-qwen3.5:4b}",
+    "timeout": 30000
+  },
   "mcp": {
-    "playwright": { "enabled": true },
-    "stitch": { "enabled": true },
-    "sequential-thinking": { "enabled": true },
-    "firecrawl": { "enabled": true },
-    "rag": { "enabled": true },
-    "mempalace": { "enabled": true },
-    "context7": { "enabled": true }
+    "playwright": {
+      "enabled": true,
+      "command": ["node", "{pluginRoot}/assets/mcp/playwright.mjs"],
+      "timeout": 600000
+    },
+    "stitch": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": { "X-Goog-Api-Key": "{env:STITCH_AI_API_KEY}" },
+      "timeout": 600000
+    },
+    "sequential-thinking": {
+      "enabled": true,
+      "command": ["node", "{pluginRoot}/assets/runtime/npm-package-runner.mjs", "@modelcontextprotocol/server-sequential-thinking"],
+      "timeout": 600000
+    },
+    "firecrawl": {
+      "enabled": true,
+      "command": ["node", "{pluginRoot}/assets/runtime/npm-package-runner.mjs", "firecrawl-mcp"],
+      "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" },
+      "timeout": 600000
+    },
+    "rag": {
+      "enabled": true,
+      "type": "local",
+      "command": ["node", "{pluginRoot}/assets/mcp/rag.mjs"],
+      "environment": {
+        "OPENCODE_RAG_URL": "{env:OPENCODE_RAG_URL:-http://localhost:9002/tools/search}"
+      },
+      "timeout": 600000
+    },
+    "mempalace": {
+      "enabled": true,
+      "type": "local",
+      "command": ["node", "{pluginRoot}/assets/mcp/mempalace.mjs", "--palace", "./.opencode/palace"],
+      "timeout": 600000
+    },
+    "context7": {
+      "enabled": true,
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": { "X-API-KEY": "{env:CONTEXT7_API_KEY}" },
+      "timeout": 600000
+    }
+  },
+  "skill_discovery": {
+    "config_sources": true,
+    "project_opencode": true,
+    "global_opencode": false,
+    "project_claude": false,
+    "global_claude": false,
+    "project_agents": false,
+    "global_agents": false
+  },
+  "skills": {
+    "enabled": true,
+    "disabled": []
   },
   "lsp": {
-    "typescript": { "enabled": true },
-    "python": { "enabled": true },
-    "svelte": { "enabled": true }
+    "typescript": {
+      "command": ["typescript-language-server", "--stdio"],
+      "extensions": [".ts", ".tsx", ".mts", ".cts"]
+    },
+    "svelte": {
+      "command": ["svelteserver", "--stdio"],
+      "extensions": [".svelte"]
+    },
+    "eslint": {
+      "command": ["node", "{pluginRoot}/assets/runtime/npm-package-runner.mjs", "eslint-lsp", "--stdio"],
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".svelte"]
+    },
+    "bash": {
+      "command": ["node", "{pluginRoot}/assets/runtime/npm-package-runner.mjs", "bash-language-server", "start"],
+      "extensions": [".sh", ".bash"]
+    },
+    "pyright": {
+      "command": ["pyright-langserver", "--stdio"],
+      "extensions": [".py"]
+    }
   },
   "subtask2": {
-    "replace_generic": true
+    "replace_generic": true,
+    "generic_return": null
+  },
+  "permissions": {
+    "read": { "*": "allow", "*.env": "deny", "*.env.*": "deny", "*.env.example": "allow" },
+    "edit": { "*": "allow" },
+    "bash": { "*": "allow" },
+    "deny_paths": ["**/backup/**", "**/secrets.*", "**/.env", "**/.env.*"]
   }
 }

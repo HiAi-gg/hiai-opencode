@@ -14,7 +14,7 @@ The plugin has five main layers:
 
 ## Repository Layout
 
-- [src/config](src/config): schemas, types, model presets, default wiring
+- [src/config](src/config): schemas, types, and bundled config loading
 - [src/agents](src/agents): agent factories, prompts, and prompt helpers
 - [src/plugin-handlers](src/plugin-handlers): runtime config assembly into OpenCode shape
 - [src/features](src/features): loaders, materializers, bridges, and supporting runtime features
@@ -62,19 +62,13 @@ Runtime naming, visibility, and compatibility are normalized through:
 
 ### Presets
 
-Shared presets and provider guidance live in:
+Agent and category model IDs live in one place:
 
-- [src/config/models.ts](src/config/models.ts)
-
-This file defines:
-
-- `MODEL_PRESETS`
-- `MODEL_ROLE_GUIDE`
-- `PROVIDER_MODEL_RULES`
+- [hiai-opencode.json](hiai-opencode.json)
 
 ### Runtime Defaults
 
-Actual default agent/category assignments live in:
+The TypeScript defaults loader only reads the bundled canonical config:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
@@ -164,8 +158,7 @@ If a prompt change looks correct in source but does not show up correctly in Ope
 
 Use these rules when editing the prompt layer:
 
-- change `src/config/models.ts` when the preset map itself should change
-- change `src/config/defaults.ts` when default model assignment should change
+- change `hiai-opencode.json` when any default model assignment should change
 - change `src/agents/*` when the prompt content or behavior should change
 - change shared prompt/injection files when the prompt is being appended or normalized after agent construction
 - change `src/plugin-handlers/agent-config-handler.ts` when runtime name, visibility, mode, or final description should change
@@ -196,6 +189,10 @@ Relevant files:
 
 - [src/features/builtin-skills/materialize.ts](src/features/builtin-skills/materialize.ts)
 - [src/features/opencode-skill-loader](src/features/opencode-skill-loader)
+- [src/config/schema/skill-discovery.ts](src/config/schema/skill-discovery.ts)
+- [src/plugin/skill-discovery-config.ts](src/plugin/skill-discovery-config.ts)
+
+Default discovery is deterministic: packaged plugin skills, generated builtin skills, explicit config sources, and project `.opencode/skills`. Global OpenCode, Claude, and Agents skill folders are opt-in.
 
 ## MCP
 
@@ -273,8 +270,8 @@ Avoid adding more root docs unless they serve a genuinely new role.
 
 When changing the plugin, keep these invariants:
 
-- `src/config/defaults.ts` is the runtime source of truth for defaults
-- `src/config/models.ts` is the source of truth for shared model presets and provider guidance
+- `hiai-opencode.json` is the source of truth for user-facing runtime defaults and model IDs
+- `src/config/defaults.ts` must remain a loader, not a second model map
 - root docs should use canonical runtime names, not stale internal aliases
 - user-facing docs should describe visible agents first and hidden/system agents second
 - third-party MCPs should follow upstream install/launch conventions whenever possible

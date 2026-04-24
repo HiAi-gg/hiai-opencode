@@ -63,6 +63,16 @@ export const SkillsConfigSchema = z.object({
   disabled: z.array(z.string()).optional(),
 });
 
+export const SkillDiscoveryConfigSchema = z.object({
+  config_sources: z.boolean().optional(),
+  project_opencode: z.boolean().optional(),
+  global_opencode: z.boolean().optional(),
+  project_claude: z.boolean().optional(),
+  global_claude: z.boolean().optional(),
+  project_agents: z.boolean().optional(),
+  global_agents: z.boolean().optional(),
+});
+
 export const PermissionsConfigSchema = z.object({
   read: z.record(z.string(), z.string()).optional(),
   edit: z.record(z.string(), z.string()).optional(),
@@ -96,8 +106,8 @@ export const AuthKeysSchema = z.object({
 
 export const OllamaConfigSchema = z.object({
   enabled: z.boolean().default(false),
-  model: z.string().default("qwen3.5:4b"),
-  baseUrl: z.string().default("http://localhost:11434"),
+  model: z.string().default(""),
+  baseUrl: z.string().default(""),
   purpose: z.enum(["verification", "helper", "fallback"]).default("helper"),
 });
 
@@ -130,6 +140,8 @@ const AgentsConfigSchema = z.object({
   zoe: AgentConfigSchema.optional(),
   build: AgentConfigSchema.optional(),
   "pre-plan": AgentConfigSchema.optional(),
+  manager: AgentConfigSchema.optional(),
+  vision: AgentConfigSchema.optional(),
   logician: AgentConfigSchema.optional(),
   librarian: AgentConfigSchema.optional(),
   explore: AgentConfigSchema.optional(),
@@ -162,6 +174,8 @@ const AgentRequirementsConfigSchema = z.object({
   zoe: ModelRequirementSchema.optional(),
   build: ModelRequirementSchema.optional(),
   "pre-plan": ModelRequirementSchema.optional(),
+  manager: ModelRequirementSchema.optional(),
+  vision: ModelRequirementSchema.optional(),
   logician: ModelRequirementSchema.optional(),
   librarian: ModelRequirementSchema.optional(),
   explore: ModelRequirementSchema.optional(),
@@ -185,6 +199,7 @@ export const HiaiOpencodeConfigSchema = z.object({
   lsp: z.record(z.string(), LspServerConfigSchema).optional(),
   subtask2: Subtask2ConfigSchema.optional(),
   skills: SkillsConfigSchema.optional(),
+  skill_discovery: SkillDiscoveryConfigSchema.optional(),
   permissions: PermissionsConfigSchema.optional(),
   auth: AuthKeysSchema.optional(),
   ollama: OllamaConfigSchema.optional(),

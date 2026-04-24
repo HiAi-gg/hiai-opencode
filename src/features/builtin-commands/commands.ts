@@ -8,6 +8,7 @@ import { REFACTOR_TEMPLATE } from "./templates/refactor"
 import { START_WORK_TEMPLATE } from "./templates/start-work"
 import { HANDOFF_TEMPLATE } from "./templates/handoff"
 import { REMOVE_AI_SLOPS_TEMPLATE } from "./templates/remove-ai-slops"
+import { MCP_STATUS_TEMPLATE } from "./templates/mcp-status"
 
 interface LoadBuiltinCommandsOptions {
   useRegisteredAgents?: boolean
@@ -120,6 +121,12 @@ Timestamp: $TIMESTAMP
 $ARGUMENTS
 </user-request>`,
       argumentHint: "[goal]",
+    },
+    "mcp-status": {
+      description: "(builtin) Show hiai-opencode MCP server status, missing keys, and local runtime availability",
+      template: `<command-instruction>
+${MCP_STATUS_TEMPLATE}
+</command-instruction>`,
     },
   }
 }

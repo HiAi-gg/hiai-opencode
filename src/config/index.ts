@@ -11,7 +11,6 @@
 export { loadConfig, resolveEnvVars, resolveMcpEnv } from "./loader.js";
 export { HiaiOpencodeConfigSchema } from "./platform-schema.js";
 export { defaultConfig } from "./defaults.js";
-export { MODEL_PRESETS, MODEL_ROLE_GUIDE, PROVIDER_MODEL_RULES } from "./models.js";
 export type {
   HiaiOpencodeConfig,
   AgentConfig,

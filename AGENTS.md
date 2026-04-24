@@ -81,6 +81,8 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 - Do not add MCP server npm packages to the OpenCode `plugin` array.
 - Use `hiai-opencode.json` as the project-level service switchboard.
 - Use `src/mcp/registry.ts` as the source of truth for default MCP launch wiring.
+- Keep skill discovery deterministic by default: packaged plugin skills, generated builtin skills, explicit config sources, and project `.opencode/skills`.
+- Do not enable global OpenCode, Claude, or Agents skill folders unless the user explicitly asks.
 - Use `.env.example` as the key template, but never print, invent, commit, or hardcode secret values.
 - Prefer user-level or project-local installs. Do not use sudo/admin rights unless the user explicitly asks.
 
@@ -96,16 +98,24 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 2. Check plugin registration with `opencode debug config`.
 3. Find or create `hiai-opencode.json` in the project root or `.opencode/`.
 4. Configure the `mcp` object there. Disable services that cannot run on the host.
-5. Check environment variables without printing values:
-   - `OPENROUTER_API_KEY`
+5. Keep `skill_discovery` clean unless the user opts into external folders:
+   - `config_sources: true`
+   - `project_opencode: true`
+   - `global_opencode: false`
+   - `project_claude: false`
+   - `global_claude: false`
+   - `project_agents: false`
+   - `global_agents: false`
+6. Check environment variables without printing values:
    - `FIRECRAWL_API_KEY`
    - `STITCH_AI_API_KEY`
    - `CONTEXT7_API_KEY`
+   - `GOOGLE_SEARCH_API_KEY`
    - `MEMPALACE_PYTHON`
    - `OPENCODE_RAG_URL`
    - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
    - `HIAI_MCP_AUTO_INSTALL`
-6. Verify with:
+7. Verify with:
    - `opencode debug config`
    - `opencode mcp list --print-logs --log-level INFO`
 
@@ -120,6 +130,13 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 | `rag` | User has a local or remote RAG endpoint | Uses `OPENCODE_RAG_URL`, defaulting to `http://localhost:9002/tools/search` |
 | `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
 | `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
+
+Playwright troubleshooting rules:
+
+- If `skill_mcp` says `MCP server "playwright" not found`, first load the `playwright` skill and check `hiai-opencode mcp-status`; do not report this as a browser dependency failure.
+- If Chromium reports missing Linux libraries (`libnspr4`, `libnss3`, `libatk-bridge`, `libgtk-3`, etc.), explain that MCP is present but the host lacks browser system dependencies.
+- Without sudo, try a system browser override in `hiai-opencode.json`, such as `--browser chrome` or `--browser msedge`.
+- If no browser path works, use `curl` only as degraded HTTP verification and explicitly say it is not a replacement for browser testing.
 
 ### Prompt For OpenCode Users
 
@@ -188,18 +205,15 @@ If runtime output differs from that set, inspect:
 
 ## Model Configuration
 
-There are two sources of truth:
-
-1. shared presets and guidance:
-   - [src/config/models.ts](src/config/models.ts)
-2. actual runtime defaults:
-   - [src/config/defaults.ts](src/config/defaults.ts)
-
-The example override file is:
+There is one source of truth for model IDs:
 
 - [hiai-opencode.json](hiai-opencode.json)
 
-Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast` or `sonnet`.
+The runtime loader is:
+
+- [src/config/defaults.ts](src/config/defaults.ts)
+
+Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 
 ## Change Map
 
@@ -207,10 +221,9 @@ Use this table when you need to change something and want the right file immedia
 
 | Goal | Edit this first | Why |
 |---|---|---|
-| Change shared preset values like `fast`, `mid`, `high`, `vision`, `reasoning` | [src/config/models.ts](src/config/models.ts) | This is the shared preset map |
-| Change which default model an agent uses | [src/config/defaults.ts](src/config/defaults.ts) | This is the runtime default assignment layer |
-| Change which default model a category uses | [src/config/defaults.ts](src/config/defaults.ts) | Categories are assigned there |
-| Change provider/model guidance shown to maintainers | [src/config/models.ts](src/config/models.ts) | That file holds provider rules and role guidance |
+| Change which default model an agent uses | [hiai-opencode.json](hiai-opencode.json) | This is the canonical model source |
+| Change which default model a category uses | [hiai-opencode.json](hiai-opencode.json) | Categories are assigned there |
+| Change MCP/LSP/user-facing defaults | [hiai-opencode.json](hiai-opencode.json) | The runtime loader reads this file |
 | Change Bob behavior or prompt text | [src/agents/bob.ts](src/agents/bob.ts), `src/agents/bob/*` | Bob prompt authoring lives there |
 | Change Coder behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
 | Change Strategist behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
@@ -228,6 +241,8 @@ Use this table when you need to change something and want the right file immedia
 | Change closure protocol appended to prompts | [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts) | It is injected after prompt construction |
 | Change prompt override / prompt_append behavior | `src/agents/builtin-agents/agent-overrides.ts` | Override merge logic lives there |
 | Change environment context appended to prompts | `src/agents/builtin-agents/environment-context.ts` | Runtime environment prompt injection lives there |
+| Change skill discovery source defaults | [src/config/schema/skill-discovery.ts](src/config/schema/skill-discovery.ts), [src/plugin/skill-discovery-config.ts](src/plugin/skill-discovery-config.ts) | Controls opt-in external skill folders |
+| Change skill source loading behavior | [src/plugin/skill-context.ts](src/plugin/skill-context.ts), [src/plugin-handlers/command-config-handler.ts](src/plugin-handlers/command-config-handler.ts) | Skills and skill-backed commands must stay aligned |
 | Change MCP defaults | [src/mcp/registry.ts](src/mcp/registry.ts) | Default MCP wiring lives there |
 | Change OpenCode MCP assembly | [src/mcp/index.ts](src/mcp/index.ts) | Final MCP config assembly lives there |
 | Change local MCP helper launcher logic | `assets/mcp/*` | Runtime launcher scripts live there |
@@ -328,22 +343,59 @@ Current MCP set:
 - `websearch`
 - `grep_app`
 
+## Skill Discovery Rules
+
+Default behavior is intentionally deterministic.
+
+Enabled by default:
+
+- packaged `hiai-opencode` skill definitions mirrored into OpenCode's skill view
+- generated builtin helper skills
+- explicit `skills.sources` entries
+- project-local `.opencode/skills` and `.opencode/skill`
+
+Disabled by default:
+
+- global OpenCode skills
+- project and global Claude skills
+- project and global Agents skills
+
+Opt-in example:
+
+```json
+{
+  "skill_discovery": {
+    "global_opencode": true,
+    "project_claude": true,
+    "global_claude": false,
+    "project_agents": false,
+    "global_agents": false
+  }
+}
+```
+
+Use `skills.disable` for noisy individual skills:
+
+```json
+{
+  "skills": {
+    "disable": ["claude-md-management"]
+  }
+}
+```
+
 ## Environment Variables
 
 Use [.env.example](.env.example) as the canonical key template for local setup and release checks.
 
-Common keys:
+Model provider credentials are configured through OpenCode Connect. Do not ask users to put `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` into `hiai-opencode.json` for normal model usage. The plugin stores model IDs only.
 
-- `OPENROUTER_API_KEY`
-- `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `DEEPSEEK_API_KEY`
-- `GLM_API_KEY`
-- `MINIMAX_API_KEY`
-- `QWEN_API_KEY`
+Common service keys:
+
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
+- `GOOGLE_SEARCH_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
