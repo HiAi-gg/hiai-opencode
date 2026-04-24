@@ -1,0 +1,1 @@
+export { createFastApplyHook } from "./hook"

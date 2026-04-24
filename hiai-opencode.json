@@ -1,0 +1,58 @@
+{
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts.",
+  "$schema": "./config/hiai-opencode.schema.json",
+  "agents": {
+    "bob": { "model": "openrouter/anthropic/claude-3.5-opus" },
+    "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet" },
+    "strategist": { "model": "openrouter/anthropic/claude-3.5-haiku" },
+    "guard": { "model": "openrouter/openai/gpt-4o" },
+    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct" },
+    "designer": { "model": "openrouter/google/gemini-3.1-pro" },
+    "researcher": { "model": "openrouter/google/gemini-2.0-flash" },
+    "manager": { "model": "openrouter/google/gemini-2.0-flash" },
+    "brainstormer": { "model": "openrouter/google/gemini-2.0-flash" },
+    "vision": { "model": "openrouter/google/gemini-3.1-pro" }
+  },
+  "categories": {
+    "visual-engineering": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
+    "artistry": { "model": "openrouter/google/gemini-2.0-pro-exp-02-05", "variant": "high" },
+    "ultrabrain": { "model": "openrouter/openai/gpt-4o", "variant": "xhigh" },
+    "deep": { "model": "openrouter/anthropic/claude-3.5-sonnet", "variant": "medium" },
+    "quick": { "model": "openrouter/google/gemini-2.0-flash" },
+    "writing": { "model": "openrouter/openai/gpt-4o-mini" },
+    "git": { "model": "openrouter/google/gemini-2.0-flash" },
+    "unspecified-low": { "model": "openrouter/anthropic/claude-3.5-haiku" },
+    "unspecified-high": { "model": "openrouter/anthropic/claude-3.5-opus", "variant": "max" }
+  },
+  "auth": {
+    "openrouter": "{env:OPENROUTER_API_KEY}",
+    "openai": "{env:OPENAI_API_KEY}",
+    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
+    "stitch": "{env:STITCH_AI_API_KEY}",
+    "firecrawl": "{env:FIRECRAWL_API_KEY}",
+    "context7": "{env:CONTEXT7_API_KEY}"
+  },
+  "ollama": {
+    "enabled": false,
+    "model": "qwen3.5:4b",
+    "baseUrl": "http://localhost:11434",
+    "purpose": "helper"
+  },
+  "mcp": {
+    "playwright": { "enabled": true },
+    "stitch": { "enabled": true },
+    "sequential-thinking": { "enabled": true },
+    "firecrawl": { "enabled": true },
+    "rag": { "enabled": true },
+    "mempalace": { "enabled": true },
+    "context7": { "enabled": true }
+  },
+  "lsp": {
+    "typescript": { "enabled": true },
+    "python": { "enabled": true },
+    "svelte": { "enabled": true }
+  },
+  "subtask2": {
+    "replace_generic": true
+  }
+}

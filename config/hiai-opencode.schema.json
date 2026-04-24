@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "hiai-opencode Configuration",
+  "description": "Unified configuration for hiai-opencode plugin",
+  "type": "object",
+  "properties": {
+    "$schema": { "type": "string" },
+    "agents": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "model": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["model"]
+      }
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "model": { "type": "string" },
+          "variant": { "type": "string" },
+          "description": { "type": "string" }
+        },
+        "required": ["model"]
+      }
+    },
+    "mcp": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "enabled": { "type": "boolean", "default": true },
+          "type": { "enum": ["remote", "local"] },
+          "url": { "type": "string" },
+          "command": { "type": "array", "items": { "type": "string" } },
+          "timeout": { "type": "number" },
+          "environment": { "type": "object", "additionalProperties": { "type": "string" } }
+        },
+        "required": ["enabled"]
+      }
+    },
+    "lsp": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "command": { "type": "array", "items": { "type": "string" } },
+          "extensions": { "type": "array", "items": { "type": "string" } },
+          "initialization": { "type": "object" }
+        },
+        "required": ["command", "extensions"]
+      }
+    },
+    "subtask2": {
+      "type": "object",
+      "properties": {
+        "replace_generic": { "type": "boolean" },
+        "generic_return": { "type": ["string", "null"] }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "disabled": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "permissions": {
+      "type": "object",
+      "properties": {
+        "read": { "type": "object", "additionalProperties": { "type": "string" } },
+        "edit": { "type": "object", "additionalProperties": { "type": "string" } },
+        "bash": { "type": "object", "additionalProperties": { "type": "string" } },
+        "deny_paths": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}

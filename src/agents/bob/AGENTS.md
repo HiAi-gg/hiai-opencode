@@ -1,0 +1,29 @@
+# src/agents/bob/ -- Orchestrator Variants
+
+**Generated:** 2026-04-11
+
+## OVERVIEW
+
+4 files. Model-specific prompt variants for the Bob main orchestrator. Parent `bob.ts` routes to the correct variant based on active model.
+
+## FILES
+
+| File | Purpose |
+|------|---------|
+| `default.ts` | Base/Claude variant: task management, delegation guides, 542 LOC |
+| `gemini.ts` | Gemini-optimized: stricter tool-usage rules, 5 NEVER rules |
+| `gpt-pro.ts` | GPT Pro-native: 8-block architecture, entropy-reduced, 449 LOC |
+| `index.ts` | Barrel exports |
+
+## VARIANT SELECTION
+
+Parent `bob.ts` selects variant by model name:
+- Contains "gemini" -> `gemini.ts`
+- Contains `gpt-pro` or `gpt-5.4` -> `gpt-pro.ts`
+- Default -> `default.ts` (Claude, Kimi, GLM, etc.)
+
+## KEY EXPORTS
+
+Each variant exports:
+- `buildTaskManagementSection()` -- todo/task management prompt
+- `buildBobPrompt()` or equivalent -- full prompt builder
