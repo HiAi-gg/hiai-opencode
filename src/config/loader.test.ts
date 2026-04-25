@@ -28,9 +28,23 @@ function withTempProject(
   }
 }
 
+const requiredModels = {
+  bob: { model: "openrouter/test/bob", recommended: "xhigh" },
+  coder: { model: "openrouter/test/coder", recommended: "high" },
+  strategist: { model: "openrouter/test/strategist", recommended: "high" },
+  guard: "openrouter/test/guard",
+  critic: "openrouter/test/critic",
+  designer: "openrouter/test/designer",
+  researcher: "openrouter/test/researcher",
+  manager: "openrouter/test/manager",
+  brainstormer: "openrouter/test/brainstormer",
+  vision: "openrouter/test/vision",
+};
+
 test("loadConfig accepts compact enabled-only LSP entries for builtin servers", () => {
   withTempProject(
     {
+      models: requiredModels,
       lsp: {
         typescript: {
           enabled: true,
@@ -42,7 +56,7 @@ test("loadConfig accepts compact enabled-only LSP entries for builtin servers", 
       const tsServer = loaded.lsp?.typescript;
 
       expect(tsServer).toBeDefined();
-      expect(tsServer?.command.length).toBeGreaterThan(0);
+      expect(tsServer?.command?.length).toBeGreaterThan(0);
       expect(tsServer?.extensions).toContain(".ts");
     },
   );
@@ -51,6 +65,7 @@ test("loadConfig accepts compact enabled-only LSP entries for builtin servers", 
 test("loadConfig ignores unknown compact enabled-only LSP entries", () => {
   withTempProject(
     {
+      models: requiredModels,
       lsp: {
         "custom-server": {
           enabled: true,

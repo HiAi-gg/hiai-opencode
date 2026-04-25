@@ -27,9 +27,13 @@ import type { HiaiOpencodeConfig } from "./config/types"
 
 import { createPlugin as createSubtask2Plugin } from "./internals/plugins/subtask2/core/plugin"
 import WebsearchCitedPlugin, { 
+  GOOGLE_PROVIDER_ID,
+  OPENAI_PROVIDER_ID,
+  OPENROUTER_PROVIDER_ID,
   WebsearchCitedGooglePlugin, 
   WebsearchCitedOpenAIPlugin 
 } from "./internals/plugins/websearch-cited/index"
+import type { WebsearchCitedFallback } from "./internals/plugins/websearch-cited/index"
 import { createBuiltinSkills } from "./features/builtin-skills"
 import {
   materializeBuiltinSkills,
@@ -37,6 +41,39 @@ import {
 } from "./features/builtin-skills/materialize"
 
 let activePluginDispose: PluginDispose | null = null
+
+function createWebsearchFallback(config: HiaiOpencodeConfig): WebsearchCitedFallback | undefined {
+  const model = config.agents?.researcher?.model?.trim()
+  if (!model) {
+    return undefined
+  }
+
+  if (model.startsWith("openrouter/")) {
+    return {
+      providerID: OPENROUTER_PROVIDER_ID,
+      model: model.slice("openrouter/".length),
+    }
+  }
+
+  if (model.startsWith("openai/")) {
+    return {
+      providerID: OPENAI_PROVIDER_ID,
+      model: model.slice("openai/".length),
+    }
+  }
+
+  if (model.startsWith("google/")) {
+    return {
+      providerID: GOOGLE_PROVIDER_ID,
+      model: model.slice("google/".length),
+    }
+  }
+
+  return {
+    providerID: OPENROUTER_PROVIDER_ID,
+    model,
+  }
+}
 
 function configureBundledBunPtyLibrary(): void {
   if (process.env.BUN_PTY_LIB?.trim()) {
@@ -129,6 +166,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   const toolsResult = await createTools({
     ctx,
     pluginConfig,
+    platformConfig: internalConfig,
     managers,
   })
 
@@ -169,7 +207,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   } catch (err) {
     console.error("[hiai-opencode] PTYPlugin failed to load:", err);
   }
-  const websearchResult = await WebsearchCitedPlugin(ctx)
+  const websearchResult = await WebsearchCitedPlugin(ctx, createWebsearchFallback(internalConfig))
   const websearchGoogleResult = await WebsearchCitedGooglePlugin(ctx)
   const websearchOpenAIResult = await WebsearchCitedOpenAIPlugin(ctx)
 

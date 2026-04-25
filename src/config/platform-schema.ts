@@ -8,6 +8,37 @@ export const AgentConfigSchema = z.object({
   description: z.string().optional(),
 });
 
+export const ModelRecommendationSchema = z.enum([
+  "xhigh",
+  "high",
+  "middle",
+  "fast",
+  "vision",
+  "writing",
+  "design",
+]);
+
+export const ModelSlotConfigSchema = z.union([
+  z.string(),
+  z.object({
+    model: z.string(),
+    recommended: ModelRecommendationSchema.optional(),
+  }),
+]);
+
+export const ModelSlotsConfigSchema = z.object({
+  bob: ModelSlotConfigSchema.optional(),
+  coder: ModelSlotConfigSchema.optional(),
+  strategist: ModelSlotConfigSchema.optional(),
+  guard: ModelSlotConfigSchema.optional(),
+  critic: ModelSlotConfigSchema.optional(),
+  designer: ModelSlotConfigSchema.optional(),
+  researcher: ModelSlotConfigSchema.optional(),
+  manager: ModelSlotConfigSchema.optional(),
+  brainstormer: ModelSlotConfigSchema.optional(),
+  vision: ModelSlotConfigSchema.optional(),
+});
+
 export const FallbackEntrySchema = z.object({
   providers: z.array(z.string()),
   model: z.string(),
@@ -48,8 +79,9 @@ export const McpServerConfigSchema = z.object({
 });
 
 export const LspServerConfigSchema = z.object({
-  command: z.array(z.string()),
-  extensions: z.array(z.string()),
+  enabled: z.boolean().optional(),
+  command: z.array(z.string()).optional(),
+  extensions: z.array(z.string()).optional(),
   initialization: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -102,6 +134,7 @@ export const AuthKeysSchema = z.object({
   openrouter: z.string().optional(),
   stitch: z.string().optional(),
   firecrawl: z.string().optional(),
+  context7: z.string().optional(),
 });
 
 export const OllamaConfigSchema = z.object({
@@ -190,6 +223,7 @@ const AgentRequirementsConfigSchema = z.object({
 
 export const HiaiOpencodeConfigSchema = z.object({
   $schema: z.string().optional(),
+  models: ModelSlotsConfigSchema.optional(),
   agents: AgentsConfigSchema.optional(),
   agentRequirements: AgentRequirementsConfigSchema.optional(),
   categories: z.record(z.string(), CategoryConfigSchema).optional(),

@@ -1,14 +1,17 @@
 import { tool, type ToolDefinition } from "@opencode-ai/plugin"
 import type { ToolContext } from "@opencode-ai/plugin/tool"
 import { BUILTIN_MCP_TOOL_HINTS, SKILL_MCP_DESCRIPTION } from "./constants"
+import type { McpServerConfig } from "../../config/types"
 import type { SkillMcpArgs } from "./types"
 import type { SkillMcpManager, SkillMcpClientInfo, SkillMcpServerContext } from "../../features/skill-mcp-manager"
+import type { ClaudeCodeMcpServer } from "../../features/claude-code-mcp-loader/types"
 import type { LoadedSkill } from "../../features/opencode-skill-loader/types"
 
 interface SkillMcpToolOptions {
   manager: SkillMcpManager
   getLoadedSkills: () => LoadedSkill[]
   getSessionID?: () => string | undefined
+  builtinMcp?: Record<string, McpServerConfig>
 }
 
 type OperationType = { type: "tool" | "resource" | "prompt"; name: string }
@@ -60,6 +63,28 @@ function findMcpServer(
   return null
 }
 
+function convertBuiltinMcpConfig(config: McpServerConfig): ClaudeCodeMcpServer | null {
+  if (config.enabled === false) return null
+
+  if (config.type === "remote") {
+    return {
+      type: "http",
+      url: config.url,
+      headers: config.headers,
+    }
+  }
+
+  const [command, ...args] = config.command ?? []
+  if (!command) return null
+
+  return {
+    type: "stdio",
+    command,
+    args,
+    env: config.environment,
+  }
+}
+
 function formatAvailableMcps(skills: LoadedSkill[]): string {
   const mcps: string[] = []
   for (const skill of skills) {
@@ -70,6 +95,14 @@ function formatAvailableMcps(skills: LoadedSkill[]): string {
     }
   }
   return mcps.length > 0 ? mcps.join("\n") : "  (none found)"
+}
+
+function formatAvailableBuiltinMcps(builtinMcp: Record<string, McpServerConfig> | undefined): string {
+  const names = Object.entries(builtinMcp ?? {})
+    .filter(([, config]) => config.enabled !== false)
+    .map(([name]) => `  - "${name}" from hiai-opencode config`)
+
+  return names.length > 0 ? names.join("\n") : "  (none found)"
 }
 
 function formatBuiltinMcpHint(mcpName: string): string | null {
@@ -119,7 +152,7 @@ export function applyGrepFilter(output: string, pattern: string | undefined): st
 }
 
 export function createSkillMcpTool(options: SkillMcpToolOptions): ToolDefinition {
-  const { manager, getLoadedSkills, getSessionID } = options
+  const { manager, getLoadedSkills, getSessionID, builtinMcp } = options
 
   return tool({
     description: SKILL_MCP_DESCRIPTION,
@@ -141,8 +174,10 @@ export function createSkillMcpTool(options: SkillMcpToolOptions): ToolDefinition
       const operation = validateOperationParams(args)
       const skills = getLoadedSkills()
       const found = findMcpServer(args.mcp_name, skills)
+      const builtinConfig = builtinMcp?.[args.mcp_name]
+      const convertedBuiltinConfig = builtinConfig ? convertBuiltinMcpConfig(builtinConfig) : null
 
-      if (!found) {
+      if (!found && !convertedBuiltinConfig) {
         const builtinHint = formatBuiltinMcpHint(args.mcp_name)
         if (builtinHint) {
           throw new Error(builtinHint)
@@ -153,7 +188,10 @@ export function createSkillMcpTool(options: SkillMcpToolOptions): ToolDefinition
             `Available MCP servers in loaded skills:\n` +
             formatAvailableMcps(skills) +
             `\n\n` +
-            `Hint: Load the skill first using the 'skill' tool, then call skill_mcp.`,
+            `Available MCP servers in hiai-opencode config:\n` +
+            formatAvailableBuiltinMcps(builtinMcp) +
+            `\n\n` +
+            `Hint: Load the skill first for skill-embedded MCPs. Builtin hiai-opencode MCPs can be called directly when enabled in hiai-opencode.json.`,
         )
       }
 
@@ -164,14 +202,14 @@ export function createSkillMcpTool(options: SkillMcpToolOptions): ToolDefinition
 
       const info: SkillMcpClientInfo = {
         serverName: args.mcp_name,
-        skillName: found.skill.name,
+        skillName: found?.skill.name ?? "hiai-opencode",
         sessionID,
-        scope: found.skill.scope,
+        scope: found?.skill.scope ?? "user",
       }
 
       const context: SkillMcpServerContext = {
-        config: found.config,
-        skillName: found.skill.name,
+        config: found?.config ?? convertedBuiltinConfig!,
+        skillName: found?.skill.name ?? "hiai-opencode",
       }
 
       const parsedArgs = parseArguments(args.arguments)

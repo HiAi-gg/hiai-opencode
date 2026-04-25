@@ -116,10 +116,22 @@ New-Item -ItemType Directory -Force .opencode
 Copy-Item .\hiai-opencode.json .\.opencode\hiai-opencode.json
 ```
 
-If you installed only from npm/OpenCode and do not have this repository checked out, create `.opencode/hiai-opencode.json` with the service block below and adjust it later.
+If you installed only from npm/OpenCode and do not have this repository checked out, create `.opencode/hiai-opencode.json` with the shape below and adjust it later.
 
 ```json
 {
+  "models": {
+    "bob": { "model": "openrouter/anthropic/claude-3.5-opus", "recommended": "xhigh" },
+    "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet", "recommended": "high" },
+    "strategist": { "model": "openrouter/z-ai/glm-5.1", "recommended": "high" },
+    "guard": { "model": "openrouter/openai/gpt-4o", "recommended": "middle" },
+    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct", "recommended": "high" },
+    "designer": { "model": "openrouter/google/gemini-3.1-pro", "recommended": "design" },
+    "researcher": { "model": "openrouter/google/gemini-2.0-flash", "recommended": "fast" },
+    "manager": { "model": "openrouter/google/gemini-2.0-flash", "recommended": "fast" },
+    "brainstormer": { "model": "openrouter/kimi/kimi-latest", "recommended": "writing" },
+    "vision": { "model": "openrouter/google/gemini-3.1-pro", "recommended": "vision" }
+  },
   "mcp": {
     "playwright": { "enabled": true },
     "sequential-thinking": { "enabled": true },
@@ -137,7 +149,7 @@ By default, skill discovery is deterministic: `hiai-opencode` skills plus projec
 ### 3. Connect models and add service keys
 
 Model provider credentials belong to OpenCode Connect, not to `hiai-opencode`.
-This plugin only writes model IDs such as `openrouter/anthropic/claude-3.5-sonnet` into agent and category config.
+This plugin only reads the 10 model IDs in `models`. Internal routing derives hidden agents and task categories from those 10 choices.
 
 Use OpenCode Connect to authorize the providers behind your configured model IDs. Then add only the service keys for MCP or search integrations you actually use:
 
@@ -216,7 +228,7 @@ If a dependency is missing, install only user-level or project-local dependencie
 
 ### Models
 
-Canonical runtime defaults for agents, categories, MCP, LSP, and model IDs:
+Canonical user-facing config for 10 primary agent models, MCP/LSP switches, service auth placeholders, and skill discovery:
 
 - [hiai-opencode.json](hiai-opencode.json)
 
@@ -224,7 +236,7 @@ Runtime loader for the bundled canonical config:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
-If you want to change which model a specific agent or category uses by default, edit `hiai-opencode.json`.
+If you want to change model selection, edit the 10 entries in `models`. Do not add category-specific model choices unless you are intentionally developing the plugin internals.
 
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 

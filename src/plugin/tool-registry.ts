@@ -5,6 +5,7 @@ import type {
   AvailableCategory,
 } from "../agents/dynamic-agent-prompt-builder"
 import type { HiaiOpenCodeConfig } from "../config"
+import type { McpServerConfig } from "../config/types"
 import { isInteractiveBashEnabled } from "../create-runtime-tmux-config"
 import type { PluginContext, ToolsRecord } from "./types"
 
@@ -146,6 +147,7 @@ export function createToolRegistry(args: {
   managers: Pick<Managers, "backgroundManager" | "tmuxSessionManager" | "skillMcpManager">
   skillContext: SkillContext
   availableCategories: AvailableCategory[]
+  builtinMcp?: Record<string, McpServerConfig>
   interactiveBashEnabled?: boolean
   toolFactories?: Partial<ToolRegistryFactories>
 }): ToolRegistryResult {
@@ -155,6 +157,7 @@ export function createToolRegistry(args: {
     managers,
     skillContext,
     availableCategories,
+    builtinMcp,
     interactiveBashEnabled = isInteractiveBashEnabled(),
     toolFactories,
   } = args
@@ -216,6 +219,7 @@ export function createToolRegistry(args: {
     manager: managers.skillMcpManager,
     getLoadedSkills: () => skillContext.mergedSkills,
     getSessionID: getSessionIDForMcp,
+    builtinMcp,
   })
 
   const commands = factories.discoverCommandsSync(ctx.directory, {

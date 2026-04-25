@@ -1,4 +1,5 @@
 import { join } from "node:path"
+import { existsSync } from "node:fs"
 import type { McpServerConfig } from "../config/types.js"
 
 export type HiaiMcpName =
@@ -22,7 +23,11 @@ export interface HiaiMcpRegistryEntry {
 }
 
 function resolveAssetScript(...segments: string[]): string {
-  return join(import.meta.dirname, "..", "assets", ...segments)
+  const candidates = [
+    join(import.meta.dirname, "..", "assets", ...segments),
+    join(import.meta.dirname, "..", "..", "assets", ...segments),
+  ]
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
 }
 
 function createNpmPackageCommand(pkg: string, ...args: string[]): string[] {

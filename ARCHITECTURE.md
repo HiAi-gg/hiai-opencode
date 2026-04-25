@@ -62,20 +62,20 @@ Runtime naming, visibility, and compatibility are normalized through:
 
 ### Presets
 
-Agent and category model IDs live in one place:
+User-facing model IDs live in one place:
 
 - [hiai-opencode.json](hiai-opencode.json)
 
 ### Runtime Defaults
 
-The TypeScript defaults loader only reads the bundled canonical config:
+The TypeScript defaults loader derives hidden agents and categories from the 10 user-facing model slots:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
-This is the runtime source of truth for:
+This is the internal routing source for:
 
-- agent models
-- category models
+- hidden agent model inheritance
+- category model inheritance
 - MCP defaults
 - LSP defaults
 - permissions
@@ -158,7 +158,8 @@ If a prompt change looks correct in source but does not show up correctly in Ope
 
 Use these rules when editing the prompt layer:
 
-- change `hiai-opencode.json` when any default model assignment should change
+- change `hiai-opencode.json` when any primary agent model slot should change
+- change `src/config/defaults.ts` when internal category-to-agent-slot routing should change
 - change `src/agents/*` when the prompt content or behavior should change
 - change shared prompt/injection files when the prompt is being appended or normalized after agent construction
 - change `src/plugin-handlers/agent-config-handler.ts` when runtime name, visibility, mode, or final description should change

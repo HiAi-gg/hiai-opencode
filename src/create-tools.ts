@@ -1,5 +1,6 @@
 import type { AvailableCategory, AvailableSkill } from "./agents/dynamic-agent-prompt-builder"
 import type { HiaiOpenCodeConfig } from "./config"
+import type { HiaiOpencodeConfig } from "./config/types"
 import type { BrowserAutomationProvider } from "./config/schema/browser-automation"
 import type { LoadedSkill } from "./features/opencode-skill-loader/types"
 import type { PluginContext, ToolsRecord } from "./plugin/types"
@@ -22,9 +23,10 @@ type CreateToolsResult = {
 export async function createTools(args: {
   ctx: PluginContext
   pluginConfig: HiaiOpenCodeConfig
+  platformConfig?: HiaiOpencodeConfig
   managers: Pick<Managers, "backgroundManager" | "tmuxSessionManager" | "skillMcpManager">
 }): Promise<CreateToolsResult> {
-  const { ctx, pluginConfig, managers } = args
+  const { ctx, pluginConfig, platformConfig, managers } = args
 
   const skillContext = await createSkillContext({
     directory: ctx.directory,
@@ -39,6 +41,7 @@ export async function createTools(args: {
     managers,
     skillContext,
     availableCategories,
+    builtinMcp: platformConfig?.mcp,
   })
 
   return {

@@ -44,6 +44,8 @@ type SelectedWebsearchConfig = {
 	model: string;
 };
 
+export type WebsearchCitedFallback = SelectedWebsearchConfig;
+
 type WebsearchCitedSelection = {
 	selected?: SelectedWebsearchConfig;
 	error?: string;
@@ -164,16 +166,16 @@ function parseOpenAIOptions(providerConfig: unknown, model: string | undefined):
 	return result;
 }
 
-const WebsearchCitedPlugin: Plugin = () => {
-	let selectedProvider: SelectedProviderID | undefined;
-	let selectedModel: string | undefined;
+const WebsearchCitedPlugin = (_ctx?: unknown, fallback?: WebsearchCitedFallback): Promise<any> => {
+	let selectedProvider: SelectedProviderID | undefined = fallback?.providerID;
+	let selectedModel: string | undefined = fallback?.model;
 	let openaiConfig: OpenAIWebsearchConfig = {};
 	let configError: string | undefined;
 
 	return Promise.resolve({
 		auth: {
 			provider: OPENROUTER_PROVIDER_ID,
-			loader(getAuth) {
+			loader(getAuth: GetAuth) {
 				registerGetAuth(OPENROUTER_PROVIDER_ID, getAuth);
 				return Promise.resolve({});
 			},
@@ -184,7 +186,7 @@ const WebsearchCitedPlugin: Plugin = () => {
 				},
 			],
 		},
-		config: (config) => {
+		config: (config: Config) => {
 			const { selected, error } = findFirstWebsearchCitedConfig(config as any);
 
 			selectedProvider = undefined;
@@ -199,6 +201,9 @@ const WebsearchCitedPlugin: Plugin = () => {
 					const openaiProvider = config.provider?.openai;
 					openaiConfig = parseOpenAIOptions(openaiProvider, selectedModel);
 				}
+			} else if (!error && fallback) {
+				selectedProvider = fallback.providerID;
+				selectedModel = fallback.model;
 			}
 
 			return Promise.resolve();

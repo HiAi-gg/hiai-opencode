@@ -213,6 +213,8 @@ The runtime loader is:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
+Users configure only the 10 primary agent model slots under `models`: `bob`, `coder`, `strategist`, `guard`, `critic`, `designer`, `researcher`, `manager`, `brainstormer`, and `vision`.
+Hidden agents and task categories are derived internally in `src/config/defaults.ts`.
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 
 ## Change Map
@@ -221,9 +223,9 @@ Use this table when you need to change something and want the right file immedia
 
 | Goal | Edit this first | Why |
 |---|---|---|
-| Change which default model an agent uses | [hiai-opencode.json](hiai-opencode.json) | This is the canonical model source |
-| Change which default model a category uses | [hiai-opencode.json](hiai-opencode.json) | Categories are assigned there |
-| Change MCP/LSP/user-facing defaults | [hiai-opencode.json](hiai-opencode.json) | The runtime loader reads this file |
+| Change a user-facing default model slot | [hiai-opencode.json](hiai-opencode.json) | This is the canonical model source |
+| Change how categories inherit the 10 model slots | [src/config/defaults.ts](src/config/defaults.ts) | Category routing is internal |
+| Change MCP/LSP user-facing switches | [hiai-opencode.json](hiai-opencode.json) | Users only toggle enabled state there |
 | Change Bob behavior or prompt text | [src/agents/bob.ts](src/agents/bob.ts), `src/agents/bob/*` | Bob prompt authoring lives there |
 | Change Coder behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
 | Change Strategist behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |

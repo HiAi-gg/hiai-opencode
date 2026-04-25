@@ -7,6 +7,35 @@ export interface AgentConfig {
   description?: string;
 }
 
+export type ModelRecommendation =
+  | "xhigh"
+  | "high"
+  | "middle"
+  | "fast"
+  | "vision"
+  | "writing"
+  | "design";
+
+export type ModelSlotConfig =
+  | string
+  | {
+      model: string;
+      recommended?: ModelRecommendation;
+    };
+
+export interface ModelSlotsConfig {
+  bob?: ModelSlotConfig;
+  coder?: ModelSlotConfig;
+  strategist?: ModelSlotConfig;
+  guard?: ModelSlotConfig;
+  critic?: ModelSlotConfig;
+  designer?: ModelSlotConfig;
+  researcher?: ModelSlotConfig;
+  manager?: ModelSlotConfig;
+  brainstormer?: ModelSlotConfig;
+  vision?: ModelSlotConfig;
+}
+
 // Canonical 12-agent model exposed by schema/default config.
 export const CANONICAL_AGENT_NAMES = [
   "bob",
@@ -124,8 +153,9 @@ export interface McpServerConfig {
 }
 
 export interface LspServerConfig {
-  command: string[];
-  extensions: string[];
+  enabled?: boolean;
+  command?: string[];
+  extensions?: string[];
   initialization?: Record<string, unknown>;
 }
 
@@ -174,6 +204,7 @@ export interface OllamaConfig {
 
 export interface HiaiOpencodeConfig {
   $schema?: string;
+  models?: ModelSlotsConfig;
   agents?: AgentConfigMap;
   agentRequirements?: AgentRequirementMap;
   categories?: Record<string, CategoryConfig>;

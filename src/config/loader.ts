@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "jsonc-parser";
 import { HiaiOpencodeConfigSchema } from "./platform-schema.js";
-import { defaultConfig } from "./defaults.js";
+import { applyModelSlots, defaultConfig } from "./defaults.js";
 import {
   LEGACY_AGENT_ALIAS_TO_CANONICAL,
   type CanonicalAgentName,
@@ -157,10 +157,12 @@ export function loadConfig(projectDir: string): HiaiOpencodeConfig {
   const validated = HiaiOpencodeConfigSchema.parse(normalizedParsed);
   const normalized = normalizeAgentAliases(validated);
 
-  return deepMerge(
+  const merged = deepMerge(
     BASE_CONFIG as unknown as Record<string, unknown>,
     normalized as unknown as Record<string, unknown>,
   ) as HiaiOpencodeConfig;
+
+  return applyModelSlots(merged);
 }
 
 export function resolveEnvVars(value: string): string {
