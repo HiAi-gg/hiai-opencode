@@ -31,7 +31,7 @@ Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages 
 
 Check which MCP services can run on this machine, update hiai-opencode.json, install only missing user-level or project-local dependencies, and report missing API keys without printing secret values.
 
-Then run opencode debug config and opencode mcp list --print-logs --log-level INFO if available.
+Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug config`.
 ```
 
 For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
@@ -121,22 +121,22 @@ If you installed only from npm/OpenCode and do not have this repository checked 
 ```json
 {
   "models": {
-    "bob": { "model": "openrouter/anthropic/claude-3.5-opus", "recommended": "xhigh" },
-    "coder": { "model": "openrouter/anthropic/claude-3.5-sonnet", "recommended": "high" },
-    "strategist": { "model": "openrouter/z-ai/glm-5.1", "recommended": "high" },
-    "guard": { "model": "openrouter/openai/gpt-4o", "recommended": "middle" },
-    "critic": { "model": "openrouter/qwen/qwen2.5-72b-instruct", "recommended": "high" },
-    "designer": { "model": "openrouter/google/gemini-3.1-pro", "recommended": "design" },
-    "researcher": { "model": "openrouter/google/gemini-2.0-flash", "recommended": "fast" },
-    "manager": { "model": "openrouter/google/gemini-2.0-flash", "recommended": "fast" },
-    "brainstormer": { "model": "openrouter/kimi/kimi-latest", "recommended": "writing" },
-    "vision": { "model": "openrouter/google/gemini-3.1-pro", "recommended": "vision" }
+    "bob": { "model": "openrouter/moonshotai/kimi-k2.6", "recommended": "xhigh" },
+    "coder": { "model": "openrouter/minimax/minimax-m2.7", "recommended": "high" },
+    "strategist": { "model": "openrouter/anthropic/claude-opus-latest", "recommended": "high" },
+    "guard": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
+    "critic": { "model": "openrouter/xiaomi/mimo-v2.5-pro", "recommended": "high" },
+    "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
+    "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
+    "manager": { "model": "openrouter/qwen/qwen3.5-9b", "recommended": "fast" },
+    "brainstormer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
+    "vision": { "model": "openrouter/google/gemma-4-26b-a4b-it", "recommended": "vision" }
   },
   "mcp": {
     "playwright": { "enabled": true },
     "sequential-thinking": { "enabled": true },
     "firecrawl": { "enabled": true },
-    "mempalace": { "enabled": true },
+    "mempalace": { "enabled": true, "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}" },
     "rag": { "enabled": false },
     "stitch": { "enabled": false },
     "context7": { "enabled": true }
@@ -165,14 +165,18 @@ See [Environment Variables And Keys](#environment-variables-and-keys) for the fu
 
 ```bash
 opencode
+hiai-opencode doctor
 hiai-opencode mcp-status
+hiai-opencode export-mcp .mcp.json
 opencode debug config
 opencode mcp list --print-logs --log-level INFO
 ```
 
-`opencode mcp list` may not show plugin-provided MCP servers in every OpenCode version. If that happens, use `opencode debug config` and startup logs as the source of truth.
+`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by plugins may work but not appear there. If you want `opencode mcp list` visibility, run `hiai-opencode export-mcp .mcp.json` first.
 
 `hiai-opencode mcp-status` is the fastest visibility check. It does not change OpenCode config; it reports config location, enabled MCP services, missing keys, and basic local runtime availability.
+
+`hiai-opencode doctor` is the broader install/runtime diagnostic. It includes MCP status, static `.mcp.json` freshness, OpenCode Connect visibility, skill materialization, agent naming/count checks, LSP runtime checks, MemPalace Python source selection, and real MCP tool probes.
 
 ## Development Install
 
@@ -210,7 +214,7 @@ Enable only services that can run on this machine:
 - playwright: requires node/npx; optionally set HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1 before first run if browser binaries are needed.
 - sequential-thinking: requires node/npx.
 - firecrawl: requires FIRECRAWL_API_KEY.
-- mempalace: requires uv or Python 3.9+ with pip; set MEMPALACE_PYTHON if needed. Leave HIAI_MCP_AUTO_INSTALL enabled unless the user forbids package installation.
+- mempalace: requires uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed. Leave `HIAI_MCP_AUTO_INSTALL` enabled unless the user forbids package installation.
 - rag: requires OPENCODE_RAG_URL or a running local endpoint at http://localhost:9002/tools/search.
 - stitch: requires STITCH_AI_API_KEY.
 - context7: works without a key but use CONTEXT7_API_KEY if available.
@@ -219,6 +223,8 @@ Check .env.example, report missing keys without printing secret values, and neve
 
 Run verification commands where available:
 - opencode debug config
+- hiai-opencode mcp-status
+- hiai-opencode export-mcp .mcp.json
 - opencode mcp list --print-logs --log-level INFO
 
 If a dependency is missing, install only user-level or project-local dependencies, explain every command before running it, and do not use sudo/admin rights unless the user explicitly asks.
@@ -321,7 +327,6 @@ Important service variables:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
-- `GOOGLE_SEARCH_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
@@ -329,6 +334,8 @@ Important service variables:
 - `OPENCODE_RAG_URL`
 - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
 - `HIAI_MCP_AUTO_INSTALL`
+- `HIAI_OPENCODE_AUTO_EXPORT_MCP`
+- `HIAI_OPENCODE_MCP_EXPORT_PATH`
 
 Optional headless or non-Connect fallback variables are documented in [.env.example](.env.example), but they are not required for normal OpenCode model auth.
 
@@ -393,7 +400,7 @@ If sudo is not available:
 
 ### Needs upstream runtime or extra setup
 
-- `mempalace`: prefers `uv`; otherwise uses Python. If `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher can run `python -m pip install --user mempalace` on first start.
+- `mempalace`: prefers `uv`; otherwise uses Python. You can force interpreter selection via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON`. If `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher can run `python -m pip install --user mempalace` on first start.
 - `rag`: requires your own running endpoint
 
 ### Important Windows note
@@ -415,12 +422,26 @@ The plugin now emits startup warnings for common misconfiguration, including:
 Available CLI:
 
 ```bash
+hiai-opencode doctor
 hiai-opencode mcp-status
+hiai-opencode export-mcp .mcp.json
+```
+
+By default, the plugin auto-exports `.mcp.json` at workspace startup when the file is missing. This closes the visibility gap where runtime plugin MCP works but `opencode mcp list` only reads static files. Control it with:
+
+```bash
+export HIAI_OPENCODE_AUTO_EXPORT_MCP=if-missing  # default
+export HIAI_OPENCODE_AUTO_EXPORT_MCP=always      # overwrite only managed hiai-opencode exports
+export HIAI_OPENCODE_AUTO_EXPORT_MCP=force       # force overwrite even non-managed files
+export HIAI_OPENCODE_AUTO_EXPORT_MCP=0           # disable auto-export
+export HIAI_OPENCODE_MCP_EXPORT_PATH=.mcp.json   # override path
+export HIAI_OPENCODE_EXPORT_MCP_MODE=safe        # export-mcp command mode: safe|force
 ```
 
 Inside OpenCode, use the slash command:
 
 ```text
+/doctor
 /mcp-status
 ```
 
@@ -435,14 +456,13 @@ MCP Servers:
 ⚠️  stitch              - enabled, API key missing (STITCH_AI_API_KEY)
 ```
 
-Planned follow-up commands:
+`hiai-opencode export-mcp` writes a standard `.mcp.json` so hosts whose `mcp list` ignores plugin runtime MCP can still show the same servers statically. Exports are marker-tagged as hiai-managed; by default, the command avoids overwriting non-managed files unless `HIAI_OPENCODE_EXPORT_MCP_MODE=force` is set.
 
-- `hiai-opencode doctor`: report config location, MCP status, missing keys, and local dependency checks.
-- `hiai-opencode export-mcp`: generate a standard `.mcp.json` for hosts that do not expose plugin-provided MCP servers through `opencode mcp list`.
-
-Until those commands ship, use:
+Use:
 
 ```bash
+hiai-opencode mcp-status
+hiai-opencode export-mcp .mcp.json
 opencode debug config
 opencode mcp list --print-logs --log-level INFO
 ```
@@ -464,7 +484,6 @@ opencode mcp list --print-logs --log-level INFO
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
 | Firecrawl MCP | [firecrawl-ai/firecrawl-mcp-server](https://github.com/firecrawl-ai/firecrawl-mcp-server) | external MCP |
 | Context7 MCP | [upstash/context7-mcp](https://github.com/upstash/context7-mcp) | external MCP |
-| Websearch cited | [ghoulr/opencode-websearch-cited](https://github.com/ghoulr/opencode-websearch-cited) | search integration influence |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
 ## Build And Publish
@@ -492,7 +511,7 @@ Before publishing:
 1. run `bun run build`
 2. run `npm pack --dry-run`
 3. verify `debug config`
-4. verify `mcp list`
+4. run `hiai-opencode export-mcp .mcp.json` if you need static `mcp list` visibility
 
 Publish:
 

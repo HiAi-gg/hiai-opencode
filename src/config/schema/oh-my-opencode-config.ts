@@ -26,9 +26,6 @@ import { FastApplyConfigSchema } from "./fast-apply"
 import { WebsearchConfigSchema } from "./websearch"
 
 const AuthConfigSchema = z.object({
-  googleSearch: z.string().optional(),
-  openai: z.string().optional(),
-  openrouter: z.string().optional(),
   stitch: z.string().optional(),
   firecrawl: z.string().optional(),
   context7: z.string().optional(),

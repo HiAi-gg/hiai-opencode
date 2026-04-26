@@ -1,7 +1,6 @@
-import type { CLI_LANGUAGES, NAPI_LANGUAGES } from "./constants"
+import type { CLI_LANGUAGES } from "./constants"
 
 export type CliLanguage = (typeof CLI_LANGUAGES)[number]
-export type NapiLanguage = (typeof NAPI_LANGUAGES)[number]
 
 export interface Position {
   line: number

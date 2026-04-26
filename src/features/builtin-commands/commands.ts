@@ -9,6 +9,7 @@ import { START_WORK_TEMPLATE } from "./templates/start-work"
 import { HANDOFF_TEMPLATE } from "./templates/handoff"
 import { REMOVE_AI_SLOPS_TEMPLATE } from "./templates/remove-ai-slops"
 import { MCP_STATUS_TEMPLATE } from "./templates/mcp-status"
+import { DOCTOR_TEMPLATE } from "./templates/doctor"
 
 interface LoadBuiltinCommandsOptions {
   useRegisteredAgents?: boolean
@@ -126,6 +127,12 @@ $ARGUMENTS
       description: "(builtin) Show hiai-opencode MCP server status, missing keys, and local runtime availability",
       template: `<command-instruction>
 ${MCP_STATUS_TEMPLATE}
+</command-instruction>`,
+    },
+    doctor: {
+      description: "(builtin) Run hiai-opencode install/runtime diagnostics and explain setup issues",
+      template: `<command-instruction>
+${DOCTOR_TEMPLATE}
 </command-instruction>`,
     },
   }

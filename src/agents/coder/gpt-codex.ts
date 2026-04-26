@@ -56,6 +56,7 @@ export function buildCoderPrompt(
     availableAgents,
     availableTools,
     availableSkills,
+    { includeIntegrationPrimer: true },
   );
   const researcherSection = buildResearcherSection(availableAgents);
   const categorySkillsGuide = buildCategorySkillsDelegationGuide(

@@ -66,8 +66,13 @@ Manual alternative:
 
 ```bash
 opencode debug config
+hiai-opencode doctor
+hiai-opencode mcp-status
+hiai-opencode export-mcp .mcp.json
 opencode mcp list --print-logs --log-level INFO
 ```
+
+`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by the plugin may work but not appear there until a static config exists. The plugin auto-exports `.mcp.json` on startup when missing. In `always` mode it overwrites only hiai-managed exports unless forced. `hiai-opencode export-mcp .mcp.json` can refresh it manually.
 
 ## Post-Install Bootstrap Instructions
 
@@ -110,13 +115,15 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `FIRECRAWL_API_KEY`
    - `STITCH_AI_API_KEY`
    - `CONTEXT7_API_KEY`
-   - `GOOGLE_SEARCH_API_KEY`
    - `MEMPALACE_PYTHON`
    - `OPENCODE_RAG_URL`
    - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
    - `HIAI_MCP_AUTO_INSTALL`
 7. Verify with:
    - `opencode debug config`
+   - `hiai-opencode doctor`
+   - `hiai-opencode mcp-status`
+   - `hiai-opencode export-mcp .mcp.json` when static MCP visibility is needed
    - `opencode mcp list --print-logs --log-level INFO`
 
 ### MCP Setup Matrix
@@ -126,7 +133,7 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 | `playwright` | Node and npx are available | Helper launcher runs `@playwright/mcp@latest`; set `HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1` to install Chromium on first start |
 | `sequential-thinking` | Node and npx are available | Helper launcher runs `@modelcontextprotocol/server-sequential-thinking` |
 | `firecrawl` | `FIRECRAWL_API_KEY` is set | Helper launcher runs `firecrawl-mcp` |
-| `mempalace` | `uv` is available, or Python 3.9+ with pip is available | Launcher prefers `uv`; otherwise uses Python and can run `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is not disabled |
+| `mempalace` | `uv` is available, or Python 3.9+ with pip is available | Launcher prefers `uv`; otherwise uses Python and can run `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is not disabled. Interpreter can be pinned via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` |
 | `rag` | User has a local or remote RAG endpoint | Uses `OPENCODE_RAG_URL`, defaulting to `http://localhost:9002/tools/search` |
 | `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
 | `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
@@ -155,14 +162,14 @@ Check which services can run here:
 - playwright: node/npx; optionally HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1.
 - sequential-thinking: node/npx.
 - firecrawl: FIRECRAWL_API_KEY.
-- mempalace: uv or Python 3.9+ with pip; MEMPALACE_PYTHON if needed; HIAI_MCP_AUTO_INSTALL controls first-run pip install.
+- mempalace: uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed; `HIAI_MCP_AUTO_INSTALL` controls first-run pip install.
 - rag: OPENCODE_RAG_URL or http://localhost:9002/tools/search.
 - stitch: STITCH_AI_API_KEY.
 - context7: optional CONTEXT7_API_KEY.
 
 Report missing keys without printing secret values. Never invent or hardcode API keys.
 
-Run opencode debug config and opencode mcp list --print-logs --log-level INFO if available. If something is missing, propose or run only user-level/project-local install commands.
+Run hiai-opencode mcp-status and opencode debug config. If the user wants opencode mcp list visibility, run hiai-opencode export-mcp .mcp.json before opencode mcp list --print-logs --log-level INFO. If something is missing, propose or run only user-level/project-local install commands.
 ```
 
 ## Expected Agent State
@@ -397,7 +404,6 @@ Common service keys:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
-- `GOOGLE_SEARCH_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
@@ -405,6 +411,9 @@ Common service keys:
 - `OPENCODE_RAG_URL`
 - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
 - `HIAI_MCP_AUTO_INSTALL`
+- `HIAI_OPENCODE_AUTO_EXPORT_MCP`
+- `HIAI_OPENCODE_MCP_EXPORT_PATH`
+- `HIAI_OPENCODE_EXPORT_MCP_MODE`
 
 ## Known Runtime Caveats
 

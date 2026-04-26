@@ -150,6 +150,7 @@ export interface McpServerConfig {
   command?: string[];
   timeout?: number;
   environment?: Record<string, string>;
+  pythonPath?: string;
 }
 
 export interface LspServerConfig {
@@ -187,9 +188,6 @@ export interface PermissionsConfig {
 }
 
 export interface AuthKeys {
-  googleSearch?: string;
-  openai?: string;
-  openrouter?: string;
   stitch?: string;
   firecrawl?: string;
   context7?: string;

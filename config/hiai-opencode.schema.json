@@ -37,7 +37,6 @@
       "type": "object",
       "additionalProperties": { "type": "string" },
       "properties": {
-        "googleSearch": { "type": "string" },
         "stitch": { "type": "string" },
         "firecrawl": { "type": "string" },
         "context7": { "type": "string" }
@@ -52,7 +51,7 @@
         "sequential-thinking": { "$ref": "#/definitions/toggle" },
         "firecrawl": { "$ref": "#/definitions/toggle" },
         "rag": { "$ref": "#/definitions/toggle" },
-        "mempalace": { "$ref": "#/definitions/toggle" },
+        "mempalace": { "$ref": "#/definitions/mempalaceToggle" },
         "context7": { "$ref": "#/definitions/toggle" }
       }
     },
@@ -109,6 +108,18 @@
       "type": "object",
       "properties": {
         "enabled": { "type": "boolean", "default": true }
+      },
+      "required": ["enabled"],
+      "additionalProperties": false
+    },
+    "mempalaceToggle": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "pythonPath": {
+          "type": "string",
+          "description": "Optional explicit Python executable for MemPalace (for example: ./.venv/bin/python)."
+        }
       },
       "required": ["enabled"],
       "additionalProperties": false

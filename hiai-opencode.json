@@ -44,7 +44,6 @@
     }
   },
   "auth": {
-    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
     "stitch": "{env:STITCH_AI_API_KEY}",
     "firecrawl": "{env:FIRECRAWL_API_KEY}",
     "context7": "{env:CONTEXT7_API_KEY}"
@@ -55,7 +54,10 @@
     "sequential-thinking": { "enabled": true },
     "firecrawl": { "enabled": true },
     "rag": { "enabled": true },
-    "mempalace": { "enabled": true },
+    "mempalace": {
+      "enabled": true,
+      "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}"
+    },
     "context7": { "enabled": true }
   },
   "lsp": {

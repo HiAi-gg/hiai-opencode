@@ -13,6 +13,7 @@ export {
   buildToolSelectionTable,
   buildResearcherSection,
   buildDelegationTable,
+  buildHiaiIntegrationPrimerSection,
   buildStrategistAndCriticSection,
   buildNonClaudePlannerSection,
   buildParallelDelegationSection,

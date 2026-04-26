@@ -31,7 +31,6 @@ Some are:
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
 | Firecrawl MCP | [firecrawl-ai/firecrawl-mcp-server](https://github.com/firecrawl-ai/firecrawl-mcp-server) | external MCP |
 | Context7 MCP | [upstash/context7-mcp](https://github.com/upstash/context7-mcp) | external MCP |
-| Websearch cited | [ghoulr/opencode-websearch-cited](https://github.com/ghoulr/opencode-websearch-cited) | search integration influence |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
 ## What Is Bundled vs External

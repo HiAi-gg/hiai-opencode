@@ -27,9 +27,6 @@ export const CLI_LANGUAGES = [
 	"yaml",
 ] as const
 
-// NAPI supported languages (5 total - native bindings)
-export const NAPI_LANGUAGES = ["html", "javascript", "tsx", "css", "typescript"] as const
-
 export const DEFAULT_TIMEOUT_MS = 300_000
 export const DEFAULT_MAX_OUTPUT_BYTES = 1 * 1024 * 1024
 export const DEFAULT_MAX_MATCHES = 500

@@ -76,6 +76,7 @@ export const McpServerConfigSchema = z.object({
   command: z.array(z.string()).optional(),
   timeout: z.number().optional(),
   environment: z.record(z.string(), z.string()).optional(),
+  pythonPath: z.string().optional(),
 });
 
 export const LspServerConfigSchema = z.object({
@@ -129,9 +130,6 @@ export const PermissionsConfigSchema = z.object({
 });
 
 export const AuthKeysSchema = z.object({
-  googleSearch: z.string().optional(),
-  openai: z.string().optional(),
-  openrouter: z.string().optional(),
   stitch: z.string().optional(),
   firecrawl: z.string().optional(),
   context7: z.string().optional(),

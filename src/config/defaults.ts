@@ -135,7 +135,20 @@ function deriveMcp(config: HiaiOpencodeConfig): HiaiOpencodeConfig["mcp"] {
   return Object.fromEntries(
     Object.entries(defaults).map(([name, entry]) => {
       const override = userMcp[name] ?? {}
-      return [name, { ...entry, ...override }]
+      const merged = { ...entry, ...override }
+
+      if (name === "mempalace" && typeof merged.pythonPath === "string" && merged.pythonPath.trim()) {
+        merged.environment = {
+          ...(entry.environment ?? {}),
+          ...(merged.environment ?? {}),
+          MEMPALACE_PYTHON: merged.pythonPath.trim(),
+        }
+      }
+
+      // Internal launcher hint; do not leak unknown keys into final OpenCode MCP server config.
+      delete merged.pythonPath
+
+      return [name, merged]
     }),
   )
 }

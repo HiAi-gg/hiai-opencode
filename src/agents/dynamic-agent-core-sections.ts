@@ -45,6 +45,7 @@ export function buildToolSelectionTable(
   agents: AvailableAgent[],
   tools: AvailableTool[] = [],
   _skills: AvailableSkill[] = [],
+  options: { includeIntegrationPrimer?: boolean } = {},
 ): string {
   const rows: string[] = ["### Tool & Agent Selection:", ""]
 
@@ -72,8 +73,43 @@ export function buildToolSelectionTable(
   rows.push(
     "**Default flow**: researcher (background) + tools → strategist (if required) → critic (high-risk gate)",
   )
+  if (options.includeIntegrationPrimer) {
+    rows.push("")
+    rows.push(buildHiaiIntegrationPrimerSection())
+  }
 
   return rows.join("\n")
+}
+
+export function buildHiaiIntegrationPrimerSection(): string {
+  return `<hiai-opencode-integration-primer>
+## hiai-opencode Architecture And Integration Rules
+
+This workspace may use hiai-opencode, an OpenCode plugin that wires agents, skills, MCP launchers, LSP, diagnostics, and compatibility helpers around external upstream tools.
+
+Core rules:
+- OpenCode plugins are not MCP servers. Keep \`@hiai-gg/hiai-opencode\` and optional \`@tarquinen/opencode-dcp\` in the OpenCode plugin list; never add MCP packages such as \`firecrawl-mcp\`, \`@playwright/mcp\`, or \`@modelcontextprotocol/server-sequential-thinking\` to the plugin list.
+- User-facing config lives in \`hiai-opencode.json\` or \`.opencode/hiai-opencode.json\`: 10 model slots, MCP enable flags, LSP enable flags, service auth placeholders, and skill discovery switches.
+- Model provider credentials are configured through OpenCode Connect. Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\` for normal model usage.
+- Service keys are separate: \`FIRECRAWL_API_KEY\`, \`STITCH_AI_API_KEY\`, \`CONTEXT7_API_KEY\`, and \`OPENCODE_RAG_URL\` when those services are enabled.
+
+MCP usage:
+- Run \`hiai-opencode doctor\` or \`hiai-opencode mcp-status\` for effective runtime MCP status.
+- \`opencode mcp list\` often reads only static \`.mcp.json\`; plugin runtime MCP may work even when that list is empty.
+- The plugin auto-exports \`.mcp.json\` when missing. Run \`hiai-opencode export-mcp .mcp.json\` to refresh static visibility.
+- \`skill_mcp\` can call skill-embedded MCP and enabled hiai-opencode MCP. If an MCP is "not found", check whether the skill was loaded, whether \`hiai-opencode.json\` enables it, and whether static export is needed.
+
+Memory and retrieval:
+- MemPalace MCP is external. If enabled, use \`mempalace_status\` first, search before answering about remembered people/projects/past decisions, and write diary entries when appropriate. Never invent memories.
+- RAG MCP is external/local. Use it for project knowledge search when \`OPENCODE_RAG_URL\` is configured or the default \`http://localhost:9002/tools/search\` is reachable.
+- Sequential Thinking MCP is for complex planning/revision/branching, not for trivial edits.
+- Firecrawl/Stitch/Context7 are external web/docs/research services; missing service keys should be reported by env var name only.
+
+Installation/debugging:
+- Use \`/doctor\` or \`hiai-opencode doctor\` before changing config.
+- Prefer user-level or project-local installs. Do not use sudo/admin rights unless explicitly requested.
+- If DCP is requested, install it separately with \`opencode plugin @tarquinen/opencode-dcp@latest --global\`.
+</hiai-opencode-integration-primer>`
 }
 
 export function buildResearcherSection(agents: AvailableAgent[]): string {

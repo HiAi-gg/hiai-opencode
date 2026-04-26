@@ -18,22 +18,15 @@ import { injectServerAuthIntoClient, log } from "./shared"
 import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config"
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
 import { PLUGIN_NAME } from "./shared/plugin-identity"
+import { autoExportStaticMcpJson } from "./shared/mcp-static-export"
 import { warnIfListPluginEntry, warnMissingRequiredMcpEnv } from "./shared/startup-diagnostics"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
 
-import { loadConfig, resolveEnvVars } from "./config/loader"
+import { loadConfig } from "./config/loader"
 import type { HiaiOpencodeConfig } from "./config/types"
 
 import { createPlugin as createSubtask2Plugin } from "./internals/plugins/subtask2/core/plugin"
-import WebsearchCitedPlugin, { 
-  GOOGLE_PROVIDER_ID,
-  OPENAI_PROVIDER_ID,
-  OPENROUTER_PROVIDER_ID,
-  WebsearchCitedGooglePlugin, 
-  WebsearchCitedOpenAIPlugin 
-} from "./internals/plugins/websearch-cited/index"
-import type { WebsearchCitedFallback } from "./internals/plugins/websearch-cited/index"
 import { createBuiltinSkills } from "./features/builtin-skills"
 import {
   materializeBuiltinSkills,
@@ -41,39 +34,6 @@ import {
 } from "./features/builtin-skills/materialize"
 
 let activePluginDispose: PluginDispose | null = null
-
-function createWebsearchFallback(config: HiaiOpencodeConfig): WebsearchCitedFallback | undefined {
-  const model = config.agents?.researcher?.model?.trim()
-  if (!model) {
-    return undefined
-  }
-
-  if (model.startsWith("openrouter/")) {
-    return {
-      providerID: OPENROUTER_PROVIDER_ID,
-      model: model.slice("openrouter/".length),
-    }
-  }
-
-  if (model.startsWith("openai/")) {
-    return {
-      providerID: OPENAI_PROVIDER_ID,
-      model: model.slice("openai/".length),
-    }
-  }
-
-  if (model.startsWith("google/")) {
-    return {
-      providerID: GOOGLE_PROVIDER_ID,
-      model: model.slice("google/".length),
-    }
-  }
-
-  return {
-    providerID: OPENROUTER_PROVIDER_ID,
-    model,
-  }
-}
 
 function configureBundledBunPtyLibrary(): void {
   if (process.env.BUN_PTY_LIB?.trim()) {
@@ -126,6 +86,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     pluginConfig,
     platformConfig: internalConfig,
   })
+  autoExportStaticMcpJson(ctx.directory, internalConfig)
 
   materializeBuiltinSkills(
     createBuiltinSkills({
@@ -207,10 +168,6 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   } catch (err) {
     console.error("[hiai-opencode] PTYPlugin failed to load:", err);
   }
-  const websearchResult = await WebsearchCitedPlugin(ctx, createWebsearchFallback(internalConfig))
-  const websearchGoogleResult = await WebsearchCitedGooglePlugin(ctx)
-  const websearchOpenAIResult = await WebsearchCitedOpenAIPlugin(ctx)
-
   const combinedResult = {
     name: PLUGIN_NAME,
     ...pluginInterface,
@@ -219,7 +176,6 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     tool: {
       ...pluginInterface.tool,
       ...ptyResult.tool,
-      ...websearchResult.tool,
     },
 
     // Chain hooks: command.execute.before
@@ -250,7 +206,6 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     config: async (input: any) => {
       await pluginInterface.config?.(input);
       await (subtask2Result as any).config?.(input);
-      await (websearchResult as any).config?.(input);
     },
 
     // Merge Events
@@ -258,33 +213,6 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
       await pluginInterface.event?.(input);
       await (subtask2Result as any).event?.(input);
       await (ptyResult as any).event?.(input);
-    },
-
-    // Auth (Consolidated)
-    auth: {
-      provider: "hiai-opencode",
-      methods: [
-        { type: "api" as const, label: "Google Search API key" },
-      ],
-      loader: async (getAuth: any) => {
-        const authData = await getAuth();
-        const { registerGetAuth, GOOGLE_PROVIDER_ID, OPENAI_PROVIDER_ID, OPENROUTER_PROVIDER_ID } = await import("./internals/plugins/websearch-cited/index");
-
-        const getConfiguredKey = (configKey?: string) => {
-          if (configKey) return resolveEnvVars(configKey);
-          return undefined;
-        };
-
-        const googleKey = authData["Google Search API key"] || getConfiguredKey(internalConfig.auth?.googleSearch);
-        const openaiKey = getConfiguredKey(internalConfig.auth?.openai);
-        const openRouterKey = getConfiguredKey(internalConfig.auth?.openrouter);
-
-        if (googleKey) registerGetAuth(GOOGLE_PROVIDER_ID, () => Promise.resolve({ type: "api", key: googleKey }));
-        if (openaiKey) registerGetAuth(OPENAI_PROVIDER_ID, () => Promise.resolve({ type: "api", key: openaiKey }));
-        if (openRouterKey) registerGetAuth(OPENROUTER_PROVIDER_ID, () => Promise.resolve({ type: "api", key: openRouterKey }));
-
-        return {};
-      },
     },
 
     "experimental.session.compacting": async (
