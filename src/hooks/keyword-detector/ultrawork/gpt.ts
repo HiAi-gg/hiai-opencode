@@ -69,15 +69,13 @@ Use these when they provide clear value based on the decision framework above:
 
 | Resource | When to Use | How to Use |
 |----------|-------------|------------|
-| explore agent | Need codebase patterns you don't have | \`task(subagent_type="explore", load_skills=[], run_in_background=true, ...)\` |
-| librarian agent | External library docs, OSS examples | \`task(subagent_type="librarian", load_skills=[], run_in_background=true, ...)\` |
-| logician agent | Stuck on architecture/debugging after 2+ attempts | \`task(subagent_type="logician", load_skills=[], run_in_background=false, ...)\` |
-| plan agent | Complex multi-step with dependencies (5+ steps) | \`task(subagent_type="plan", load_skills=[], run_in_background=false, ...)\` |
+| researcher agent | Need codebase patterns or external docs | \`task(subagent_type="researcher", load_skills=[], run_in_background=true, ...)\` |
+| strategist agent | Complex multi-step (5+ steps) or architecture decisions | \`task(subagent_type="strategist", load_skills=[], run_in_background=false, ...)\` |
 | task category | Specialized work matching a category | \`task(category="...", load_skills=[...], run_in_background=true)\` |
 
 <tool_usage_rules>
 - Prefer tools over internal knowledge for fresh or user-specific data
-- Parallelize independent reads (read_file, grep, explore, librarian) to reduce latency
+- Parallelize independent reads (read_file, grep, researcher) to reduce latency
 - After any write/update, briefly restate: What changed, Where (path), Follow-up needed
 </tool_usage_rules>
 
@@ -88,13 +86,13 @@ Use these when they provide clear value based on the decision framework above:
 | Track | Tools | Speed | Purpose |
 |-------|-------|-------|---------|
 | **Direct** | Grep, Read, LSP, AST-grep | Instant | Quick wins, known locations |
-| **Background** | explore, librarian agents | Async | Deep search, external docs |
+| **Background** | researcher agents | Async | Deep search, external docs |
 
 **ALWAYS run both tracks in parallel:**
 \`\`\`
 // Fire background agents for deep exploration
-task(subagent_type="explore", load_skills=[], prompt="I'm implementing [TASK] and need to understand [KNOWLEDGE GAP]. Find [X] patterns in the codebase - file paths, implementation approach, conventions used, and how modules connect. I'll use this to [DOWNSTREAM DECISION]. Focus on production code in src/. Return file paths with brief descriptions.", run_in_background=true)
-task(subagent_type="librarian", load_skills=[], prompt="I'm working with [TECHNOLOGY] and need [SPECIFIC INFO]. Find official docs and production examples for [Y] - API reference, configuration, recommended patterns, and pitfalls. Skip tutorials. I'll use this to [DECISION THIS INFORMS].", run_in_background=true)
+task(subagent_type="researcher", load_skills=[], prompt="I'm implementing [TASK] and need to understand [KNOWLEDGE GAP]. Find [X] patterns in the codebase - file paths, implementation approach, conventions used, and how modules connect. I'll use this to [DOWNSTREAM DECISION]. Focus on production code in src/. Return file paths with brief descriptions.", run_in_background=true)
+task(subagent_type="researcher", load_skills=[], prompt="I'm working with [TECHNOLOGY] and need [SPECIFIC INFO]. Find official docs and production examples for [Y] - API reference, configuration, recommended patterns, and pitfalls. Skip tutorials. I'll use this to [DECISION THIS INFORMS].", run_in_background=true)
 
 // WHILE THEY RUN - use direct tools for immediate context
 grep(pattern="relevant_pattern", path="src/")

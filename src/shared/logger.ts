@@ -43,6 +43,14 @@ export function log(message: string, data?: unknown): void {
   }
 }
 
+export function logWarn(message: string, data?: unknown): void {
+  log(`WARN: ${message}`, data)
+}
+
+export function logError(message: string, data?: unknown): void {
+  log(`ERROR: ${message}`, data)
+}
+
 export function getLogFilePath(): string {
   return logFile
 }

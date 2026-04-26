@@ -11,6 +11,7 @@ import {
   reviewWorkSkill,
   aiSlopRemoverSkill,
   hiaiOpencodeSetupSkill,
+  websiteCopywritingSkill,
 } from "./skills/index"
 
 export interface CreateBuiltinSkillsOptions {
@@ -38,6 +39,7 @@ export function createBuiltinSkills(options: CreateBuiltinSkillsOptions = {}): B
     devBrowserSkill,
     reviewWorkSkill,
     aiSlopRemoverSkill,
+    websiteCopywritingSkill,
   ]
 
   if (!disabledSkills) {

@@ -38,8 +38,6 @@ export const HookNameSchema = z.enum([
   "delegate-task-retry",
   "strategist-md-only",
   "sub-notepad",
-  "no-bob-gpt",
-  "no-coder-non-gpt",
   "start-work",
   "guard",
   "unstable-agent-babysitter",

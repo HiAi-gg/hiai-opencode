@@ -1,4 +1,5 @@
-/** Generic GPT Coder prompt - fallback for GPT models without a model-specific variant */
+/** PROMPT_VERSION: 2026-04-26
+ * Generic GPT Coder prompt - fallback for GPT models without a model-specific variant */
 
 import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard"
 import type {

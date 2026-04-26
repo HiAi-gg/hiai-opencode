@@ -4,6 +4,8 @@ import type { CategoriesConfig, GitMasterConfig } from "../config/schema"
 import type { LoadedSkill } from "../features/opencode-skill-loader/types"
 import type { BrowserAutomationProvider } from "../config/schema"
 import { createBobAgent } from "./bob"
+import { createDesignerAgent, designerPromptMetadata } from "./designer"
+import { createAgentSkillsAgent, agentSkillsPromptMetadata } from "./agent-skills"
 import { createCriticAgent, criticPromptMetadata } from "./critic/agent"
 import { createMultimodalLookerAgent, MULTIMODAL_LOOKER_PROMPT_METADATA } from "./ui"
 import { createGuardAgent, guardPromptMetadata } from "./guard"
@@ -11,6 +13,7 @@ import { createCoderAgent } from "./coder"
 import { createPlatformManagerAgent, platformManagerPromptMetadata } from "./platform-manager"
 import { createQualityGuardianAgent, qualityGuardianPromptMetadata } from "./quality-guardian"
 import { createResearcherAgent, researcherPromptMetadata } from "./researcher"
+import { createBrainstormerAgent, brainstormerPromptMetadata } from "./brainstormer"
 import { createBobJuniorAgentWithOverrides } from "./sub"
 import type { AvailableCategory } from "./dynamic-agent-prompt-builder"
 import {
@@ -33,10 +36,10 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
   "bob": createBobAgent,
   "coder": createCoderAgent,
   "strategist": createBobAgent, // Strategist runtime config is assembled in agent-config-handler.
-  "designer": createBobAgent,
+  "designer": createDesignerAgent,
   "multimodal": createMultimodalLookerAgent,
-  "brainstormer": createBobAgent,
-  "agent-skills": createBobAgent,
+  "brainstormer": createBrainstormerAgent,
+  "agent-skills": createAgentSkillsAgent,
   "critic": createCriticAgent,
   "platform-manager": createPlatformManagerAgent,
   "quality-guardian": createQualityGuardianAgent,
@@ -56,6 +59,59 @@ const agentMetadata: Partial<Record<BuiltinAgentName, AgentPromptMetadata>> = {
   "critic": criticPromptMetadata,
   "quality-guardian": qualityGuardianPromptMetadata,
   "platform-manager": platformManagerPromptMetadata,
+  "brainstormer": brainstormerPromptMetadata,
+  "strategist": {
+    category: "advisor",
+    cost: "EXPENSIVE",
+    promptAlias: "Strategist",
+    keyTrigger: "Architecture, multi-step planning, ambiguous scope, or high-risk sequencing → consult strategist first.",
+    triggers: [
+      {
+        domain: "Architecture planning",
+        trigger: "Need system design, tradeoff analysis, migration plan, or implementation sequence",
+      },
+      {
+        domain: "Ambiguous scope",
+        trigger: "Task has unclear requirements, multiple phases, or needs decomposition before coding",
+      },
+    ],
+    useWhen: [
+      "Architecture decisions or cross-cutting changes",
+      "Multi-step implementation plans before Coder work",
+      "Ambiguous tasks where choosing the wrong approach is expensive",
+    ],
+    avoidWhen: [
+      "Single-file obvious fixes",
+      "Pure copywriting or visual exploration",
+      "Review-only tasks where Critic is the right gate",
+    ],
+  },
+  "designer": {
+    category: "specialist",
+    cost: "EXPENSIVE",
+    promptAlias: "Designer",
+    keyTrigger: "Visual direction, product UI feel, layout, branding, or design-system work → use designer/visual-engineering.",
+    triggers: [
+      {
+        domain: "Visual direction",
+        trigger: "Need UI concept, art direction, layout, branding, or design-system guidance",
+      },
+      {
+        domain: "Frontend aesthetics",
+        trigger: "Need polished interface design beyond functional implementation",
+      },
+    ],
+    useWhen: [
+      "Defining visual direction, layout, interaction feel, or design-system choices",
+      "Reviewing UI for taste, hierarchy, and visual coherence",
+    ],
+    avoidWhen: [
+      "Website copy or wording only (use Brainstormer/Writer)",
+      "Backend or infrastructure implementation",
+      "Pure file/media extraction (use Vision)",
+    ],
+  },
+  "agent-skills": agentSkillsPromptMetadata,
 }
 
 export async function createBuiltinAgents(

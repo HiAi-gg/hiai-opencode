@@ -1,4 +1,5 @@
-/** gpt-codex optimized Coder prompt */
+/** PROMPT_VERSION: 2026-04-26
+ * gpt-codex optimized Coder prompt */
 import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard";
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode } from "../types";
@@ -40,7 +41,7 @@ function canonicalizeCriticSection(section: string): string {
  * Optimized for:
  * - Goal-oriented autonomous execution (not step-by-step instructions)
  * - Deep exploration before decisive action
- * - Active use of explore/librarian agents for comprehensive context
+ * - Active use of researcher agents for comprehensive context
  * - End-to-end task completion without premature stopping
  */
 
@@ -389,7 +390,7 @@ export function createCoderAgent(
 
   return {
     description:
-      "Autonomous Deep Worker - goal-oriented execution with GPT Codex. Explores thoroughly before acting, uses explore/librarian agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode. (Coder - HiaiOpenCode)",
+      "Autonomous Deep Worker - goal-oriented execution with GPT Codex. Explores thoroughly before acting, uses researcher agents for comprehensive context, completes tasks end-to-end. Inspired by AmpCode deep mode. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,

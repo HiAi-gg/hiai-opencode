@@ -10,6 +10,8 @@ export type HiaiMcpName =
   | "rag"
   | "context7"
   | "mempalace"
+  | "websearch"
+  | "grep_app"
 
 export type HiaiMcpInstallKind = "bundled" | "npm" | "python" | "remote" | "user-service"
 
@@ -118,6 +120,31 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       enabled: true,
       type: "local",
       command: ["node", resolveAssetScript("mcp", "mempalace.mjs"), "--palace", "./.opencode/palace"],
+      timeout: 600000,
+    },
+  },
+  websearch: {
+    name: "websearch",
+    enabledByDefault: true,
+    install: "remote",
+    optionalEnv: ["EXA_API_KEY", "TAVILY_API_KEY"],
+    config: {
+      enabled: true,
+      type: "remote",
+      url: "https://mcp.exa.ai/mcp?tools=web_search_exa",
+      headers: { "x-api-key": "{env:EXA_API_KEY}" },
+      timeout: 600000,
+      provider: "exa",
+    },
+  },
+  grep_app: {
+    name: "grep_app",
+    enabledByDefault: true,
+    install: "remote",
+    config: {
+      enabled: true,
+      type: "remote",
+      url: "https://mcp.grep.app",
       timeout: 600000,
     },
   },

@@ -5,6 +5,7 @@ import type { HiaiOpenCodeConfig, HiaiOpencodeConfig } from "../config"
 import { HIAI_MCP_REGISTRY } from "../mcp/registry"
 import { parseJsoncSafe } from "./jsonc-parser"
 import { getOpenCodeConfigPaths } from "./opencode-config-dir"
+import { logWarn } from "./logger"
 import { PLUGIN_NAME } from "./plugin-identity"
 
 interface OpenCodeConfig {
@@ -38,9 +39,9 @@ export function warnIfListPluginEntry(directory: string): void {
     const plugins = readPlugins(configPath)
     if (!plugins.includes("list")) continue
 
-    console.warn(`[hiai-opencode] WARNING: ${configPath} contains plugin: ["list"].`)
-    console.warn("[hiai-opencode] This can prevent hiai-opencode MCP servers from loading from that config scope.")
-    console.warn(`[hiai-opencode] Update it to: plugin: ["${PLUGIN_NAME}"]`)
+    logWarn(`${configPath} contains plugin: ["list"].`)
+    logWarn("This can prevent hiai-opencode MCP servers from loading from that config scope.")
+    logWarn(`Update it to: plugin: ["${PLUGIN_NAME}"]`)
   }
 }
 
@@ -69,9 +70,7 @@ export function warnMissingRequiredMcpEnv(args: {
 
     if (missing.length === 0) continue
 
-    console.warn(
-      `[hiai-opencode] MCP "${name}" is enabled but missing required env: ${missing.join(", ")}.`
-      + " The plugin will continue to load; set the key or disable this MCP in hiai-opencode.json.",
-    )
+    logWarn(`MCP "${name}" is enabled but missing required env: ${missing.join(", ")}.`
+      + " The plugin will continue to load; set the key or disable this MCP in hiai-opencode.json.")
   }
 }

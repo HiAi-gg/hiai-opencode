@@ -1,5 +1,7 @@
 # hiai-opencode
 
+[![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml)
+
 `hiai-opencode` is an OpenCode plugin that wires together:
 
 - a curated multi-agent runtime
@@ -36,16 +38,42 @@ Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug
 
 For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
 
+## Agents
+
+| Agent | Role | When to use |
+|-------|------|-------------|
+| `Bob` | Orchestrator, router, distributor | Entry point; complex tasks needing multi-agent coordination |
+| `Coder` | Deep implementation, focused execution | Complex features, refactors, deep work |
+| `Sub` | Bounded cheap executor | Small targeted changes, quick fixes |
+| `Strategist` | Planning, architecture, pre-check | Scope definition, architectural decisions |
+| `Guard` | Final acceptor, workflow enforcer | Closure validation, output acceptance |
+| `Critic` | Review gate, high-accuracy verification | Plan review, code review, regression catch |
+| `Researcher` | Local + external search | Codebase exploration, documentation discovery |
+| `Designer` | UI/visual, creative direction | Visual problems, UX decisions, branding |
+| `Brainstormer` | Ideation, content, copy | Landing pages, CTA, feature copy, onboarding |
+| `Vision` | Image/PDF/layout analysis | Visual inspection, multimodal interpretation |
+| `Manager` | Memory, bootstrap, ledger | Durable state, session continuity, project init |
+
+## Modes (Task Routing)
+
+Mode determines prompt append, variant, and reasoning effort. The executor agent is selected via `mode → agent` mapping.
+
+| Mode | Agent | Prompt variant | When to use |
+|------|-------|----------------|-------------|
+| `quick` | `sub` | Fast bounded | Small targeted changes |
+| `writing` | `brainstormer` | Docs/prose | Content, i18n, copy |
+| `deep` | `coder` | Deep reasoning | Complex implementation |
+| `ultrabrain` | `strategist` | Plan-only | Architecture, hard logic |
+| `visual-engineering` | `designer` | UI/visual | Visual problems |
+| `artistry` | `designer` | Creative | Brand, SEO, creative |
+| `git` | `platform-manager` | Git ops | Version control operations |
+| `bounded` | `sub` | Mid-tier bounded | Moderate effort changes |
+| `cross-module` | `coder` | Deep substantial | Multi-component changes |
+
 ## What You Get
 
-- Visible primary agents: `Bob`, `Coder`, `Strategist`, `Guard`, `Critic`, `Designer`, `Researcher`, `Manager`, `Brainstormer`, `Vision`
-- Hidden system or compatibility agents: `Agent Skills`, `Sub`, `build`, `plan`
-- Task routing model:
-  - category-based execution routes through `Coder`
-  - `quick`, `writing`, and `unspecified-low` are the fast bounded Coder contour
-  - `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` are the deep Coder contour
-  - `Critic` and `Researcher` are selected explicitly
-  - `Designer`, `Brainstormer`, `Manager`, and `Vision` are direct callable specialists
+- **10 visible primary agents** + **4 hidden system agents** (Agent Skills, Sub, build, plan)
+- **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
 - MCP wiring for `playwright`, `stitch`, `sequential-thinking`, `firecrawl`, `rag`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
@@ -67,6 +95,8 @@ Optional, depending on which services you want:
 - `FIRECRAWL_API_KEY` for Firecrawl
 - `STITCH_AI_API_KEY` for Stitch
 - `CONTEXT7_API_KEY` for Context7
+- `EXA_API_KEY` for higher Exa websearch limits
+- `TAVILY_API_KEY` when `mcp.websearch.provider` is `tavily`
 - Python 3.9+ or `uv` for MemPalace
 - a running RAG endpoint if you enable `rag`
 - local language servers if you want LSP beyond the npm-bootstrapped helpers
@@ -154,9 +184,18 @@ This plugin only reads the 10 model IDs in `models`. Internal routing derives hi
 Use OpenCode Connect to authorize the providers behind your configured model IDs. Then add only the service keys for MCP or search integrations you actually use:
 
 ```bash
+opencode models
+```
+
+Use the exact model IDs printed by OpenCode in `hiai-opencode.json`. For example, `openrouter/minimax/minimax-m2.7` routes through OpenRouter, while `minimax/minimax-m2.7` routes through a direct Minimax provider only if that provider is connected in OpenCode.
+
+```bash
 export FIRECRAWL_API_KEY=...
 export STITCH_AI_API_KEY=...
 export CONTEXT7_API_KEY=...
+export EXA_API_KEY=...
+# or, if mcp.websearch.provider is "tavily":
+export TAVILY_API_KEY=...
 ```
 
 See [Environment Variables And Keys](#environment-variables-and-keys) for the full list.
@@ -245,6 +284,7 @@ Runtime loader for the bundled canonical config:
 If you want to change model selection, edit the 10 entries in `models`. Do not add category-specific model choices unless you are intentionally developing the plugin internals.
 
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
+After connecting providers in OpenCode, run `opencode models` and copy the exact model IDs from that output into `hiai-opencode.json`.
 
 ### Prompting
 
@@ -263,6 +303,7 @@ Important prompt entrypoints:
 - `Vision`: [src/agents/ui.ts](src/agents/ui.ts)
 - `Manager`: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - `Researcher`: [src/agents/researcher.ts](src/agents/researcher.ts)
+- `Brainstormer` / `Writer`: [src/agents/brainstormer.ts](src/agents/brainstormer.ts)
 
 Name mapping and visibility:
 
@@ -278,6 +319,22 @@ Project skill definitions live under:
 Skill materialization logic:
 
 - [src/features/builtin-skills/materialize.ts](src/features/builtin-skills/materialize.ts)
+
+Built-in helper skills include browser automation, frontend UI/UX, review, git workflow, hiai-opencode setup, AI slop cleanup, and `website-copywriting`.
+
+Website/product copy should use:
+
+```text
+task(subagent_type="brainstormer", load_skills=["website-copywriting"], ...)
+```
+
+`writer`, `copywriter`, and `content-writer` are aliases for `brainstormer`.
+
+Manager memory stewardship:
+
+- Use `task(subagent_type="platform-manager", ...)` or `task(subagent_type="manager", ...)` for MemPalace cleanup, session ledgers, TODO hygiene, and architecture decision handoff.
+- Manager writes only durable decisions and important project state. It should not dump raw chat logs into memory.
+- RAG is retrieval-first by default; Manager syncs architecture summaries to RAG only when the configured endpoint exposes write/upsert capability.
 
 Skill discovery defaults:
 
@@ -327,6 +384,8 @@ Important service variables:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
+- `EXA_API_KEY`
+- `TAVILY_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
@@ -349,7 +408,9 @@ The user-facing MCP switchboard is the `mcp` object in `hiai-opencode.json`:
 {
   "mcp": {
     "playwright": { "enabled": true },
-    "mempalace": { "enabled": false }
+    "mempalace": { "enabled": false },
+    "websearch": { "enabled": true, "provider": "exa" },
+    "grep_app": { "enabled": true }
   }
 }
 ```
@@ -360,7 +421,7 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 
 - `stitch`
 - `context7`
-- `websearch`
+- `websearch`: defaults to Exa remote MCP. `EXA_API_KEY` is optional for Exa; set `"provider": "tavily"` and `TAVILY_API_KEY` to use Tavily.
 - `grep_app`
 
 ### Works with local helper bootstrap

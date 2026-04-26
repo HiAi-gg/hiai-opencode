@@ -1,3 +1,4 @@
+// PROMPT_VERSION: 2026-04-26
 import { buildGuardPrompt } from "./shared-prompt"
 import {
   DEFAULT_ATLAS_INTRO,

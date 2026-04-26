@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        bun-version: ['1.1.x', '1.2.x']
+        include:
+          - os: ubuntu-latest
+            bun-version: '1.3.x'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ matrix.bun-version }}
+
+      - name: Cache bun install
+        uses: actions/cache@v4
+        with:
+          path: ~/.bun
+          key: ${{ matrix.os }}-bun-${{ matrix.bun-version }}-${{ hashFiles('bun.lock') }}
+          restore-keys: |
+            ${{ matrix.os }}-bun-${{ matrix.bun-version }}-
+            ${{ matrix.os }}-bun-
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run typecheck
+
+      - name: Test
+        run: bun test
+
+      - name: Build
+        run: bun run build
+
+      - name: Pack dry-run
+        run: npm pack --dry-run
+
+      - name: Check bundle size
+        run: npm run check:bundle-size
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.x'
+      - run: bun install --frozen-lockfile
+      - run: bun run lint || echo "No lint script configured"

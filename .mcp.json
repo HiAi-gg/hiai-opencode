@@ -1,0 +1,66 @@
+{
+  "_meta": {
+    "generatedBy": "hiai-opencode",
+    "version": 1,
+    "generatedAt": "2026-04-26T21:19:46.945Z"
+  },
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\playwright.mjs"
+      ]
+    },
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": ""
+      }
+    },
+    "sequential-thinking": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\runtime\\npm-package-runner.mjs",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "firecrawl": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\runtime\\npm-package-runner.mjs",
+        "firecrawl-mcp"
+      ],
+      "env": {
+        "FIRECRAWL_API_KEY": ""
+      }
+    },
+    "rag": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\rag.mjs"
+      ],
+      "env": {
+        "OPENCODE_RAG_URL": "http://localhost:9002/tools/search"
+      }
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "X-API-KEY": ""
+      }
+    },
+    "mempalace": {
+      "command": "node",
+      "args": [
+        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\mempalace.mjs",
+        "--palace",
+        "./.opencode/palace"
+      ],
+      "env": {
+        "MEMPALACE_PYTHON": "/home/vlgalib/.local/venvs/mempalace/bin/python"
+      }
+    }
+  }
+}

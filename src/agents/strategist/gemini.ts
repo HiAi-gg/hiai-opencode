@@ -1,4 +1,5 @@
 /**
+ * PROMPT_VERSION: 2026-04-26
  * Gemini-optimized Strategist System Prompt
  *
  * Key differences from Claude/GPT variants:

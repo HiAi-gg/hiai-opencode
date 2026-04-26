@@ -73,6 +73,23 @@ Create the work plan directly - that's your job as the planning agent.`,
     }
   }
 
+  const ORCHESTRATOR_AGENTS: Set<string> = new Set(["bob"])
+  if (ORCHESTRATOR_AGENTS.has(requestedCanonicalAgentKey)) {
+    return {
+      agentToUse: "",
+      categoryModel: undefined,
+      error: `Cannot delegate to orchestrator agent "${requestedCanonicalAgentKey}". Bob is the entry-point orchestrator and is not callable as a subagent. Use a specific subagent (researcher/strategist/coder/...) or a mode (quick/deep/...).`,
+    }
+  }
+
+  if (canonicalParentAgent && canonicalParentAgent === requestedCanonicalAgentKey) {
+    return {
+      agentToUse: "",
+      categoryModel: undefined,
+      error: `Self-delegation not allowed: agent "${requestedCanonicalAgentKey}" cannot delegate to itself via task. Continue the work directly or use session_id=... to continue an existing subagent session.`,
+    }
+  }
+
   let agentToUse = requestedAgentName
   let categoryModel: DelegatedModelConfig | undefined
   let fallbackChain: FallbackEntry[] | undefined = undefined
@@ -84,8 +101,8 @@ Create the work plan directly - that's your job as the planning agent.`,
     })
 
     const mergedAgents = mergeWithClaudeCodeAgents(agents, executorCtx.directory)
-    const matchedPrimaryAgent = findPrimaryAgentMatch(mergedAgents, agentToUse)
 
+    const matchedPrimaryAgent = findPrimaryAgentMatch(mergedAgents, agentToUse)
     if (matchedPrimaryAgent) {
       return {
         agentToUse: "",

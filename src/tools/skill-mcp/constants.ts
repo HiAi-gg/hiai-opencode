@@ -1,6 +1,6 @@
 export const SKILL_MCP_TOOL_NAME = "skill_mcp"
 
-export const SKILL_MCP_DESCRIPTION = `Invoke MCP server operations from skill-embedded MCPs. Requires mcp_name plus exactly one of: tool_name, resource_name, or prompt_name.`
+export const SKILL_MCP_DESCRIPTION = `Invoke MCP server operations from skill-embedded MCPs or enabled hiai-opencode builtin MCPs. Requires mcp_name plus exactly one of: tool_name, resource_name, or prompt_name.`
 
 export const BUILTIN_MCP_TOOL_HINTS: Record<string, string[]> = {
   context7: ["context7_resolve-library-id", "context7_query-docs"],

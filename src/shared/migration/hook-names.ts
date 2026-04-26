@@ -5,7 +5,7 @@ export const HOOK_NAME_MAP: Record<string, string | null> = {
   "anthropic-auto-compact": "anthropic-context-window-limit-recovery",
   "bob-orchestrator": "guard",
 
-  "bob-gpt-coder-reminder": "no-bob-gpt",
+  "bob-gpt-coder-reminder": null,
 
   // Removed hooks (v3.0.0) - will be filtered out and user warned
   "empty-message-sanitizer": null,

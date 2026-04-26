@@ -52,7 +52,9 @@
         "firecrawl": { "$ref": "#/definitions/toggle" },
         "rag": { "$ref": "#/definitions/toggle" },
         "mempalace": { "$ref": "#/definitions/mempalaceToggle" },
-        "context7": { "$ref": "#/definitions/toggle" }
+        "context7": { "$ref": "#/definitions/toggle" },
+        "websearch": { "$ref": "#/definitions/websearchToggle" },
+        "grep_app": { "$ref": "#/definitions/toggle" }
       }
     },
     "lsp": {
@@ -119,6 +121,19 @@
         "pythonPath": {
           "type": "string",
           "description": "Optional explicit Python executable for MemPalace (for example: ./.venv/bin/python)."
+        }
+      },
+      "required": ["enabled"],
+      "additionalProperties": false
+    },
+    "websearchToggle": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true },
+        "provider": {
+          "enum": ["exa", "tavily"],
+          "default": "exa",
+          "description": "Remote web search MCP provider. Exa works without an API key but can use EXA_API_KEY. Tavily requires TAVILY_API_KEY."
         }
       },
       "required": ["enabled"],

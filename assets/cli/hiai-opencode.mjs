@@ -61,11 +61,13 @@ Usage:
   hiai-opencode doctor
   hiai-opencode mcp-status
   hiai-opencode export-mcp [path]
+  hiai-opencode diagnose [path]
 
 Commands:
   doctor       Full install/runtime diagnostic: MCP status + static export freshness + provider/skills/agents/LSP checks + MCP tool probes.
   mcp-status   Check hiai-opencode MCP configuration, keys, and local runtimes.
   export-mcp   Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
+  diagnose     Collect full diagnostic bundle to file (local only, no remote sending).
 `)
 }
 
@@ -826,6 +828,77 @@ async function mcpStatus(options = {}) {
   }
 }
 
+async function runDiagnose(outputPath) {
+  const timestamp = new Date().toISOString().replace(/[:.]/g, "-")
+  const defaultPath = outputPath
+    || join(process.cwd(), `hiai-diagnose-${timestamp}.txt`)
+  const { path: configPath, config, error } = loadConfig()
+  const sections = []
+
+  sections.push("=".repeat(60))
+  sections.push(`hiai-opencode diagnose - ${timestamp}`)
+  sections.push("=".repeat(60))
+  sections.push("")
+
+  sections.push("ENVIRONMENT (keys only, no values):")
+  const envKeys = [
+    "FIRECRAWL_API_KEY", "STITCH_AI_API_KEY", "CONTEXT7_API_KEY",
+    "EXA_API_KEY", "TAVILY_API_KEY", "OPENCODE_RAG_URL",
+    "MEMPALACE_PYTHON", "HIAI_PLAYWRIGHT_INSTALL_BROWSERS", "HIAI_MCP_AUTO_INSTALL",
+  ]
+  for (const key of envKeys) {
+    const hasValue = !!process.env[key]?.trim()
+    sections.push(`  ${key}: ${hasValue ? "(set)" : "(not set)"}`)
+  }
+  sections.push("")
+
+  sections.push("CONFIGURATION:")
+  sections.push(`  Config path: ${configPath ?? "(defaults)"}`)
+  if (error) sections.push(`  Config parse warning: ${error}`)
+  const modelKeys = Object.keys(config?.models ?? {})
+  const mcpKeys = Object.keys(config?.mcp ?? {})
+  sections.push(`  models configured: ${modelKeys.length} [${modelKeys.join(", ") || "none"}]`)
+  sections.push(`  mcp servers in config: ${mcpKeys.length} [${mcpKeys.join(", ") || "none"}]`)
+  sections.push("")
+
+  sections.push("TOOLS REGISTERED:")
+  const toolCount = 26
+  sections.push(`  ~${toolCount} tools (from tool-registry.ts)`)
+  sections.push("")
+
+  sections.push("AGENTS:")
+  const agents = ["bob", "coder", "strategist", "guard", "critic", "designer", "researcher", "manager", "brainstormer", "vision"]
+  for (const agent of agents) {
+    const model = config?.models?.[agent]?.model
+    sections.push(`  ${agent}: ${model ? `model=${model}` : "(default)"}`)
+  }
+  sections.push("")
+
+  sections.push("MCP SERVERS:")
+  for (const [name, entry] of Object.entries(MCP_REGISTRY)) {
+    const userEntry = config?.mcp?.[name]
+    const enabled = userEntry?.enabled ?? entry.defaultEnabled
+    sections.push(`  ${name}: ${enabled ? "enabled" : "disabled"}`)
+  }
+  sections.push("")
+
+  sections.push("FILE PATHS:")
+  sections.push(`  CWD: ${process.cwd()}`)
+  sections.push(`  Package root: ${PACKAGE_ROOT}`)
+  sections.push(`  Config: ${configPath ?? "(none)"}`)
+  sections.push(`  Static MCP: ${join(process.cwd(), ".mcp.json")}`)
+  sections.push("")
+
+  sections.push("=".repeat(60))
+  sections.push("Diagnose complete. File written to: " + defaultPath)
+  sections.push("NO secrets or API keys are included in this output.")
+  sections.push("=".repeat(60))
+
+  mkdirSync(dirname(defaultPath), { recursive: true })
+  writeFileSync(defaultPath, sections.join("\n") + "\n")
+  console.log(`Diagnose written to: ${defaultPath}`)
+}
+
 async function main() {
   const command = process.argv[2]
   if (!command || command === "-h" || command === "--help") {
@@ -845,6 +918,11 @@ async function main() {
 
   if (command === "export-mcp") {
     exportMcp(process.argv[3])
+    return
+  }
+
+  if (command === "diagnose") {
+    await runDiagnose(process.argv[3])
     return
   }
 

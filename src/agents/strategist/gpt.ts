@@ -1,4 +1,5 @@
 /**
+ * PROMPT_VERSION: 2026-04-26
  * GPT-5.4 Optimized Strategist System Prompt
  *
  * Tuned for GPT-5.4 system prompt design principles:

@@ -1,25 +1,25 @@
 {
-  "_description": "hiai-opencode user config. Edit only this file in your project as .opencode/hiai-opencode.json. Model provider credentials are configured in OpenCode Connect; this file stores model IDs only.",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts.",
   "$schema": "./config/hiai-opencode.schema.json",
   "models": {
     "bob": {
       "model": "openrouter/moonshotai/kimi-k2.6",
-      "recommended": "xhigh"
+      "recommended": "high"
     },
     "coder": {
-      "model": "openrouter/minimax/minimax-m2.7",
+      "model": "minimax-coding-plan/MiniMax-M2.7",
       "recommended": "high"
     },
     "strategist": {
-      "model": "openrouter/anthropic/claude-opus-latest",
-      "recommended": "high"
+      "model": "openrouter/deepseek/deepseek-v4-pro",
+      "recommended": "xhigh"
     },
     "guard": {
       "model": "openrouter/qwen/qwen3.6-plus",
       "recommended": "middle"
     },
     "critic": {
-      "model": "openrouter/xiaomi/mimo-v2.5-pro",
+      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
       "recommended": "high"
     },
     "designer": {
@@ -41,31 +41,60 @@
     "vision": {
       "model": "openrouter/google/gemma-4-26b-a4b-it",
       "recommended": "vision"
+    },
+    "sub": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "recommended": "fast"
     }
   },
   "auth": {
+    "openrouter": "{env:OPENROUTER_API_KEY}",
+    "openai": "{env:OPENAI_API_KEY}",
+    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
     "stitch": "{env:STITCH_AI_API_KEY}",
     "firecrawl": "{env:FIRECRAWL_API_KEY}",
     "context7": "{env:CONTEXT7_API_KEY}"
   },
   "mcp": {
-    "playwright": { "enabled": true },
-    "stitch": { "enabled": true },
-    "sequential-thinking": { "enabled": true },
-    "firecrawl": { "enabled": true },
-    "rag": { "enabled": true },
+    "playwright": {
+      "enabled": true
+    },
+    "stitch": {
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "enabled": true
+    },
+    "firecrawl": {
+      "enabled": true
+    },
+    "rag": {
+      "enabled": true
+    },
     "mempalace": {
       "enabled": true,
-      "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}"
+      "pythonPath": "/home/vlgalib/.local/venvs/mempalace/bin/python"
     },
-    "context7": { "enabled": true }
+    "context7": {
+      "enabled": true
+    }
   },
   "lsp": {
-    "typescript": { "enabled": true },
-    "svelte": { "enabled": true },
-    "eslint": { "enabled": true },
-    "bash": { "enabled": true },
-    "pyright": { "enabled": true }
+    "typescript": {
+      "enabled": true
+    },
+    "svelte": {
+      "enabled": true
+    },
+    "eslint": {
+      "enabled": true
+    },
+    "bash": {
+      "enabled": true
+    },
+    "pyright": {
+      "enabled": true
+    }
   },
   "skill_discovery": {
     "config_sources": true,

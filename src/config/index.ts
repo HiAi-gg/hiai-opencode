@@ -62,5 +62,4 @@ export type { RalphLoopConfig } from "./schema/ralph-loop.js";
 export type { DynamicContextPruningConfig } from "./schema/dynamic-context-pruning.js";
 export type { GitMasterConfig } from "./schema/git-master.js";
 export type { ModelCapabilitiesConfig } from "./schema/model-capabilities.js";
-export type { WebsearchConfig, WebsearchProvider } from "./schema/websearch.js";
 export type { FastApplyConfig } from "./schema/fast-apply.js";

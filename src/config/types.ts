@@ -34,6 +34,7 @@ export interface ModelSlotsConfig {
   manager?: ModelSlotConfig;
   brainstormer?: ModelSlotConfig;
   vision?: ModelSlotConfig;
+  sub?: ModelSlotConfig;
 }
 
 // Canonical 12-agent model exposed by schema/default config.
@@ -136,7 +137,7 @@ export interface HeuristicModelFamilyDefinition {
 }
 
 export interface CategoryConfig {
-  model: string;
+  model?: string;
   variant?: string;
   description?: string;
   fallbackChain?: FallbackEntry[];
@@ -145,6 +146,7 @@ export interface CategoryConfig {
 export interface McpServerConfig {
   enabled: boolean;
   type?: "remote" | "local";
+  provider?: "exa" | "tavily";
   url?: string;
   headers?: Record<string, string>;
   command?: string[];

@@ -115,6 +115,8 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `FIRECRAWL_API_KEY`
    - `STITCH_AI_API_KEY`
    - `CONTEXT7_API_KEY`
+   - `EXA_API_KEY`
+   - `TAVILY_API_KEY`
    - `MEMPALACE_PYTHON`
    - `OPENCODE_RAG_URL`
    - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
@@ -137,10 +139,13 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 | `rag` | User has a local or remote RAG endpoint | Uses `OPENCODE_RAG_URL`, defaulting to `http://localhost:9002/tools/search` |
 | `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
 | `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
+| `websearch` | User wants remote web search | Defaults to Exa; `EXA_API_KEY` optional for Exa, `TAVILY_API_KEY` required for Tavily |
+| `grep_app` | User wants GitHub/code search | Remote MCP endpoint; no key required |
 
 Playwright troubleshooting rules:
 
-- If `skill_mcp` says `MCP server "playwright" not found`, first load the `playwright` skill and check `hiai-opencode mcp-status`; do not report this as a browser dependency failure.
+- `skill_mcp` can call enabled hiai-opencode builtin MCPs and skill-embedded MCPs. If it reports a builtin MCP such as `firecrawl` as missing, check that the installed plugin version includes builtin fallback support and that `hiai-opencode.json` has that MCP enabled.
+- If `skill_mcp` says `MCP server "playwright" not found`, first check `hiai-opencode mcp-status`; do not report this as a browser dependency failure.
 - If Chromium reports missing Linux libraries (`libnspr4`, `libnss3`, `libatk-bridge`, `libgtk-3`, etc.), explain that MCP is present but the host lacks browser system dependencies.
 - Without sudo, try a system browser override in `hiai-opencode.json`, such as `--browser chrome` or `--browser msedge`.
 - If no browser path works, use `curl` only as degraded HTTP verification and explicitly say it is not a replacement for browser testing.
@@ -166,6 +171,8 @@ Check which services can run here:
 - rag: OPENCODE_RAG_URL or http://localhost:9002/tools/search.
 - stitch: STITCH_AI_API_KEY.
 - context7: optional CONTEXT7_API_KEY.
+- websearch: optional EXA_API_KEY for Exa, or TAVILY_API_KEY when provider is tavily.
+- grep_app: no key required.
 
 Report missing keys without printing secret values. Never invent or hardcode API keys.
 
@@ -223,6 +230,7 @@ The runtime loader is:
 Users configure only the 10 primary agent model slots under `models`: `bob`, `coder`, `strategist`, `guard`, `critic`, `designer`, `researcher`, `manager`, `brainstormer`, and `vision`.
 Hidden agents and task categories are derived internally in `src/config/defaults.ts`.
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
+When helping a user choose model IDs, tell them to connect providers in OpenCode, run `opencode models`, and copy the exact `provider/model-id` strings into `hiai-opencode.json`. Do not invent provider prefixes.
 
 ## Change Map
 
@@ -352,6 +360,41 @@ Current MCP set:
 - `websearch`
 - `grep_app`
 
+## Writing And Website Copy
+
+Public-facing website/product copy is owned by `brainstormer`.
+`writer`, `copywriter`, `content-writer`, and `website-writer` are aliases for `brainstormer`.
+
+Use the `website-copywriting` skill for:
+
+- landing pages
+- hero sections
+- CTA labels
+- feature copy
+- positioning and naming
+- onboarding, empty states, and product microcopy
+
+Preferred invocation:
+
+```text
+task(subagent_type="brainstormer", load_skills=["website-copywriting"], run_in_background=false, description="Write landing page copy", prompt="...")
+```
+
+Use `designer` or `visual-engineering` for visual direction. Use `brainstormer` for words.
+
+## Manager Memory Stewardship
+
+Use `platform-manager` / `manager` when durable project memory or handoff state must stay current.
+
+Manager owns:
+
+- MemPalace decision hygiene: search first, deduplicate, write only durable decisions and important preferences.
+- Architecture memory updates: when architecture changes, update MemPalace and sync to RAG only if the configured RAG endpoint exposes write/upsert capability.
+- TODO hygiene: mark completed items complete, preserve unfinished tasks with blocker and next action, remove duplicate stale TODOs.
+- Session continuity: write concise handoff ledgers, not raw transcripts.
+
+Do not ask Manager to implement code. Use Coder for implementation and Manager for memory/task state.
+
 ## Skill Discovery Rules
 
 Default behavior is intentionally deterministic.
@@ -404,6 +447,8 @@ Common service keys:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
+- `EXA_API_KEY`
+- `TAVILY_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`

@@ -1,0 +1,35 @@
+name: Bug Report
+description: Report a bug in hiai-opencode
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Bug Description
+
+        <!-- What happened? -->
+
+        ## Steps to Reproduce
+
+        1.
+        2.
+        3.
+
+        ## Expected Behavior
+
+        <!-- What should happen? -->
+
+        ## Actual Behavior
+
+        <!-- What actually happens? -->
+
+        ## Environment
+
+        - OS: [e.g. Windows 11, macOS, Ubuntu]
+        - Bun version: `bun --version`
+        - hiai-opencode version: check `hiai-opencode.json` or package.json
+
+        ## Logs
+
+        <!-- Paste relevant log output. Run with `HIAI_OPENCODE_LOG_LEVEL=debug` for verbose logs. -->

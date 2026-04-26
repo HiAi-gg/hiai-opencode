@@ -14,12 +14,13 @@ import { createPluginDispose, type PluginDispose } from "./plugin-dispose"
 import { loadPluginConfig } from "./plugin-config"
 import { createModelCacheState } from "./plugin-state"
 import { createFirstMessageVariantGate } from "./shared/first-message-variant"
-import { injectServerAuthIntoClient, log } from "./shared"
+import { injectServerAuthIntoClient, log, logWarn, logError } from "./shared"
 import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config"
 import { detectExternalSkillPlugin, getSkillPluginConflictWarning } from "./shared/external-plugin-detector"
 import { PLUGIN_NAME } from "./shared/plugin-identity"
 import { autoExportStaticMcpJson } from "./shared/mcp-static-export"
 import { warnIfListPluginEntry, warnMissingRequiredMcpEnv } from "./shared/startup-diagnostics"
+import { lintModeAgentCapabilities } from "./plugin/startup-diagnostics"
 import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash"
 import { lspManager } from "./tools/lsp/client"
 
@@ -71,7 +72,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
 
   const skillPluginCheck = detectExternalSkillPlugin(ctx.directory)
   if (skillPluginCheck.detected && skillPluginCheck.pluginName) {
-    console.warn(getSkillPluginConflictWarning(skillPluginCheck.pluginName))
+    logWarn(getSkillPluginConflictWarning(skillPluginCheck.pluginName))
   }
 
   injectServerAuthIntoClient(ctx.client)
@@ -86,6 +87,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     pluginConfig,
     platformConfig: internalConfig,
   })
+  lintModeAgentCapabilities()
   autoExportStaticMcpJson(ctx.directory, internalConfig)
 
   materializeBuiltinSkills(
@@ -166,7 +168,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     const mod = await import("./internals/plugins/pty/plugin");
     ptyResult = await mod.PTYPlugin(ctx);
   } catch (err) {
-    console.error("[hiai-opencode] PTYPlugin failed to load:", err);
+    logError("PTYPlugin failed to load:", err)
   }
   const combinedResult = {
     name: PLUGIN_NAME,

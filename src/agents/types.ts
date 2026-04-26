@@ -66,8 +66,11 @@ export interface AgentPromptMetadata {
   /** Nickname/alias used in prompt (e.g., "Logician" instead of "logician") */
   promptAlias?: string;
 
-  /** Key triggers that should appear in Phase 0 (e.g., "External library mentioned → fire librarian") */
+  /** Key triggers that should appear in Phase 0 (e.g., "External library mentioned → fire researcher") */
   keyTrigger?: string;
+
+  /** Prompt version for snapshot tracking (format: YYYY-MM-DD) */
+  promptVersion?: string;
 }
 
 function extractModelName(model: string): string {

@@ -19,8 +19,6 @@ import {
   createStartWorkHook,
   createStrategistMdOnlyHook,
   createBobJuniorNotepadHook,
-  createNoBobGptHook,
-  createNoCoderNonGptHook,
   createQuestionLabelTruncatorHook,
   createPreemptiveCompactionHook,
   createRuntimeFallbackHook,
@@ -54,8 +52,6 @@ export type SessionHooks = {
   startWork: ReturnType<typeof createStartWorkHook> | null
   strategistMdOnly: ReturnType<typeof createStrategistMdOnlyHook> | null
   bobJuniorNotepad: ReturnType<typeof createBobJuniorNotepadHook> | null
-  noBobGpt: ReturnType<typeof createNoBobGptHook> | null
-  noCoderNonGpt: ReturnType<typeof createNoCoderNonGptHook> | null
   questionLabelTruncator: ReturnType<typeof createQuestionLabelTruncatorHook> | null
   taskResumeInfo: ReturnType<typeof createTaskResumeInfoHook> | null
   anthropicEffort: ReturnType<typeof createAnthropicEffortHook> | null
@@ -219,17 +215,6 @@ export function createSessionHooks(args: {
     ? safeHook("sub-notepad", () => createBobJuniorNotepadHook(ctx))
     : null
 
-  const noBobGpt = isHookEnabled("no-bob-gpt")
-    ? safeHook("no-bob-gpt", () => createNoBobGptHook(ctx))
-    : null
-
-  const noCoderNonGpt = isHookEnabled("no-coder-non-gpt")
-    ? safeHook("no-coder-non-gpt", () =>
-      createNoCoderNonGptHook(ctx, {
-        allowNonGptModel: pluginConfig.agents?.coder?.allow_non_gpt_model,
-      }))
-    : null
-
   const questionLabelTruncator = isHookEnabled("question-label-truncator")
     ? safeHook("question-label-truncator", () => createQuestionLabelTruncatorHook())
     : null
@@ -275,8 +260,6 @@ export function createSessionHooks(args: {
     startWork,
     strategistMdOnly,
     bobJuniorNotepad,
-    noBobGpt,
-    noCoderNonGpt,
     questionLabelTruncator,
     taskResumeInfo,
     anthropicEffort,

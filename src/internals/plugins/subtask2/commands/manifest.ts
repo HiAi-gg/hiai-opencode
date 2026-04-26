@@ -3,11 +3,7 @@
 import { join } from "path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import type { CommandConfig } from "../types";
-import {
-  parseFrontmatter,
-  getTemplateBody,
-  parseParallelConfig,
-} from "../parsing";
+import { parseFrontmatter, getTemplateBody, parseParallelConfig, parseLoopConfig } from "../parsing";
 
 /**
  * Commands: Manifest building
@@ -43,7 +39,7 @@ export async function buildManifest(): Promise<Record<string, CommandConfig>> {
           agent: fm.agent as string | undefined,
           description: fm.description as string | undefined,
           template: getTemplateBody(content),
-          loop: fm.loop as any,
+          loop: parseLoopConfig(fm.loop),
           model: fm.model as string | undefined,
           auto: fm.subtask2 === "auto",
         };

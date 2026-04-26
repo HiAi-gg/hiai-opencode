@@ -1,1 +1,0 @@
-export { createNoCoderNonGptHook } from "./hook"

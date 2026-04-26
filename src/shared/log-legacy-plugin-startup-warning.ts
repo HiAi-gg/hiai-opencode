@@ -1,5 +1,5 @@
 import { checkForLegacyPluginEntry } from "./legacy-plugin-warning"
-import { log } from "./logger"
+import { log, logWarn } from "./logger"
 import { migrateLegacyPluginEntry } from "./migrate-legacy-plugin-entry"
 import { toCanonicalEntry } from "./plugin-entry-migrator"
 import { LEGACY_PLUGIN_NAME, PLUGIN_NAME } from "./plugin-identity"
@@ -28,18 +28,16 @@ export function logLegacyPluginStartupWarning(deps: LogLegacyPluginStartupWarnin
     hasCanonicalEntry: result.hasCanonicalEntry,
   })
 
-  console.warn(
-    `[hiai-opencode] WARNING: Your opencode.json uses the legacy package name "${LEGACY_PLUGIN_NAME}".`
+  logWarn(`Your opencode.json uses the legacy package name "${LEGACY_PLUGIN_NAME}".`
     + ` The package has been renamed to "${PLUGIN_NAME}".`
-    + ` Attempting auto-migration...`,
-  )
+    + ` Attempting auto-migration...`)
 
   const migrated = migrateLegacyPluginEntryFn(result.configPath!)
   if (migrated) {
-    console.warn(`[hiai-opencode] Auto-migrated opencode.json: ${result.legacyEntries.join(", ")} -> ${suggestedEntries.join(", ")}`)
+    logWarn(`Auto-migrated opencode.json: ${result.legacyEntries.join(", ")} -> ${suggestedEntries.join(", ")}`)
   } else {
-    console.warn(
-      `[hiai-opencode] Could not auto-migrate. Please manually update your opencode.json:`
+    logWarn(
+      `Could not auto-migrate. Please manually update your opencode.json:`
       + ` ${result.legacyEntries.map((e, i) => `"${e}" -> "${suggestedEntries[i]}"`).join(", ")}`,
     )
   }

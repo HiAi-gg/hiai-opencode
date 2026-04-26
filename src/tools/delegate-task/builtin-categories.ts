@@ -1,6 +1,7 @@
 import type { CategoryConfig } from "../../config/schema"
 import { ANTHROPIC_CATEGORIES } from "./anthropic-categories"
 import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
+import { GIT_CATEGORIES } from "./git-categories"
 import { GOOGLE_CATEGORIES } from "./google-categories"
 import { KIMI_CATEGORIES } from "./kimi-categories"
 import { OPENAI_CATEGORIES } from "./openai-categories"
@@ -10,6 +11,7 @@ const BUILTIN_CATEGORIES: BuiltinCategoryDefinition[] = [
   ...OPENAI_CATEGORIES,
   ...ANTHROPIC_CATEGORIES,
   ...KIMI_CATEGORIES,
+  ...GIT_CATEGORIES,
 ]
 
 function buildCategoryRecord<TValue>(

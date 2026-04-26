@@ -1,4 +1,5 @@
 /**
+ * PROMPT_VERSION: 2026-04-26
  * Gemini-specific overlay sections for Bob prompt.
  *
  * Gemini models are aggressively optimistic and tend to:

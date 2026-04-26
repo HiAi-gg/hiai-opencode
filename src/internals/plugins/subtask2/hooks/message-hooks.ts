@@ -177,7 +177,7 @@ export async function chatMessagesTransform(input: any, output: any) {
       if (msg.info?.role !== "user") continue;
 
       // Track processed messages by ID to avoid infinite loop
-      const msgId = (msg.info as any)?.id;
+      const msgId = msg.info?.id;
       if (msgId && hasProcessedS2Message(msgId)) continue;
 
       for (const part of msg.parts) {

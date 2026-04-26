@@ -1,3 +1,4 @@
+// PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
@@ -15,7 +16,7 @@ export function createPlatformManagerAgent(model: string): AgentConfig {
 
   return {
     description:
-      "Unified platform management agent for session continuity, project initialization, and mindmodel orchestration. (Manager - HiaiOpenCode)",
+      "Project memory steward for MemPalace, RAG handoff notes, TODO hygiene, session continuity, project initialization, and mindmodel orchestration. (Manager - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.2,
@@ -32,6 +33,18 @@ export const platformManagerPromptMetadata: AgentPromptMetadata = {
   promptAlias: "Manager",
   triggers: [
     {
+      domain: "Memory maintenance",
+      trigger: "Need to write durable decisions to MemPalace, avoid duplicates, or update project memory",
+    },
+    {
+      domain: "Architecture knowledge sync",
+      trigger: "Architecture decisions changed and MemPalace/RAG state should be updated",
+    },
+    {
+      domain: "TODO hygiene",
+      trigger: "Need completed items marked, stale tasks collapsed, or handoff state cleaned",
+    },
+    {
       domain: "Session management",
       trigger: "Need to preserve session state or create continuity ledgers",
     },
@@ -47,6 +60,9 @@ export const platformManagerPromptMetadata: AgentPromptMetadata = {
   useWhen: [
     "At beginning of session for project initialization",
     "At end of session for ledger creation",
+    "After durable architecture, product, or workflow decisions",
+    "When TODO/task lists need cleanup or completion status reconciliation",
+    "When MemPalace or RAG state must be checked or refreshed",
     "When mindmodel update is requested",
     "For rapid codebase discovery during bootstrapping",
   ],

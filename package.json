@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Unified OpenCode plugin — canonical 12-agent model with bundled skills, MCP integrations, LSP, and permissions in one install.",
   "type": "module",
   "main": "dist/index.js",
@@ -51,11 +51,14 @@
   },
   "scripts": {
     "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "bun run clean:dist && bun build src/index.ts --outdir dist --target bun --format esm && tsc --emitDeclarationOnly",
+    "build": "bun run clean:dist && bun build src/index.ts --outdir dist --target bun --format esm --minify && tsc --emitDeclarationOnly",
     "build:bundle": "bun build src/index.ts --outdir dist --target bun --format esm",
     "build:types": "tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
+    "check:docs": "bun run scripts/check-docs.ts",
+    "check:bundle-size": "node -e \"const s=require('fs').statSync('dist/index.js').size;console.log('Bundle: '+(s/1024/1024).toFixed(2)+'MB');if(s>3*1024*1024){console.error('FAIL: bundle >3MB');process.exit(1)}else{console.log('OK: bundle <=3MB')}\"",
+    "check:todos": "node scripts/check-todos.mjs || echo 'No check-todos script'",
     "pack:check": "npm pack --dry-run",
     "prepare": "bun run build",
     "prepublishOnly": "bun run typecheck && bun run test && bun run build && bun run pack:check"

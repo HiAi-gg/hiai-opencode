@@ -21,6 +21,7 @@ export const CANONICAL_DELEGATE_AGENT_KEYS = [
 ] as const
 
 type CanonicalDelegateAgentKey = (typeof CANONICAL_DELEGATE_AGENT_KEYS)[number]
+export type { CanonicalDelegateAgentKey }
 const CANONICAL_DELEGATE_AGENT_KEY_SET = new Set<string>(CANONICAL_DELEGATE_AGENT_KEYS)
 
 const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> = {
@@ -44,8 +45,17 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   "project-initializer": "platform-manager",
   mindmodel: "platform-manager",
   ui: "multimodal",
+  writer: "brainstormer",
+  copywriter: "brainstormer",
+  "content-writer": "brainstormer",
   subagent: "sub",
   "bob-junior": "sub",
+  oracle: "strategist",
+  hephaestus: "coder",
+  metis: "strategist",
+  momus: "critic",
+  "sisyphus-junior": "sub",
+  "multimodal-looker": "multimodal",
 }
 
 export function resolveCanonicalDelegateAgentKey(agentName: string): string {

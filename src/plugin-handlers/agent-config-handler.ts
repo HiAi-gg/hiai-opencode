@@ -81,7 +81,7 @@ const RUNTIME_AGENT_DESCRIPTIONS: Partial<Record<string, string>> = {
     "Compatibility wrapper for review functions now folded into Critic. (Quality Guardian - HiaiOpenCode)",
 };
 
-function forceVisiblePrimaryAgent(agent: unknown, name: string): unknown {
+function forceVisiblePrimaryAgent(agent: unknown, name: string, forceMode?: "primary" | "all"): unknown {
   if (typeof agent !== "object" || agent === null) {
     return agent;
   }
@@ -91,7 +91,7 @@ function forceVisiblePrimaryAgent(agent: unknown, name: string): unknown {
     ...base,
     name,
     hidden: false,
-    mode: "primary",
+    mode: forceMode ?? "all",
     ...(typeof base.description === "string" && base.description.trim().length > 0
       ? {}
       : { description: RUNTIME_AGENT_DESCRIPTIONS[name] }),
@@ -475,6 +475,7 @@ export async function applyAgentConfig(params: {
         normalizedAgents[name] = forceVisiblePrimaryAgent(
           normalizedAgents[name],
           name,
+          name === "Bob" ? "primary" : "all",
         );
       }
     }

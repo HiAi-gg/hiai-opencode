@@ -37,6 +37,7 @@ export const ModelSlotsConfigSchema = z.object({
   manager: ModelSlotConfigSchema.optional(),
   brainstormer: ModelSlotConfigSchema.optional(),
   vision: ModelSlotConfigSchema.optional(),
+  sub: ModelSlotConfigSchema.optional(),
 });
 
 export const FallbackEntrySchema = z.object({
@@ -71,6 +72,7 @@ export const CategoryConfigSchema = z.object({
 export const McpServerConfigSchema = z.object({
   enabled: z.boolean().default(true),
   type: z.enum(["remote", "local"]).optional(),
+  provider: z.enum(["exa", "tavily"]).optional(),
   url: z.string().optional(),
   headers: z.record(z.string(), z.string()).optional(),
   command: z.array(z.string()).optional(),

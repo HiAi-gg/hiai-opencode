@@ -1,29 +1,33 @@
 import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
 
 const ULTRABRAIN_CATEGORY_PROMPT_APPEND = `<Category_Context>
-You are working on DEEP LOGICAL REASONING / COMPLEX ARCHITECTURE tasks.
+You are working on DEEP LOGICAL REASONING / ARCHITECTURE / STRATEGY tasks.
 
 <Routing_Policy>
-Executor contour: coder (deep execution). Do not use this category for bounded quick edits.
+Executor contour: strategist (plan + analysis, read-only). This category produces a structured plan, NOT implementation. The caller is responsible for routing the implementation step to \`deep\`, \`bounded\`, or \`cross-module\` mode based on your plan.
 </Routing_Policy>
 
-**CRITICAL - CODE STYLE REQUIREMENTS (NON-NEGOTIABLE)**:
-1. BEFORE writing ANY code, SEARCH the existing codebase to find similar patterns/styles
-2. Your code MUST match the project's existing conventions - blend in seamlessly
-3. Write READABLE code that humans can easily understand - no clever tricks
-4. If unsure about style, explore more files until you find the pattern
+<Output_Contract>
+Your output MUST contain:
+1. **Decomposition** - concrete tasks with bounded scope (each task small enough that one executor agent can complete it without further planning).
+2. **Dependency graph** - which tasks block which; identify parallel-safe tasks explicitly.
+3. **Tradeoffs** - at least 2 alternative approaches with cost/risk for each; recommend one and justify briefly.
+4. **Recommended next step** - explicit \`task(category=...)\` call the caller should make to start implementation.
+5. **Open questions** - assumptions the caller should confirm before kickoff (if any).
 
-Strategic advisor mindset:
-- Bias toward simplicity: least complex solution that fulfills requirements
-- Leverage existing code/patterns over new components
-- Prioritize developer experience and maintainability
-- One clear recommendation with effort estimate (Quick/Short/Medium/Large)
-- Signal when advanced approach warranted
+You MUST NOT:
+- Write or edit code (you have no write/edit tools).
+- Mark task as done yourself; the caller verifies the plan and routes implementation.
+- Defer planning by asking clarifying questions when assumptions can be stated and surfaced as Open questions.
+</Output_Contract>
 
-Response format:
-- Bottom line (2-3 sentences)
-- Action plan (numbered steps)
-- Risks and mitigations (if relevant)
+<Reasoning_Discipline>
+- Bias toward simplicity: least complex solution that fulfills requirements.
+- Leverage existing code/patterns over new components - reference concrete files when relevant.
+- Surface assumptions explicitly as Open questions rather than guessing silently.
+- For unfamiliar domains, recommend a \`task(subagent_type="researcher", run_in_background=true, ...)\` exploration step before planning.
+- One clear recommendation with effort estimate (Quick / Short / Medium / Large).
+</Reasoning_Discipline>
 </Category_Context>`
 
 const DEEP_CATEGORY_PROMPT_APPEND = `<Category_Context>
@@ -55,7 +59,7 @@ const QUICK_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on SMALL / QUICK tasks.
 
 <Routing_Policy>
-Executor contour: coder (fast bounded execution). Keep the implementation narrow and escalate only when the task truly becomes deep or cross-system.
+Executor contour: sub (cheap fast-tier executor). Keep the implementation narrow and escalate only when the task truly becomes deep or cross-system.
 </Routing_Policy>
 
 Efficient execution mindset:
@@ -110,7 +114,7 @@ export const OPENAI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "ultrabrain",
     config: {},
-    description: "Hard logic and architecture tasks. Uses coder execution contour; avoid for quick bounded edits.",
+    description: "Hard logic, architecture, strategy. Returns structured plan (decomposition + dependency graph + tradeoffs), NOT implementation. Follow up with deep/bounded/cross-module mode for build.",
     promptAppend: ULTRABRAIN_CATEGORY_PROMPT_APPEND,
   },
   {
@@ -122,7 +126,7 @@ export const OPENAI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "quick",
     config: {},
-    description: "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses coder execution contour.",
+    description: "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses sub (cheap fast-tier) execution contour.",
     promptAppend: QUICK_CATEGORY_PROMPT_APPEND,
   },
 ]

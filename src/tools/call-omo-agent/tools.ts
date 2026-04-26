@@ -10,6 +10,7 @@ import type { DelegatedModelConfig } from "../../shared/model-resolution-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { AGENT_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
 import { getAgentConfigKey, stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
+import { resolveCanonicalDelegateAgentKey } from "../../tools/delegate-task/sub-agent"
 import { normalizeFallbackModels } from "../../shared/model-resolver"
 import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models"
 import { log } from "../../shared"
@@ -139,22 +140,28 @@ export function createCallOmoAgent(
     async execute(args: CallOmoAgentArgs, toolContext) {
       const toolCtx = toolContext as ToolContextWithMetadata;
       log(
-        `[call_omo_agent] Starting with agent: ${args.subagent_type}, background: ${args.run_in_background}`,
+        `[call_omo_agent] DEPRECATED: call_omo_agent is deprecated. Use task(agent="...", load_skills=[], run_in_background=...) instead.`,
       );
 
       const callableAgents = await resolveCallableAgents(ctx.client);
 
       // Strip ZWSP and case-insensitive agent validation - allows canonical names and compatibility aliases.
       const strippedAgentType = stripInvisibleAgentCharacters(args.subagent_type)
+      const preCanonicalAgentType = getAgentConfigKey(strippedAgentType)
+      const canonicalAgentType = resolveCanonicalDelegateAgentKey(preCanonicalAgentType)
+      const wasLegacyAlias = canonicalAgentType !== preCanonicalAgentType.toLowerCase()
+      if (wasLegacyAlias) {
+        log("[call_omo_agent] Legacy agent alias resolved", { from: preCanonicalAgentType, to: canonicalAgentType })
+      }
       if (
         !callableAgents.some(
-          (name) => name.toLowerCase() === strippedAgentType.toLowerCase(),
+          (name) => name.toLowerCase() === canonicalAgentType.toLowerCase(),
         )
       ) {
-        return `Error: Invalid agent type "${args.subagent_type}". Only ${callableAgents.join(", ")} are allowed.`;
+        return `Error: Invalid agent type "${args.subagent_type}". Available agents: ${callableAgents.join(", ")}. Legacy aliases: oracle→strategist, hephaestus→coder, metis→strategist, momus→critic, sisyphus-junior→sub, multimodal-looker→multimodal, librarian→researcher, explore→researcher.`;
       }
 
-      const normalizedAgent = strippedAgentType.toLowerCase();
+      const normalizedAgent = canonicalAgentType.toLowerCase();
       args = { ...args, subagent_type: normalizedAgent };
 
       // Check if agent is disabled

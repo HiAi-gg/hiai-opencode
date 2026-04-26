@@ -28,8 +28,6 @@ export { createThinkingBlockValidatorHook } from "./thinking-block-validator";
 export { createToolPairValidatorHook } from "./tool-pair-validator";
 export { createCategorySkillReminderHook } from "./category-skill-reminder";
 export { createRalphLoopHook, type RalphLoopHook } from "./ralph-loop";
-export { createNoBobGptHook } from "./no-bob-gpt";
-export { createNoCoderNonGptHook } from "./no-coder-non-gpt";
 export { createAutoSlashCommandHook } from "./auto-slash-command";
 export { createEditErrorRecoveryHook } from "./edit-error-recovery";
 

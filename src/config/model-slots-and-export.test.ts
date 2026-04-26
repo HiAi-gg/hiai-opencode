@@ -17,6 +17,7 @@ const baseConfig: HiaiOpencodeConfig = {
     manager: { model: "openrouter/test/manager", recommended: "fast" },
     brainstormer: { model: "openrouter/test/brainstormer", recommended: "writing" },
     vision: { model: "openrouter/test/vision", recommended: "vision" },
+    sub: { model: "openrouter/test/sub", recommended: "fast" },
   },
   mcp: {
     mempalace: { enabled: true, pythonPath: "/opt/venv/bin/python" },
@@ -28,10 +29,13 @@ test("model slots derive canonical agents and categories", () => {
   expect(resolved.agents?.bob?.model).toBe("openrouter/test/bob")
   expect(resolved.agents?.coder?.model).toBe("openrouter/test/coder")
   expect(resolved.agents?.["platform-manager"]?.model).toBe("openrouter/test/manager")
-  expect(resolved.agents?.sub?.model).toBe("openrouter/test/coder")
-  expect(resolved.categories?.artistry?.model).toBe("openrouter/test/designer")
-  expect(resolved.categories?.ultrabrain?.model).toBe("openrouter/test/strategist")
-  expect(resolved.categories?.writing?.model).toBe("openrouter/test/brainstormer")
+  expect(resolved.agents?.sub?.model).toBe("openrouter/test/sub")
+  expect(resolved.categories?.artistry?.variant).toBe("high")
+  expect(resolved.categories?.ultrabrain?.variant).toBe("xhigh")
+  expect(resolved.categories?.deep?.variant).toBe("medium")
+  expect(resolved.categories?.quick).toBeDefined()
+  expect(resolved.categories?.writing).toBeDefined()
+  expect(resolved.categories?.git).toBeDefined()
 })
 
 test("compact MCP mempalace pythonPath is materialized into environment", () => {
@@ -47,6 +51,20 @@ test("static MCP export includes marker metadata and servers", () => {
   expect(exported._meta?.version).toBe(1)
   expect(exported.mcpServers.playwright).toBeDefined()
   expect(exported.mcpServers.mempalace).toBeDefined()
+  expect(exported.mcpServers.websearch).toBeDefined()
+  expect(exported.mcpServers.grep_app).toBeDefined()
+})
+
+test("websearch MCP provider is selected from the MCP switchboard", () => {
+  const resolved = applyModelSlots({
+    ...baseConfig,
+    mcp: {
+      websearch: { enabled: true, provider: "tavily" },
+    },
+  })
+
+  expect(resolved.mcp?.websearch?.url).toBe("https://mcp.tavily.com/mcp/")
+  expect(resolved.mcp?.websearch?.headers?.Authorization).toBe("Bearer {env:TAVILY_API_KEY}")
 })
 
 test("integration primer does not request model provider API keys", () => {

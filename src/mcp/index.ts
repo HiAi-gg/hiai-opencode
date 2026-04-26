@@ -1,4 +1,3 @@
-export { createBuiltinMcps } from "./omo-mcp-index"
 export { McpNameSchema, type McpName, type AnyMcpName } from "./types"
 
 import type { McpServerConfig } from "../config/types.js";

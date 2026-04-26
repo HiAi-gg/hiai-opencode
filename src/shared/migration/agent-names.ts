@@ -64,6 +64,13 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   // Designer
   designer: "designer",
 
+  // Writer/copywriter aliases are handled by Brainstormer.
+  writer: "brainstormer",
+  copywriter: "brainstormer",
+  "content-writer": "brainstormer",
+  "content writer": "brainstormer",
+  "website-writer": "brainstormer",
+
   // Multimodal / Vision
   ui: "multimodal",
   vision: "multimodal",
@@ -80,6 +87,7 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "multimodal",
   "platform-manager",
   "guard",
+  "brainstormer",
 ])
 
 export function migrateAgentNames(

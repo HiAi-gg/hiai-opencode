@@ -1,4 +1,5 @@
 /**
+ * PROMPT_VERSION: 2026-04-26
  * Default/base Bob prompt builder. Used for Claude and general models.
  * Lean router — delegates, routes, orchestrates. Does not implement.
  */

@@ -27,11 +27,14 @@ export function parseLoopConfig(loop: unknown): LoopConfig | undefined {
 }
 
 // Parse a parallel item - handles "/cmd {model:...} args" syntax, plain "cmd", or {command, arguments} object
+function isParallelCommandLike(p: unknown): p is { command: unknown; arguments?: unknown; prompt?: unknown; model?: unknown; agent?: unknown; loop?: unknown; as?: unknown; inline?: unknown } {
+  return typeof p === "object" && p !== null && "command" in p
+}
+
 export function parseParallelItem(p: unknown): ParallelCommand | null {
   if (typeof p === "string") {
     const trimmed = p.trim();
     if (trimmed.startsWith("/")) {
-      // Parse /command {overrides} args syntax
       const parsed = parseCommandWithOverrides(trimmed);
       if (parsed.isInlineSubtask) {
         return {
@@ -55,16 +58,16 @@ export function parseParallelItem(p: unknown): ParallelCommand | null {
     }
     return { command: trimmed };
   }
-  if (typeof p === "object" && p !== null && (p as any).command) {
+  if (isParallelCommandLike(p)) {
     return {
-      command: (p as any).command,
-      arguments: (p as any).arguments,
-      prompt: (p as any).prompt,
-      model: (p as any).model,
-      agent: (p as any).agent,
-      loop: (p as any).loop,
-      as: (p as any).as,
-      inline: (p as any).inline,
+      command: String(p.command),
+      arguments: p.arguments !== undefined ? String(p.arguments) : undefined,
+      prompt: p.prompt !== undefined ? String(p.prompt) : undefined,
+      model: p.model !== undefined ? String(p.model) : undefined,
+      agent: p.agent !== undefined ? String(p.agent) : undefined,
+      loop: p.loop !== undefined ? parseLoopConfig(p.loop) : undefined,
+      as: p.as !== undefined ? String(p.as) : undefined,
+      inline: p.inline !== undefined ? Boolean(p.inline) : undefined,
     };
   }
   return null;

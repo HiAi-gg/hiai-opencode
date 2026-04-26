@@ -3,7 +3,7 @@ import { dirname, join } from "node:path"
 
 import type { HiaiOpencodeConfig, McpServerConfig } from "../config/types"
 import { resolveEnvVars } from "../config/loader"
-import { log } from "./logger"
+import { log, logWarn } from "./logger"
 
 type StaticMcpServer = {
   type?: "http" | "stdio"
@@ -99,10 +99,8 @@ export function autoExportStaticMcpJson(directory: string, config: HiaiOpencodeC
 
   const isForceMode = mode === "force"
   if (mode === "always" && existsSync(outputPath) && !isManagedStaticMcpFile(outputPath) && !isForceMode) {
-    console.warn(
-      `[hiai-opencode] WARNING: refusing to overwrite non-managed static MCP config at ${outputPath}. `
-      + "Set HIAI_OPENCODE_AUTO_EXPORT_MCP=force to override.",
-    )
+    logWarn(`refusing to overwrite non-managed static MCP config at ${outputPath}. `
+      + "Set HIAI_OPENCODE_AUTO_EXPORT_MCP=force to override.")
     return
   }
 
@@ -116,6 +114,6 @@ export function autoExportStaticMcpJson(directory: string, config: HiaiOpencodeC
     })
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    console.warn(`[hiai-opencode] WARNING: failed to export static MCP config to ${outputPath}: ${message}`)
+    logWarn(`failed to export static MCP config to ${outputPath}: ${message}`)
   }
 }

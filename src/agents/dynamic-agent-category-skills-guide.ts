@@ -18,6 +18,8 @@ function buildSkillsSection(skills: AvailableSkill[]): string {
   if (customSkills.length > 0 && builtinSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
 
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
+
 **Built-in**: ${builtinNames}
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
 
@@ -28,6 +30,8 @@ function buildSkillsSection(skills: AvailableSkill[]): string {
   if (customSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
 
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
+
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
 
 > User-installed skills OVERRIDE built-in defaults. ALWAYS prefer YOUR SKILLS when domain matches.
@@ -36,6 +40,8 @@ function buildSkillsSection(skills: AvailableSkill[]): string {
 
   if (builtinSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
+
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
 
 **Built-in**: ${builtinNames}
 

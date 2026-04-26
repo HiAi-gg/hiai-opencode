@@ -1,0 +1,15 @@
+name: Question
+description: Ask a question about hiai-opencode
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Question
+
+        <!-- What do you want to ask? -->
+
+        ## Context
+
+        <!-- Any additional context (version, config, use case) -->

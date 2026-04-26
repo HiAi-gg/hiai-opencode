@@ -23,7 +23,6 @@ import { BobAgentConfigSchema } from "./bob-agent"
 import { TmuxConfigSchema } from "./tmux"
 import { StartWorkConfigSchema } from "./start-work"
 import { FastApplyConfigSchema } from "./fast-apply"
-import { WebsearchConfigSchema } from "./websearch"
 
 const AuthConfigSchema = z.object({
   stitch: z.string().optional(),
@@ -78,7 +77,6 @@ export const HiaiOpenCodeConfigSchema = z.object({
     git_env_prefix: "GIT_MASTER=1",
   }),
   browser_automation_engine: BrowserAutomationConfigSchema.optional(),
-  websearch: WebsearchConfigSchema.optional(),
   tmux: TmuxConfigSchema.optional(),
   "bob": BobConfigSchema.optional(),
   start_work: StartWorkConfigSchema.optional(),

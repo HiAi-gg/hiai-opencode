@@ -3,9 +3,6 @@ import type { DelegateTaskArgs } from "./types"
 import type { ExecutorContext } from "./executor-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { mergeCategories } from "../../shared/merge-categories"
-import {
-  CODER_AGENT_CONFIG_KEY,
-} from "./sub-agent"
 import { resolveCategoryConfig } from "./categories"
 import { parseModelString } from "./model-string-parser"
 import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
@@ -15,6 +12,7 @@ import { CONFIG_BASENAME } from "../../shared/plugin-identity"
 import { getAvailableModelsForDelegateTask } from "./available-models"
 import { resolveModelForDelegateTask } from "./model-selection"
 import { getAgentDisplayName } from "../../shared/agent-display-names"
+import { resolveModeAgent } from "../../shared/mode-routing"
 
 import type { CategoryConfig } from "../../config/schema"
 import type { DelegatedModelConfig } from "./types"
@@ -42,11 +40,11 @@ export interface CategoryResolutionResult {
 }
 
 function resolveCategoryExecutorAgentKey(
-  _categoryName: string,
+  categoryName: string,
   config: CategoryConfig,
-): typeof CODER_AGENT_CONFIG_KEY {
+): string {
   void config
-  return CODER_AGENT_CONFIG_KEY
+  return resolveModeAgent(categoryName)
 }
 
 export async function resolveCategoryExecution(
@@ -120,7 +118,7 @@ Available categories: ${allCategoryNames}`,
   }
 
   const categoryExecutorAgentKey = resolveCategoryExecutorAgentKey(categoryName, resolved.config)
-  const categoryExecutorAgentName = getAgentDisplayName(CODER_AGENT_CONFIG_KEY)
+  const categoryExecutorAgentName = getAgentDisplayName(categoryExecutorAgentKey)
   const categoryExecutorOverride = agentOverrides?.[categoryExecutorAgentKey as keyof typeof agentOverrides]
     ?? (agentOverrides
       ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === categoryExecutorAgentKey)?.[1]
@@ -141,8 +139,9 @@ Available categories: ${allCategoryNames}`,
   const explicitCategoryModel = userCategories?.[args.category!]?.model
 
   if (!requirement) {
-    // Precedence: explicit category model > routed executor override model > category resolved model.
-    // This preserves per-category overrides while allowing category routing to stay on coder.
+    // Precedence: explicit category model > routed executor agent's override model > category resolved model.
+    // The routed executor agent is selected per-mode via resolveModeAgent (see shared/mode-routing.ts);
+    // its agentOverrides[<agent>].model serves as the fallback when no explicit category model is set.
     actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model
     if (actualModel) {
       modelInfo = explicitCategoryModel || overrideModel

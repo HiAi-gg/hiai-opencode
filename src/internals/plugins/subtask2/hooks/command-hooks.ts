@@ -261,11 +261,11 @@ export async function commandExecuteBefore(
       log(
         `cmd.before: registered parent for prompt (${part.prompt.length} chars)`
       );
-      if ((part as any).as) {
+      if ("as" in part && part.as) {
         registerPendingResultCaptureByPrompt(
           part.prompt,
           input.sessionID,
-          (part as any).as
+          String(part.as)
         );
       }
     }

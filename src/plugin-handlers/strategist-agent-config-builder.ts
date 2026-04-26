@@ -98,7 +98,7 @@ export async function buildStrategistAgentConfig(params: {
   const base: Record<string, unknown> = {
     ...(resolvedModel ? { model: resolvedModel } : {}),
     ...(variantToUse ? { variant: variantToUse } : {}),
-    mode: "primary",
+    mode: "all",
     prompt: getStrategistPrompt(resolvedModel, params.disabledTools) + "\n\n" + CLOSURE_SCHEMA_PROMPT,
     permission: PROMETHEUS_PERMISSION,
     description: `${(params.configAgentPlan?.description as string) ?? "Plan agent"} (Strategist - HiaiOpenCode)`,

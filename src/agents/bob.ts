@@ -1,3 +1,4 @@
+// PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { isGptModel, isGeminiModel, isGptProModel } from "./types";
@@ -17,6 +18,7 @@ export const BOB_PROMPT_METADATA: AgentPromptMetadata = {
   category: "utility",
   cost: "EXPENSIVE",
   promptAlias: "Bob",
+  promptVersion: "2026-04-26",
   triggers: [],
 };
 import type {

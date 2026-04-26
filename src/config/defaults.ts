@@ -20,6 +20,7 @@ const REQUIRED_MODEL_SLOTS = [
   "manager",
   "brainstormer",
   "vision",
+  "sub",
 ] as const
 
 type ModelSlot = (typeof REQUIRED_MODEL_SLOTS)[number]
@@ -109,24 +110,29 @@ function deriveAgents(models: Record<ModelSlot, string>): HiaiOpencodeConfig["ag
     "platform-manager": { model: models.manager },
     brainstormer: { model: models.brainstormer },
     multimodal: { model: models.vision },
-    sub: { model: models.coder },
+    sub: { model: models.sub },
     "quality-guardian": { model: models.critic },
     "agent-skills": { model: models.manager },
   }
 }
 
-function deriveCategories(models: Record<ModelSlot, string>): HiaiOpencodeConfig["categories"] {
-  return {
-    "visual-engineering": { model: models.designer, variant: "high" },
-    artistry: { model: models.designer, variant: "high" },
-    ultrabrain: { model: models.strategist, variant: "xhigh" },
-    deep: { model: models.coder, variant: "medium" },
-    quick: { model: models.researcher },
-    writing: { model: models.brainstormer },
-    git: { model: models.manager },
-    "unspecified-low": { model: models.coder },
-    "unspecified-high": { model: models.bob, variant: "max" },
+function deriveCategories(models: Record<ModelSlot, string>): Record<string, import("./types").CategoryConfig> {
+  const categories: Record<string, import("./types").CategoryConfig> = {}
+  const entries: [string, Record<string, unknown>][] = [
+    ["visual-engineering", { variant: "high" }],
+    ["artistry", { variant: "high" }],
+    ["ultrabrain", { variant: "xhigh" }],
+    ["deep", { variant: "medium" }],
+    ["quick", {}],
+    ["writing", {}],
+    ["git", {}],
+    ["unspecified-low", {}],
+    ["unspecified-high", { variant: "max" }],
+  ]
+  for (const [name, cfg] of entries) {
+    categories[name] = cfg as import("./types").CategoryConfig
   }
+  return categories
 }
 
 function deriveMcp(config: HiaiOpencodeConfig): HiaiOpencodeConfig["mcp"] {
@@ -142,6 +148,19 @@ function deriveMcp(config: HiaiOpencodeConfig): HiaiOpencodeConfig["mcp"] {
           ...(entry.environment ?? {}),
           ...(merged.environment ?? {}),
           MEMPALACE_PYTHON: merged.pythonPath.trim(),
+        }
+      }
+
+      if (name === "websearch") {
+        const provider = merged.provider === "tavily" ? "tavily" : "exa"
+        merged.provider = provider
+        merged.type = "remote"
+        if (provider === "tavily") {
+          merged.url = "https://mcp.tavily.com/mcp/"
+          merged.headers = { Authorization: "Bearer {env:TAVILY_API_KEY}" }
+        } else {
+          merged.url = "https://mcp.exa.ai/mcp?tools=web_search_exa"
+          merged.headers = { "x-api-key": "{env:EXA_API_KEY}" }
         }
       }
 

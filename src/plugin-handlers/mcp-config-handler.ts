@@ -2,7 +2,6 @@ import type { HiaiOpenCodeConfig } from "../config";
 import { spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { loadMcpConfigs } from "../features/claude-code-mcp-loader";
-import { createBuiltinMcps } from "../mcp";
 import type { PluginComponents } from "./plugin-components-loader";
 import { log } from "../shared";
 import { getPlatformMcpDefaults } from "../shared/runtime-plugin-config";
@@ -14,8 +13,20 @@ function resolveHeaderAuthFallback(
   pluginConfig: HiaiOpenCodeConfig,
   name: string,
 ): Record<string, string> | undefined {
-  if (name === "stitch" && pluginConfig.auth?.stitch?.trim()) {
-    return { "X-Goog-Api-Key": pluginConfig.auth.stitch.trim() };
+  const resolveAuth = (value: string | undefined): string | undefined => {
+    if (!value?.trim()) return undefined;
+    const resolved = resolveEnvVars(value).trim();
+    return resolved.length > 0 ? resolved : undefined;
+  };
+
+  if (name === "stitch") {
+    const key = resolveAuth(pluginConfig.auth?.stitch);
+    return key ? { "X-Goog-Api-Key": key } : undefined;
+  }
+
+  if (name === "context7") {
+    const key = resolveAuth(pluginConfig.auth?.context7);
+    return key ? { "X-API-KEY": key } : undefined;
   }
 
   return undefined;
@@ -25,8 +36,9 @@ function resolveEnvironmentAuthFallback(
   pluginConfig: HiaiOpenCodeConfig,
   name: string,
 ): Record<string, string> | undefined {
-  if (name === "firecrawl" && pluginConfig.auth?.firecrawl?.trim()) {
-    return { FIRECRAWL_API_KEY: pluginConfig.auth.firecrawl.trim() };
+  if (name === "firecrawl") {
+    const key = pluginConfig.auth?.firecrawl ? resolveEnvVars(pluginConfig.auth.firecrawl).trim() : "";
+    return key ? { FIRECRAWL_API_KEY: key } : undefined;
   }
 
   return undefined;
@@ -122,18 +134,20 @@ function normalizePlatformMcpDefaults(
     );
     const headerFallback = resolveHeaderAuthFallback(pluginConfig, name);
     const environmentFallback = resolveEnvironmentAuthFallback(pluginConfig, name);
+    const usableHeaders = headers && !hasMissingResolvedValue(headers) ? headers : undefined;
+    const usableEnvironment = environment && !hasMissingResolvedValue(environment) ? environment : undefined;
     const headersWithFallback =
-      headers && headerFallback
-        ? { ...headerFallback, ...headers }
-        : headers ?? headerFallback;
+      usableHeaders && headerFallback
+        ? { ...headerFallback, ...usableHeaders }
+        : usableHeaders ?? headerFallback;
     const environmentWithFallback =
-      environment && environmentFallback
-        ? { ...environmentFallback, ...environment }
-        : environment ?? environmentFallback;
+      usableEnvironment && environmentFallback
+        ? { ...environmentFallback, ...usableEnvironment }
+        : usableEnvironment ?? environmentFallback;
 
     const missingResolvedValues =
-      hasMissingResolvedValue(headersWithFallback) ||
-      hasMissingResolvedValue(environmentWithFallback);
+      (!!headers && !usableHeaders && !headerFallback) ||
+      (!!environment && !usableEnvironment && !environmentFallback);
 
     if (missingResolvedValues) {
       log(`MCP server "${name}" is missing environment-backed auth; keeping it visible in config`);
@@ -151,6 +165,8 @@ function normalizePlatformMcpDefaults(
     if (environmentWithFallback && !hasMissingResolvedValue(environmentWithFallback)) {
       nextEntry.environment = environmentWithFallback;
     }
+
+    delete nextEntry.provider;
 
     normalized[name] = nextEntry;
   }
@@ -184,7 +200,6 @@ export async function applyMcpConfig(params: {
       getPlatformMcpDefaults(params.pluginConfig) as unknown as Record<string, unknown>,
       params.pluginConfig,
     ),
-    ...createBuiltinMcps(disabledMcps, params.pluginConfig),
     ...mcpResult.servers,
     ...(userMcp ?? {}),
     ...params.pluginComponents.mcpServers,
