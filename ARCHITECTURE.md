@@ -89,10 +89,13 @@ Prompting is not a single file and not a single directory. `src/agents` is the m
 These files create the top-level agent config objects:
 
 - Bob: [src/agents/bob.ts](src/agents/bob.ts)
-- Coder: `src/agents/coder/agent.ts`
+- Coder: [src/agents/coder/agent.ts](src/agents/coder/agent.ts)
 - Strategist: `src/agents/strategist/*`
-- Guard: `src/agents/guard/agent.ts`
-- Critic: `src/agents/critic/agent.ts`
+- Guard: [src/agents/guard/agent.ts](src/agents/guard/agent.ts)
+- Critic: [src/agents/critic/agent.ts](src/agents/critic/agent.ts)
+- Designer: [src/agents/designer.ts](src/agents/designer.ts)
+- Brainstormer: [src/agents/brainstormer.ts](src/agents/brainstormer.ts)
+- Agent Skills: [src/agents/agent-skills.ts](src/agents/agent-skills.ts)
 - Vision: [src/agents/ui.ts](src/agents/ui.ts)
 - Manager: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - Researcher: [src/agents/researcher.ts](src/agents/researcher.ts)
