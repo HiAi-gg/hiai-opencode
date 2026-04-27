@@ -69,6 +69,25 @@ Mode determines prompt append, variant, and reasoning effort. The executor agent
 | `git` | `platform-manager` | Git ops | Version control operations |
 | `bounded` | `sub` | Mid-tier bounded | Moderate effort changes |
 | `cross-module` | `coder` | Deep substantial | Multi-component changes |
+| `unspecified-low` | `sub` | Bounded | Unclassified small tasks |
+| `unspecified-high` | `coder` | Deep | Unclassified substantial tasks |
+
+## Integrations
+
+MCP integrations and which agents use them:
+
+| Service | Key env var | Agent(s) | What it's for |
+|---------|------------|----------|---------------|
+| Stitch | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
+| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | Web scraping, crawl, extract, search |
+| Context7 | `CONTEXT7_API_KEY` | Researcher, Coder | Library API documentation |
+| grep_app | — | Researcher | GitHub OSS code pattern search |
+| websearch (Exa) | `EXA_API_KEY` | Researcher | General web search |
+| websearch (Tavily) | `TAVILY_API_KEY` | Researcher | General web search (alt provider) |
+| RAG | `OPENCODE_RAG_URL` | Researcher, Brainstormer, Manager | Project knowledge base |
+| MemPalace | — | Manager (primary), all agents | Project memory and past decisions |
+| Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
+| Playwright | — | Coder | Browser tests and automation |
 
 ## What You Get
 

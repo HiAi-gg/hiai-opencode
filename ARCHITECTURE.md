@@ -12,6 +12,45 @@ The plugin has five main layers:
 4. MCP and LSP wiring
 5. migration and compatibility handling
 
+## Request Flow
+
+```
+User input
+    │
+    ▼
+┌─────────┐
+│   Bob    │ ← orchestrator / router
+└────┬────┘
+     │ delegates
+     ▼
+┌──────────────────────────────────────────────────────┐
+│                                                      │
+│  researcher ◄── background (facts, docs)             │
+│  strategist ◄── planning (plan before action)        │
+│                                                      │
+│  category routes to:                                  │
+│    deep/ultrabrain → coder (implementation)           │
+│    quick/bounded    → sub (cheap bounded)            │
+│    writing         → brainstormer (copy)            │
+│    visual-engineering → designer (Stitch MCP)       │
+│    artistry       → designer (creative)             │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+     │
+     ▼
+┌─────────┐
+│   Bob    │ ← collects results, verifies
+└────┬────┘
+     │
+     ▼
+  User response
+```
+
+**Key wiring rules:**
+- OpenCode plugins are NOT MCP servers. `hiai-opencode` only provides the OpenCode-side launch wiring for MCP servers through its `mcp` config and helper launchers in `assets/mcp/`.
+- Model credentials go through OpenCode Connect, not `hiai-opencode.json`.
+- Service keys (`FIRECRAWL_API_KEY`, `STITCH_AI_API_KEY`, etc.) go in `hiai-opencode.json` `mcp` section or as env vars.
+
 ## Repository Layout
 
 - [src/config](src/config): schemas, types, and bundled config loading

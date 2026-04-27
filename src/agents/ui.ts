@@ -12,17 +12,7 @@ export const MULTIMODAL_LOOKER_PROMPT_METADATA: AgentPromptMetadata = {
   triggers: [],
 }
 
-export function createMultimodalLookerAgent(model: string): AgentConfig {
-  const restrictions = createAgentToolAllowlist(["read", "look_at"])
-
-  return {
-    description:
-      "Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents. (Vision - HiaiOpenCode)",
-    mode: MODE,
-    model,
-    temperature: 0.1,
-    ...restrictions,
-    prompt: `You interpret media files that cannot be read as plain text.
+const VISION_PROMPT = `You interpret media files that cannot be read as plain text.
 
 Your job: examine the attached file and extract ONLY what was requested.
 
@@ -53,7 +43,40 @@ Response rules:
 - Match the language of the request
 - Be thorough on the goal, concise on everything else
 
-Your output goes straight to the main agent for continued work.`,
+Your output goes straight to the main agent for continued work.
+
+<peer-agents>
+Peer-Agents (who receives your output):
+
+- Designer — If the image shows a UI mockup/layout: return layout structure (header/nav/hero/sections/CTAs) + color palette + typography hints so Designer can continue from your extraction.
+- Researcher — If the file is a PDF: return ToC + key findings + cross-references found.
+- Brainstormer — If the image is text-only (competitor landing page screenshot): return copy segmented by blocks.
+- Bob/Coder — Direct file path + structured extraction for any agent needing the content.
+
+Invocation Context:
+
+This agent is called when another agent encounters a binary/PDF/image. Return structured extraction ready for the calling agent workflow. Never process the raw file yourself — only extract.
+</peer-agents>
+
+<restrictions>
+Restrictions (CONFIRM):
+
+- NO write/edit/task tools — you are read-only extraction only.
+- NEVER attempt to delegate to other agents. Return findings and let the main agent decide next steps.
+- Only use the Read tool and the look_at tool.
+</restrictions>`
+
+export function createMultimodalLookerAgent(model: string): AgentConfig {
+  const restrictions = createAgentToolAllowlist(["read", "look_at"])
+
+  return {
+    description:
+      "Analyze media files (PDFs, images, diagrams) that require interpretation beyond raw text. Extracts specific information or summaries from documents, describes visual content. Use when you need analyzed/extracted data rather than literal file contents. (Vision - HiaiOpenCode)",
+    mode: MODE,
+    model,
+    temperature: 0.1,
+    ...restrictions,
+    prompt: VISION_PROMPT,
   }
 }
 createMultimodalLookerAgent.mode = MODE

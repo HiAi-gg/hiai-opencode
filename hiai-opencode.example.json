@@ -1,0 +1,25 @@
+{
+  "_description": "hiai-opencode user configuration. 10 model slots (bob/coder/strategist/guard/critic/designer/researcher/manager/brainstormer/vision/sub), MCP enable flags, service auth. recommended values: high/middle/fast/design/writing/vision/xhigh — map to effort tiers, not model quality. MCP defaults: stitch (designer), firecrawl/context7/grep_app (researcher), mempalace/rag (manager), playwright (coder for tests), sequential-thinking (strategist/critic).",
+  "models": {
+    "bob": { "model": "openrouter/moonshotai/kimi-k2.6", "recommended": "high" },
+    "coder": { "model": "openrouter/anthropic/claude-sonnet-4-20250514", "recommended": "high" },
+    "strategist": { "model": "openrouter/deepseek/deepseek-v4-pro", "recommended": "xhigh" },
+    "guard": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
+    "critic": { "model": "openrouter/anthropic/claude-sonnet-4-20250514", "recommended": "high" },
+    "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
+    "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
+    "manager": { "model": "openrouter/qwen/qwen3.5-9b", "recommended": "fast" },
+    "brainstormer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
+    "vision": { "model": "openrouter/google/gemma-4-26b-a4b-it", "recommended": "vision" },
+    "sub": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" }
+  },
+  "mcp": {
+    "playwright": { "enabled": true },
+    "stitch": { "enabled": true },
+    "sequential-thinking": { "enabled": true },
+    "firecrawl": { "enabled": true },
+    "rag": { "enabled": true },
+    "mempalace": { "enabled": true },
+    "context7": { "enabled": true }
+  }
+}
