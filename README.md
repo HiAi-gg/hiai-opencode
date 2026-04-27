@@ -1,6 +1,6 @@
 # hiai-opencode
 
-[![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml)
+[![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml)
 
 `hiai-opencode` is an OpenCode plugin that turns vanilla OpenCode into an opinionated multi-agent cockpit.
 
