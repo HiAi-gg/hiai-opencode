@@ -161,12 +161,23 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   })
 
   // --- Internal Plugins Integration ---
+  // The OpenCode plugin SDK exposes a strongly-typed `Hooks` shape, while
+  // optional sub-plugins (subtask2, PTY) define an open-ended set of hook
+  // names. `lookup` is a single chokepoint for the dynamic dispatch — every
+  // other call site stays typed.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lookup = (obj: unknown, key: string): ((...args: any[]) => any) | undefined =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (obj as Record<string, any> | undefined)?.[key]
+
   const subtask2Result = await createSubtask2Plugin(ctx)
-  let ptyResult: any = { tool: {}, event: null };
+  // Tool shape is enforced by the OpenCode SDK at registration time; we treat
+  // ptyResult.tool as opaque here and let the SDK validate downstream.
+  let ptyResult: { tool: Record<string, unknown>; event?: (input: unknown) => unknown } = { tool: {} as Record<string, unknown> }
   try {
     configureBundledBunPtyLibrary()
     const mod = await import("./internals/plugins/pty/plugin");
-    ptyResult = await mod.PTYPlugin(ctx);
+    ptyResult = (await mod.PTYPlugin(ctx)) as typeof ptyResult
   } catch (err) {
     logError("PTYPlugin failed to load:", err)
   }
@@ -175,46 +186,38 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     ...pluginInterface,
 
     // Merge Tools
-    tool: {
-      ...pluginInterface.tool,
-      ...ptyResult.tool,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tool: { ...pluginInterface.tool, ...(ptyResult.tool as any) },
+
+    "command.execute.before": async (input: unknown, output: unknown) => {
+      await lookup(pluginInterface, "command.execute.before")?.(input, output)
+      await lookup(subtask2Result, "command.execute.before")?.(input, output)
     },
 
-    // Chain hooks: command.execute.before
-    "command.execute.before": async (input: any, output: any) => {
-      await pluginInterface["command.execute.before"]?.(input, output);
-      await (subtask2Result as any)["command.execute.before"]?.(input, output);
+    "tool.execute.before": async (input: unknown, output: unknown) => {
+      await lookup(pluginInterface, "tool.execute.before")?.(input, output)
+      await lookup(subtask2Result, "tool.execute.before")?.(input, output)
     },
 
-    // Chain hooks: tool.execute.before
-    "tool.execute.before": async (input: any, output: any) => {
-      await (pluginInterface as any)["tool.execute.before"]?.(input, output);
-      await (subtask2Result as any)["tool.execute.before"]?.(input, output);
+    "tool.execute.after": async (input: unknown, output: unknown) => {
+      await lookup(pluginInterface, "tool.execute.after")?.(input, output)
+      await lookup(subtask2Result, "tool.execute.after")?.(input, output)
     },
 
-    // Chain hooks: tool.execute.after
-    "tool.execute.after": async (input: any, output: any) => {
-      await (pluginInterface as any)["tool.execute.after"]?.(input, output);
-      await (subtask2Result as any)["tool.execute.after"]?.(input, output);
+    "experimental.chat.messages.transform": async (input: unknown, output: unknown) => {
+      await lookup(pluginInterface, "experimental.chat.messages.transform")?.(input, output)
+      await lookup(subtask2Result, "experimental.chat.messages.transform")?.(input, output)
     },
 
-    // Chain hooks: experimental.chat.messages.transform
-    "experimental.chat.messages.transform": async (input: any, output: any) => {
-      await (pluginInterface as any)["experimental.chat.messages.transform"]?.(input, output);
-      await (subtask2Result as any)["experimental.chat.messages.transform"]?.(input, output);
+    config: async (input: unknown) => {
+      await lookup(pluginInterface, "config")?.(input)
+      await lookup(subtask2Result, "config")?.(input)
     },
 
-    // Merge Config
-    config: async (input: any) => {
-      await pluginInterface.config?.(input);
-      await (subtask2Result as any).config?.(input);
-    },
-
-    // Merge Events
-    event: async (input: any) => {
-      await pluginInterface.event?.(input);
-      await (subtask2Result as any).event?.(input);
-      await (ptyResult as any).event?.(input);
+    event: async (input: unknown) => {
+      await lookup(pluginInterface, "event")?.(input)
+      await lookup(subtask2Result, "event")?.(input)
+      await lookup(ptyResult, "event")?.(input)
     },
 
     "experimental.session.compacting": async (

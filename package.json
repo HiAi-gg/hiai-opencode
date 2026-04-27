@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "description": "Unified OpenCode plugin — canonical 12-agent model with bundled skills, MCP integrations, LSP, and permissions in one install.",
   "type": "module",
   "main": "dist/index.js",
@@ -16,7 +16,6 @@
   },
   "files": [
     "dist/",
-    "src/",
     "skills/",
     "assets/",
     "config/",
@@ -58,6 +57,7 @@
     "test": "bun test",
     "check:docs": "bun run scripts/check-docs.ts",
     "check:bundle-size": "node -e \"const s=require('fs').statSync('dist/index.js').size;console.log('Bundle: '+(s/1024/1024).toFixed(2)+'MB');if(s>3*1024*1024){console.error('FAIL: bundle >3MB');process.exit(1)}else{console.log('OK: bundle <=3MB')}\"",
+    "prompts:measure": "bun run scripts/measure-prompts.ts",
     "check:todos": "node scripts/check-todos.mjs || echo 'No check-todos script'",
     "pack:check": "npm pack --dry-run",
     "prepare": "bun run build",

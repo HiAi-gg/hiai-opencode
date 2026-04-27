@@ -1,5 +1,5 @@
 {
-  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts. MCP defaults per agent: stitch (designer), firecrawl/context7/grep_app (researcher), mempalace/rag (manager), playwright (coder for tests), sequential-thinking (strategist/critic). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=guard/gatekeeping, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction.",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts. MCP defaults per agent: stitch (designer), firecrawl/context7/grep_app (researcher), mempalace/rag (manager), playwright (coder for tests), sequential-thinking (strategist/critic). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=guard/gatekeeping, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. The subtask2.replace_generic flag controls the bundled subtask2 internal plugin: when true, generic task() responses are replaced with a structured return prompt before the parent agent sees them.",
   "$schema": "./config/hiai-opencode.schema.json",
   "models": {
     "bob": {
@@ -72,8 +72,7 @@
       "enabled": true
     },
     "mempalace": {
-      "enabled": true,
-      "pythonPath": "/home/vlgalib/.local/venvs/mempalace/bin/python"
+      "enabled": true
     },
     "context7": {
       "enabled": true

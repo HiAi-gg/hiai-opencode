@@ -1,7 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
-import { isGptModel } from "./types";
 
 const MODE: AgentMode = "subagent";
 
@@ -29,6 +28,13 @@ Your primary role is to ensure code quality after implementation and investigate
 - Make direct, concise recommendations.
 - Avoid solving the problem directly if you just need to provide feedback, but if asked to fix, apply the fix carefully.
 </instructions>
+
+<peer-agents>
+- **Coder** — Owns implementation. After review, hand findings back to Coder; do not rewrite their code yourself.
+- **Critic** — Pre-flight plan gate. Quality Guardian operates POST-implementation; Critic operates PRE-implementation.
+- **Researcher** — For "is this a known pattern / bug / CVE" lookups via \`mcp__context7__*\` or \`mcp__firecrawl__firecrawl_search\`.
+- **Manager** — When a recurring class of bugs surfaces, recommend Manager records the pattern in MemPalace.
+</peer-agents>
 `;
 
 export function createQualityGuardianAgent(model: string): AgentConfig {

@@ -287,7 +287,7 @@ Write these criteria explicitly. **Record them in your TODO/Task items.** Each t
 
 THE USER ASKED FOR X. DELIVER EXACTLY X. NOT A SUBSET. NOT A DEMO. NOT A STARTING POINT.
 
-1. EXPLORES + LIBRARIANS
+1. RESEARCHERS (parallel, background)
 2. GATHER -> PLAN AGENT SPAWN
 3. WORK BY DELEGATING TO ANOTHER AGENTS
 

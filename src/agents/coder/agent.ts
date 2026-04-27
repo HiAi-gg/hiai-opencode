@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "../types";
-import { isGptProModel, isGptCodexModel } from "../types";
+import { isGptModel } from "../types";
 import type {
   AvailableAgent,
   AvailableTool,
@@ -10,24 +10,14 @@ import type {
 import { categorizeTools, buildAgentIdentitySection } from "../dynamic-agent-prompt-builder";
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard";
 
-import { buildCoderPrompt as buildGptPrompt } from "./gpt";
-import { buildCoderPrompt as buildGptCodexPrompt } from "./gpt-codex";
-import { buildCoderPrompt as buildGptProPrompt } from "./gpt-pro";
+import { buildCoderPrompt } from "./gpt";
 
 const MODE: AgentMode = "primary";
 
-export type CoderPromptSource = "gpt-pro" | "gpt-codex" | "gpt";
+export type CoderPromptSource = "default";
 
-export function getCoderPromptSource(
-  model?: string,
-): CoderPromptSource {
-  if (model && isGptProModel(model)) {
-    return "gpt-pro";
-  }
-  if (model && isGptCodexModel(model)) {
-    return "gpt-codex";
-  }
-  return "gpt";
+export function getCoderPromptSource(_model?: string): CoderPromptSource {
+  return "default";
 }
 
 export interface CoderContext {
@@ -52,41 +42,14 @@ function buildDynamicCoderPrompt(ctx?: CoderContext): string {
   const skills = ctx?.availableSkills ?? [];
   const categories = ctx?.availableCategories ?? [];
   const useTaskSystem = ctx?.useTaskSystem ?? false;
-  const model = ctx?.model;
 
-  const source = getCoderPromptSource(model);
-
-  let basePrompt: string;
-  switch (source) {
-    case "gpt-pro":
-      basePrompt = buildGptProPrompt(
-        agents,
-        tools,
-        skills,
-        categories,
-        useTaskSystem,
-      );
-      break;
-    case "gpt-codex":
-      basePrompt = buildGptCodexPrompt(
-        agents,
-        tools,
-        skills,
-        categories,
-        useTaskSystem,
-      );
-      break;
-    case "gpt":
-    default:
-      basePrompt = buildGptPrompt(
-        agents,
-        tools,
-        skills,
-        categories,
-        useTaskSystem,
-      );
-      break;
-  }
+  const basePrompt = buildCoderPrompt(
+    agents,
+    tools,
+    skills,
+    categories,
+    useTaskSystem,
+  );
 
   const agentIdentity = buildAgentIdentitySection(
     "Coder",
@@ -115,9 +78,9 @@ export function createCoderAgent(
     useTaskSystem,
   });
 
-  return {
+  const base: AgentConfig = {
     description:
-      "High-depth executor for autonomous software engineering work with `gpt-pro`, `gpt-codex`, or `gpt`. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic, and also owns the bounded execution contour used by quick, writing, and unspecified-low task categories. (Coder - HiaiOpenCode)",
+      "High-depth executor for autonomous software engineering work. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic, and also owns the bounded execution contour used by quick, writing, and unspecified-low task categories. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,
@@ -128,8 +91,12 @@ export function createCoderAgent(
       call_omo_agent: "deny",
       ...getGptApplyPatchPermission(model),
     } as AgentConfig["permission"],
-    reasoningEffort: "medium",
   };
+
+  if (isGptModel(model)) {
+    return { ...base, reasoningEffort: "medium" } as AgentConfig;
+  }
+  return { ...base, thinking: { type: "enabled", budgetTokens: 32000 } } as AgentConfig;
 }
 createCoderAgent.mode = MODE;
 

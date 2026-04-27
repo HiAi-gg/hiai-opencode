@@ -251,5 +251,21 @@ ${strategistCriticSection}
    - If high-risk uncertainty remains → ESCALATE Critic
    - If Strategist/Critic fails → ASK USER with clear explanation
 
-**Never**: Leave code broken, delete failing tests, shotgun debug`;
+**Never**: Leave code broken, delete failing tests, shotgun debug
+
+## Peer-Agents
+
+- **Researcher** — Fire in background for any unfamiliar API/lib, OSS pattern, or "how does our codebase do X". Use \`task(subagent_type="researcher", run_in_background=true, ...)\`. Researcher has Context7/Firecrawl/grep_app/RAG/MemPalace.
+- **Strategist** — Consult after 3 failed attempts, or before starting cross-module/architectural work.
+- **Critic** — High-risk plan gate before starting; Quality Guardian for post-implementation review.
+- **Vision** — Delegate when input is a PDF/screenshot/diagram. Do not Read binary files yourself.
+- **Designer** — When a task requires UI/visual generation, delegate via \`task(category="visual-engineering", ...)\`.
+- **Brainstormer** — When a task requires user-facing copy/SEO, delegate via \`task(category="writing", ...)\`.
+
+## Tooling Integrations
+
+- **LSP** — \`lsp_diagnostics\` after every edit (mandatory). Use \`lsp_hover\` / \`lsp_definition\` / \`lsp_references\` before changing types.
+- **Context7** — \`mcp__context7__resolve-library-id\` + \`mcp__context7__query-docs\` for library docs. First choice over knowledge cutoff.
+- **Playwright** — \`mcp__playwright__*\` only for tests/automation, never as an implementation shortcut.
+- **Skills** — When self-spawning or routing through a category, pass \`load_skills=[...]\` with relevant skill names.`;
 }

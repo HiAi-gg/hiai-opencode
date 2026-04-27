@@ -4,15 +4,13 @@
  * Executes delegated tasks directly without spawning other agents.
  * Category-spawned executor with domain-specific configurations.
  *
- * Routing:
- * 1. GPT models (openai/*, github-copilot/gpt-*) -> gpt.ts (GPT-5.4 optimized)
- * 2. Gemini models (google/*, google-vertex/*) -> gemini.ts (Gemini-optimized)
- * 3. Default (Claude, etc.) -> default.ts (Claude-optimized)
+ * Single unified prompt across all models. Runtime knobs (reasoningEffort,
+ * thinking, blocked tools) remain conditional per model family.
  */
 
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode } from "../types"
-import { isGlmModel, isGptModel, isGeminiModel } from "../types"
+import { isGlmModel, isGptModel } from "../types"
 import type { AgentOverrideConfig } from "../../config/schema"
 import {
   createAgentToolRestrictions,
@@ -21,10 +19,6 @@ import {
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard"
 import { CLOSURE_SCHEMA_PROMPT } from "../../shared/closure-protocol"
 import { buildDefaultBobJuniorPrompt } from "./default"
-import { buildGptBobJuniorPrompt } from "./gpt"
-import { buildGptProBobJuniorPrompt } from "./gpt-pro"
-import { buildGptCodexBobJuniorPrompt } from "./gpt-codex"
-import { buildGeminiBobJuniorPrompt } from "./gemini"
 
 const MODE: AgentMode = "subagent"
 
@@ -37,43 +31,21 @@ export const BOB_JUNIOR_DEFAULTS = {
   temperature: 0.1,
 } as const
 
-export type BobJuniorPromptSource = "default" | "gpt" | "gpt-pro" | "gpt-codex" | "gemini"
+export type BobJuniorPromptSource = "default"
 
-export function getBobJuniorPromptSource(model?: string): BobJuniorPromptSource {
-  if (model && isGptModel(model)) {
-    const lower = model.toLowerCase()
-    if (lower.includes("pro") || lower.includes("gpt-5")) return "gpt-pro"
-    if (lower.includes("codex")) return "gpt-codex"
-    return "gpt"
-  }
-  if (model && isGeminiModel(model)) {
-    return "gemini"
-  }
+export function getBobJuniorPromptSource(_model?: string): BobJuniorPromptSource {
   return "default"
 }
 
 /**
- * Builds the appropriate SubAgent prompt based on model.
+ * Builds the SubAgent prompt. Unified across models.
  */
 export function buildBobJuniorPrompt(
-  model: string | undefined,
+  _model: string | undefined,
   useTaskSystem: boolean,
   promptAppend?: string
 ): string {
-  const source = getBobJuniorPromptSource(model)
-
-  switch (source) {
-    case "gpt-pro":
-      return buildGptProBobJuniorPrompt(useTaskSystem, promptAppend)
-    case "gpt-codex":
-      return buildGptCodexBobJuniorPrompt(useTaskSystem, promptAppend)
-    case "gpt":
-      return buildGptBobJuniorPrompt(useTaskSystem, promptAppend)
-    case "gemini":
-      return buildGeminiBobJuniorPrompt(useTaskSystem, promptAppend)
-    default:
-      return buildDefaultBobJuniorPrompt(useTaskSystem, promptAppend)
-  }
+  return buildDefaultBobJuniorPrompt(useTaskSystem, promptAppend)
 }
 
 export function createBobJuniorAgentWithOverrides(

@@ -30,7 +30,7 @@ interface EventInput {
 
 /**
  * Only orchestrator agents should receive usage reminders.
- * Subagents (explore, librarian, logician, etc.) are the targets of delegation,
+ * Subagents (researcher, strategist, etc.) are the targets of delegation,
  * so reminding them to delegate to themselves is counterproductive.
  */
 const ORCHESTRATOR_AGENTS = new Set([

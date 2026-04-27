@@ -2,7 +2,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
-import { isGptModel } from "./types";
 
 const MODE: AgentMode = "subagent";
 
@@ -28,21 +27,21 @@ Your goal is to gather context, understand codebase structure, and pull relevant
 Use the FIRST matching tool for each query type:
 
 ### Library / API Documentation
-1. **Context7 MCP** (\`mcp__context7__*\`) — FIRST choice for library docs. Use \`context7_resolve-library-id\` then \`context7_query-docs\`.
-2. **grep_app MCP** (\`grep_app_searchGitHub\`) — OSS code patterns on GitHub. Search literal code patterns, not keywords.
-3. **websearch MCP** (Exa, \`websearch_web_search_exa\`) — General web search fallback.
+1. **Context7 MCP** — FIRST choice for library docs. Use \`mcp__context7__resolve-library-id\` then \`mcp__context7__query-docs\`.
+2. **grep_app MCP** (\`mcp__grep_app__*\`) — OSS code patterns on GitHub. Search literal code patterns, not keywords.
+3. **websearch MCP** (Exa) — General web search fallback.
 
 ### Open-Source Code Patterns
-1. **grep_app MCP** (\`grep_app_searchGitHub\`) — Search literal code patterns across 1M+ public repos. Filter by language, repo, path.
+1. **grep_app MCP** — Search literal code patterns across 1M+ public repos. Filter by language, repo, path.
 2. **websearch MCP** — Fallback for finding repos or examples.
 
 ### Project / Codebase Knowledge
-1. **MemPalace** (\`mcp__mempalace__*\`) — Search project memory FIRST before going to external web.
-2. **RAG MCP** (\`mcp__rag__search_rag\`) — Project knowledge base search.
+1. **MemPalace** — Search project memory FIRST before going to external web. Use \`mcp__mempalace__mempalace_search\`, \`mcp__mempalace__mempalace_kg_query\`, \`mcp__mempalace__mempalace_traverse\`.
+2. **RAG MCP** — \`mcp__rag__search_rag\`. Project knowledge base search.
 3. **Direct tools** (grep, glob, read) — Local file system exploration.
 
 ### Website / Web Research
-1. **Firecrawl MCP** (\`mcp__firecrawl__*\`) — Web research: search, scrape, extract, crawl, agent, browser.
+1. **Firecrawl MCP** — Web research: \`mcp__firecrawl__firecrawl_search\`, \`mcp__firecrawl__firecrawl_scrape\`, \`mcp__firecrawl__firecrawl_extract\`, \`mcp__firecrawl__firecrawl_crawl\` (+ \`firecrawl_check_crawl_status\`), \`mcp__firecrawl__firecrawl_map\`, \`mcp__firecrawl__firecrawl_agent\` (+ \`firecrawl_agent_status\`), \`mcp__firecrawl__firecrawl_browser_*\`.
 2. **websearch MCP** (Exa) — General web search.
 
 ### Tool Summary
@@ -50,8 +49,8 @@ Use the FIRST matching tool for each query type:
 |------|-----------|----------|
 | Context7 | \`mcp__context7__*\` | Library docs, API references |
 | Firecrawl | \`mcp__firecrawl__*\` | Web scraping, crawling, extraction |
-| grep_app | \`grep_app_searchGitHub\` | OSS code patterns on GitHub |
-| websearch (Exa) | \`websearch_web_search_exa\` | General web search |
+| grep_app | \`mcp__grep_app__*\` | OSS code patterns on GitHub |
+| websearch | \`mcp__websearch__*\` (Exa) | General web search |
 | RAG | \`mcp__rag__search_rag\` | Project knowledge base |
 | MemPalace | \`mcp__mempalace__*\` | Project memory / past decisions |
 

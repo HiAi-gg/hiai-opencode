@@ -1,16 +1,7 @@
 // PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
-import { isGptModel, isGeminiModel, isGptProModel } from "./types";
-import {
-  buildGeminiToolMandate,
-  buildGeminiDelegationOverride,
-  buildGeminiVerificationOverride,
-  buildGeminiIntentGateEnforcement,
-  buildGeminiToolGuide,
-  buildGeminiToolCallExamples,
-} from "./bob/gemini";
-import { buildGptProBobPrompt } from "./bob/gpt-pro";
+import { isGptModel } from "./types";
 import { getGptApplyPatchPermission } from "./gpt-apply-patch-guard";
 
 const MODE: AgentMode = "primary";
@@ -449,33 +440,7 @@ export function createBobAgent(
   const categories = availableCategories ?? [];
   const agents = availableAgents ?? [];
 
-  if (isGptProModel(model)) {
-    const prompt = buildGptProBobPrompt(
-      model,
-      agents,
-      tools,
-      skills,
-      categories,
-      useTaskSystem,
-    );
-    return {
-      description:
-        "Powerful AI orchestrator. Plans obsessively with todos, assesses search complexity before research, and delegates strategically via category+skills combinations. Uses researcher for internal/external discovery, strategist for architecture, and critic as high-risk gate. (Bob - HiaiOpenCode)",
-      mode: MODE,
-      model,
-      maxTokens: 64000,
-      prompt,
-      color: "#00CED1",
-      permission: {
-        question: "allow",
-        call_omo_agent: "deny",
-        ...getGptApplyPatchPermission(model),
-      } as AgentConfig["permission"],
-      reasoningEffort: "medium",
-    };
-  }
-
-  let prompt = buildDynamicBobPrompt(
+  const prompt = buildDynamicBobPrompt(
     model,
     agents,
     tools,
@@ -483,28 +448,6 @@ export function createBobAgent(
     categories,
     useTaskSystem,
   );
-
-  if (isGeminiModel(model)) {
-    // 1. Intent gate + tool mandate - early in prompt (after intent verbalization)
-    prompt = prompt.replace(
-      "</intent_verbalization>",
-      `</intent_verbalization>\n\n${buildGeminiIntentGateEnforcement()}\n\n${buildGeminiToolMandate()}`
-    );
-
-    // 2. Tool guide + examples - after tool_usage_rules (where tools are discussed)
-    prompt = prompt.replace(
-      "</tool_usage_rules>",
-      `</tool_usage_rules>\n\n${buildGeminiToolGuide()}\n\n${buildGeminiToolCallExamples()}`
-    );
-
-    // 3. Delegation + verification overrides - before Constraints (NOT at prompt end)
-    //    Gemini suffers from lost-in-the-middle: content at prompt end gets weaker attention.
-    //    Placing these before <Constraints> ensures they're in a high-attention zone.
-    prompt = prompt.replace(
-      "<Constraints>",
-      `${buildGeminiDelegationOverride()}\n\n${buildGeminiVerificationOverride()}\n\n<Constraints>`
-    );
-  }
 
   const permission = {
     question: "allow",

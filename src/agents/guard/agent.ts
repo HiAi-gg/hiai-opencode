@@ -2,25 +2,17 @@
  * Guard - Master Orchestrator Agent
  *
  * Orchestrates work via task() to complete ALL tasks in a todo list until fully done.
- * You are the conductor of a symphony of specialized agents.
- *
- * Routing:
- * 1. GPT models (openai/*, github-copilot/gpt-*) → gpt.ts (GPT-5.4 optimized)
- * 2. Gemini models (google/*, google-vertex/*) → gemini.ts (Gemini-optimized)
- * 3. Default (Claude, etc.) → default.ts (Claude-optimized)
+ * Single unified prompt across all models.
  */
 
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode, AgentPromptMetadata } from "../types"
-import { isGptModel, isGeminiModel } from "../types"
 import type { AvailableAgent, AvailableSkill, AvailableCategory } from "../dynamic-agent-prompt-builder"
 import { buildAgentIdentitySection, buildCategorySkillsDelegationGuide } from "../dynamic-agent-prompt-builder"
 import type { CategoryConfig } from "../../config/schema"
 import { mergeCategories } from "../../shared/merge-categories"
 
 import { getDefaultGuardPrompt } from "./default"
-import { getGptGuardPrompt } from "./gpt"
-import { getGeminiGuardPrompt } from "./gemini"
 import {
   getCategoryDescription,
   buildAgentSelectionSection,
@@ -31,18 +23,9 @@ import {
 
 const MODE: AgentMode = "primary"
 
-export type GuardPromptSource = "default" | "gpt" | "gemini"
+export type GuardPromptSource = "default"
 
-/**
- * Determines which Guard prompt to use based on model.
- */
-export function getGuardPromptSource(model?: string): GuardPromptSource {
-  if (model && isGptModel(model)) {
-    return "gpt"
-  }
-  if (model && isGeminiModel(model)) {
-    return "gemini"
-  }
+export function getGuardPromptSource(_model?: string): GuardPromptSource {
   return "default"
 }
 
@@ -53,28 +36,14 @@ export interface OrchestratorContext {
   userCategories?: Record<string, CategoryConfig>
 }
 
-/**
- * Gets the appropriate Guard prompt based on model.
- */
-export function getGuardPrompt(model?: string): string {
-  const source = getGuardPromptSource(model)
-
-  switch (source) {
-    case "gpt":
-      return getGptGuardPrompt()
-    case "gemini":
-      return getGeminiGuardPrompt()
-    case "default":
-    default:
-      return getDefaultGuardPrompt()
-  }
+export function getGuardPrompt(_model?: string): string {
+  return getDefaultGuardPrompt()
 }
 
 function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
   const agents = ctx?.availableAgents ?? []
   const skills = ctx?.availableSkills ?? []
   const userCategories = ctx?.userCategories
-  const model = ctx?.model
 
   const allCategories = mergeCategories(userCategories)
   const availableCategories: AvailableCategory[] = Object.entries(allCategories).map(([name]) => ({
@@ -92,7 +61,7 @@ function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
     "Guard",
     "Master Orchestrator agent from HiaiOpenCode that coordinates specialized agents to complete todo lists",
   )
-  const basePrompt = getGuardPrompt(model)
+  const basePrompt = getDefaultGuardPrompt()
 
   return agentIdentity + "\n" + basePrompt
     .replace("{CATEGORY_SECTION}", categorySection)

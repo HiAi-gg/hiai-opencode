@@ -72,7 +72,9 @@ async function makePartVisible(
 
   // Use the internal HTTP client from v1 SDK
   try {
-    const httpClient = (client as any).client || (client as any)._client;
+    // SDK v1 exposes the inner HTTP client only via untyped internal fields.
+    const internal = client as unknown as { client?: { patch?: (...args: unknown[]) => unknown }; _client?: { patch?: (...args: unknown[]) => unknown } };
+    const httpClient = internal.client ?? internal._client;
     if (httpClient?.patch) {
       await httpClient.patch({
         url: `/session/${sessionID}/message/${messageID}/part/${partID}`,
@@ -223,7 +225,8 @@ export async function chatMessagesTransform(input: any, output: any) {
             part.text = S2_INLINE_INSTRUCTION;
             // Spawn the subtask - get sessionID from message info
             const sessionID =
-              (msg.info as any)?.sessionID || (input as any).sessionID;
+              (msg.info as { sessionID?: string } | undefined)?.sessionID
+              ?? (input as { sessionID?: string }).sessionID;
             log(`/subtask sessionID: ${sessionID}`);
             if (sessionID) {
               executeInlineSubtask(parsed, sessionID).catch(console.error);

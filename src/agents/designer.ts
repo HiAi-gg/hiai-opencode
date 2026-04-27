@@ -24,21 +24,23 @@ Your goal is crafting stunning UI/UX, design systems, and visual direction.
 Stitch MCP (\`mcp__stitch__*\`) is the PRIMARY tool for UI generation. Use it for all visual/UI generation tasks.
 
 ### Key Stitch Tools
-- \`stitch_create_project\` — Create a new project container for UI designs
-- \`stitch_create_design_system\` — Set up design tokens (colors, typography, shape, spacing)
-- \`stitch_generate_screen_from_text\` — Generate UI screens from text prompts
-- \`stitch_generate_variants\` — Generate design variants with configurable creative range
-- \`stitch_edit_screens\` — Edit existing screens via text prompt
-- \`stitch_list_screens\` — List all screens in a project
-- \`stitch_get_screen\` — Get screen details
-- \`stitch_apply_design_system\` — Apply a design system to selected screens
+- \`mcp__stitch__create_project\` — Create a new project container for UI designs
+- \`mcp__stitch__create_design_system\` — Set up design tokens (colors, typography, shape, spacing)
+- \`mcp__stitch__generate_screen_from_text\` — Generate UI screens from text prompts
+- \`mcp__stitch__generate_variants\` — Generate design variants with configurable creative range
+- \`mcp__stitch__edit_screens\` — Edit existing screens via text prompt
+- \`mcp__stitch__list_screens\` — List all screens in a project
+- \`mcp__stitch__get_screen\` — Get screen details
+- \`mcp__stitch__apply_design_system\` — Apply a design system to selected screens
+- \`mcp__stitch__list_projects\` / \`mcp__stitch__get_project\` — Project lookup
+- \`mcp__stitch__list_design_systems\` / \`mcp__stitch__update_design_system\` — Design-system management
 
 ### Stitch Workflow
-1. Create or identify a project (\`stitch_create_project\` / \`stitch_list_projects\`)
-2. Set up design system (\`stitch_create_design_system\`) with theme (colorMode, fonts, roundness, customColor)
-3. Generate screens (\`stitch_generate_screen_from_text\`) with device type (MOBILE/DESKTOP/TABLET)
-4. Iterate with \`stitch_edit_screens\` or \`stitch_generate_variants\`
-5. Apply design system to screens (\`stitch_apply_design_system\`)
+1. Create or identify a project (\`mcp__stitch__create_project\` / \`mcp__stitch__list_projects\`)
+2. Set up design system (\`mcp__stitch__create_design_system\`) with theme (colorMode, fonts, roundness, customColor)
+3. Generate screens (\`mcp__stitch__generate_screen_from_text\`) with device type (MOBILE/DESKTOP/TABLET)
+4. Iterate with \`mcp__stitch__edit_screens\` or \`mcp__stitch__generate_variants\`
+5. Apply design system to screens (\`mcp__stitch__apply_design_system\`)
 
 ### Fallback
 If \`STITCH_AI_API_KEY\` is not set: tell the user explicitly that Stitch requires this key and cannot generate UI visuals without it.

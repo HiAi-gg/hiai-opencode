@@ -2,16 +2,17 @@
 
 [![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml)
 
-`hiai-opencode` is an OpenCode plugin that wires together:
+`hiai-opencode` is an OpenCode plugin that turns vanilla OpenCode into an opinionated multi-agent cockpit.
 
-- a curated multi-agent runtime
-- project and OpenCode skills
-- MCP integrations
-- LSP defaults
-- migration and compatibility wiring
+**What you get on top of plain OpenCode:**
 
-This repository is intended to be usable by someone who clones it from GitHub without any internal context.
-The external MCP servers, skills, model providers, and auxiliary OpenCode plugins remain their own upstream projects; this plugin only provides OpenCode wiring, defaults, prompts, launchers, and documentation around them.
+- **12-agent canonical model** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/RAG/MemPalace, Designer drives Stitch UI generation, Brainstormer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Guard sandboxes bash.
+- **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Brainstormer, `git-ops` → Manager. No more "everything routes to coder".
+- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, RAG, MemPalace, Sequential-Thinking, Playwright. Each agent's prompt knows which MCP servers it owns.
+- **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
+- **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
+
+This repository is intended to be usable by someone who clones it from GitHub without any internal context. External MCP servers, skills, model providers, and auxiliary OpenCode plugins remain their own upstream projects; this plugin only provides OpenCode wiring, defaults, prompts, launchers, and documentation around them.
 
 ## Why This Exists
 

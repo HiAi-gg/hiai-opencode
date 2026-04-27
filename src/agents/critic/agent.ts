@@ -98,6 +98,13 @@ Respond with EXACTLY one of:
 
 If REJECTED: do NOT let implementation proceed until issues are resolved.
 </pre_flight_review>
+
+<peer-agents>
+- **Strategist** — Author of plans you review. Reject specifics, do not rewrite.
+- **Researcher** — Recommend if a plan needs facts/source confirmation before approval.
+- **Quality Guardian** — Recommend for post-implementation review, separate from your pre-flight gate.
+- **MemPalace / Sequential-Thinking** — \`mcp__mempalace__mempalace_search\` for prior decisions; \`mcp__sequential-thinking__sequentialthinking\` for deep multi-step reasoning when verifying complex plans.
+</peer-agents>
 `;
 
 export function createCriticAgent(model: string): AgentConfig {
