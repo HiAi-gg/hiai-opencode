@@ -5,6 +5,7 @@ import type {
 } from "./dynamic-agent-prompt-types"
 import type { AvailableTool } from "./dynamic-agent-prompt-types"
 import { getToolsPromptDisplay } from "./dynamic-agent-tool-categorization"
+import { buildIntegrationMentalMap } from "./prompt-library/integration-map"
 
 /**
  * Builds an explicit agent identity preamble that overrides any base system prompt identity.
@@ -81,7 +82,7 @@ export function buildToolSelectionTable(
   return rows.join("\n")
 }
 
-export function buildHiaiIntegrationPrimerSection(): string {
+export function buildHiaiIntegrationPrimerSection(options?: { includeMentalMap?: boolean }): string {
   return `<hiai-opencode-integration-primer>
 ## hiai-opencode Architecture And Integration Rules
 
@@ -109,7 +110,9 @@ Installation/debugging:
 - Use \`/doctor\` or \`hiai-opencode doctor\` before changing config.
 - Prefer user-level or project-local installs. Do not use sudo/admin rights unless explicitly requested.
 - If DCP is requested, install it separately with \`opencode plugin @tarquinen/opencode-dcp@latest --global\`.
-</hiai-opencode-integration-primer>`
+</hiai-opencode-integration-primer>
+
+${options?.includeMentalMap !== false ? buildIntegrationMentalMap() : ''}`
 }
 
 export function buildResearcherSection(agents: AvailableAgent[]): string {
