@@ -98,6 +98,29 @@ MCP integrations and which agents use them:
 - MCP wiring for `playwright`, `stitch`, `sequential-thinking`, `firecrawl`, `rag`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
+## Continuation, Ralph-Loop, And Auto-Start
+
+The plugin runs three layered mechanisms so a session does not give up halfway through a TODO list.
+
+| Mechanism | Trigger | What it does |
+|-----------|---------|--------------|
+| **Todo continuation enforcer** | `session.idle` while open todos remain | Injects a continuation prompt after a 2s countdown. Backs off on stagnation, abort, token-limit, and pending-question. |
+| **Ralph-loop** | `/ralph-loop <goal>` or `/ulw-loop <goal>` | Runs an explicit completion loop. Stops on `<promise>DONE</promise>`. Cancel with `/cancel-ralph`. |
+| **Auto ralph-loop** | N+ open todos in one session | Auto-starts ralph-loop in ULTRAWORK mode so each iteration is forced to delegate to specialist agents (researcher / strategist / coder / critic). |
+
+Tune the auto-start threshold in `hiai-opencode.json`:
+
+```json
+{
+  "ralph_loop": {
+    "enabled": true,
+    "auto_start_threshold": 5
+  }
+}
+```
+
+`auto_start_threshold: 0` disables auto-start. The enforcer always yields to ralph-loop while it owns the session, so the two never inject duplicate prompts.
+
 ## Requirements
 
 Minimum:
@@ -492,6 +515,50 @@ On some Windows/OpenCode environments, local MCP process spawning can fail with 
 - the remaining issue is the host runtime's local process spawn behavior
 
 This most often affects `sequential-thinking` and `mempalace`, and sometimes local `npx`-backed tools.
+
+## Troubleshooting MCP Servers
+
+### Firecrawl tools return "FIRECRAWL_API_KEY missing"
+
+The `skill_mcp` env scrubber filters `process.env` before launching stdio MCP servers — secret-shaped names (`*_API_KEY`, `*_TOKEN`, etc.) and npm/pnpm config vars are stripped so they cannot leak into a malicious server. Keys you set via `hiai-opencode.json` are an explicit allowlist and pass through.
+
+If your key only lives in `process.env`, move it into the MCP `environment` block:
+
+```json
+{
+  "mcp": {
+    "firecrawl": {
+      "enabled": true,
+      "environment": { "FIRECRAWL_API_KEY": "fc-..." }
+    }
+  }
+}
+```
+
+(Versions ≤ 0.1.8 had a bug where customEnv was merged before filtering, so even an explicit `FIRECRAWL_API_KEY` got stripped. Fixed in 0.1.9 — explicit `environment` always wins over the filter.)
+
+### Playwright MCP fails to find Chromium
+
+When `@playwright/mcp` cannot locate a system browser, point it at one explicitly:
+
+```json
+{
+  "mcp": {
+    "playwright": {
+      "enabled": true,
+      "environment": {
+        "PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/usr/bin/chromium"
+      }
+    }
+  }
+}
+```
+
+The path can be Chromium, Chrome, or Edge. Run `npx playwright install chromium` first if no browser is installed.
+
+### `skill_mcp(playwright)` connects to localhost:3001 and fails
+
+If `mcp__playwright__browser_*` works but `skill_mcp(mcp_name="playwright", ...)` errors with a connection to `localhost:3001/mcp`, you have a leftover HTTP-mode MCP registration in your global or parent `opencode.json`. Either start the HTTP server, or remove that registration so the plugin's stdio registration (`npx @playwright/mcp@latest`) is the only one. As a workaround, agents (Vision, Critic) can call `mcp__playwright__browser_*` direct tools instead of going through `skill_mcp`.
 
 ## Diagnostics
 

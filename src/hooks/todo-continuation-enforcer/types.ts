@@ -5,6 +5,25 @@ export interface TodoContinuationEnforcerOptions {
   backgroundManager?: BackgroundManager
   skipAgents?: string[]
   isContinuationStopped?: (sessionID: string) => boolean
+  /**
+   * If set to N >= 1, the enforcer will auto-start ralph-loop on a session that
+   * has N or more open todos and no active loop. 0/undefined disables.
+   */
+  autoLoopThreshold?: number
+  /**
+   * Lazy callback to start ralph-loop. Lazy because ralph-loop is created
+   * after the enforcer in the plugin wiring.
+   */
+  startRalphLoop?: (
+    sessionID: string,
+    prompt: string,
+    options?: { ultrawork?: boolean },
+  ) => boolean
+  /**
+   * Lazy callback returning true if ralph-loop is currently active for the
+   * session. Used to avoid double-injection.
+   */
+  isRalphLoopActive?: (sessionID: string) => boolean
 }
 
 export interface TodoContinuationEnforcer {
@@ -39,6 +58,7 @@ export interface SessionState {
   recentCompactionAt?: number
   recentCompactionEpoch?: number
   acknowledgedCompactionEpoch?: number
+  autoLoopStarted?: boolean
 }
 
 export interface MessageInfo {

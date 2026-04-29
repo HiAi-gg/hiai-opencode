@@ -6,6 +6,7 @@ import { log } from "../../shared/logger"
 import { getAgentConfigKey } from "../../shared/agent-display-names"
 
 import { ABORT_WINDOW_MS, CONTINUATION_COOLDOWN_MS, DEFAULT_SKIP_AGENTS, FAILURE_RESET_WINDOW_MS, HOOK_NAME, MAX_CONSECUTIVE_FAILURES } from "./constants"
+import { decideAutoLoop } from "./auto-loop"
 import { isLastAssistantMessageAborted } from "./abort-detection"
 import { hasUnansweredQuestion } from "./pending-question-detection"
 import { shouldStopForStagnation } from "./stagnation-detection"
@@ -31,6 +32,9 @@ export async function handleSessionIdle(args: {
   backgroundManager?: BackgroundManager
   skipAgents?: string[]
   isContinuationStopped?: (sessionID: string) => boolean
+  autoLoopThreshold?: number
+  startRalphLoop?: (sessionID: string, prompt: string, options?: { ultrawork?: boolean }) => boolean
+  isRalphLoopActive?: (sessionID: string) => boolean
 }): Promise<void> {
   const {
     ctx,
@@ -39,6 +43,9 @@ export async function handleSessionIdle(args: {
     backgroundManager,
     skipAgents = DEFAULT_SKIP_AGENTS,
     isContinuationStopped,
+    autoLoopThreshold,
+    startRalphLoop,
+    isRalphLoopActive,
   } = args
 
   log(`[${HOOK_NAME}] session.idle`, { sessionID })
@@ -200,6 +207,54 @@ export async function handleSessionIdle(args: {
   if (isContinuationStopped?.(sessionID)) {
     log(`[${HOOK_NAME}] Skipped: continuation stopped for session`, { sessionID })
     return
+  }
+
+  // Yield to ralph-loop: if a loop owns this session, only ralph-loop should
+  // inject continuation. Two simultaneous injections fight for the prompt.
+  let loopActiveForSession = false
+  if (isRalphLoopActive) {
+    loopActiveForSession = isRalphLoopActive(sessionID)
+  } else {
+    try {
+      const { readState } = await import("../ralph-loop/storage")
+      const loopState = readState(ctx.directory)
+      loopActiveForSession = !!loopState?.active && (loopState.session_id === undefined || loopState.session_id === sessionID)
+    } catch (error) {
+      log(`[${HOOK_NAME}] ralph-loop state probe failed, continuing`, { sessionID, error: String(error) })
+    }
+  }
+  if (loopActiveForSession) {
+    log(`[${HOOK_NAME}] Skipped: ralph-loop owns this session`, { sessionID })
+    return
+  }
+
+  try {
+    const todoResp = await ctx.client.session.todo({ path: { id: sessionID } })
+    const freshTodos = normalizeSDKResponse(todoResp, [] as Todo[], { preferResponseOnMissingData: true })
+    const decision = decideAutoLoop({
+      threshold: autoLoopThreshold,
+      todos: freshTodos,
+      alreadyStarted: !!state.autoLoopStarted,
+      hasStartCallback: !!startRalphLoop,
+    })
+    if (decision.kind === "start" && startRalphLoop) {
+      const started = startRalphLoop(sessionID, decision.goal, { ultrawork: true })
+      if (started) {
+        state.autoLoopStarted = true
+        log(`[${HOOK_NAME}] Auto-started ralph-loop`, { sessionID, openTodos: decision.openTodos, threshold: autoLoopThreshold })
+        ctx.client.tui?.showToast?.({
+          body: {
+            title: "Auto-loop started",
+            message: `${decision.openTodos} open todos (≥${autoLoopThreshold}) — switched to ULTRAWORK ralph-loop. Cancel with /cancel-ralph.`,
+            variant: "info",
+            duration: 6000,
+          },
+        }).catch(() => {})
+        return
+      }
+    }
+  } catch (error) {
+    log(`[${HOOK_NAME}] Auto-loop probe failed`, { sessionID, error: String(error) })
   }
 
   const progressUpdate = sessionStateStore.trackContinuationProgress(

@@ -19,6 +19,9 @@ export function createTodoContinuationHandler(args: {
   backgroundManager?: BackgroundManager
   skipAgents?: string[]
   isContinuationStopped?: (sessionID: string) => boolean
+  autoLoopThreshold?: number
+  startRalphLoop?: (sessionID: string, prompt: string, options?: { ultrawork?: boolean }) => boolean
+  isRalphLoopActive?: (sessionID: string) => boolean
 }): (input: { event: { type: string; properties?: unknown } }) => Promise<void> {
   const {
     ctx,
@@ -26,6 +29,9 @@ export function createTodoContinuationHandler(args: {
     backgroundManager,
     skipAgents = DEFAULT_SKIP_AGENTS,
     isContinuationStopped,
+    autoLoopThreshold,
+    startRalphLoop,
+    isRalphLoopActive,
   } = args
 
   return async ({ event }: { event: { type: string; properties?: unknown } }): Promise<void> => {
@@ -68,6 +74,9 @@ export function createTodoContinuationHandler(args: {
         backgroundManager,
         skipAgents,
         isContinuationStopped,
+        autoLoopThreshold,
+        startRalphLoop,
+        isRalphLoopActive,
       })
       return
     }

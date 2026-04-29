@@ -106,5 +106,9 @@
   },
   "subtask2": {
     "replace_generic": true
+  },
+  "ralph_loop": {
+    "enabled": true,
+    "auto_start_threshold": 5
   }
 }

@@ -67,6 +67,7 @@ export function createHooks(args: {
     safeHookEnabled,
     backgroundManager,
     sessionRecovery: core.sessionRecovery,
+    ralphLoop: core.ralphLoop,
   })
 
   const skill = createSkillHooks({

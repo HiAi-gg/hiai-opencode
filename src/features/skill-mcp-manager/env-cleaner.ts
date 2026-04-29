@@ -38,22 +38,22 @@ export const EXCLUDED_ENV_PATTERNS: RegExp[] = [
 export function createCleanMcpEnvironment(
   customEnv: Record<string, string> = {}
 ): Record<string, string> {
-  const mergedEnv: Record<string, string> = {}
-
+  // 1. Filter process.env first — strips npm/pnpm config vars and secret-shaped names
+  //    that the user did NOT explicitly opt into.
+  const cleanEnv: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
     if (value === undefined) continue
-    mergedEnv[key] = value
-  }
-
-  Object.assign(mergedEnv, customEnv)
-
-  const cleanEnv: Record<string, string> = {}
-  for (const [key, value] of Object.entries(mergedEnv)) {
     const shouldExclude = EXCLUDED_ENV_PATTERNS.some((pattern) => pattern.test(key))
     if (!shouldExclude) {
       cleanEnv[key] = value
     }
   }
+
+  // 2. Apply customEnv AFTER filtering, as an explicit allowlist. If a user
+  //    configured FIRECRAWL_API_KEY (or any *_API_KEY) in their MCP config
+  //    intentionally, it must reach the MCP server even though its name
+  //    matches a generic secret pattern.
+  Object.assign(cleanEnv, customEnv)
 
   return cleanEnv
 }

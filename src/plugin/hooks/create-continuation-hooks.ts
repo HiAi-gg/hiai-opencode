@@ -9,6 +9,7 @@ import {
   createCompactionContextInjector,
   createCompactionTodoPreserverHook,
   createGuardHook,
+  type RalphLoopHook,
 } from "../../hooks"
 import { safeCreateHook } from "../../shared/safe-create-hook"
 import { createUnstableAgentBabysitter } from "../unstable-agent-babysitter"
@@ -35,6 +36,7 @@ export function createContinuationHooks(args: {
   safeHookEnabled: boolean
   backgroundManager: BackgroundManager
   sessionRecovery: SessionRecovery
+  ralphLoop?: RalphLoopHook | null
 }): ContinuationHooks {
   const {
     ctx,
@@ -43,6 +45,7 @@ export function createContinuationHooks(args: {
     safeHookEnabled,
     backgroundManager,
     sessionRecovery,
+    ralphLoop,
   } = args
 
   const safeHook = <T>(hookName: HookName, factory: () => T): T | null =>
@@ -64,11 +67,23 @@ export function createContinuationHooks(args: {
     ? safeHook("compaction-todo-preserver", () => createCompactionTodoPreserverHook(ctx))
     : null
 
+  const autoLoopThreshold = pluginConfig.ralph_loop?.auto_start_threshold ?? 0
   const todoContinuationEnforcer = isHookEnabled("todo-continuation-enforcer")
     ? safeHook("todo-continuation-enforcer", () =>
       createTodoContinuationEnforcer(ctx, {
           backgroundManager,
           isContinuationStopped: stopContinuationGuard?.isStopped,
+          autoLoopThreshold,
+          startRalphLoop: ralphLoop
+            ? (sessionID: string, prompt: string, opts?: { ultrawork?: boolean }): boolean =>
+                ralphLoop.startLoop(sessionID, prompt, opts)
+            : undefined,
+          isRalphLoopActive: ralphLoop
+            ? (sessionID: string): boolean => {
+                const state = ralphLoop.getState()
+                return !!state?.active && (state.session_id === undefined || state.session_id === sessionID)
+              }
+            : undefined,
         }))
     : null
 

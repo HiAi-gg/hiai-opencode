@@ -152,12 +152,21 @@ export async function injectContinuation(args: {
 
   const incompleteTodos = todos.filter((todo) => todo.status !== "completed" && todo.status !== "cancelled")
   const todoList = incompleteTodos.map((todo) => `- [${todo.status}] ${todo.content}`).join("\n")
+
+  // For complex remaining work, hint at ulw / ralph-loop so the agent can
+  // suggest the user upgrade to a more rigorous loop. Threshold is intentionally
+  // conservative — 5+ open todos is the point where Bob tends to drift.
+  const COMPLEX_THRESHOLD = 5
+  const escalationHint = freshIncompleteCount >= COMPLEX_THRESHOLD
+    ? `\n\n[hint] ${freshIncompleteCount} todos remain. If progress stalls, prefix your next user message with \`ulw\` to enable ULTRAWORK mode (parallel research + strategist plan), or run \`/ralph-loop <goal>\` for an iterative completion loop with verification.`
+    : ""
+
   const prompt = `${CONTINUATION_PROMPT}
 
 [Status: ${todos.length - freshIncompleteCount}/${todos.length} completed, ${freshIncompleteCount} remaining]
 
 Remaining tasks:
-${todoList}`
+${todoList}${escalationHint}`
 
   const injectionState = sessionStateStore.getExistingState(sessionID)
   if (injectionState?.wasCancelled) {

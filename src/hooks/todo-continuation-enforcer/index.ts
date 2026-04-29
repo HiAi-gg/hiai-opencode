@@ -17,6 +17,9 @@ export function createTodoContinuationEnforcer(
     backgroundManager,
     skipAgents = DEFAULT_SKIP_AGENTS,
     isContinuationStopped,
+    autoLoopThreshold,
+    startRalphLoop,
+    isRalphLoopActive,
   } = options
 
   const sessionStateStore = createSessionStateStore()
@@ -42,6 +45,9 @@ export function createTodoContinuationEnforcer(
     backgroundManager,
     skipAgents,
     isContinuationStopped,
+    autoLoopThreshold,
+    startRalphLoop,
+    isRalphLoopActive,
   })
 
   const cancelAllCountdowns = (): void => {
