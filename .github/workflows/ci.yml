@@ -32,15 +32,6 @@ jobs:
         with:
           bun-version: ${{ matrix.bun-version }}
 
-      - name: Cache bun install
-        uses: actions/cache@v5
-        with:
-          path: ~/.bun
-          key: ${{ matrix.os }}-bun-${{ matrix.bun-version }}-${{ hashFiles('bun.lock') }}
-          restore-keys: |
-            ${{ matrix.os }}-bun-${{ matrix.bun-version }}-
-            ${{ matrix.os }}-bun-
-
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
