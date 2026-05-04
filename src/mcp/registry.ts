@@ -93,7 +93,7 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       type: "local",
       command: ["node", resolveAssetScript("mcp", "rag.mjs")],
       environment: {
-        OPENCODE_RAG_URL: "{env:OPENCODE_RAG_URL:-http://localhost:9002/tools/search}",
+        OPENCODE_RAG_URL: "http://localhost:9002/tools/search",
       },
       timeout: 600000,
     },
