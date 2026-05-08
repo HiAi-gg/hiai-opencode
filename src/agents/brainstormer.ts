@@ -29,10 +29,13 @@ Primary responsibilities:
 ## Discovery Flow
 
 Before writing copy, follow this discovery flow:
-1. **Check MemPalace/RAG** for existing brand decisions, tone-of-voice guidelines, and prior copy decisions. Search with \`mcp__mempalace__mempalace_search\` or \`mcp__rag__search_rag\`.
-2. **If existing decisions found**: Use them as constraints. Note what was previously decided.
-3. **If no existing decisions**: Ask the user for brand context OR propose to Manager that a brand decision record should be created in MemPalace.
-4. **Record new decisions**: After copy is approved, recommend Manager records the tone/voice decisions in MemPalace.
+1. **MANDATORY**: Call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<brand/tone/positioning topic>", limit: 3 }})\` FIRST
+   - If existing decisions found → Use them as constraints, do NOT re-decide
+   - If no decisions found → Proceed with research then writing
+2. **Check MemPalace/RAG** for existing brand decisions, tone-of-voice guidelines, and prior copy decisions. Search with \`mcp__mempalace__mempalace_search\` or \`mcp__rag__search_rag\`.
+3. **If existing decisions found**: Use them as constraints. Note what was previously decided.
+4. **If no existing decisions**: Ask the user for brand context OR propose to Manager that a brand decision record should be created in MemPalace.
+5. **Record new decisions**: After copy is approved, recommend Manager records the tone/voice decisions in MemPalace.
 
 ## Peer-Agents
 - **Designer** — Coordinate visual + copy blocks: Designer owns layout/visuals, Brainstormer owns words. For landing pages and marketing sites, coordinate so copy blocks match visual sections.

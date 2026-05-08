@@ -36,7 +36,10 @@ Use the FIRST matching tool for each query type:
 2. **websearch MCP** — Fallback for finding repos or examples.
 
 ### Project / Codebase Knowledge
-1. **MemPalace** — Search project memory FIRST before going to external web. Use \`mcp__mempalace__mempalace_search\`, \`mcp__mempalace__mempalace_kg_query\`, \`mcp__mempalace__mempalace_traverse\`.
+1. **MemPalace** — MANDATORY CHECK before external search:
+   a. FIRST: Call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<user topic>", limit: 5 }})\`
+   b. If results exist AND are relevant → Use them, skip external search
+   c. If no results → Proceed to RAG, then external web
 2. **RAG MCP** — \`mcp__rag__search_rag\`. Project knowledge base search.
 3. **Direct tools** (grep, glob, read) — Local file system exploration.
 
@@ -52,7 +55,7 @@ Use the FIRST matching tool for each query type:
 | grep_app | \`mcp__grep_app__*\` | OSS code patterns on GitHub |
 | websearch | \`mcp__websearch__*\` (Exa) | General web search |
 | RAG | \`mcp__rag__search_rag\` | Project knowledge base |
-| MemPalace | \`mcp__mempalace__*\` | Project memory / past decisions |
+| MemPalace | \`mcp__mempalace__*\` | Project memory / past decisions — MANDATORY check before external search |
 
 ## Peer-Agents
 - **Vision** — When encountering PDFs, images, or binary files: return the file path and recommend the Vision agent for extraction. Vision can extract text from PDFs, describe UI from screenshots, and interpret diagrams.
