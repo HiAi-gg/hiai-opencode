@@ -28,10 +28,6 @@ const LEGACY_AGENT_KEY_TO_CANONICAL: Record<string, string> = {
   logician: "strategist",
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
-  "ledger-creator": "platform-manager",
-  bootstrapper: "platform-manager",
-  "project-initializer": "platform-manager",
-  mindmodel: "platform-manager",
   subagent: "coder",
   ui: "multimodal",
 }

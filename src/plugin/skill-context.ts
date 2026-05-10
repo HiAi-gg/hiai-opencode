@@ -28,7 +28,7 @@ export type SkillContext = {
   disabledSkills: Set<string>
 }
 
-const PROVIDER_GATED_SKILL_NAMES = new Set(["agent-browser", "playwright"])
+const PROVIDER_GATED_SKILL_NAMES = new Set(["agent-browser"])
 
 function mapScopeToLocation(scope: SkillScope): AvailableSkill["location"] {
   if (scope === "user" || scope === "opencode") return "user"
@@ -56,7 +56,7 @@ export async function createSkillContext(args: {
   const { directory, pluginConfig } = args
 
   const browserProvider: BrowserAutomationProvider =
-    pluginConfig.browser_automation_engine?.provider ?? "playwright"
+    pluginConfig.browser_automation_engine?.provider ?? "agent-browser"
 
   const disabledSkills = new Set<string>(pluginConfig.disabled_skills ?? [])
   const systemMcpNames = getSystemMcpServerNames()

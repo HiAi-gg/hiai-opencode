@@ -58,7 +58,7 @@ export const AgentOverrideConfigSchema = z.object({
 export const AgentOverridesSchema = z.object({
   // Canonical 12 agents
   "bob": AgentOverrideConfigSchema.optional(),
-  "guard": AgentOverrideConfigSchema.optional(),
+  "manager": AgentOverrideConfigSchema.optional(),
   "strategist": AgentOverrideConfigSchema.optional(),
   "critic": AgentOverrideConfigSchema.optional(),
   "coder": AgentOverrideConfigSchema.extend({
@@ -69,8 +69,7 @@ export const AgentOverridesSchema = z.object({
   researcher: AgentOverrideConfigSchema.optional(),
   "multimodal": AgentOverrideConfigSchema.optional(),
   "quality-guardian": AgentOverrideConfigSchema.optional(),
-  "platform-manager": AgentOverrideConfigSchema.optional(),
-  brainstormer: AgentOverrideConfigSchema.optional(),
+  "writer": AgentOverrideConfigSchema.optional(),
   "agent-skills": AgentOverrideConfigSchema.optional(),
   // Compatibility aliases
   build: AgentOverrideConfigSchema.optional(),
@@ -79,7 +78,6 @@ export const AgentOverridesSchema = z.object({
   general: AgentOverrideConfigSchema.optional(),
   zoe: AgentOverrideConfigSchema.optional(),
   "pre-plan": AgentOverrideConfigSchema.optional(),
-  manager: AgentOverrideConfigSchema.optional(),
   vision: AgentOverrideConfigSchema.optional(),
   "logician": AgentOverrideConfigSchema.optional(),
   librarian: AgentOverrideConfigSchema.optional(),

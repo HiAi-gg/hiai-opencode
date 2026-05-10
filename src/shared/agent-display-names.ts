@@ -2,7 +2,7 @@ import { AGENT_NAME_MAP } from "./migration/agent-names"
 
 /**
  * Agent config keys to display names mapping.
- * Config keys are lowercase (e.g., "bob", "guard").
+ * Config keys are lowercase (e.g., "bob", "manager").
  * Display names include suffixes for UI/logs (e.g., "Bob - Ultraworker").
  *
  * IMPORTANT: Display names MUST NOT contain parentheses or other characters
@@ -19,10 +19,14 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "designer": "Designer",
   "researcher": "Researcher",
   "quality-guardian": "Quality Guardian",
-  "platform-manager": "Manager",
-  "brainstormer": "Brainstormer",
+  "brainstormer - idea explorer": "writer",
+  "brainstormer": "writer",
+  "writer": "Writer",
   "agent-skills": "Agent Skills",
-  "guard": "Guard",
+  "guard (plan executor)": "manager",
+  "guard - plan executor": "manager",
+  "guard": "manager",
+  "manager": "Manager",
   "sub": "Sub",
   "multimodal": "Vision",
   "ui": "Vision",
@@ -94,8 +98,6 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "coder - deep agent": "coder",
   "strategist (plan builder)": "strategist",
   "strategist - plan builder": "strategist",
-  "guard (plan executor)": "guard",
-  "guard - plan executor": "guard",
   "pre-plan (plan consultant)": "strategist",
   "critic (plan critic)": "critic",
   "critic - plan critic": "critic",
@@ -106,15 +108,11 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "researcher - codebase explorer": "researcher",
   "quality guardian (verifier)": "quality-guardian",
   "quality guardian - verifier": "quality-guardian",
-  "manager": "platform-manager",
-  "platform manager (utility)": "platform-manager",
-  "platform manager - utility": "platform-manager",
-  "brainstormer - idea explorer": "brainstormer",
-  "writer": "brainstormer",
-  "copywriter": "brainstormer",
-  "content-writer": "brainstormer",
-  "content writer": "brainstormer",
-  "website-writer": "brainstormer",
+  "writer": "writer",
+  "copywriter": "writer",
+  "content-writer": "writer",
+  "content writer": "writer",
+  "website-writer": "writer",
   "agent skills - skill composer": "agent-skills",
   "subagent": "sub",
   "ui": "multimodal",
@@ -142,7 +140,7 @@ function resolveKnownAgentConfigKey(agentName: string): string | undefined {
 
 /**
  * Resolve an agent name (display name or config key) to its lowercase config key.
- * "Guard - Plan Executor" -> "guard", "Guard (Plan Executor)" -> "guard", "guard" -> "guard"
+ * "Manager" -> "manager", "Guard" -> "manager", "guard" -> "manager"
  */
 export function getAgentConfigKey(agentName: string): string {
   const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase()

@@ -28,7 +28,6 @@ test("model slots derive canonical agents and categories", () => {
   const resolved = applyModelSlots(baseConfig)
   expect(resolved.agents?.bob?.model).toBe("openrouter/test/bob")
   expect(resolved.agents?.coder?.model).toBe("openrouter/test/coder")
-  expect(resolved.agents?.["platform-manager"]?.model).toBe("openrouter/test/manager")
   expect(resolved.agents?.sub?.model).toBe("openrouter/test/sub")
   expect(resolved.categories?.artistry?.variant).toBe("high")
   expect(resolved.categories?.ultrabrain?.variant).toBe("xhigh")
@@ -49,7 +48,6 @@ test("static MCP export includes marker metadata and servers", () => {
 
   expect(exported._meta?.generatedBy).toBe(MCP_EXPORT_MARKER)
   expect(exported._meta?.version).toBe(1)
-  expect(exported.mcpServers.playwright).toBeDefined()
   expect(exported.mcpServers.mempalace).toBeDefined()
   expect(exported.mcpServers.websearch).toBeDefined()
   expect(exported.mcpServers.grep_app).toBeDefined()

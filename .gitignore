@@ -85,6 +85,7 @@ bun.lockb
 
 # Opencode
 .opencode/
+.mcp.json
 todo.md
 
 # Stitch

@@ -22,23 +22,23 @@ test("skill_mcp falls back to enabled builtin MCP when skill MCP is absent", asy
     getLoadedSkills: () => [],
     getSessionID: () => "session-test",
     builtinMcp: {
-      firecrawl: {
+      context7: {
         enabled: true,
-        type: "local",
-        command: ["node", "firecrawl.mjs"],
+        type: "remote",
+        url: "https://mcp.context7.com/mcp",
       },
     },
   })
 
   const result = await toolDef.execute(
     {
-      mcp_name: "firecrawl",
-      tool_name: "firecrawl_search",
+      mcp_name: "context7",
+      tool_name: "context7_search",
       arguments: { query: "test" },
     } as any,
     { sessionID: "session-test" } as ToolContext,
   )
 
-  expect(callCaptured).toEqual({ serverName: "firecrawl", toolName: "firecrawl_search" })
+  expect(callCaptured).toEqual({ serverName: "context7", toolName: "context7_search" })
   expect(result).toContain("\"ok\": true")
 })

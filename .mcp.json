@@ -2,64 +2,39 @@
   "_meta": {
     "generatedBy": "hiai-opencode",
     "version": 1,
-    "generatedAt": "2026-04-26T21:19:46.945Z"
+    "generatedAt": "2026-05-10T18:22:59.459Z"
   },
   "mcpServers": {
-    "playwright": {
-      "command": "node",
-      "args": [
-        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\playwright.mjs"
-      ]
-    },
     "stitch": {
       "type": "http",
       "url": "https://stitch.googleapis.com/mcp",
       "headers": {
-        "X-Goog-Api-Key": ""
+        "X-Goog-Api-Key": "{env:STITCH_AI_API_KEY}"
       }
     },
     "sequential-thinking": {
       "command": "node",
       "args": [
-        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\runtime\\npm-package-runner.mjs",
+        "/mnt/ai_data/projects/hiai-opencode/assets/runtime/npm-package-runner.mjs",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
-    "firecrawl": {
+    "mempalace": {
       "command": "node",
       "args": [
-        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\runtime\\npm-package-runner.mjs",
-        "firecrawl-mcp"
+        "/mnt/ai_data/projects/hiai-opencode/assets/mcp/mempalace.mjs",
+        "--palace",
+        "./.opencode/palace"
       ],
       "env": {
-        "FIRECRAWL_API_KEY": ""
-      }
-    },
-    "rag": {
-      "command": "node",
-      "args": [
-        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\rag.mjs"
-      ],
-      "env": {
-        "OPENCODE_RAG_URL": "http://localhost:9002/tools/search"
+        "MEMPALACE_PYTHON": "/home/vlgalib/.local/venvs/mempalace/bin/python"
       }
     },
     "context7": {
       "type": "http",
       "url": "https://mcp.context7.com/mcp",
       "headers": {
-        "X-API-KEY": ""
-      }
-    },
-    "mempalace": {
-      "command": "node",
-      "args": [
-        "C:\\Users\\vlgal\\.cache\\opencode\\packages\\@hiai-gg\\hiai-opencode@latest\\node_modules\\@hiai-gg\\hiai-opencode\\assets\\mcp\\mempalace.mjs",
-        "--palace",
-        "./.opencode/palace"
-      ],
-      "env": {
-        "MEMPALACE_PYTHON": "/home/vlgalib/.local/venvs/mempalace/bin/python"
+        "X-API-KEY": "{env:CONTEXT7_API_KEY}"
       }
     }
   }

@@ -5,7 +5,7 @@
  * Includes TL;DR, context, objectives, verification strategy, TODOs, and success criteria.
  */
 
-export const PROMETHEUS_PLAN_TEMPLATE = `## Plan Structure
+export const STRATEGIST_PLAN_TEMPLATE = `## Plan Structure
 
 Generate plan to: \`.bob/plans/{name}.md\`
 
@@ -83,7 +83,7 @@ Generate plan to: \`.bob/plans/{name}.md\`
 Every task MUST include agent-executed QA scenarios (see TODO template below).
 Evidence saved to \`.bob/evidence/task-{N}-{scenario-slug}.{ext}\`.
 
-- **Frontend/UI**: Use Playwright (playwright skill) - Navigate, interact, assert DOM, screenshot
+- **Frontend/UI**: Use agent-browser skill - Navigate, interact, assert DOM, screenshot
 - **TUI/CLI**: Use interactive_bash (tmux) - Run command, send keystrokes, validate output
 - **API/Backend**: Use Bash (curl) - Send requests, assert status + response fields
 - **Library/Module**: Use Bash (bun/node REPL) - Import, call functions, compare output
@@ -147,6 +147,17 @@ Max Concurrent: 7 (Waves 1 & 2)
 - **21**: 15 - 23, 24, 4
 
 > This is abbreviated for reference. YOUR generated plan must include the FULL matrix for ALL tasks.
+
+### Design Pipeline (for UI tasks)
+
+When the plan includes UI/visual tasks (visual-engineering category):
+
+1. **Designer** generates Stitch screens with design system
+2. **Vision** verifies screens in browser → Designer iterates
+3. **Designer** exports tokens/components via \`stitch_export_design_system\` + \`stitch_generate_design_tokens\`
+4. **Coder** implements from exported tokens (Tailwind classes, CSS variables, component specs)
+
+Plan UI tasks in this order: Designer task → Vision verification task → Coder implementation task. Never skip the Vision verification gate.
 
 ### Agent Dispatch Summary
 
@@ -233,7 +244,7 @@ Max Concurrent: 7 (Waves 1 & 2)
 
   \\\`\\\`\\\`
   Scenario: [Happy path - what SHOULD work]
-    Tool: [Playwright / interactive_bash / Bash (curl)]
+    Tool: [agent-browser / interactive_bash / Bash (curl)]
     Preconditions: [Exact setup state]
     Steps:
       1. [Exact action - specific command/selector/endpoint, no vagueness]
@@ -292,7 +303,7 @@ Max Concurrent: 7 (Waves 1 & 2)
   Run \`tsc --noEmit\` + linter + \`bun test\`. Review all changed files for: \`as any\`/\`@ts-ignore\`, empty catches, console.log in prod, commented-out code, unused imports. Check AI slop: excessive comments, over-abstraction, generic names (data/result/item/temp).
   Output: \`Build [PASS/FAIL] | Lint [PASS/FAIL] | Tests [N pass/N fail] | Files [N clean/N issues] | VERDICT\`
 
-- [ ] F3. **Real Manual QA** \u2014 \`unspecified-high\` (+ \`playwright\` skill if UI)
+- [ ] F3. **Real Manual QA** \u2014 \`unspecified-high\` (+ \`agent-browser\` skill if UI)
   Start from clean state. Execute EVERY QA scenario from EVERY task \u2014 follow exact steps, capture evidence. Test cross-task integration (features working together, not isolation). Test edge cases: empty state, invalid input, rapid actions. Save to \`.bob/evidence/final-qa/\`.
   Output: \`Scenarios [N/N pass] | Integration [N/N] | Edge Cases [N tested] | VERDICT\`
 

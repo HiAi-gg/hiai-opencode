@@ -30,14 +30,16 @@ export const ModelSlotsConfigSchema = z.object({
   bob: ModelSlotConfigSchema.optional(),
   coder: ModelSlotConfigSchema.optional(),
   strategist: ModelSlotConfigSchema.optional(),
-  guard: ModelSlotConfigSchema.optional(),
+  manager: ModelSlotConfigSchema.optional(), // renamed from guard
   critic: ModelSlotConfigSchema.optional(),
   designer: ModelSlotConfigSchema.optional(),
   researcher: ModelSlotConfigSchema.optional(),
-  manager: ModelSlotConfigSchema.optional(),
-  brainstormer: ModelSlotConfigSchema.optional(),
+  writer: ModelSlotConfigSchema.optional(), // renamed from brainstormer
   vision: ModelSlotConfigSchema.optional(),
   sub: ModelSlotConfigSchema.optional(),
+  // Deprecated legacy aliases
+  guard: ModelSlotConfigSchema.optional(), // deprecated: use manager
+  brainstormer: ModelSlotConfigSchema.optional(), // deprecated: use writer
 });
 
 export const FallbackEntrySchema = z.object({
@@ -156,7 +158,7 @@ export const ModelFamilySchema = z.object({
 const AgentsConfigSchema = z.object({
   // Canonical 12 agents
   bob: AgentConfigSchema.optional(),
-  guard: AgentConfigSchema.optional(),
+  manager: AgentConfigSchema.optional(), // renamed from guard
   strategist: AgentConfigSchema.optional(),
   critic: AgentConfigSchema.optional(),
   coder: AgentConfigSchema.optional(),
@@ -165,15 +167,13 @@ const AgentsConfigSchema = z.object({
   researcher: AgentConfigSchema.optional(),
   multimodal: AgentConfigSchema.optional(),
   "quality-guardian": AgentConfigSchema.optional(),
-  "platform-manager": AgentConfigSchema.optional(),
-  brainstormer: AgentConfigSchema.optional(),
+  writer: AgentConfigSchema.optional(), // renamed from brainstormer
   "agent-skills": AgentConfigSchema.optional(),
   // Legacy aliases kept for config compatibility only
   general: AgentConfigSchema.optional(),
   zoe: AgentConfigSchema.optional(),
   build: AgentConfigSchema.optional(),
   "pre-plan": AgentConfigSchema.optional(),
-  manager: AgentConfigSchema.optional(),
   vision: AgentConfigSchema.optional(),
   logician: AgentConfigSchema.optional(),
   librarian: AgentConfigSchema.optional(),
@@ -185,12 +185,15 @@ const AgentsConfigSchema = z.object({
   "ledger-creator": AgentConfigSchema.optional(),
   bootstrapper: AgentConfigSchema.optional(),
   "project-initializer": AgentConfigSchema.optional(),
+  // Deprecated legacy aliases
+  guard: AgentConfigSchema.optional(), // deprecated: use manager
+  brainstormer: AgentConfigSchema.optional(), // deprecated: use writer
 }).catchall(AgentConfigSchema);
 
 const AgentRequirementsConfigSchema = z.object({
   // Canonical 12 agents
   bob: ModelRequirementSchema.optional(),
-  guard: ModelRequirementSchema.optional(),
+  manager: ModelRequirementSchema.optional(), // renamed from guard
   strategist: ModelRequirementSchema.optional(),
   critic: ModelRequirementSchema.optional(),
   coder: ModelRequirementSchema.optional(),
@@ -199,15 +202,13 @@ const AgentRequirementsConfigSchema = z.object({
   researcher: ModelRequirementSchema.optional(),
   multimodal: ModelRequirementSchema.optional(),
   "quality-guardian": ModelRequirementSchema.optional(),
-  "platform-manager": ModelRequirementSchema.optional(),
-  brainstormer: ModelRequirementSchema.optional(),
+  writer: ModelRequirementSchema.optional(), // renamed from brainstormer
   "agent-skills": ModelRequirementSchema.optional(),
   // Legacy aliases kept for config compatibility only
   general: ModelRequirementSchema.optional(),
   zoe: ModelRequirementSchema.optional(),
   build: ModelRequirementSchema.optional(),
   "pre-plan": ModelRequirementSchema.optional(),
-  manager: ModelRequirementSchema.optional(),
   vision: ModelRequirementSchema.optional(),
   logician: ModelRequirementSchema.optional(),
   librarian: ModelRequirementSchema.optional(),
@@ -219,6 +220,9 @@ const AgentRequirementsConfigSchema = z.object({
   "ledger-creator": ModelRequirementSchema.optional(),
   bootstrapper: ModelRequirementSchema.optional(),
   "project-initializer": ModelRequirementSchema.optional(),
+  // Deprecated legacy aliases
+  guard: ModelRequirementSchema.optional(), // deprecated: use manager
+  brainstormer: ModelRequirementSchema.optional(), // deprecated: use writer
 }).catchall(ModelRequirementSchema);
 
 export const HiaiOpencodeConfigSchema = z.object({

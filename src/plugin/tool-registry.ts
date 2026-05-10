@@ -12,7 +12,7 @@ import type { PluginContext, ToolsRecord } from "./types"
 import {
   builtinTools,
   createBackgroundTools,
-  createCallOmoAgent,
+  createCallHiaiAgent,
   createLookAt,
   createSkillMcpTool,
   createSkillTool,
@@ -28,6 +28,8 @@ import {
   createTaskList,
   createTaskUpdateTool,
   createHashlineEditTool,
+  createAgentBrowserTool,
+  createAgentBrowserIntegrationTool,
 } from "../tools"
 import { getMainSessionID } from "../features/claude-code-session-state"
 import { filterDisabledTools } from "../shared/disabled-tools"
@@ -40,7 +42,7 @@ import { normalizeToolArgSchemas } from "./normalize-tool-arg-schemas"
 type ToolRegistryFactories = {
   builtinTools: typeof builtinTools
   createBackgroundTools: typeof createBackgroundTools
-  createCallOmoAgent: typeof createCallOmoAgent
+  createCallHiaiAgent: typeof createCallHiaiAgent
   createLookAt: typeof createLookAt
   createSkillMcpTool: typeof createSkillMcpTool
   createSkillTool: typeof createSkillTool
@@ -56,12 +58,14 @@ type ToolRegistryFactories = {
   createTaskList: typeof createTaskList
   createTaskUpdateTool: typeof createTaskUpdateTool
   createHashlineEditTool: typeof createHashlineEditTool
+  createAgentBrowserTool: typeof createAgentBrowserTool
+  createAgentBrowserIntegrationTool: typeof createAgentBrowserIntegrationTool
 }
 
 const defaultToolRegistryFactories: ToolRegistryFactories = {
   builtinTools,
   createBackgroundTools,
-  createCallOmoAgent,
+  createCallHiaiAgent,
   createLookAt,
   createSkillMcpTool,
   createSkillTool,
@@ -77,6 +81,8 @@ const defaultToolRegistryFactories: ToolRegistryFactories = {
   createTaskList,
   createTaskUpdateTool,
   createHashlineEditTool,
+  createAgentBrowserTool,
+  createAgentBrowserIntegrationTool,
 }
 
 export type ToolRegistryResult = {
@@ -91,7 +97,7 @@ const LOW_PRIORITY_TOOL_ORDER = [
   "session_info",
   "interactive_bash",
   "look_at",
-  "call_omo_agent",
+  "call_hiai_agent",
   "task_create",
   "task_get",
   "task_list",
@@ -166,7 +172,7 @@ export function createToolRegistry(args: {
     ...toolFactories,
   }
   const backgroundTools = factories.createBackgroundTools(managers.backgroundManager, ctx.client)
-  const callOmoAgent = factories.createCallOmoAgent(
+  const callHiaiAgent = factories.createCallHiaiAgent(
     ctx,
     managers.backgroundManager,
     pluginConfig.disabled_agents ?? [],
@@ -251,6 +257,17 @@ export function createToolRegistry(args: {
     ? { edit: factories.createHashlineEditTool(ctx) }
     : {}
 
+  const agentBrowserIntegrationTools: ToolDefinition[] = Array.from(factories.createAgentBrowserIntegrationTool())
+  const agentBrowserTools: ToolDefinition[] = Array.from(factories.createAgentBrowserTool(ctx))
+
+  const agentBrowserToolEntries: Record<string, ToolDefinition> = {}
+  for (const t of agentBrowserIntegrationTools) {
+    ;(agentBrowserToolEntries as any)[(t as any).name] = t
+  }
+  for (const t of agentBrowserTools) {
+    ;(agentBrowserToolEntries as any)[(t as any).name] = t
+  }
+
   const allTools: Record<string, ToolDefinition> = {
     ...factories.builtinTools,
     ...factories.createGrepTools(ctx),
@@ -258,7 +275,7 @@ export function createToolRegistry(args: {
     ...factories.createAstGrepTools(ctx),
     ...factories.createSessionManagerTools(ctx),
     ...backgroundTools,
-    call_omo_agent: callOmoAgent,
+    call_hiai_agent: callHiaiAgent,
     ...(lookAt ? { look_at: lookAt } : {}),
     task: delegateTask,
     skill_mcp: skillMcpTool,
@@ -266,6 +283,7 @@ export function createToolRegistry(args: {
     ...(interactiveBashEnabled ? { interactive_bash: factories.interactive_bash } : {}),
     ...taskToolsRecord,
     ...hashlineToolsRecord,
+    ...agentBrowserToolEntries,
   }
 
   for (const toolDefinition of Object.values(allTools)) {

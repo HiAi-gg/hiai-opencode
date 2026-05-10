@@ -3,14 +3,10 @@ import { existsSync } from "node:fs"
 import type { McpServerConfig } from "../config/types.js"
 
 export type HiaiMcpName =
-  | "playwright"
   | "stitch"
   | "sequential-thinking"
-  | "firecrawl"
-  | "rag"
   | "context7"
   | "mempalace"
-  | "websearch"
   | "grep_app"
 
 export type HiaiMcpInstallKind = "bundled" | "npm" | "python" | "remote" | "user-service"
@@ -37,17 +33,6 @@ function createNpmPackageCommand(pkg: string, ...args: string[]): string[] {
 }
 
 export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
-  playwright: {
-    name: "playwright",
-    enabledByDefault: true,
-    install: "npm",
-    optionalEnv: ["HIAI_PLAYWRIGHT_INSTALL_BROWSERS"],
-    config: {
-      enabled: true,
-      command: ["node", resolveAssetScript("mcp", "playwright.mjs")],
-      timeout: 600000,
-    },
-  },
   stitch: {
     name: "stitch",
     enabledByDefault: true,
@@ -68,33 +53,6 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
     config: {
       enabled: true,
       command: createNpmPackageCommand("@modelcontextprotocol/server-sequential-thinking"),
-      timeout: 600000,
-    },
-  },
-  firecrawl: {
-    name: "firecrawl",
-    enabledByDefault: true,
-    install: "npm",
-    requiredEnv: ["FIRECRAWL_API_KEY"],
-    config: {
-      enabled: true,
-      command: createNpmPackageCommand("firecrawl-mcp"),
-      timeout: 600000,
-      environment: { FIRECRAWL_API_KEY: "{env:FIRECRAWL_API_KEY}" },
-    },
-  },
-  rag: {
-    name: "rag",
-    enabledByDefault: true,
-    install: "user-service",
-    optionalEnv: ["OPENCODE_RAG_URL"],
-    config: {
-      enabled: true,
-      type: "local",
-      command: ["node", resolveAssetScript("mcp", "rag.mjs")],
-      environment: {
-        OPENCODE_RAG_URL: "{env:OPENCODE_RAG_URL:-http://localhost:9002/tools/search}",
-      },
       timeout: 600000,
     },
   },
@@ -121,20 +79,6 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       type: "local",
       command: ["node", resolveAssetScript("mcp", "mempalace.mjs"), "--palace", "./.opencode/palace"],
       timeout: 600000,
-    },
-  },
-  websearch: {
-    name: "websearch",
-    enabledByDefault: true,
-    install: "remote",
-    optionalEnv: ["EXA_API_KEY", "TAVILY_API_KEY"],
-    config: {
-      enabled: true,
-      type: "remote",
-      url: "https://mcp.exa.ai/mcp?tools=web_search_exa",
-      headers: { "x-api-key": "{env:EXA_API_KEY}" },
-      timeout: 600000,
-      provider: "exa",
     },
   },
   grep_app: {

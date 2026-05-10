@@ -1,5 +1,5 @@
 {
-  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Guard, Critic, Designer, Researcher, Manager, Brainstormer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, guard, critic, designer, researcher, manager, brainstormer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts. MCP defaults per agent: stitch (designer), firecrawl/context7/grep_app (researcher), mempalace/rag (manager), playwright (coder for tests), sequential-thinking (strategist/critic). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=guard/gatekeeping, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. The subtask2.replace_generic flag controls the bundled subtask2 internal plugin: when true, generic task() responses are replaced with a structured return prompt before the parent agent sees them.",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Manager, Critic, Designer, Researcher, Writer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, manager, critic, designer, researcher, writer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts. MCP defaults per agent: stitch (designer), firecrawl/context7/grep_app (researcher), agent-browser (vision for UI verification, primary user; coder also uses for testing), sequential-thinking (strategist/critic). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=manager/orchestration, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. The subtask2.replace_generic flag controls the bundled subtask2 internal plugin: when true, generic task() responses are replaced with a structured return prompt before the parent agent sees them. Install agent-browser with: npm i -g agent-browser && agent-browser install",
   "$schema": "./config/hiai-opencode.schema.json",
   "models": {
     "bob": {
@@ -14,7 +14,7 @@
       "model": "deepseek/deepseek-v4-pro",
       "recommended": "xhigh"
     },
-    "guard": {
+    "manager": {
       "model": "openrouter/qwen/qwen3.6-plus",
       "recommended": "middle"
     },
@@ -30,11 +30,7 @@
       "model": "openrouter/deepseek/deepseek-v4-flash",
       "recommended": "fast"
     },
-    "manager": {
-      "model": "openrouter/qwen/qwen3.5-9b",
-      "recommended": "fast"
-    },
-    "brainstormer": {
+    "writer": {
       "model": "openrouter/mistralai/mistral-small-2603",
       "recommended": "writing"
     },
@@ -48,27 +44,15 @@
     }
   },
   "auth": {
-    "openrouter": "{env:OPENROUTER_API_KEY}",
-    "openai": "{env:OPENAI_API_KEY}",
-    "googleSearch": "{env:GOOGLE_SEARCH_API_KEY}",
     "stitch": "{env:STITCH_AI_API_KEY}",
-    "firecrawl": "{env:FIRECRAWL_API_KEY}",
-    "context7": "{env:CONTEXT7_API_KEY}"
+    "context7": "{env:CONTEXT7_API_KEY}",
+    "firecrawl": "{env:FIRECRAWL_API_KEY}"
   },
   "mcp": {
-    "playwright": {
-      "enabled": true
-    },
     "stitch": {
       "enabled": true
     },
     "sequential-thinking": {
-      "enabled": true
-    },
-    "firecrawl": {
-      "enabled": true
-    },
-    "rag": {
       "enabled": true
     },
     "mempalace": {
@@ -76,6 +60,10 @@
     },
     "context7": {
       "enabled": true
+    },
+    "grep_app": {
+      "enabled": true,
+      "_note": "GitHub OSS code pattern search \u2014 remote MCP, no key required"
     }
   },
   "lsp": {

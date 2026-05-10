@@ -11,7 +11,7 @@ export async function isCallerOrchestrator(sessionID?: string, client?: PluginIn
   if (isSqliteBackend() && client) {
     try {
       const nearest = await findNearestMessageWithFieldsFromSDK(client, sessionID)
-      return getAgentConfigKey(nearest?.agent ?? "") === "guard"
+      return getAgentConfigKey(nearest?.agent ?? "") === "manager"
     } catch (error) {
       log("[session-utils] SDK orchestrator check failed", { sessionID, error: String(error) })
       return false
@@ -21,5 +21,5 @@ export async function isCallerOrchestrator(sessionID?: string, client?: PluginIn
   const messageDir = getMessageDir(sessionID)
   if (!messageDir) return false
   const nearest = findNearestMessageWithFields(messageDir)
-  return getAgentConfigKey(nearest?.agent ?? "") === "guard"
+  return getAgentConfigKey(nearest?.agent ?? "") === "manager"
 }

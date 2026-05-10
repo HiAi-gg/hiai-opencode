@@ -260,6 +260,7 @@ export function createEventHandler(args: {
     await runEventHookSafely("writeExistingFileGuard", hooks.writeExistingFileGuard?.event, input);
     await runEventHookSafely("guardHook", hooks.guardHook?.handler, input);
     await runEventHookSafely("autoSlashCommand", hooks.autoSlashCommand?.event, input);
+    await runEventHookSafely("mempalaceAutoSave", hooks.mempalaceAutoSave?.handler, input);
   };
 
   const recentSyntheticIdles = new Map<string, number>();

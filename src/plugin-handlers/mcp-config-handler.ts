@@ -36,11 +36,6 @@ function resolveEnvironmentAuthFallback(
   pluginConfig: HiaiOpenCodeConfig,
   name: string,
 ): Record<string, string> | undefined {
-  if (name === "firecrawl") {
-    const key = pluginConfig.auth?.firecrawl ? resolveEnvVars(pluginConfig.auth.firecrawl).trim() : "";
-    return key ? { FIRECRAWL_API_KEY: key } : undefined;
-  }
-
   return undefined;
 }
 

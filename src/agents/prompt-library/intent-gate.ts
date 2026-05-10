@@ -26,6 +26,8 @@ Identify what the user actually wants. Map surface form to true intent, then ann
 - "what do you think about X?" → evaluate → propose → wait for confirmation
 - "X is broken / seeing error Y" → diagnose → fix minimally
 - "refactor / improve / clean up" → assess codebase → propose approach
+- "design X / create UI / make it beautiful / improve frontend appearance" → visual-engineering → designer
+- "architect X / design system / dependency map / define boundaries" → suggest task(subagent_type="manager")
 
 **Verbalize before proceeding:**
 
@@ -116,7 +118,7 @@ function buildExecutorIntentGate(): string {
 - Run verification (lint, tests, build) WITHOUT asking
 - Make decisions. Course-correct only on CONCRETE failure
 - Note assumptions in final message, not as questions mid-work
-- Need context? Fire Researcher via \`call_omo_agent\` IMMEDIATELY — continue only with non-overlapping work while it searches
+- Need context? Fire Researcher via \`call_hiai_agent\` IMMEDIATELY — continue only with non-overlapping work while it searches
 - User asks a question implying work → Answer briefly, DO the implied work in the same turn
 
 ### Executor Intent Mapping

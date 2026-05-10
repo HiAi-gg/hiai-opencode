@@ -18,7 +18,7 @@ function buildSkillsSection(skills: AvailableSkill[]): string {
   if (customSkills.length > 0 && builtinSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
 
-Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
 
 **Built-in**: ${builtinNames}
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
@@ -30,7 +30,7 @@ Skills are instruction packs, not agents. Do not look for \`strategist\`, \`crit
   if (customSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
 
-Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
 
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
 
@@ -41,7 +41,7 @@ Skills are instruction packs, not agents. Do not look for \`strategist\`, \`crit
   if (builtinSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
 
-Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, \`manager\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
+Skills are instruction packs, not agents. Do not look for \`strategist\`, \`critic\`, or \`researcher\` here; call agents with \`task(subagent_type="...")\`.
 
 **Built-in**: ${builtinNames}
 

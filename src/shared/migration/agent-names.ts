@@ -12,6 +12,7 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   coder: "coder",
   "coder (deep agent)": "coder",
   "coder - deep agent": "coder",
+  hephaestus: "coder",
 
   // Strategist variants (subsumes pre-plan/logician/athena)
   "omo-plan": "strategist",
@@ -26,6 +27,8 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   logician: "strategist",
   athena: "strategist",
   "athena-junior": "strategist",
+  oracle: "strategist",
+  metis: "strategist",
 
   // Critic remains explicit and canonical
   critic: "critic",
@@ -35,12 +38,17 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   "quality guardian - verifier": "critic",
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
+  momus: "critic",
 
-  // Guard variants
-  "orchestrator-bob": "guard",
-  guard: "guard",
-  "guard (plan executor)": "guard",
-  "guard - plan executor": "guard",
+  // Manager variants (formerly Guard - the orchestrator/delegate role)
+  // Guard is now Manager. Manager focuses on delegation, TODO tracking, session handoffs.
+  // Error verification is Critic's job.
+  "orchestrator-bob": "manager",
+  "platform-manager": "manager",
+  manager: "manager",
+  guard: "manager",
+  "guard (plan executor)": "manager",
+  "guard - plan executor": "manager",
 
   // Researcher variants (subsumes Librarian, Explore)
   librarian: "researcher",
@@ -48,33 +56,27 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   researcher: "researcher",
   "researcher - codebase explorer": "researcher",
 
-  // Platform Manager variants (subsumes Ledger, Bootstrapper, Initializer, Mindmodel)
-  "ledger-creator": "platform-manager",
-  "bootstrapper": "platform-manager",
-  "project-initializer": "platform-manager",
-  "mindmodel": "platform-manager",
-  "platform-manager": "platform-manager",
-  manager: "platform-manager",
-  "platform manager - utility": "platform-manager",
-
   // SubAgent
   subagent: "coder",
   sub: "coder",
+  "sisyphus-junior": "sub",
 
   // Designer
   designer: "designer",
 
-  // Writer/copywriter aliases are handled by Brainstormer.
-  writer: "brainstormer",
-  copywriter: "brainstormer",
-  "content-writer": "brainstormer",
-  "content writer": "brainstormer",
-  "website-writer": "brainstormer",
+  // Writer variants (formerly Brainstormer - copy, content, SEO, ideation)
+  writer: "writer",
+  copywriter: "writer",
+  "content-writer": "writer",
+  "content writer": "writer",
+  "website-writer": "writer",
+  brainstormer: "writer",
 
   // Multimodal / Vision
   ui: "multimodal",
   vision: "multimodal",
   multimodal: "multimodal",
+  "multimodal-looker": "multimodal",
 }
 
 export const BUILTIN_AGENT_NAMES = new Set([
@@ -85,9 +87,8 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "designer",
   "researcher",
   "multimodal",
-  "platform-manager",
-  "guard",
-  "brainstormer",
+  "manager",
+  "writer",
 ])
 
 export function migrateAgentNames(

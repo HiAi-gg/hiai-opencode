@@ -42,4 +42,25 @@ SYNTHESIZE findings before proceeding.
 MANDATORY delegate_task params: ALWAYS include load_skills=[] and run_in_background when calling delegate_task.
 Example: delegate_task(subagent_type="researcher", prompt="...", run_in_background=true, load_skills=[])`,
   },
+  {
+    pattern: /\b(design|ui|ux|visual|frontend|layout|brand(ing)?|design.system|style|beautiful|aesthetic|polish|look.and.feel|user.interface|user.experience|css|styling|theme|color.palette|typography.scale|responsive|animation|transition|hover.effect|shadow|border.radius|spacing|grid|flexbox)\b/i,
+    message: `[search-mode]
+MAXIMIZE SEARCH EFFORT. Launch multiple background researcher agents IN PARALLEL:
+- researcher agents (codebase patterns, file structures, ast-grep)
+- researcher agents (remote repos, official docs, GitHub examples)
+Plus direct tools: Grep, ripgrep (rg), ast-grep (sg)
+NEVER stop at first result - be exhaustive.
+
+[visual-mode]
+VISUAL/UI WORK. Use task(category="visual-engineering", load_skills=["frontend-ui-ux"]) for implementation.
+For exploration: research existing patterns before building.`,
+  },
+  {
+    pattern: /\b(architecture|system.design|dependency.(map|graph)|boundar(y|ies)|integration.(point|pattern)|module.boundary|API.design|contract|data.flow|component.tree)\b/i,
+    message: `[search-mode]
+→ Use task(subagent_type='manager', load_skills=['api-and-interface-design'], ...)
+
+[guard-mode]
+→ Consult Guard for system architecture review`,
+  },
 ]

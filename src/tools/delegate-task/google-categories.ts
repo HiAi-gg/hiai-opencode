@@ -4,7 +4,7 @@ const VISUAL_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on VISUAL/UI tasks.
 
 <Routing_Policy>
-Executor contour: coder (deep execution). This category is not for cheap bounded edits.
+Executor contour: designer (deep execution). This category is not for cheap bounded edits.
 </Routing_Policy>
 
 <DESIGN_SYSTEM_WORKFLOW_MANDATE>
@@ -97,7 +97,7 @@ const ARTISTRY_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on HIGHLY CREATIVE / ARTISTIC tasks.
 
 <Routing_Policy>
-Executor contour: coder (deep execution). Reserve for high-effort creative work.
+Executor contour: designer (deep execution). Reserve for high-effort creative work.
 </Routing_Policy>
 
 Artistic genius mindset:
@@ -118,13 +118,13 @@ export const GOOGLE_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "visual-engineering",
     config: {},
-    description: "Frontend and UI systems work with design-system discipline. Uses coder execution contour.",
+    description: "Frontend and UI systems work with design-system discipline. Uses designer execution contour.",
     promptAppend: VISUAL_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "artistry",
     config: {},
-    description: "High-effort creative problem solving beyond standard patterns. Uses coder execution contour.",
+    description: "High-effort creative problem solving beyond standard patterns. Uses designer execution contour.",
     promptAppend: ARTISTRY_CATEGORY_PROMPT_APPEND,
   },
 ]

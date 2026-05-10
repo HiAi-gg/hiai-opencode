@@ -1,9 +1,9 @@
-import { tool } from '@opencode-ai/plugin'
+import { tool, type ToolDefinition } from '@opencode-ai/plugin'
 import { manager } from '../manager'
 import { formatSessionInfo } from '../formatters'
 import DESCRIPTION from './list.txt'
 
-export const ptyList = tool({
+export const ptyList: ToolDefinition = tool({
   description: DESCRIPTION,
   args: {},
   async execute() {

@@ -74,7 +74,7 @@ PRs attempting these patterns will be rejected.
 | Agent | Granted | Denied |
 |-------|---------|--------|
 | Librarian | grep_app_* | — |
-| Guard, Bob, Strategist | task, task_*, teammate | — |
+| Manager, Bob, Strategist | task, task_*, teammate | — |
 | Coder | task | — |
 | Default (all others) | — | grep_app_*, task_*, teammate, LSP |
 

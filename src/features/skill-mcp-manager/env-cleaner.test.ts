@@ -59,13 +59,6 @@ describe("createCleanMcpEnvironment", () => {
     expect(env.FIRECRAWL_API_KEY).toBe("explicit-value")
   })
 
-  test("customEnv passes through non-secret keys unchanged", () => {
-    const env = createCleanMcpEnvironment({
-      PLAYWRIGHT_MCP_EXECUTABLE_PATH: "/usr/bin/chromium",
-    })
-    expect(env.PLAYWRIGHT_MCP_EXECUTABLE_PATH).toBe("/usr/bin/chromium")
-  })
-
   test("ANTHROPIC_API_KEY in process.env is still filtered", () => {
     process.env.ANTHROPIC_API_KEY = "sk-ant-leaked"
     const env = createCleanMcpEnvironment()

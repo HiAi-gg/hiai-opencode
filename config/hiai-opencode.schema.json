@@ -1,24 +1,55 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "hiai-opencode Configuration",
-  "description": "User-facing hiai-opencode config. Users choose 10 primary agent models, service auth placeholders, and enable/disable MCP/LSP integrations. Internal routing derives hidden agents and task categories from these model slots.",
+  "description": "User-facing hiai-opencode config. Users choose 10+ primary agent models, service auth placeholders, and enable/disable MCP/LSP integrations. Internal routing derives hidden agents and task categories from these model slots.",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "description": "Config format version. Semantic versioning; bump on breaking schema changes."
+    },
     "models": {
       "type": "object",
       "description": "The only user-facing model source of truth. Use fully qualified OpenCode model IDs.",
+      "additionalProperties": false,
       "properties": {
-        "bob": { "$ref": "#/definitions/modelSlot" },
-        "coder": { "$ref": "#/definitions/modelSlot" },
-        "strategist": { "$ref": "#/definitions/modelSlot" },
-        "guard": { "$ref": "#/definitions/modelSlot" },
-        "critic": { "$ref": "#/definitions/modelSlot" },
-        "designer": { "$ref": "#/definitions/modelSlot" },
-        "researcher": { "$ref": "#/definitions/modelSlot" },
-        "manager": { "$ref": "#/definitions/modelSlot" },
-        "brainstormer": { "$ref": "#/definitions/modelSlot" },
-        "vision": { "$ref": "#/definitions/modelSlot" }
+        "bob": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "coder": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "strategist": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "guard": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "critic": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "designer": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "researcher": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "manager": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "brainstormer": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "vision": {
+          "$ref": "#/definitions/modelSlot"
+        },
+        "sub": {
+          "$ref": "#/definitions/modelSlot"
+        }
       },
       "required": [
         "bob",
@@ -35,73 +66,165 @@
     },
     "auth": {
       "type": "object",
-      "additionalProperties": { "type": "string" },
+      "description": "Service auth placeholders. Keys: stitch, context7. Others are not valid.",
+      "additionalProperties": false,
       "properties": {
-        "stitch": { "type": "string" },
-        "firecrawl": { "type": "string" },
-        "context7": { "type": "string" }
+        "stitch": {
+          "type": "string",
+          "description": "Stitch AI API key placeholder, e.g. {env:HIAI_STITCH_AUTH}"
+        },
+        "context7": {
+          "type": "string",
+          "description": "Context7 API key placeholder, e.g. {env:HIAI_CONTEXT7_AUTH}"
+        }
       }
     },
     "mcp": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "playwright": { "$ref": "#/definitions/toggle" },
-        "stitch": { "$ref": "#/definitions/toggle" },
-        "sequential-thinking": { "$ref": "#/definitions/toggle" },
-        "firecrawl": { "$ref": "#/definitions/toggle" },
-        "rag": { "$ref": "#/definitions/toggle" },
-        "mempalace": { "$ref": "#/definitions/mempalaceToggle" },
-        "context7": { "$ref": "#/definitions/toggle" },
-        "websearch": { "$ref": "#/definitions/websearchToggle" },
-        "grep_app": { "$ref": "#/definitions/toggle" }
+        "playwright": {
+          "$ref": "#/definitions/toggle"
+        },
+        "stitch": {
+          "$ref": "#/definitions/toggle"
+        },
+        "sequential-thinking": {
+          "$ref": "#/definitions/toggle"
+        },
+        "mempalace": {
+          "$ref": "#/definitions/mempalaceToggle"
+        },
+        "context7": {
+          "$ref": "#/definitions/toggle"
+        },
+        "websearch": {
+          "$ref": "#/definitions/websearchToggle"
+        },
+        "grep_app": {
+          "$ref": "#/definitions/toggle"
+        }
       }
     },
     "lsp": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "typescript": { "$ref": "#/definitions/toggle" },
-        "svelte": { "$ref": "#/definitions/toggle" },
-        "eslint": { "$ref": "#/definitions/toggle" },
-        "bash": { "$ref": "#/definitions/toggle" },
-        "pyright": { "$ref": "#/definitions/toggle" }
+        "typescript": {
+          "$ref": "#/definitions/toggle"
+        },
+        "svelte": {
+          "$ref": "#/definitions/toggle"
+        },
+        "eslint": {
+          "$ref": "#/definitions/toggle"
+        },
+        "bash": {
+          "$ref": "#/definitions/toggle"
+        },
+        "pyright": {
+          "$ref": "#/definitions/toggle"
+        }
       }
     },
     "skill_discovery": {
       "type": "object",
       "description": "Controls external skill folder scanning. Defaults keep installs deterministic.",
+      "additionalProperties": false,
       "properties": {
-        "config_sources": { "type": "boolean", "default": true },
-        "project_opencode": { "type": "boolean", "default": true },
-        "global_opencode": { "type": "boolean", "default": false },
-        "project_claude": { "type": "boolean", "default": false },
-        "global_claude": { "type": "boolean", "default": false },
-        "project_agents": { "type": "boolean", "default": false },
-        "global_agents": { "type": "boolean", "default": false }
+        "config_sources": {
+          "type": "boolean",
+          "default": true
+        },
+        "project_opencode": {
+          "type": "boolean",
+          "default": true
+        },
+        "global_opencode": {
+          "type": "boolean",
+          "default": false
+        },
+        "project_claude": {
+          "type": "boolean",
+          "default": false
+        },
+        "global_claude": {
+          "type": "boolean",
+          "default": false
+        },
+        "project_agents": {
+          "type": "boolean",
+          "default": false
+        },
+        "global_agents": {
+          "type": "boolean",
+          "default": false
+        }
       }
     },
     "subtask2": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "replace_generic": { "type": "boolean" }
+        "replace_generic": {
+          "type": "boolean"
+        }
       }
+    },
+    "ralph_loop": {
+      "type": "object",
+      "description": "Ralph-loop continuation engine config. Auto-start threshold 0 disables auto-start.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether ralph-loop is enabled."
+        },
+        "auto_start_threshold": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 0,
+          "description": "Auto-start ralph-loop when this many or more open todos exist in a single session. 0 disables auto-start."
+        }
+      }
+    },
+    "_description": {
+      "type": "string",
+      "description": "Human-readable description of this config file's purpose and version."
     }
   },
-  "required": ["models"],
+  "required": [
+    "models"
+  ],
   "definitions": {
     "modelSlot": {
       "oneOf": [
-        { "type": "string" },
+        {
+          "type": "string"
+        },
         {
           "type": "object",
           "properties": {
-            "model": { "type": "string" },
+            "model": {
+              "type": "string"
+            },
             "recommended": {
-              "enum": ["xhigh", "high", "middle", "fast", "vision", "writing", "design"]
+              "enum": [
+                "xhigh",
+                "high",
+                "middle",
+                "fast",
+                "vision",
+                "writing",
+                "design"
+              ]
             }
           },
-          "required": ["model"],
+          "required": [
+            "model"
+          ],
           "additionalProperties": false
         }
       ]
@@ -109,34 +232,52 @@
     "toggle": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean", "default": true }
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        }
       },
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "additionalProperties": false
     },
     "mempalaceToggle": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
         "pythonPath": {
           "type": "string",
           "description": "Optional explicit Python executable for MemPalace (for example: ./.venv/bin/python)."
         }
       },
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "additionalProperties": false
     },
     "websearchToggle": {
       "type": "object",
       "properties": {
-        "enabled": { "type": "boolean", "default": true },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
         "provider": {
-          "enum": ["exa", "tavily"],
+          "enum": [
+            "exa",
+            "tavily"
+          ],
           "default": "exa",
           "description": "Remote web search MCP provider. Exa works without an API key but can use EXA_API_KEY. Tavily requires TAVILY_API_KEY."
         }
       },
-      "required": ["enabled"],
+      "required": [
+        "enabled"
+      ],
       "additionalProperties": false
     }
   }

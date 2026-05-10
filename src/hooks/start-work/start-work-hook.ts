@@ -79,12 +79,28 @@ export function createStartWorkHook(ctx: PluginInput) {
     }
 
     log(`[${HOOK_NAME}] Processing start-work command`, { sessionID: input.sessionID })
-    const activeAgent = isAgentRegistered("guard")
-      ? "guard"
+    const activeAgent = isAgentRegistered("manager")
+      ? "manager"
       : "bob"
     updateSessionAgent(input.sessionID, activeAgent)
     if (output.message) {
       output.message["agent"] = resolveRegisteredAgentName(activeAgent) ?? activeAgent
+    }
+
+    try {
+      log(`[${HOOK_NAME}] Reloading agent prompt`, { sessionID: input.sessionID, activeAgent })
+      await ctx.client.session.promptAsync({
+        path: { id: input.sessionID },
+        body: {
+          noReply: true,
+          agent: activeAgent,
+          parts: [{ type: "text", text: "/" }],
+        },
+        query: { directory: ctx.directory },
+      })
+      log(`[${HOOK_NAME}] Agent prompt reloaded`, { sessionID: input.sessionID, activeAgent })
+    } catch (err) {
+      log(`[${HOOK_NAME}] Failed to reload agent prompt`, { sessionID: input.sessionID, error: String(err) })
     }
 
     const existingState = readBoulderState(ctx.directory)

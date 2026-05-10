@@ -4,6 +4,7 @@ import type { LoadedSkill } from "./features/opencode-skill-loader/types"
 import type { BackgroundManager } from "./features/background-agent"
 import type { PluginContext } from "./plugin/types"
 import type { ModelCacheState } from "./plugin-state"
+import type { Managers } from "./create-managers"
 
 import { createCoreHooks } from "./plugin/hooks/create-core-hooks"
 import { createContinuationHooks } from "./plugin/hooks/create-continuation-hooks"
@@ -36,6 +37,7 @@ export function createHooks(args: {
   pluginConfig: HiaiOpenCodeConfig
   modelCacheState: ModelCacheState
   backgroundManager: BackgroundManager
+  managers: Managers
   isHookEnabled: (hookName: HookName) => boolean
   safeHookEnabled: boolean
   mergedSkills: LoadedSkill[]
@@ -46,6 +48,7 @@ export function createHooks(args: {
     pluginConfig,
     modelCacheState,
     backgroundManager,
+    managers,
     isHookEnabled,
     safeHookEnabled,
     mergedSkills,
@@ -68,6 +71,7 @@ export function createHooks(args: {
     backgroundManager,
     sessionRecovery: core.sessionRecovery,
     ralphLoop: core.ralphLoop,
+    skillMcpManager: managers.skillMcpManager,
   })
 
   const skill = createSkillHooks({

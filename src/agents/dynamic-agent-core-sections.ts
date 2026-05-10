@@ -92,7 +92,7 @@ Core rules:
 - OpenCode plugins are not MCP servers. Keep \`@hiai-gg/hiai-opencode\` and optional \`@tarquinen/opencode-dcp\` in the OpenCode plugin list; never add MCP packages such as \`firecrawl-mcp\`, \`@playwright/mcp\`, or \`@modelcontextprotocol/server-sequential-thinking\` to the plugin list.
 - User-facing config lives in \`hiai-opencode.json\` or \`.opencode/hiai-opencode.json\`: 10 model slots, MCP enable flags, LSP enable flags, service auth placeholders, and skill discovery switches.
 - Model provider credentials are configured through OpenCode Connect. Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\` for normal model usage.
-- Service keys are separate: \`FIRECRAWL_API_KEY\`, \`STITCH_AI_API_KEY\`, \`CONTEXT7_API_KEY\`, and \`OPENCODE_RAG_URL\` when those services are enabled.
+- Service keys are separate: \`FIRECRAWL_API_KEY\`, \`STITCH_AI_API_KEY\`, \`CONTEXT7_API_KEY\` when those services are enabled. RAG is provided via agent-skills MCP with the supabase-postgres skill.
 
 MCP usage:
 - Run \`hiai-opencode doctor\` or \`hiai-opencode mcp-status\` for effective runtime MCP status.
@@ -101,10 +101,13 @@ MCP usage:
 - \`skill_mcp\` can call skill-embedded MCP and enabled hiai-opencode MCP. If an MCP is "not found", check whether the skill was loaded, whether \`hiai-opencode.json\` enables it, and whether static export is needed.
 
 Memory and retrieval:
-- MemPalace MCP is external. If enabled, use \`mempalace_status\` first, search before answering about remembered people/projects/past decisions, and write diary entries when appropriate. Never invent memories.
-- RAG MCP is external/local. Use it for project knowledge search when \`OPENCODE_RAG_URL\` is configured or the default \`http://localhost:9002/tools/search\` is reachable.
+- MemPalace MCP — your project memory. TWO mandatory rules:
+  1. **READ before acting**: Call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` BEFORE making decisions about projects, architecture, past fixes, or design choices. Always search with \`wing: "hiai-opencode"\` to scope to project memory. Search MemPalace FIRST, then external sources.
+  2. **WRITE after completing**: After finishing significant work, call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "<your name>", entry: "<AAAK-format summary>", topic: "<topic>" }})\` to record decisions, outcomes, and lessons. Write when: plan completed, bug fixed, architecture decided, or important finding discovered.
+  Never invent memories — search before assuming.
+- RAG knowledge is available via the \`agent-skills\` MCP using the \`supabase-postgres-best-practices\` skill. Use \`skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "supabase-postgres-best-practices" }})\` for project architecture and database context.
 - Sequential Thinking MCP is for complex planning/revision/branching, not for trivial edits.
-- Firecrawl/Stitch/Context7 are external web/docs/research services; missing service keys should be reported by env var name only.
+- Context7 MCP: When you need library/framework documentation, call \`mcp__context7__resolve-library-id\` then \`mcp__context7__query-docs\` DIRECTLY (do NOT delegate to Researcher for library doc lookups — Context7 is the fastest path). Limit: 3 Context7 calls per question. Firecrawl/Stitch are separate external services; missing service keys should be reported by env var name only.
 
 Installation/debugging:
 - Use \`/doctor\` or \`hiai-opencode doctor\` before changing config.

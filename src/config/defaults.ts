@@ -3,6 +3,8 @@
  *
  * The user-facing config owns model choice through 10 primary agent slots.
  * Internal routing derives hidden agents and task categories from those slots.
+ * 
+ * Note: "guard" renamed to "manager", "brainstormer" renamed to "writer"
  */
 import { existsSync, readFileSync } from "node:fs"
 import { dirname, join, normalize } from "node:path"
@@ -13,12 +15,11 @@ const REQUIRED_MODEL_SLOTS = [
   "bob",
   "coder",
   "strategist",
-  "guard",
+  "manager",  // formerly "guard"
   "critic",
   "designer",
   "researcher",
-  "manager",
-  "brainstormer",
+  "writer",   // formerly "brainstormer"
   "vision",
   "sub",
 ] as const
@@ -103,21 +104,20 @@ function deriveAgents(models: Record<ModelSlot, string>): HiaiOpencodeConfig["ag
     bob: { model: models.bob },
     coder: { model: models.coder },
     strategist: { model: models.strategist },
-    guard: { model: models.guard },
+    manager: { model: models.manager },  // formerly "guard"
     critic: { model: models.critic },
     designer: { model: models.designer },
     researcher: { model: models.researcher },
-    "platform-manager": { model: models.manager },
-    brainstormer: { model: models.brainstormer },
+    writer: { model: models.writer },     // formerly "brainstormer"
     multimodal: { model: models.vision },
     sub: { model: models.sub },
     "quality-guardian": { model: models.critic },
-    "agent-skills": { model: models.manager },
+    "agent-skills": { model: models.researcher },
   }
 }
 
-function deriveCategories(models: Record<ModelSlot, string>): Record<string, import("./types").CategoryConfig> {
-  const categories: Record<string, import("./types").CategoryConfig> = {}
+function deriveCategories(_models: Record<ModelSlot, string>): Record<string, import("./types.js").CategoryConfig> {
+  const categories: Record<string, import("./types.js").CategoryConfig> = {}
   const entries: [string, Record<string, unknown>][] = [
     ["visual-engineering", { variant: "high" }],
     ["artistry", { variant: "high" }],
@@ -130,7 +130,7 @@ function deriveCategories(models: Record<ModelSlot, string>): Record<string, imp
     ["unspecified-high", { variant: "max" }],
   ]
   for (const [name, cfg] of entries) {
-    categories[name] = cfg as import("./types").CategoryConfig
+    categories[name] = cfg as import("./types.js").CategoryConfig
   }
   return categories
 }
@@ -148,19 +148,6 @@ function deriveMcp(config: HiaiOpencodeConfig): HiaiOpencodeConfig["mcp"] {
           ...(entry.environment ?? {}),
           ...(merged.environment ?? {}),
           MEMPALACE_PYTHON: merged.pythonPath.trim(),
-        }
-      }
-
-      if (name === "websearch") {
-        const provider = merged.provider === "tavily" ? "tavily" : "exa"
-        merged.provider = provider
-        merged.type = "remote"
-        if (provider === "tavily") {
-          merged.url = "https://mcp.tavily.com/mcp/"
-          merged.headers = { Authorization: "Bearer {env:TAVILY_API_KEY}" }
-        } else {
-          merged.url = "https://mcp.exa.ai/mcp?tools=web_search_exa"
-          merged.headers = { "x-api-key": "{env:EXA_API_KEY}" }
         }
       }
 

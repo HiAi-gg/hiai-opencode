@@ -1,5 +1,5 @@
 import type { PluginInput } from "@opencode-ai/plugin"
-import { HOOK_NAME, BLOCKED_TOOLS, PLANNING_CONSULT_WARNING, PROMETHEUS_WORKFLOW_REMINDER } from "./constants"
+import { HOOK_NAME, BLOCKED_TOOLS, PLANNING_CONSULT_WARNING, STRATEGIST_WORKFLOW_REMINDER } from "./constants"
 import { log } from "../../shared/logger"
 import { SYSTEM_DIRECTIVE_PREFIX } from "../../shared/system-directive"
 import { getAgentDisplayName } from "../../shared/agent-display-names"
@@ -7,7 +7,7 @@ import { getAgentFromSession } from "./agent-resolution"
 import { isStrategistAgent } from "./agent-matcher"
 import { isAllowedFile } from "./path-policy"
 
-const TASK_TOOLS = ["task", "call_omo_agent"]
+const TASK_TOOLS = ["task", "call_hiai_agent"]
 
 export function createStrategistMdOnlyHook(ctx: PluginInput) {
   return {
@@ -68,7 +68,7 @@ export function createStrategistMdOnlyHook(ctx: PluginInput) {
           filePath,
           agent: agentName,
         })
-        output.message = (output.message || "") + PROMETHEUS_WORKFLOW_REMINDER
+        output.message = (output.message || "") + STRATEGIST_WORKFLOW_REMINDER
       }
 
       log(`[${HOOK_NAME}] Allowed: .bob/*.md write permitted`, {

@@ -4,7 +4,7 @@
 
 ## OVERVIEW
 
-19 files (~1604 LOC). The `rulesInjectorHook` — Tool Guard Tier hook that auto-injects AGENTS.md (and similar rule files) into context when a file in a directory is read, written, or edited. Proximity-based: closest rule file to the target path wins.
+19 files (~1604 LOC). The `rulesInjectorHook` — Tool Manager Tier hook that auto-injects AGENTS.md (and similar rule files) into context when a file in a directory is read, written, or edited. Proximity-based: closest rule file to the target path wins.
 
 ## HOW IT WORKS
 

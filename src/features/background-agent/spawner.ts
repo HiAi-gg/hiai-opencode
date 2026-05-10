@@ -35,7 +35,7 @@ export function buildFallbackBody(
     agent: fallbackAgent,
     tools: {
       task: false,
-      call_omo_agent: true,
+      call_hiai_agent: true,
       question: false,
       ...getAgentToolRestrictions(fallbackAgent),
     },
@@ -181,7 +181,7 @@ export async function startTask(
     system: input.skillContent,
     tools: {
       task: false,
-      call_omo_agent: true,
+      call_hiai_agent: true,
       question: false,
       ...getAgentToolRestrictions(normalizedAgent),
     },
@@ -291,7 +291,7 @@ export async function resumeTask(
     ...(resumeVariant ? { variant: resumeVariant } : {}),
     tools: {
       task: false,
-      call_omo_agent: true,
+      call_hiai_agent: true,
       question: false,
       ...getAgentToolRestrictions(task.agent),
     },

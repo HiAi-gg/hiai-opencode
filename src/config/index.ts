@@ -1,10 +1,8 @@
 /**
  * hiai-opencode config barrel
  *
- * Re-exports both the original platform config types and the oh-my-openagent
- * config schema types. The canonical config type is HiaiOpenCodeConfig (uppercase C)
- * from the oh-my-openagent schema. HiaiOpencodeConfig (lowercase c) is kept as
- * a backward-compatible alias for the original platform config shape.
+ * Re-exports config types and the hiai-opencode config schema.
+ * The canonical config type is HiaiOpenCodeConfig.
  */
 
 // Original platform config loading
@@ -22,9 +20,9 @@ export type {
   PermissionsConfig as PlatformPermissionsConfig,
 } from "./types.js";
 
-// Oh-my-openagent config schema (canonical)
-export { HiaiOpenCodeConfigSchema } from "./schema/oh-my-opencode-config.js";
-export type { HiaiOpenCodeConfig } from "./schema/oh-my-opencode-config.js";
+// hiai-opencode config schema (canonical)
+export { HiaiOpenCodeConfigSchema } from "./schema/hiai-opencode-config.js";
+export type { HiaiOpenCodeConfig } from "./schema/hiai-opencode-config.js";
 
 // Agent types
 export type { AgentName } from "./schema/agent-names.js";

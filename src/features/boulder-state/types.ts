@@ -15,7 +15,7 @@ export interface BoulderState {
   session_origins?: Record<string, "direct" | "appended">
   /** Plan name derived from filename */
   plan_name: string
-  /** Agent type to use when resuming (e.g., 'guard') */
+  /** Agent type to use when resuming (e.g., 'manager') */
   agent?: string
   /** Absolute path to the git worktree root where work happens */
   worktree_path?: string

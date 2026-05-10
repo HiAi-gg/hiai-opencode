@@ -2,7 +2,7 @@ import { getAgentListDisplayName } from "../shared/agent-display-names"
 
 /**
  * CRITICAL: This is the ONLY source of truth for core agent ordering.
- * The order is: bob → coder → strategist → guard
+ * The order is: bob → coder → strategist → manager
  *
  * DO NOT CHANGE THIS ORDER. Any PR attempting to modify this order
  * or introduce alternative ordering mechanisms (ZWSP prefixes, sort
@@ -14,7 +14,7 @@ export const CANONICAL_CORE_AGENT_ORDER = [
   "bob",
   "coder",
   "strategist",
-  "guard",
+  "manager",
 ] as const
 
 type CoreAgentName = (typeof CANONICAL_CORE_AGENT_ORDER)[number]

@@ -3,7 +3,7 @@ import type { BuiltinSkill } from "../types"
 export const hiaiOpencodeSetupSkill: BuiltinSkill = {
   name: "hiai-opencode-setup",
   description:
-    "Use when install/setup/onboarding or MCP debug mentions: install, setup, bootstrap, doctor, mcp-status, MCP not found, mcp list empty, MemPalace, RAG, firecrawl, stitch, sequential-thinking, playwright, DCP, agents, skills, or LSP.",
+    "Use when install/setup/onboarding or MCP debug mentions: install, setup, bootstrap, doctor, mcp-status, MCP not found, mcp list empty, MemPalace, firecrawl, stitch, sequential-thinking, agent-browser, DCP, agents, skills, or LSP.",
   template: `# hiai-opencode Setup And Runtime Operations
 
 Use this skill for hiai-opencode installation, diagnostics, and integration repair.
@@ -44,11 +44,10 @@ Do not add MCP packages to the OpenCode plugin array. MCP packages are launched 
 
 ## MCP Runtime Notes
 
-- \`playwright\`: node/npx; browser binaries may need \`HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1\`; Linux system deps may require admin rights.
+- \`agent-browser\`: npm i -g agent-browser && agent-browser install; use for browser automation tasks.
 - \`sequential-thinking\`: node/npx; use for complex planning, revision, and branching.
 - \`firecrawl\`: requires \`FIRECRAWL_API_KEY\`.
 - \`mempalace\`: prefers \`uv\`; otherwise Python 3.9+ with \`mempalace\`. Use \`mempalace_status\` first, search before answering memory questions, and never invent memories.
-- \`rag\`: requires \`OPENCODE_RAG_URL\` or a reachable default \`http://localhost:9002/tools/search\`.
 - \`stitch\`: requires \`STITCH_AI_API_KEY\`.
 - \`context7\`: remote docs/search; key optional but recommended for limits.
 

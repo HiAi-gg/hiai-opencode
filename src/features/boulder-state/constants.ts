@@ -10,4 +10,4 @@ export const NOTEPAD_DIR = "notepads"
 export const NOTEPAD_BASE_PATH = `${BOULDER_DIR}/${NOTEPAD_DIR}`
 
 /** Strategist plan directory pattern */
-export const PROMETHEUS_PLANS_DIR = ".bob/plans"
+export const STRATEGIST_PLANS_DIR = ".bob/plans"

@@ -1,14 +1,16 @@
 # hiai-opencode
 
 [![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml?query=branch%3Amain)
+[![npm version](https://img.shields.io/npm/v/@hiai-gg/hiai-opencode/0.2.0?style=flat-square)](https://www.npmjs.com/package/@hiai-gg/hiai-opencode)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE.md)
 
 `hiai-opencode` is an OpenCode plugin that turns vanilla OpenCode into an opinionated multi-agent cockpit.
 
 **What you get on top of plain OpenCode:**
 
-- **12-agent canonical model** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/RAG/MemPalace, Designer drives Stitch UI generation, Brainstormer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Guard sandboxes bash.
-- **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Brainstormer, `git-ops` → Manager. No more "everything routes to coder".
-- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, RAG, MemPalace, Sequential-Thinking, Playwright. Each agent's prompt knows which MCP servers it owns.
+- **12-agent canonical model** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
+- **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
+- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, MemPalace, Sequential-Thinking, Playwright. Each agent's prompt knows which MCP servers it owns.
 - **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
 - **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
 
@@ -47,12 +49,9 @@ For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
 | `Coder` | Deep implementation, focused execution | Complex features, refactors, deep work |
 | `Sub` | Bounded cheap executor | Small targeted changes, quick fixes |
 | `Strategist` | Planning, architecture, pre-check | Scope definition, architectural decisions |
-| `Guard` | Final acceptor, workflow enforcer | Closure validation, output acceptance |
+| `Manager` | Final acceptor, workflow enforcer | Closure validation, output acceptance |
 | `Critic` | Review gate, high-accuracy verification | Plan review, code review, regression catch |
 | `Researcher` | Local + external search | Codebase exploration, documentation discovery |
-| `Designer` | UI/visual, creative direction | Visual problems, UX decisions, branding |
-| `Brainstormer` | Ideation, content, copy | Landing pages, CTA, feature copy, onboarding |
-| `Vision` | Image/PDF/layout analysis | Visual inspection, multimodal interpretation |
 | `Manager` | Memory, bootstrap, ledger | Durable state, session continuity, project init |
 
 ## Modes (Task Routing)
@@ -62,7 +61,7 @@ Mode determines prompt append, variant, and reasoning effort. The executor agent
 | Mode | Agent | Prompt variant | When to use |
 |------|-------|----------------|-------------|
 | `quick` | `sub` | Fast bounded | Small targeted changes |
-| `writing` | `brainstormer` | Docs/prose | Content, i18n, copy |
+| `writing` | `writer` | Docs/prose | Content, i18n, copy |
 | `deep` | `coder` | Deep reasoning | Complex implementation |
 | `ultrabrain` | `strategist` | Plan-only | Architecture, hard logic |
 | `visual-engineering` | `designer` | UI/visual | Visual problems |
@@ -80,12 +79,11 @@ MCP integrations and which agents use them:
 | Service | Key env var | Agent(s) | What it's for |
 |---------|------------|----------|---------------|
 | Stitch | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
-| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | Web scraping, crawl, extract, search |
+| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | CLI skill for web scraping, crawl, extract, search |
 | Context7 | `CONTEXT7_API_KEY` | Researcher, Coder | Library API documentation |
 | grep_app | — | Researcher | GitHub OSS code pattern search |
 | websearch (Exa) | `EXA_API_KEY` | Researcher | General web search |
 | websearch (Tavily) | `TAVILY_API_KEY` | Researcher | General web search (alt provider) |
-| RAG | `OPENCODE_RAG_URL` | Researcher, Brainstormer, Manager | Project knowledge base |
 | MemPalace | — | Manager (primary), all agents | Project memory and past decisions |
 | Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
 | Playwright | — | Coder | Browser tests and automation |
@@ -95,7 +93,7 @@ MCP integrations and which agents use them:
 - **10 visible primary agents** + **4 hidden system agents** (Agent Skills, Sub, build, plan)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
-- MCP wiring for `playwright`, `stitch`, `sequential-thinking`, `firecrawl`, `rag`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
+- Skill wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
 ## Continuation, Ralph-Loop, And Auto-Start
@@ -141,7 +139,6 @@ Optional, depending on which services you want:
 - `EXA_API_KEY` for higher Exa websearch limits
 - `TAVILY_API_KEY` when `mcp.websearch.provider` is `tavily`
 - Python 3.9+ or `uv` for MemPalace
-- a running RAG endpoint if you enable `rag`
 - local language servers if you want LSP beyond the npm-bootstrapped helpers
 
 ## Install
@@ -158,7 +155,7 @@ Optional Dynamic Context Pruning plugin:
 opencode plugin @tarquinen/opencode-dcp@latest --global
 ```
 
-Do not put MCP server packages such as `firecrawl-mcp`, `@playwright/mcp`, or `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. `hiai-opencode` only provides the OpenCode-side launch wiring for them through its `mcp` config and helper launchers.
+Do not put MCP server packages such as `firecrawl-mcp` or `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Install the CLI skill separately using `opencode plugin` or `npm install -g @mendableai/firecrawl`.
 
 Manual OpenCode config equivalent:
 
@@ -197,20 +194,16 @@ If you installed only from npm/OpenCode and do not have this repository checked 
     "bob": { "model": "openrouter/moonshotai/kimi-k2.6", "recommended": "xhigh" },
     "coder": { "model": "openrouter/minimax/minimax-m2.7", "recommended": "high" },
     "strategist": { "model": "openrouter/anthropic/claude-opus-latest", "recommended": "high" },
-    "guard": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
+    "manager": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
     "critic": { "model": "openrouter/xiaomi/mimo-v2.5-pro", "recommended": "high" },
     "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
     "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
-    "manager": { "model": "openrouter/qwen/qwen3.5-9b", "recommended": "fast" },
-    "brainstormer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
+    "writer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
     "vision": { "model": "openrouter/google/gemma-4-26b-a4b-it", "recommended": "vision" }
   },
   "mcp": {
-    "playwright": { "enabled": true },
     "sequential-thinking": { "enabled": true },
-    "firecrawl": { "enabled": true },
     "mempalace": { "enabled": true, "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}" },
-    "rag": { "enabled": false },
     "stitch": { "enabled": false },
     "context7": { "enabled": true }
   }
@@ -293,11 +286,9 @@ Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp
 Keep skill discovery deterministic unless I explicitly ask for external skills. Leave global_opencode, project_claude, global_claude, project_agents, and global_agents disabled by default.
 
 Enable only services that can run on this machine:
-- playwright: requires node/npx; optionally set HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1 before first run if browser binaries are needed.
 - sequential-thinking: requires node/npx.
-- firecrawl: requires FIRECRAWL_API_KEY.
+- firecrawl-cli: uses CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks.
 - mempalace: requires uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed. Leave `HIAI_MCP_AUTO_INSTALL` enabled unless the user forbids package installation.
-- rag: requires OPENCODE_RAG_URL or a running local endpoint at http://localhost:9002/tools/search.
 - stitch: requires STITCH_AI_API_KEY.
 - context7: works without a key but use CONTEXT7_API_KEY if available.
 
@@ -341,12 +332,12 @@ Important prompt entrypoints:
 - `Bob`: [src/agents/bob.ts](src/agents/bob.ts) and `src/agents/bob/*`
 - `Coder`: `src/agents/coder/*`
 - `Strategist`: `src/agents/strategist/*`
-- `Guard`: `src/agents/guard/*`
+- `Manager`: `src/agents/manager/*`
 - `Critic`: `src/agents/critic/*`
 - `Vision`: [src/agents/ui.ts](src/agents/ui.ts)
 - `Manager`: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - `Researcher`: [src/agents/researcher.ts](src/agents/researcher.ts)
-- `Brainstormer` / `Writer`: [src/agents/brainstormer.ts](src/agents/brainstormer.ts)
+- `Writer` / `Writer`: [src/agents/writer.ts](src/agents/writer.ts)
 
 Name mapping and visibility:
 
@@ -368,16 +359,15 @@ Built-in helper skills include browser automation, frontend UI/UX, review, git w
 Website/product copy should use:
 
 ```text
-task(subagent_type="brainstormer", load_skills=["website-copywriting"], ...)
+task(subagent_type="writer", load_skills=["website-copywriting"], ...)
 ```
 
-`writer`, `copywriter`, and `content-writer` are aliases for `brainstormer`.
+`writer`, `copywriter`, and `content-writer` are aliases for `writer`.
 
 Manager memory stewardship:
 
 - Use `task(subagent_type="platform-manager", ...)` or `task(subagent_type="manager", ...)` for MemPalace cleanup, session ledgers, TODO hygiene, and architecture decision handoff.
 - Manager writes only durable decisions and important project state. It should not dump raw chat logs into memory.
-- RAG is retrieval-first by default; Manager syncs architecture summaries to RAG only when the configured endpoint exposes write/upsert capability.
 
 Skill discovery defaults:
 
@@ -433,7 +423,6 @@ Important service variables:
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
 - `MEMPALACE_PALACE_PATH`
-- `OPENCODE_RAG_URL`
 - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
@@ -450,7 +439,6 @@ The user-facing MCP switchboard is the `mcp` object in `hiai-opencode.json`:
 ```json
 {
   "mcp": {
-    "playwright": { "enabled": true },
     "mempalace": { "enabled": false },
     "websearch": { "enabled": true, "provider": "exa" },
     "grep_app": { "enabled": true }
@@ -469,43 +457,22 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 
 ### Works with local helper bootstrap
 
-- `playwright`: launches `@playwright/mcp@latest` through the helper npm runner. Set `HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1` if you want the launcher to install Chromium on first start.
 - `sequential-thinking`: launches `@modelcontextprotocol/server-sequential-thinking` through the helper npm runner.
-- `firecrawl`: launches `firecrawl-mcp` through the helper npm runner and requires `FIRECRAWL_API_KEY`.
+- `firecrawl`: uses the CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks.
 
-### Playwright On Minimal Linux Hosts
+### Browser Automation
 
-`hiai-opencode mcp-status` can confirm that the Playwright MCP launcher is available, but it cannot guarantee that Chromium can start on a minimal Linux image.
+For browser automation, use the `/agent-browser` skill instead of an MCP server. Install Chromium if needed:
 
-Playwright has two dependency layers:
-
-- Browser binary: install with `HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1` before OpenCode starts, or run `npx playwright install chromium`.
-- System libraries: if Chromium errors with missing packages like `libnspr4`, `libnss3`, `libatk-bridge`, or `libgtk-3`, install them with admin rights, usually `sudo npx playwright install-deps chromium`.
-
-If sudo is not available:
-
-- Use an already installed system browser by editing the Playwright command in `.opencode/hiai-opencode.json`, for example:
-
-```json
-{
-  "mcp": {
-    "playwright": {
-      "enabled": true,
-      "command": ["node", "{pluginRoot}/assets/mcp/playwright.mjs", "--browser", "chrome"],
-      "timeout": 600000
-    }
-  }
-}
+```bash
+npm i -g agent-browser && agent-browser install
 ```
 
-- Try `--browser msedge` if Edge is installed.
-- Use a remote/CDP browser or the `agent-browser`/`playwright-cli` skill path if those tools are installed.
-- Use `curl` only as a degraded HTTP check. It does not replace browser interaction, screenshots, auth flows, or client-side app verification.
+Then use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
 
 ### Needs upstream runtime or extra setup
 
 - `mempalace`: prefers `uv`; otherwise uses Python. You can force interpreter selection via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON`. If `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher can run `python -m pip install --user mempalace` on first start.
-- `rag`: requires your own running endpoint
 
 ### Important Windows note
 
@@ -518,47 +485,7 @@ This most often affects `sequential-thinking` and `mempalace`, and sometimes loc
 
 ## Troubleshooting MCP Servers
 
-### Firecrawl tools return "FIRECRAWL_API_KEY missing"
-
-The `skill_mcp` env scrubber filters `process.env` before launching stdio MCP servers — secret-shaped names (`*_API_KEY`, `*_TOKEN`, etc.) and npm/pnpm config vars are stripped so they cannot leak into a malicious server. Keys you set via `hiai-opencode.json` are an explicit allowlist and pass through.
-
-If your key only lives in `process.env`, move it into the MCP `environment` block:
-
-```json
-{
-  "mcp": {
-    "firecrawl": {
-      "enabled": true,
-      "environment": { "FIRECRAWL_API_KEY": "fc-..." }
-    }
-  }
-}
-```
-
-(Versions ≤ 0.1.8 had a bug where customEnv was merged before filtering, so even an explicit `FIRECRAWL_API_KEY` got stripped. Fixed in 0.1.9 — explicit `environment` always wins over the filter.)
-
 ### Playwright MCP fails to find Chromium
-
-When `@playwright/mcp` cannot locate a system browser, point it at one explicitly:
-
-```json
-{
-  "mcp": {
-    "playwright": {
-      "enabled": true,
-      "environment": {
-        "PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/usr/bin/chromium"
-      }
-    }
-  }
-}
-```
-
-The path can be Chromium, Chrome, or Edge. Run `npx playwright install chromium` first if no browser is installed.
-
-### `skill_mcp(playwright)` connects to localhost:3001 and fails
-
-If `mcp__playwright__browser_*` works but `skill_mcp(mcp_name="playwright", ...)` errors with a connection to `localhost:3001/mcp`, you have a leftover HTTP-mode MCP registration in your global or parent `opencode.json`. Either start the HTTP server, or remove that registration so the plugin's stdio registration (`npx @playwright/mcp@latest`) is the only one. As a workaround, agents (Vision, Critic) can call `mcp__playwright__browser_*` direct tools instead of going through `skill_mcp`.
 
 ## Diagnostics
 
@@ -593,17 +520,6 @@ Inside OpenCode, use the slash command:
 /mcp-status
 ```
 
-Example output:
-
-```text
-MCP Servers:
-✅ playwright           - backend ok
-⚠️  rag                 - enabled, http://localhost:9002/tools/search not reachable
-✅ firecrawl            - backend ok
-❌ mempalace            - python not found
-⚠️  stitch              - enabled, API key missing (STITCH_AI_API_KEY)
-```
-
 `hiai-opencode export-mcp` writes a standard `.mcp.json` so hosts whose `mcp list` ignores plugin runtime MCP can still show the same servers statically. Exports are marker-tagged as hiai-managed; by default, the command avoids overwriting non-managed files unless `HIAI_OPENCODE_EXPORT_MCP_MODE=force` is set.
 
 Use:
@@ -628,10 +544,9 @@ opencode mcp list --print-logs --log-level INFO
 | Agent skill ecosystem | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | tactical workflow skill ideas |
 | Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | installed separately |
 | MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external MCP/runtime |
-| Playwright MCP | [microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp) | external MCP |
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
-| Firecrawl MCP | [firecrawl-ai/firecrawl-mcp-server](https://github.com/firecrawl-ai/firecrawl-mcp-server) | external MCP |
-| Context7 MCP | [upstash/context7-mcp](https://github.com/upstash/context7-mcp) | external MCP |
+| Firecrawl CLI skill | [mendableai/firecrawl](https://github.com/mendableai/firecrawl) | CLI-based web scraping, crawl, extract, search |
+| Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
 ## Build And Publish

@@ -39,7 +39,7 @@ export const HookNameSchema = z.enum([
   "strategist-md-only",
   "sub-notepad",
   "start-work",
-  "guard",
+  "manager",
   "unstable-agent-babysitter",
   "task-resume-info",
   "stop-continuation-guard",

@@ -1,6 +1,7 @@
 import type { HookName, HiaiOpenCodeConfig } from "../../config"
 import type { BackgroundManager } from "../../features/background-agent"
 import type { PluginContext } from "../types"
+import type { SkillMcpManager } from "../../features/skill-mcp-manager"
 
 import {
   createTodoContinuationEnforcer,
@@ -13,6 +14,7 @@ import {
 } from "../../hooks"
 import { safeCreateHook } from "../../shared/safe-create-hook"
 import { createUnstableAgentBabysitter } from "../unstable-agent-babysitter"
+import { createMemPalaceAutoSave } from "../../hooks/mempalace-auto-save"
 
 export type ContinuationHooks = {
   stopContinuationGuard: ReturnType<typeof createStopContinuationGuardHook> | null
@@ -22,6 +24,7 @@ export type ContinuationHooks = {
   unstableAgentBabysitter: ReturnType<typeof createUnstableAgentBabysitter> | null
   backgroundNotificationHook: ReturnType<typeof createBackgroundNotificationHook> | null
   guardHook: ReturnType<typeof createGuardHook> | null
+  mempalaceAutoSave: ReturnType<typeof createMemPalaceAutoSave> | null
 }
 
 type SessionRecovery = {
@@ -35,6 +38,7 @@ export function createContinuationHooks(args: {
   isHookEnabled: (hookName: HookName) => boolean
   safeHookEnabled: boolean
   backgroundManager: BackgroundManager
+  skillMcpManager: SkillMcpManager
   sessionRecovery: SessionRecovery
   ralphLoop?: RalphLoopHook | null
 }): ContinuationHooks {
@@ -46,6 +50,7 @@ export function createContinuationHooks(args: {
     backgroundManager,
     sessionRecovery,
     ralphLoop,
+    skillMcpManager,
   } = args
 
   const safeHook = <T>(hookName: HookName, factory: () => T): T | null =>
@@ -119,8 +124,8 @@ export function createContinuationHooks(args: {
     ? safeHook("background-notification", () => createBackgroundNotificationHook(backgroundManager))
     : null
 
-  const guardHook = isHookEnabled("guard")
-    ? safeHook("guard", () =>
+  const guardHook = isHookEnabled("manager")
+    ? safeHook("manager", () =>
         createGuardHook(ctx, {
           directory: ctx.directory,
           backgroundManager,
@@ -131,6 +136,12 @@ export function createContinuationHooks(args: {
         }))
     : null
 
+  const mempalaceAutoSave = createMemPalaceAutoSave(
+    ctx as Parameters<typeof createMemPalaceAutoSave>[0],
+    skillMcpManager,
+    { enabled: true }
+  )
+
   return {
     stopContinuationGuard,
     compactionContextInjector,
@@ -139,5 +150,6 @@ export function createContinuationHooks(args: {
     unstableAgentBabysitter,
     backgroundNotificationHook,
     guardHook,
+    mempalaceAutoSave,
   }
 }

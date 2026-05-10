@@ -10,12 +10,17 @@ const RESEARCHER_DENYLIST: Record<string, boolean> = {
   write: false,
   edit: false,
   task: false,
-  call_omo_agent: false,
+  call_hiai_agent: false,
 }
 
 const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
   researcher: RESEARCHER_DENYLIST,
   critic: {
+    write: false,
+    edit: false,
+    task: false,
+  },
+  strategist: {
     write: false,
     edit: false,
     task: false,

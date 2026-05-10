@@ -19,7 +19,6 @@ import { getStrategistPrompt } from "../src/agents/strategist/system-prompt"
 import { createResearcherAgent } from "../src/agents/researcher"
 import { createDesignerAgent } from "../src/agents/designer"
 import { createBrainstormerAgent } from "../src/agents/brainstormer"
-import { createPlatformManagerAgent } from "../src/agents/platform-manager"
 import { createMultimodalLookerAgent } from "../src/agents/ui"
 import { createCriticAgent } from "../src/agents/critic/agent"
 import { createQualityGuardianAgent } from "../src/agents/quality-guardian"
@@ -53,7 +52,6 @@ const snapshots: Snapshot[] = [
   snapshot("researcher", asPrompt(createResearcherAgent(stubModel))),
   snapshot("designer", asPrompt(createDesignerAgent(stubModel))),
   snapshot("brainstormer", asPrompt(createBrainstormerAgent(stubModel))),
-  snapshot("platform-manager", asPrompt(createPlatformManagerAgent(stubModel))),
   snapshot("vision", asPrompt(createMultimodalLookerAgent(stubModel))),
   snapshot("critic", asPrompt(createCriticAgent(stubModel))),
   snapshot("quality-guardian", asPrompt(createQualityGuardianAgent(stubModel))),

@@ -23,7 +23,7 @@ import { buildDefaultBobJuniorPrompt } from "./default"
 const MODE: AgentMode = "subagent"
 
 // Core tools that SubAgent must NEVER have access to
-// Note: call_omo_agent is ALLOWED so subagents can spawn Researcher
+// Note: call_hiai_agent is ALLOWED so subagents can spawn Researcher
 const BLOCKED_TOOLS = ["task"]
 const GPT_BLOCKED_TOOLS = ["task", "apply_patch"]
 
@@ -73,7 +73,7 @@ export function createBobJuniorAgentWithOverrides(
   for (const tool of blockedTools) {
     merged[tool] = "deny"
   }
-  merged.call_omo_agent = "allow"
+  merged.call_hiai_agent = "allow"
   const toolsConfig = { permission: { ...merged, ...basePermission } as Record<string, PermissionValue> }
   const permission: Record<string, PermissionValue> = {
     ...toolsConfig.permission,

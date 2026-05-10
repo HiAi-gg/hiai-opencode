@@ -12,7 +12,7 @@ import { buildReminderMessage } from "./formatter"
 const TARGET_AGENTS = new Set([
   "bob",
   "sub",
-  "guard",
+  "manager",
 ])
 
 /**
@@ -33,7 +33,7 @@ const DELEGATABLE_WORK_TOOLS = new Set([
  */
 const DELEGATION_TOOLS = new Set([
    "task",
-   "call_omo_agent",
+   "call_hiai_agent",
 ])
 
 interface ToolExecuteInput {
@@ -80,7 +80,7 @@ export function createCategorySkillReminderHook(
     return (
       TARGET_AGENTS.has(agentKey) ||
       agentKey.includes("bob") ||
-      agentKey.includes("guard")
+      agentKey.includes("manager")
     )
   }
 

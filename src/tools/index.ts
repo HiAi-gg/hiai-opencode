@@ -34,7 +34,7 @@ import type { BackgroundManager } from "../features/background-agent"
 
 type OpencodeClient = PluginInput["client"]
 
-export { createCallOmoAgent } from "./call-omo-agent"
+export { createCallHiaiAgent } from "./call-hiai-agent"
 export { createLookAt } from "./look-at"
 export { createDelegateTask } from "./delegate-task"
 export {
@@ -44,6 +44,8 @@ export {
   createTaskUpdateTool,
 } from "./task"
 export { createHashlineEditTool } from "./hashline-edit"
+
+export { createAgentBrowserTool, createAgentBrowserIntegrationTool } from "./agent-browser"
 
 export function createBackgroundTools(manager: BackgroundManager, client: OpencodeClient): Record<string, ToolDefinition> {
   const outputManager: BackgroundOutputManager = manager

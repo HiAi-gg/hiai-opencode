@@ -16,8 +16,8 @@ test("resolveModeAgent maps quick to sub", () => {
   expect(resolveModeAgent("quick")).toBe("sub")
 })
 
-test("resolveModeAgent maps writing to brainstormer", () => {
-  expect(resolveModeAgent("writing")).toBe("brainstormer")
+test("resolveModeAgent maps writing to writer", () => {
+  expect(resolveModeAgent("writing")).toBe("writer")
 })
 
 test("resolveModeAgent maps deep to coder", () => {
@@ -36,12 +36,12 @@ test("resolveModeAgent maps artistry to designer", () => {
   expect(resolveModeAgent("artistry")).toBe("designer")
 })
 
-test("resolveModeAgent maps git to platform-manager", () => {
-  expect(resolveModeAgent("git")).toBe("platform-manager")
+test("resolveModeAgent maps git to guard", () => {
+  expect(resolveModeAgent("git")).toBe("manager")
 })
 
-test("resolveModeAgent maps git-ops to platform-manager", () => {
-  expect(resolveModeAgent("git-ops")).toBe("platform-manager")
+test("resolveModeAgent maps git-ops to guard", () => {
+  expect(resolveModeAgent("git-ops")).toBe("manager")
 })
 
 test("resolveModeAgent maps bounded to sub", () => {
@@ -76,13 +76,13 @@ test("MODE_NAMES contains all mode names", () => {
 
 test("MODE_TO_AGENT has correct mapping", () => {
   expect(MODE_TO_AGENT.quick).toBe("sub")
-  expect(MODE_TO_AGENT.writing).toBe("brainstormer")
+  expect(MODE_TO_AGENT.writing).toBe("writer")
   expect(MODE_TO_AGENT.deep).toBe("coder")
   expect(MODE_TO_AGENT.ultrabrain).toBe("strategist")
   expect(MODE_TO_AGENT["visual-engineering"]).toBe("designer")
   expect(MODE_TO_AGENT.artistry).toBe("designer")
-  expect(MODE_TO_AGENT.git).toBe("platform-manager")
-  expect(MODE_TO_AGENT["git-ops"]).toBe("platform-manager")
+  expect(MODE_TO_AGENT.git).toBe("manager")
+  expect(MODE_TO_AGENT["git-ops"]).toBe("manager")
   expect(MODE_TO_AGENT.bounded).toBe("sub")
   expect(MODE_TO_AGENT["cross-module"]).toBe("coder")
 })

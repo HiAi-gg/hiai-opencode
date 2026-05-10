@@ -71,7 +71,7 @@ export async function sendSyncPrompt(
   const effectivePrompt = buildTaskPrompt(input.args.prompt, input.agentToUse, tddEnabled)
   const tools = {
     task: allowTask,
-    call_omo_agent: true,
+    call_hiai_agent: true,
     question: false,
     ...getAgentToolRestrictions(input.agentToUse),
   }

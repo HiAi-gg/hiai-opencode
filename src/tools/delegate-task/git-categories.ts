@@ -4,7 +4,7 @@ const GIT_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on GIT / VERSION CONTROL tasks.
 
 <Routing_Policy>
-Executor contour: platform-manager (git operations specialist).
+Executor contour: guard (git operations specialist).
 </Routing_Policy>
 
 Git operations mindset:
@@ -24,7 +24,7 @@ export const GIT_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "git",
     config: {},
-    description: "Git operations: commits, branching, history, rebasing. Uses platform-manager execution contour.",
+    description: "Git operations: commits, branching, history, rebasing. Uses guard execution contour.",
     promptAppend: GIT_CATEGORY_PROMPT_APPEND,
   },
 ]

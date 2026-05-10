@@ -39,16 +39,17 @@ type AgentConfigRecord = Record<string, Record<string, unknown> | undefined> & {
   plan?: Record<string, unknown>;
 };
 
+// Note: "Guard" renamed to "Manager", "Brainstormer" renamed to "Writer"
+// Legacy names still work via AGENT_NAME_MAP and LEGACY_DISPLAY_NAMES
 const CANONICAL_VISIBLE_AGENT_NAMES = [
   "Bob",
   "Coder",
   "Strategist",
-  "Guard",
+  "Manager",
   "Critic",
   "Designer",
   "Researcher",
-  "Manager",
-  "Brainstormer",
+  "Writer",
   "Vision",
 ] as const;
 
@@ -59,20 +60,18 @@ const RUNTIME_AGENT_DESCRIPTIONS: Partial<Record<string, string>> = {
     "High-depth executor for multi-file implementation, substantial refactors, and technical delivery. (Coder - HiaiOpenCode)",
   "Strategist":
     "Planning and architecture agent for decomposition, sequencing, and decision framing before execution. (Strategist - HiaiOpenCode)",
-  "Guard":
-    "Execution supervisor that routes work, enforces discipline, and keeps delegated flows on track. (Guard - HiaiOpenCode)",
+  "Manager":
+    "Orchestrator that delegates work, tracks TODO lists, and manages session continuity. Does NOT do error verification - that's Critic's job. (Manager - HiaiOpenCode)",
   "Critic":
     "High-accuracy review gate for implementation quality, correctness, and plan validation. (Critic - HiaiOpenCode)",
   "Designer":
     "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction. (Designer - HiaiOpenCode)",
   "Researcher":
     "Specialized in codebase exploration and external documentation research. (Researcher - HiaiOpenCode)",
-  "Manager":
-    "Unified platform management agent for session continuity, project initialization, and mindmodel orchestration. (Manager - HiaiOpenCode)",
-  "Brainstormer":
-    "Idea exploration agent for divergent thinking, option generation, and concept shaping before execution. (Brainstormer - HiaiOpenCode)",
+  "Writer":
+    "Content and copy specialist for website text, SEO, positioning, and product messaging. Formerly 'Brainstormer'. (Writer - HiaiOpenCode)",
   "Vision":
-    "Multimodal analysis agent for images, PDFs, diagrams, and other media that require interpretation beyond plain text. (Vision - HiaiOpenCode)",
+    "Multimodal analysis agent for images, PDFs, diagrams, and other media that require interpretation beyond plain text. Also drives agent-browser for live UI verification. (Vision - HiaiOpenCode)",
   "Agent Skills":
     "System agent for skill registry, discovery, and capability orchestration. Not for direct user-facing work. (Agent Skills - HiaiOpenCode)",
   "Sub":
@@ -175,7 +174,7 @@ export async function applyAgentConfig(params: {
   const deduplicatedDiscoveredSkills = deduplicateSkillsByName(allDiscoveredSkills);
 
   const browserProvider =
-    params.pluginConfig.browser_automation_engine?.provider ?? "playwright";
+    params.pluginConfig.browser_automation_engine?.provider ?? "agent-browser";
   const currentModel = params.config.model as string | undefined;
   const disabledSkills = new Set<string>(params.pluginConfig.disabled_skills ?? []);
   const useTaskSystem = isTaskSystemEnabled(params.pluginConfig);
@@ -277,7 +276,7 @@ export async function applyAgentConfig(params: {
         getAgentRuntimeName("bob");
     }
 
-    // Assembly order: Bob -> Coder -> Strategist -> Guard
+    // Assembly order: Bob -> Coder -> Strategist -> Manager
     const agentConfig: Record<string, unknown> = {
       "bob": builtinAgents.bob,
     };
@@ -300,8 +299,9 @@ export async function applyAgentConfig(params: {
       });
     }
 
-    if (builtinAgents.guard) {
-      agentConfig["guard"] = builtinAgents.guard;
+    // Manager (formerly Guard) - the delegation/orchestration role
+    if (builtinAgents.manager) {
+      agentConfig["manager"] = builtinAgents.manager;
     }
 
     if (builtinAgents.designer) {
@@ -310,7 +310,7 @@ export async function applyAgentConfig(params: {
 
     agentConfig["sub"] = createBobJuniorAgentWithOverrides(
       params.pluginConfig.agents?.["sub"],
-      (builtinAgents.guard as { model?: string } | undefined)?.model,
+      (builtinAgents.manager as { model?: string } | undefined)?.model,
       useTaskSystem,
     );
 
@@ -387,7 +387,7 @@ export async function applyAgentConfig(params: {
       ...agentConfig,
       ...Object.fromEntries(
         Object.entries(builtinAgents).filter(
-          ([key]) => key !== "bob" && key !== "coder" && key !== "guard" && key !== "strategist" && key !== "sub",
+          ([key]) => key !== "bob" && key !== "coder" && key !== "manager" && key !== "strategist" && key !== "sub",
         ),
       ),
       // Precedence: later entries override earlier (project > global > user > plugin)

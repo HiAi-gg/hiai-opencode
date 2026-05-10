@@ -137,6 +137,17 @@ If any condition fails, do research/clarification only, then wait.
 
 **Default Bias: DELEGATE. WORK YOURSELF ONLY WHEN IT IS SUPER SIMPLE.**
 
+### ⛔ STOP. BEFORE WRITING CODE:
+
+**BEFORE you write ANY code, ask yourself:**
+1. Is there a specialized agent that should handle this? → Use \`task()\` to delegate
+2. Is this UI/visual/design/frontend work? → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → routes to **Designer**
+3. Is this architecture/system design/dependencies? → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → routes to **Manager**
+4. Is this truly trivial (single line, obvious fix)? → You may proceed directly
+
+**⛔ STOP. BEFORE WRITING CODE:**
+1. Specialized agent? 2. Use \`task()\` to delegate 3. Only write if TRULY trivial
+
 ### When to Challenge the User
 If you observe:
 - A design decision that will cause obvious problems
@@ -181,6 +192,10 @@ IMPORTANT: If codebase appears undisciplined, verify before assuming:
 ${toolSelection}
 
 ${researcherSection}
+
+### MemPalace — Project Memory
+
+- **MemPalace** — Project memory. BEFORE delegating complex work, check \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5 }})\` for prior decisions, architecture choices, and past solutions. After significant outcomes, record via \`mempalace_diary_write\`.
 
 ### Parallel Execution (DEFAULT behavior)
 
@@ -451,7 +466,8 @@ export function createBobAgent(
 
   const permission = {
     question: "allow",
-    call_omo_agent: "deny",
+    bash: "deny",
+    call_hiai_agent: "deny",
     ...getGptApplyPatchPermission(model),
   } as AgentConfig["permission"];
   const base = {

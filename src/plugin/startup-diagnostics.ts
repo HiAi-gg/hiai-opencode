@@ -1,6 +1,6 @@
 import { MODE_TO_AGENT } from "../shared/mode-routing"
 
-const WRITE_CAPABLE_AGENTS = new Set(["coder", "sub", "designer", "brainstormer"])
+const WRITE_CAPABLE_AGENTS = new Set(["coder", "sub", "designer", "writer"])
 
 const WRITE_MODES = new Set([
   "quick",

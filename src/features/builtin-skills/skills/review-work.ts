@@ -155,7 +155,7 @@ The QA agent follows a structured process: brainstorm scenarios exhaustively fir
 task(
   category="unspecified-high",
   run_in_background=true,
-  load_skills=["playwright", "dev-browser"],
+  load_skills=["agent-browser", "dev-browser"],
   description="QA by actually running and using the application",
   prompt="""
 <review_type>QA - HANDS-ON APP EXECUTION</review_type>
@@ -223,7 +223,7 @@ Work through the task list in priority order (P0 first). For each test:
 6. Mark the task complete
 
 **Execution guidance by app type:**
-- **Web app**: Use playwright/dev-browser to navigate, click, fill forms, verify visual output.
+- **Web app**: Use agent-browser/dev-browser to navigate, click, fill forms, verify visual output.
 - **CLI tool**: Run commands with various arguments, pipe inputs, check exit codes and output.
 - **Library/SDK**: Write and execute a test script that imports and exercises the public API.
 - **Backend API**: Use curl/httpie to hit endpoints with various payloads, verify response codes and bodies.

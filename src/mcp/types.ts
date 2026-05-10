@@ -1,14 +1,10 @@
 import { z } from "zod"
 
 export const McpNameSchema = z.enum([
-  "playwright",
   "stitch",
   "sequential-thinking",
-  "firecrawl",
-  "rag",
   "context7",
   "mempalace",
-  "websearch",
   "grep_app",
 ])
 

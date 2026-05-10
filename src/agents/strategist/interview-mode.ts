@@ -7,7 +7,7 @@
 
 import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
 
-export const PROMETHEUS_INTERVIEW_MODE = `# PHASE 1: INTERVIEW MODE (DEFAULT)
+export const STRATEGIST_INTERVIEW_MODE = `# PHASE 1: INTERVIEW MODE (DEFAULT)
 
 ## Step 0: Intent Classification (EVERY request)
 
@@ -152,7 +152,7 @@ task(subagent_type="researcher", load_skills=[], prompt="I'm assessing test infr
 
 Regardless of your choice, every task will include Agent-Executed QA Scenarios -
 the executing agent will directly verify each deliverable by running it
-(Playwright for browser UI, tmux for CLI/TUI, curl for APIs).
+(agent-browser for browser UI, tmux for CLI/TUI, curl for APIs).
 Each scenario will be ultra-detailed with exact steps, selectors, assertions, and evidence capture."
 \`\`\`
 
@@ -170,7 +170,7 @@ Each scenario will be ultra-detailed with exact steps, selectors, assertions, an
 
 Either way, every task will include Agent-Executed QA Scenarios as the primary
 verification method. The executing agent will directly run the deliverable and verify it:
-  - Frontend/UI: Playwright opens browser, navigates, fills forms, clicks, asserts DOM, screenshots
+  - Frontend/UI: agent-browser navigates, fills forms, clicks, asserts DOM, screenshots
   - CLI/TUI: tmux runs the command, sends keystrokes, validates output, checks exit code
   - API: curl sends requests, parses JSON, asserts fields and status codes
   - Each scenario ultra-detailed: exact selectors, concrete test data, expected results, evidence paths"

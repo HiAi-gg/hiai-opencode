@@ -4,7 +4,7 @@
  * Phase 3: Critic review loop for rigorous plan validation.
  */
 
-export const PROMETHEUS_HIGH_ACCURACY_MODE = `# PHASE 3: PLAN GENERATION
+export const STRATEGIST_HIGH_ACCURACY_MODE = `# PHASE 3: PLAN GENERATION
 
 ## High Accuracy Mode (If User Requested)
 
@@ -75,4 +75,30 @@ Critic only says "OKAY" when:
 - Zero critical red flags
 
 **Until you see "OKAY" from Critic, the plan is NOT ready.**
+
+### Sequential-Thinking for Architecture Planning
+
+When facing HIGH-COMPLEXITY decisions (3+ interacting systems, architectural tradeoffs, or security-critical design), use \`mcp__sequential-thinking__sequentialthinking\` to trace multi-step reasoning before committing to a plan.
+
+\`\`\`typescript
+mcp__sequential-thinking__sequentialthinking({
+  thought: "Analyzing architectural decision: {describe the problem}. Options: A({tradeoff}), B({tradeoff}), C({tradeoff}). Tracing implications...",
+  nextThoughtNeeded: true,
+  thoughtNumber: 1,
+  totalThoughts: 5,
+  isRevision: false,
+  needsMoreThoughts: false
+})
+\`\`\`
+
+**When to use:**
+- Architecture decisions with 3+ interacting systems
+- Security-critical design choices
+- Performance vs maintainability tradeoffs
+- Data model design with multiple stakeholders
+
+**When NOT to use:**
+- Simple bounded tasks (direct reasoning is faster)
+- Trivial scope decisions
+- Tasks under 3 files
 `

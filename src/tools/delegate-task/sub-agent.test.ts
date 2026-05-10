@@ -15,16 +15,15 @@ test("canonical keys include the 12 expected agents", () => {
   // through Critic for plan-time and Quality Guardian for runtime separately).
   for (const key of [
     "bob",
-    "coder",
-    "sub",
+    "manager",
     "strategist",
     "critic",
+    "coder",
+    "sub",
     "researcher",
     "multimodal",
     "designer",
-    "brainstormer",
-    "platform-manager",
-    "guard",
+    "writer",
     "agent-skills",
   ]) {
     expect(CANONICAL_DELEGATE_AGENT_KEYS as readonly string[]).toContain(key)
@@ -52,8 +51,7 @@ test("legacy descriptive aliases resolve to canonical agents", () => {
   expect(resolveCanonicalDelegateAgentKey("logician")).toBe("strategist")
   expect(resolveCanonicalDelegateAgentKey("plan")).toBe("strategist")
   expect(resolveCanonicalDelegateAgentKey("code-reviewer")).toBe("critic")
-  expect(resolveCanonicalDelegateAgentKey("writer")).toBe("brainstormer")
-  expect(resolveCanonicalDelegateAgentKey("copywriter")).toBe("brainstormer")
+  expect(resolveCanonicalDelegateAgentKey("copywriter")).toBe("writer")
   expect(resolveCanonicalDelegateAgentKey("subagent")).toBe("sub")
   expect(resolveCanonicalDelegateAgentKey("bob-junior")).toBe("sub")
 })

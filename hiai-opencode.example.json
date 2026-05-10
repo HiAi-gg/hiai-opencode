@@ -1,25 +1,105 @@
 {
-  "_description": "hiai-opencode user configuration. 10 model slots (bob/coder/strategist/guard/critic/designer/researcher/manager/brainstormer/vision/sub), MCP enable flags, service auth. recommended values: high/middle/fast/design/writing/vision/xhigh — map to effort tiers, not model quality. MCP defaults: stitch (designer), firecrawl/context7/grep_app (researcher), mempalace/rag (manager), playwright (coder for tests), sequential-thinking (strategist/critic).",
+  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Manager, Critic, Designer, Researcher, Writer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, manager, critic, designer, researcher, writer, vision.",
+  "$schema": "./config/hiai-opencode.schema.json",
   "models": {
-    "bob": { "model": "openrouter/moonshotai/kimi-k2.6", "recommended": "high" },
-    "coder": { "model": "openrouter/anthropic/claude-sonnet-4-20250514", "recommended": "high" },
-    "strategist": { "model": "openrouter/deepseek/deepseek-v4-pro", "recommended": "xhigh" },
-    "guard": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
-    "critic": { "model": "openrouter/anthropic/claude-sonnet-4-20250514", "recommended": "high" },
-    "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
-    "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
-    "manager": { "model": "openrouter/qwen/qwen3.5-9b", "recommended": "fast" },
-    "brainstormer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
-    "vision": { "model": "openrouter/google/gemma-4-26b-a4b-it", "recommended": "vision" },
-    "sub": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" }
+    "bob": {
+      "model": "openrouter/moonshotai/kimi-k2.6",
+      "recommended": "high"
+    },
+    "coder": {
+      "model": "minimax-coding-plan/MiniMax-M2.7",
+      "recommended": "high"
+    },
+    "strategist": {
+      "model": "deepseek/deepseek-v4-pro",
+      "recommended": "xhigh"
+    },
+    "critic": {
+      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "recommended": "high"
+    },
+    "designer": {
+      "model": "openrouter/google/gemini-3.1-pro-preview",
+      "recommended": "design"
+    },
+    "researcher": {
+      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "recommended": "fast"
+    },
+    "writer": {
+      "model": "openrouter/mistralai/mistral-small-2603",
+      "recommended": "writing"
+    },
+    "vision": {
+      "model": "openrouter/google/gemma-4-26b-a4b-it",
+      "recommended": "vision"
+    },
+    "sub": {
+      "model": "minimax-coding-plan/MiniMax-M2.7",
+      "recommended": "fast"
+    },
+    "manager": {
+      "model": "openrouter/qwen/qwen3.6-plus",
+      "recommended": "middle"
+    }
+  },
+  "auth": {
+    "stitch": "{env:STITCH_AI_API_KEY}",
+    "context7": "{env:CONTEXT7_API_KEY}",
+    "firecrawl": "{env:FIRECRAWL_API_KEY}"
   },
   "mcp": {
-    "playwright": { "enabled": true },
-    "stitch": { "enabled": true },
-    "sequential-thinking": { "enabled": true },
-    "firecrawl": { "enabled": true },
-    "rag": { "enabled": true },
-    "mempalace": { "enabled": true },
-    "context7": { "enabled": true }
+    "stitch": {
+      "enabled": true
+    },
+    "sequential-thinking": {
+      "enabled": true
+    },
+    "mempalace": {
+      "enabled": true
+    },
+    "context7": {
+      "enabled": true
+    },
+    "grep_app": {
+      "enabled": true
+    },
+    "websearch": {
+      "enabled": true,
+      "provider": "exa"
+    }
+  },
+  "lsp": {
+    "typescript": {
+      "enabled": true
+    },
+    "svelte": {
+      "enabled": true
+    },
+    "eslint": {
+      "enabled": true
+    },
+    "bash": {
+      "enabled": true
+    },
+    "pyright": {
+      "enabled": true
+    }
+  },
+  "skill_discovery": {
+    "config_sources": true,
+    "project_opencode": true,
+    "global_opencode": false,
+    "project_claude": false,
+    "global_claude": false,
+    "project_agents": false,
+    "global_agents": false
+  },
+  "subtask2": {
+    "replace_generic": true
+  },
+  "ralph_loop": {
+    "enabled": true,
+    "auto_start_threshold": 5
   }
 }

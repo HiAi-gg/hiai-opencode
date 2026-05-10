@@ -100,12 +100,12 @@ export function applyToolConfig(params: {
 
   applyPermissionToAgentKeys({
     agentResult: params.agentResult,
-    keys: ["guard"],
+    keys: ["manager"],
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
         task: "allow",
-        call_omo_agent: "deny",
+        call_hiai_agent: "deny",
         "task_*": "allow",
         teammate: "allow",
         ...denyTodoTools,
@@ -119,7 +119,7 @@ export function applyToolConfig(params: {
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
-        call_omo_agent: "deny",
+        call_hiai_agent: "deny",
         task: "allow",
         question: questionPermission,
         "task_*": "allow",
@@ -135,7 +135,7 @@ export function applyToolConfig(params: {
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
-        call_omo_agent: "deny",
+        call_hiai_agent: "deny",
         task: "allow",
         question: questionPermission,
         ...denyTodoTools,
@@ -149,7 +149,7 @@ export function applyToolConfig(params: {
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
-        call_omo_agent: "deny",
+        call_hiai_agent: "deny",
         task: "allow",
         question: questionPermission,
         "task_*": "allow",
@@ -165,7 +165,7 @@ export function applyToolConfig(params: {
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
-        call_omo_agent: "deny",
+        call_hiai_agent: "deny",
       };
     },
   });

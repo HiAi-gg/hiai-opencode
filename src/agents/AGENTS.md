@@ -22,13 +22,12 @@ Layer 4 (runtime) can still change behavior even after layers 1-3 are authored. 
 | Bob | `src/agents/bob.ts`, `src/agents/bob/default.ts` | `gpt-pro.ts`, `gemini.ts` |
 | Coder | `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts`, `src/agents/coder/gpt.ts` | (same) |
 | Strategist | `src/agents/strategist/gpt.ts` + mode files | `gemini.ts` |
-| Guard | `src/agents/guard/default.ts`, `src/agents/guard/gpt.ts` | `gemini.ts` |
+| Manager | `src/agents/manager/default.ts`, `src/agents/manager/gpt.ts` | `gemini.ts` |
 | Critic | `src/agents/critic/default.ts` | (none) |
 | Vision | `src/agents/ui.ts` | (none) |
-| Manager | `src/agents/platform-manager.ts` | (none) |
 | Designer | `src/agents/designer.ts` | (none) |
 | Researcher | `src/agents/researcher.ts` | (none) |
-| Brainstormer | `src/agents/brainstormer.ts` | (none) |
+| Writer | `src/agents/writer.ts` | (none) |
 
 ## Shared Prompt Sections
 

@@ -36,7 +36,7 @@ interface EventInput {
 const ORCHESTRATOR_AGENTS = new Set([
   "bob",
   "sub",
-  "guard",
+  "manager",
   "coder",
   "strategist",
 ]);

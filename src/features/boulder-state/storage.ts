@@ -7,7 +7,7 @@
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs"
 import { dirname, join, basename } from "node:path"
 import type { BoulderState, PlanProgress, TaskSessionState } from "./types"
-import { BOULDER_DIR, BOULDER_FILE, PROMETHEUS_PLANS_DIR } from "./constants"
+import { BOULDER_DIR, BOULDER_FILE, STRATEGIST_PLANS_DIR } from "./constants"
 
 const RESERVED_KEYS = new Set(["__proto__", "prototype", "constructor"])
 
@@ -174,7 +174,7 @@ export function upsertTaskSessionState(
  * Strategist stores plans at: {project}/.bob/plans/{name}.md
  */
 export function findStrategistPlans(directory: string): string[] {
-  const plansDir = join(directory, PROMETHEUS_PLANS_DIR)
+  const plansDir = join(directory, STRATEGIST_PLANS_DIR)
 
   if (!existsSync(plansDir)) {
     return []

@@ -31,7 +31,7 @@ User input
 │  category routes to:                                  │
 │    deep/ultrabrain → coder (implementation)           │
 │    quick/bounded    → sub (cheap bounded)            │
-│    writing         → brainstormer (copy)            │
+│    writing         → writer (copy)            │
 │    visual-engineering → designer (Stitch MCP)       │
 │    artistry       → designer (creative)             │
 │                                                      │
@@ -72,12 +72,12 @@ These are the agents meant to be visible in the normal UI:
 - `Bob`
 - `Coder`
 - `Strategist`
-- `Guard`
+- `Manager`
 - `Critic`
 - `Designer`
 - `Researcher`
 - `Manager`
-- `Brainstormer`
+- `Writer`
 - `Vision`
 
 ### Hidden/System Agents
@@ -130,13 +130,12 @@ These files create the top-level agent config objects:
 - Bob: [src/agents/bob.ts](src/agents/bob.ts)
 - Coder: [src/agents/coder/agent.ts](src/agents/coder/agent.ts)
 - Strategist: `src/agents/strategist/*`
-- Guard: [src/agents/guard/agent.ts](src/agents/guard/agent.ts)
+- Manager: [src/agents/manager/agent.ts](src/agents/manager/agent.ts)
 - Critic: [src/agents/critic/agent.ts](src/agents/critic/agent.ts)
 - Designer: [src/agents/designer.ts](src/agents/designer.ts)
-- Brainstormer: [src/agents/brainstormer.ts](src/agents/brainstormer.ts)
+- Writer: [src/agents/writer.ts](src/agents/writer.ts)
 - Agent Skills: [src/agents/agent-skills.ts](src/agents/agent-skills.ts)
 - Vision: [src/agents/ui.ts](src/agents/ui.ts)
-- Manager: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - Researcher: [src/agents/researcher.ts](src/agents/researcher.ts)
 
 ### Layer 2: Model-Specific Prompt Variants
@@ -146,7 +145,7 @@ Examples:
 - Bob: `src/agents/bob/gpt-pro.ts`, `src/agents/bob/gemini.ts`
 - Coder: `src/agents/coder/gpt.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts`
 - Strategist: `src/agents/strategist/gpt.ts`, `src/agents/strategist/gemini.ts`
-- Guard: `src/agents/guard/gpt.ts`, `src/agents/guard/gemini.ts`
+- Manager: `src/agents/manager/gpt.ts`, `src/agents/manager/gemini.ts`
 
 This is where provider- or model-family-specific behavior usually lives.
 
@@ -258,7 +257,6 @@ Helper launchers live in:
 
 Current MCP set:
 
-- `playwright`
 - `stitch`
 - `sequential-thinking`
 - `firecrawl`
@@ -267,6 +265,7 @@ Current MCP set:
 - `context7`
 - `websearch`
 - `grep_app`
+- `agent-browser`
 
 ## LSP
 

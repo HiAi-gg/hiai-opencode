@@ -118,7 +118,6 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `EXA_API_KEY`
    - `TAVILY_API_KEY`
    - `MEMPALACE_PYTHON`
-   - `OPENCODE_RAG_URL`
    - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
    - `HIAI_MCP_AUTO_INSTALL`
 7. Verify with:
@@ -132,23 +131,13 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 
 | Service | Enable when | Dependency behavior |
 |---|---|---|
-| `playwright` | Node and npx are available | Helper launcher runs `@playwright/mcp@latest`; set `HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1` to install Chromium on first start |
 | `sequential-thinking` | Node and npx are available | Helper launcher runs `@modelcontextprotocol/server-sequential-thinking` |
-| `firecrawl` | `FIRECRAWL_API_KEY` is set | Helper launcher runs `firecrawl-mcp` |
+
 | `mempalace` | `uv` is available, or Python 3.9+ with pip is available | Launcher prefers `uv`; otherwise uses Python and can run `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is not disabled. Interpreter can be pinned via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` |
-| `rag` | User has a local or remote RAG endpoint | Uses `OPENCODE_RAG_URL`, defaulting to `http://localhost:9002/tools/search` |
 | `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
 | `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
 | `websearch` | User wants remote web search | Defaults to Exa; `EXA_API_KEY` optional for Exa, `TAVILY_API_KEY` required for Tavily |
 | `grep_app` | User wants GitHub/code search | Remote MCP endpoint; no key required |
-
-Playwright troubleshooting rules:
-
-- `skill_mcp` can call enabled hiai-opencode builtin MCPs and skill-embedded MCPs. If it reports a builtin MCP such as `firecrawl` as missing, check that the installed plugin version includes builtin fallback support and that `hiai-opencode.json` has that MCP enabled.
-- If `skill_mcp` says `MCP server "playwright" not found`, first check `hiai-opencode mcp-status`; do not report this as a browser dependency failure.
-- If Chromium reports missing Linux libraries (`libnspr4`, `libnss3`, `libatk-bridge`, `libgtk-3`, etc.), explain that MCP is present but the host lacks browser system dependencies.
-- Without sudo, try a system browser override in `hiai-opencode.json`, such as `--browser chrome` or `--browser msedge`.
-- If no browser path works, use `curl` only as degraded HTTP verification and explicitly say it is not a replacement for browser testing.
 
 ### Prompt For OpenCode Users
 
@@ -164,11 +153,8 @@ Verify @hiai-gg/hiai-opencode is registered. If I ask for Dynamic Context Prunin
 Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp object as the only switchboard for MCP enable/disable.
 
 Check which services can run here:
-- playwright: node/npx; optionally HIAI_PLAYWRIGHT_INSTALL_BROWSERS=1.
 - sequential-thinking: node/npx.
-- firecrawl: FIRECRAWL_API_KEY.
 - mempalace: uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed; `HIAI_MCP_AUTO_INSTALL` controls first-run pip install.
-- rag: OPENCODE_RAG_URL or http://localhost:9002/tools/search.
 - stitch: STITCH_AI_API_KEY.
 - context7: optional CONTEXT7_API_KEY.
 - websearch: optional EXA_API_KEY for Exa, or TAVILY_API_KEY when provider is tavily.
@@ -186,12 +172,12 @@ Visible primary agents:
 - `Bob`
 - `Coder`
 - `Strategist`
-- `Guard`
+- `Manager`
 - `Critic`
 - `Designer`
 - `Researcher`
 - `Manager`
-- `Brainstormer`
+- `Writer`
 - `Vision`
 
 Hidden/system or compatibility agents:
@@ -208,8 +194,8 @@ Automatic task distribution:
 - `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` use Coder's deep contour
 - `Critic` is selected explicitly for review and verification passes
 - `Researcher` is selected explicitly for codebase and documentation discovery
-- `Designer`, `Brainstormer`, `Manager`, and `Vision` are direct callable specialists, not category executors
-- `Bob` and `Guard` are orchestration agents, not normal subagent routing targets
+- `Designer`, `Writer`, `Manager`, and `Vision` are direct callable specialists, not category executors
+- `Bob` and `Manager` are orchestration agents, not normal subagent routing targets
 
 If runtime output differs from that set, inspect:
 
@@ -227,7 +213,7 @@ The runtime loader is:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
-Users configure only the 10 primary agent model slots under `models`: `bob`, `coder`, `strategist`, `guard`, `critic`, `designer`, `researcher`, `manager`, `brainstormer`, and `vision`.
+Users configure only the 10 primary agent model slots under `models`: `bob`, `coder`, `strategist`, `manager`, `critic`, `designer`, `researcher`, `writer`, `vision`, and `sub`.
 Hidden agents and task categories are derived internally in `src/config/defaults.ts`.
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 When helping a user choose model IDs, tell them to connect providers in OpenCode, run `opencode models`, and copy the exact `provider/model-id` strings into `hiai-opencode.json`. Do not invent provider prefixes.
@@ -244,7 +230,7 @@ Use this table when you need to change something and want the right file immedia
 | Change Bob behavior or prompt text | [src/agents/bob.ts](src/agents/bob.ts), `src/agents/bob/*` | Bob prompt authoring lives there |
 | Change Coder behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
 | Change Strategist behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
-| Change Guard behavior or prompt text | `src/agents/guard/*` | Guard prompt authoring lives there |
+| Change Manager behavior or prompt text | `src/agents/manager/*` | Manager prompt authoring lives there |
 | Change Critic prompt text | `src/agents/critic/*` | Critic prompt authoring lives there |
 | Change Vision prompt text | [src/agents/ui.ts](src/agents/ui.ts) | Vision lives there |
 | Change Manager prompt text | [src/agents/platform-manager.ts](src/agents/platform-manager.ts) | Manager lives there |
@@ -277,7 +263,7 @@ These decide the high-level config object for each agent:
 - Bob: [src/agents/bob.ts](src/agents/bob.ts)
 - Coder: `src/agents/coder/*`
 - Strategist: `src/agents/strategist/*`
-- Guard: `src/agents/guard/*`
+- Manager: `src/agents/manager/*`
 - Critic: `src/agents/critic/*`
 - Vision: [src/agents/ui.ts](src/agents/ui.ts)
 - Manager: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
@@ -287,10 +273,10 @@ These decide the high-level config object for each agent:
 
 Examples:
 
-- Bob: `src/agents/bob/gpt-pro.ts`, `src/agents/bob/gemini.ts`
-- Coder: `src/agents/coder/gpt.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts`
-- Strategist: `src/agents/strategist/gpt.ts`, `src/agents/strategist/gemini.ts`
-- Guard: `src/agents/guard/gpt.ts`, `src/agents/guard/gemini.ts`
+- Bob: `src/agents/bob.ts` (single file — variants are merged via factory logic)
+- Coder: `src/agents/coder/agent.ts`, `src/agents/coder/gpt.ts` (model routing via index.ts)
+- Strategist: `src/agents/strategist/index.ts` (mode variants via sub-directory files)
+- Manager: `src/agents/manager/agent.ts`, `src/agents/manager/default.ts`, `src/agents/manager/default-prompt-sections.ts`
 
 ### Layer 3: Shared Prompt Sections
 
@@ -350,20 +336,17 @@ Runtime helper assets live in:
 
 Current MCP set:
 
-- `playwright`
-- `stitch`
 - `sequential-thinking`
-- `firecrawl`
-- `rag`
 - `mempalace`
+- `stitch`
 - `context7`
 - `websearch`
 - `grep_app`
 
 ## Writing And Website Copy
 
-Public-facing website/product copy is owned by `brainstormer`.
-`writer`, `copywriter`, `content-writer`, and `website-writer` are aliases for `brainstormer`.
+Public-facing website/product copy is owned by `writer`.
+`writer`, `copywriter`, `content-writer`, and `website-writer` are aliases for `writer`.
 
 Use the `website-copywriting` skill for:
 
@@ -377,10 +360,10 @@ Use the `website-copywriting` skill for:
 Preferred invocation:
 
 ```text
-task(subagent_type="brainstormer", load_skills=["website-copywriting"], run_in_background=false, description="Write landing page copy", prompt="...")
+task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false, description="Write landing page copy", prompt="...")
 ```
 
-Use `designer` or `visual-engineering` for visual direction. Use `brainstormer` for words.
+Use `designer` or `visual-engineering` for visual direction. Use `writer` for words.
 
 ## Manager Memory Stewardship
 
@@ -389,7 +372,7 @@ Use `platform-manager` / `manager` when durable project memory or handoff state 
 Manager owns:
 
 - MemPalace decision hygiene: search first, deduplicate, write only durable decisions and important preferences.
-- Architecture memory updates: when architecture changes, update MemPalace and sync to RAG only if the configured RAG endpoint exposes write/upsert capability.
+- Architecture memory updates: when architecture changes, update MemPalace.
 - TODO hygiene: mark completed items complete, preserve unfinished tasks with blocker and next action, remove duplicate stale TODOs.
 - Session continuity: write concise handoff ledgers, not raw transcripts.
 
@@ -453,7 +436,6 @@ Common service keys:
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
 - `MEMPALACE_PALACE_PATH`
-- `OPENCODE_RAG_URL`
 - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
@@ -471,21 +453,46 @@ AGENTS:
   sub              — implementation (cheap, bounded)
   strategist       — planning (read-only, no code)
   critic           — review gate (APPROVED/REJECTED)
-  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/websearch/RAG/MemPalace
+  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/websearch/MemPalace
   designer         — UI via Stitch MCP
-  brainstormer     — copy/positioning/SEO (write to copy files only)
+  writer     — copy/positioning/SEO (write to copy files only)
   vision           — PDF/image extraction
-  manager          — MemPalace/RAG memory steward
+  manager          — MemPalace memory steward
   quality-guardian — post-impl review + bug investigation
-  guard            — sandboxed bash executor
 
 MCP INTEGRATIONS (who uses what):
   Stitch              -> designer (UI generation)
-  Firecrawl           -> researcher (web scrape/search/extract)
+  Firecrawl           -> researcher (CLI skill)
   Context7            -> researcher, coder (lib docs)
   grep_app            -> researcher (OSS code patterns)
   websearch           -> researcher (general web)
-  RAG                 -> researcher, brainstormer, manager (project knowledge)
+  MemPalace           -> manager (primary), all agents (search before answer)
+  Sequential-Thinking -> strategist, critic (deep reasoning)
+  Playwright          -> coder (only for tests/automation)
+
+LSP:
+  typescript, svelte, eslint, bash, pyright
+  -> coder MUST run lsp_diagnostics after every edit
+```
+AGENTS:
+  bob (you)        — orchestrator
+  coder            — implementation (deep)
+  sub              — implementation (cheap, bounded)
+  strategist       — planning (read-only, no code)
+  critic           — review gate (APPROVED/REJECTED)
+  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/websearch/MemPalace
+  designer         — UI via Stitch MCP
+  writer     — copy/positioning/SEO (write to copy files only)
+  vision           — PDF/image extraction
+  manager          — MemPalace memory steward
+  quality-guardian — post-impl review + bug investigation
+
+MCP INTEGRATIONS (who uses what):
+  Stitch              -> designer (UI generation)
+  Firecrawl           -> researcher (CLI skill)
+  Context7            -> researcher, coder (lib docs)
+  grep_app            -> researcher (OSS code patterns)
+  websearch           -> researcher (general web)
   MemPalace           -> manager (primary), all agents (search before answer)
   Sequential-Thinking -> strategist, critic (deep reasoning)
   Playwright          -> coder (only for tests/automation)
@@ -507,6 +514,179 @@ This most often affects:
 - `sequential-thinking`
 - `mempalace`
 - local `npx`-backed MCP processes
+
+## Closure Protocol
+
+All agents MUST wrap their final response in a structured `<CLOSURE>` block. This is injected into every agent prompt via `buildAgentIdentitySection()` in [src/agents/prompt-library/identity.ts](src/agents/prompt-library/identity.ts).
+
+### Schema
+
+```xml
+<CLOSURE>
+{
+  "reasoning": "Concise summary of what was achieved and why it satisfies the request.",
+  "evidence": ["Link to test results", "File path to changes", "Log snippets", "LSP diagnostics clean"],
+  "readiness": "done" | "accept" | "reject"
+}
+</CLOSURE>
+```
+
+### Readiness Values
+
+| Value | Meaning |
+|-------|---------|
+| `done` | Task completed successfully |
+| `accept` | Reviewer approved the proposed changes |
+| `reject` | Reviewer denied the changes with feedback |
+
+**WARNING**: Responses without a valid `<CLOSURE>` block will be automatically REJECTED by the system.
+
+### Relationship to `<promise>DONE</promise>`
+
+The ralph-loop continuation system uses `<promise>DONE</promise>` as its signal to stop iterating. This is separate from `<CLOSURE>`:
+
+- `<CLOSURE>` — task completion marker, required on every agent response
+- `<promise>DONE</promise>` — ralph-loop continuation signal, stops the loop when emitted
+
+Both can appear together; they do not conflict. The closure validator lives in [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts).
+
+### When to Inspect Closure Injection
+
+If an agent response is missing `<CLOSURE>` at runtime but the source prompts look correct, check in order:
+
+1. Does the agent factory call `buildAgentIdentitySection()`? (located in [src/agents/prompt-library/identity.ts](src/agents/prompt-library/identity.ts))
+2. Does `src/shared/closure-protocol.ts` export the correct `CLOSURE_SCHEMA_PROMPT`?
+3. Does `src/agents/builtin-agents/agent-overrides.ts` or [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) strip or override the closure injection?
+
+## Troubleshooting
+
+### `hiai-opencode doctor` reports schema errors
+
+1. Run `hiai-opencode doctor` and look for the specific missing or unknown key
+2. Check your `hiai-opencode.json` against the schema in [config/hiai-opencode.schema.json](config/hiai-opencode.schema.json)
+3. Verify all keys in `models`, `mcp`, and `skill_discovery` match documented shapes
+4. Run `opencode debug config` to confirm the plugin is registered
+
+### `hiai-opencode mcp-status` shows all services as ⚠️ missing
+
+- The plugin is likely registered but cannot find its bundled `hiai-opencode.json`
+- Run `bun run build` in the plugin repository to ensure `dist/` is populated
+- If running from npm, reinstall: `opencode plugin @hiai-gg/hiai-opencode@latest --global`
+
+### `opencode mcp list` does not show hiai-opencode MCP servers
+
+- `opencode mcp list` reads static `.mcp.json` files, not runtime plugin MCP
+- Run `hiai-opencode export-mcp .mcp.json` to write a static export
+- The plugin auto-exports on startup when `HIAI_OPENCODE_AUTO_EXPORT_MCP` is not disabled
+
+### Firecrawl tools return "FIRECRAWL_API_KEY missing" despite having the key set
+
+The `skill_mcp` env scrubber strips secret-shaped env vars before launching stdio MCP servers. If your key only lives in `process.env`, move it into the explicit `environment` block in `hiai-opencode.json`:
+
+```json
+{
+  "mcp": {
+    "firecrawl-cli": {
+      "enabled": true,
+      "environment": { "FIRECRAWL_API_KEY": "fc-..." }
+    }
+  }
+}
+```
+
+This bypasses the filter because explicit `environment` entries are an allowlist.
+
+### Browser Automation (agent-browser)
+
+For browser automation, use the `/agent-browser` skill instead of MCP. The CLI-based approach uses native Chrome via CDP, snapshot-based @eN refs, and doesn't require MCP server startup.
+
+Install:
+```bash
+npm i -g agent-browser && agent-browser install
+```
+
+Key pattern: `snapshot -i --json` → @eN refs → `click @e2` / `fill @e3 "text"`
+
+Use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
+
+### MemPalace MCP fails with "python not found"
+
+The launcher prefers `uv`. If `uv` is not available, it falls back to `python`. Set `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` to the correct interpreter:
+
+```json
+{
+  "mcp": {
+    "mempalace": {
+      "enabled": true,
+      "pythonPath": "/usr/bin/python3"
+    }
+  }
+}
+```
+
+If `HIAI_MCP_AUTO_INSTALL` is not disabled, the launcher will attempt `python -m pip install --user mempalace` on first start.
+
+### Agent prompt looks correct in source but wrong at runtime
+
+The final runtime prompt is assembled from multiple layers beyond `src/agents/`:
+
+1. Source prompt in `src/agents/<agent>/*.ts`
+2. Model-specific variant in `src/agents/<agent>/<model>.ts`
+3. Shared prompt-library blocks in `src/agents/prompt-library/*`
+4. Runtime injection from `src/agents/builtin-agents/agent-overrides.ts` and `src/agents/builtin-agents/environment-context.ts`
+5. Closure protocol from `src/shared/closure-protocol.ts`
+6. Plugin handler normalization in [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
+
+Inspect layer 6 first when runtime output diverges from source.
+
+## Common Pitfalls
+
+### Installing MCP server packages as OpenCode plugins
+
+MCP servers (`firecrawl-mcp`, `@modelcontextprotocol/server-sequential-thinking`) are NOT OpenCode plugins. Adding them to the `plugin` array in `opencode.json` will not work.
+
+Register only `@hiai-gg/hiai-opencode` as a plugin. MCP wiring is handled through the `mcp` object in `hiai-opencode.json`.
+
+### Inventing model ID prefixes
+
+When users ask which model to choose, tell them to run `opencode models` and copy the exact `provider/model-id` strings from that output into `hiai-opencode.json`. Do not invent prefixes like `openrouter/minimax/` — the provider prefix must match what OpenCode Connect has authorized.
+
+### Hardcoding API keys in config files
+
+Never put actual API key values in `hiai-opencode.json`. Use `{env:VARIABLE_NAME}` placeholder format:
+
+```json
+{
+  "mcp": {
+    "firecrawl-cli": {
+      "enabled": true,
+      "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" }
+    }
+  }
+}
+```
+
+Check with: `grep -E '(AQ\.|fc-|ctx7sk-|sk-|key-)' hiai-opencode.json` — should return 0 matches.
+
+### Enabling all skill sources
+
+Global OpenCode, Claude, and Agents skill folders are disabled by default for a reason: they can pollute the skill tree with low-quality or irrelevant skills. Only enable them if the user explicitly asks.
+
+### Writing code in Bob or Manager
+
+Bob is an orchestrator — it MUST delegate, not implement. Manager is a memory steward — it should not write code files. Assign implementation to `Coder` or `Sub`, not to these orchestration agents.
+
+### Confusing `<CLOSURE>` with `<promise>DONE</promise>`
+
+`<CLOSURE>` is a mandatory task-completion marker that Manager checks on every response. `<promise>DONE</promise>` is a ralph-loop signal that stops the iteration loop. They serve different purposes and both can coexist. See the Closure Protocol section for details.
+
+### Treating `src/agents/` as the only prompt source
+
+Prompt assembly has 6 layers. Changing a file in `src/agents/` is necessary but not sufficient if layers 4–6 are overriding the result. See "Prompting Truth Model" for the full picture.
+
+### Skipping `lsp_diagnostics` after edits
+
+Coder MUST run `lsp_diagnostics` after every file edit. LSP errors will not surface automatically — agents must proactively call the diagnostic tool to catch TypeScript/Svelte/Bash/Python errors.
 
 ## Prompt Ownership
 

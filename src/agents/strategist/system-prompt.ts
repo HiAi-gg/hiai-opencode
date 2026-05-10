@@ -5,13 +5,13 @@ export type { StrategistMode }
  * Strategist system prompt — unified across all models.
  * "interview" mode is the full spec session; "planning" is the lean default.
  */
-export const PROMETHEUS_SYSTEM_PROMPT = getUnifiedStrategistPrompt("interview")
+export const STRATEGIST_SYSTEM_PROMPT = getUnifiedStrategistPrompt("interview")
 
-export const PROMETHEUS_PERMISSION = {
-  edit: "allow" as const,
-  bash: "allow" as const,
-  webfetch: "allow" as const,
-  question: "allow" as const,
+export const STRATEGIST_PERMISSION = {
+  edit: "allow" as const,       // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
+  bash: "deny" as const,        // denied: Strategist is planning-only, no shell execution
+  webfetch: "allow" as const,   // allowed: research/web content reading
+  question: "allow" as const,   // allowed: user interviews
 }
 
 export type StrategistPromptSource = "default"

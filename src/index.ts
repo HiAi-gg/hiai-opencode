@@ -92,7 +92,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
 
   materializeBuiltinSkills(
     createBuiltinSkills({
-      browserProvider: pluginConfig.browser_automation_engine?.provider ?? "playwright",
+      browserProvider: pluginConfig.browser_automation_engine?.provider ?? "agent-browser",
       disabledSkills: new Set(pluginConfig.disabled_skills ?? []),
     }),
   )
@@ -138,6 +138,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
     pluginConfig,
     modelCacheState,
     backgroundManager: managers.backgroundManager,
+    managers,
     isHookEnabled,
     safeHookEnabled,
     mergedSkills: toolsResult.mergedSkills,

@@ -1,5 +1,5 @@
 import type { CategoryConfig } from "../config/schema";
-import { PROMETHEUS_PERMISSION, getStrategistPrompt } from "../agents/strategist";
+import { STRATEGIST_PERMISSION, getStrategistPrompt } from "../agents/strategist";
 import { resolvePromptAppend } from "../agents/builtin-agents/resolve-file-uri";
 import { AGENT_MODEL_REQUIREMENTS } from "../shared/model-requirements";
 import type { FallbackEntry } from "../shared/model-requirements";
@@ -100,7 +100,7 @@ export async function buildStrategistAgentConfig(params: {
     ...(variantToUse ? { variant: variantToUse } : {}),
     mode: "all",
     prompt: getStrategistPrompt(resolvedModel, params.disabledTools) + "\n\n" + CLOSURE_SCHEMA_PROMPT,
-    permission: PROMETHEUS_PERMISSION,
+    permission: STRATEGIST_PERMISSION,
     description: `${(params.configAgentPlan?.description as string) ?? "Plan agent"} (Strategist - HiaiOpenCode)`,
     color: (params.configAgentPlan?.color as string) ?? "#FF5722",
     ...(temperatureToUse !== undefined ? { temperature: temperatureToUse } : {}),

@@ -36,6 +36,6 @@ Prefer copy that can be pasted into UI:
 
 ## Delegation Hint
 
-Use \`task(subagent_type="brainstormer", load_skills=["website-copywriting"], ...)\` for copy-only work.
+Use \`task(subagent_type="writer", load_skills=["website-copywriting"], ...)\` for copy-only work.
 Use \`category="writing"\` when a category is required. Writer/copywriter aliases map to Brainstormer.`,
 }

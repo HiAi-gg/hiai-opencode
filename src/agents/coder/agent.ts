@@ -88,7 +88,7 @@ export function createCoderAgent(
     color: "#D97706",
     permission: {
       question: "allow",
-      call_omo_agent: "deny",
+      call_hiai_agent: "deny",
       ...getGptApplyPatchPermission(model),
     } as AgentConfig["permission"],
   };

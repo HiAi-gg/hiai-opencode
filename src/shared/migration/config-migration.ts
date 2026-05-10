@@ -39,6 +39,15 @@ export function migrateConfigFile(
     }
   }
 
+  // Migrate model slot names: guard → manager, brainstormer → writer
+  if (copy.models && typeof copy.models === "object") {
+    const { migrated, changed } = migrateAgentNames(copy.models as Record<string, unknown>)
+    if (changed) {
+      copy.models = migrated
+      needsWrite = true
+    }
+  }
+
   // Migrate model versions in agents (skip already-applied migrations)
   if (copy.agents && typeof copy.agents === "object") {
     const { migrated, changed, newMigrations } = migrateModelVersions(

@@ -36,8 +36,21 @@ export function buildAntiPatternsSection(): string {
 ${patterns.join("\n")}`
 }
 
+export function buildDelegationWarningSection(): string {
+  return `## ⛔ Delegation Required — Before You Write Code
+
+**STOP. BEFORE WRITING ANY CODE, ASK YOURSELF:**
+
+1. **Is there a specialized agent that should handle this?** → Use \`task()\` to delegate
+2. **Is this UI/visual/design/frontend work?** → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → routes to **Designer**
+3. **Is this architecture/system design/dependencies?** → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → routes to **Manager**
+4. **Is this truly trivial** (single line, obvious fix)? → You may proceed directly
+
+**Default Bias: DELEGATE. WORK YOURSELF ONLY WHEN IT IS SUPER SIMPLE.**`
+}
+
 export function buildHardRulesSection(): string {
-  return buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
+  return buildDelegationWarningSection() + "\n\n" + buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
 }
 
 export function buildToolCallFormatSection(): string {
@@ -179,4 +192,10 @@ export function buildToolUsageRulesSection(): string {
 - After any write/edit tool call, briefly restate what changed, where, and what validation follows
 - Prefer tools over internal knowledge whenever you need specific data (files, configs, patterns)
 </tool_usage_rules>`;
+}
+
+export function buildMemorySection(): string {
+  return `### Memory (MemPalace)
+
+Before starting work, search MemPalace for relevant past decisions. After completing significant work, record outcomes via \`mempalace_diary_write\`.`;
 }

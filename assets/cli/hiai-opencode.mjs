@@ -15,22 +15,6 @@ const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const MCP_EXPORT_MARKER = "hiai-opencode"
 
 const MCP_REGISTRY = {
-  playwright: {
-    defaultEnabled: true,
-    requiredEnv: [],
-    check: checkNodeNpx,
-  },
-  rag: {
-    defaultEnabled: true,
-    requiredEnv: [],
-    check: checkRag,
-  },
-  firecrawl: {
-    defaultEnabled: true,
-    requiredEnv: ["FIRECRAWL_API_KEY"],
-    authFallback: "firecrawl",
-    check: checkNodeNpx,
-  },
   mempalace: {
     defaultEnabled: true,
     requiredEnv: [],
@@ -188,13 +172,6 @@ function assetPath(...segments) {
 function createMcpExport(config) {
   const servers = {}
 
-  if (enabled(config, "playwright")) {
-    servers.playwright = {
-      command: "node",
-      args: [assetPath("mcp", "playwright.mjs")],
-    }
-  }
-
   if (enabled(config, "stitch")) {
     servers.stitch = {
       type: "http",
@@ -212,29 +189,6 @@ function createMcpExport(config) {
         assetPath("runtime", "npm-package-runner.mjs"),
         "@modelcontextprotocol/server-sequential-thinking",
       ],
-    }
-  }
-
-  if (enabled(config, "firecrawl")) {
-    servers.firecrawl = {
-      command: "node",
-      args: [assetPath("runtime", "npm-package-runner.mjs"), "firecrawl-mcp"],
-      env: {
-        FIRECRAWL_API_KEY: config?.auth?.firecrawl || "${FIRECRAWL_API_KEY}",
-      },
-    }
-  }
-
-  if (enabled(config, "rag")) {
-    servers.rag = {
-      command: "node",
-      args: [assetPath("mcp", "rag.mjs")],
-      env: {
-        OPENCODE_RAG_URL:
-          process.env.OPENCODE_RAG_URL
-          || resolveEnvTemplate(config?.mcp?.rag?.environment?.OPENCODE_RAG_URL)
-          || DEFAULT_RAG_URL,
-      },
     }
   }
 
@@ -470,27 +424,6 @@ function checkMempalace(config) {
   }
 }
 
-async function checkRag(config) {
-  const url =
-    process.env.OPENCODE_RAG_URL?.trim()
-    || resolveEnvTemplate(config?.mcp?.rag?.environment?.OPENCODE_RAG_URL)
-    || DEFAULT_RAG_URL
-
-  try {
-    const controller = new AbortController()
-    const timeout = setTimeout(() => controller.abort(), 2500)
-    const response = await fetch(url, { method: "GET", signal: controller.signal })
-    clearTimeout(timeout)
-
-    if (response.status < 500) {
-      return { level: "ok", detail: `enabled, ${url} reachable` }
-    }
-    return { level: "warn", detail: `enabled, ${url} returned ${response.status}` }
-  } catch {
-    return { level: "warn", detail: `enabled, ${url} not reachable` }
-  }
-}
-
 function checkRemoteKeyOnly() {
   return { level: "ok", detail: "remote endpoint configured" }
 }
@@ -614,25 +547,80 @@ function checkSkillMaterialization() {
   }
 }
 
+const REQUIRED_MODEL_SLOTS = [
+  "bob", "coder", "strategist", "manager", "critic",
+  "designer", "researcher", "writer", "vision", "sub"
+]
+
+const DEPRECATED_MODEL_KEYS = {
+  "guard": "manager",
+  "brainstormer": "writer"
+}
+
 function getAgentSummary(config) {
   const visible = [
-    "Bob",
-    "Coder",
-    "Strategist",
-    "Guard",
-    "Critic",
-    "Designer",
-    "Researcher",
-    "Manager",
-    "Brainstormer",
-    "Vision",
+    "Bob", "Coder", "Strategist", "Manager", "Critic",
+    "Designer", "Researcher", "Writer", "Vision"
   ]
   const hidden = ["Agent Skills", "Sub", "build", "plan"]
-  const modelCount = Object.keys(config?.models ?? {}).length
+
+  const models = config?.models ?? {}
+  const modelKeys = Object.keys(models)
+
+  // Check for missing required slots
+  const missing = REQUIRED_MODEL_SLOTS.filter(slot => !(slot in models))
+  const missingDetail = missing.length > 0
+    ? `; missing=[${missing.join(", ")}]`
+    : ""
+
+  // Check for deprecated keys
+  const deprecated = modelKeys.filter(k => k in DEPRECATED_MODEL_KEYS)
+  const deprecatedDetail = deprecated.length > 0
+    ? `; deprecated keys=[${deprecated.join(" → " + DEPRECATED_MODEL_KEYS[deprecated[0]] + ", ")}]`
+    : ""
+
+  // Check for empty model values
+  const emptySlots = modelKeys.filter(k => {
+    const v = models[k]
+    if (typeof v === "string") return v.trim() === ""
+    if (v && typeof v === "object") return !v.model || v.model.trim() === ""
+    return true
+  })
+  const emptyDetail = emptySlots.length > 0
+    ? `; empty=[${emptySlots.join(", ")}]`
+    : ""
+
+  const issues = []
+  if (missing.length > 0) issues.push(`${missing.length} required slot(s) missing: ${missing.join(", ")}`)
+  if (deprecated.length > 0) issues.push(`${deprecated.length} deprecated key(s): ${deprecated.map(k => `${k}→${DEPRECATED_MODEL_KEYS[k]}`).join(", ")}`)
+  if (emptySlots.length > 0) issues.push(`${emptySlots.length} empty model value(s): ${emptySlots.join(", ")}`)
+
+  const level = issues.length === 0 ? "ok" : (missing.length > 0 ? "fail" : "warn")
+  const issueDetail = issues.length > 0 ? ` (${issues.join("; ")})` : ""
+
   return {
-    level: modelCount >= 10 ? "ok" : "warn",
-    detail: `visible=${visible.length} [${visible.join(", ")}]; hidden=${hidden.length} [${hidden.join(", ")}]; model slots configured=${modelCount}/10`,
+    level,
+    detail: `visible=${visible.length} [${visible.join(", ")}]; hidden=${hidden.length} [${hidden.join(", ")}]; model slots=${modelKeys.length}/${REQUIRED_MODEL_SLOTS.length}${missingDetail}${deprecatedDetail}${emptyDetail}${issueDetail}`,
   }
+}
+
+function checkModelSlotValues(config) {
+  const results = []
+  const models = config?.models ?? {}
+
+  for (const slot of REQUIRED_MODEL_SLOTS) {
+    const value = models[slot]
+    if (!value) {
+      results.push({ level: "fail", check: `Model slot '${slot}'`, detail: "missing — no model configured" })
+      continue
+    }
+    const model = typeof value === "string" ? value : value.model
+    if (!model || model.trim() === "") {
+      results.push({ level: "fail", check: `Model slot '${slot}'`, detail: "empty model value" })
+    }
+  }
+
+  return results
 }
 
 function getLspDefaults() {
@@ -687,7 +675,7 @@ async function probeStdioMcp(serverName, serverConfig) {
     stderr: "pipe",
   })
 
-  const timeoutMs = 12000
+  const timeoutMs = 60000
   const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeoutMs))
 
   try {
@@ -806,6 +794,12 @@ async function mcpStatus(options = {}) {
     const agents = getAgentSummary(config)
     console.log(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
 
+    // Model slot value validation
+    const modelIssues = checkModelSlotValues(config)
+    for (const issue of modelIssues) {
+      console.log(`${statusIcon(issue.level)} ${issue.check}: ${issue.detail}`)
+    }
+
     const lsp = checkLspAvailability(config)
     console.log(`${statusIcon(lsp.level)} LSP runtime availability - ${lsp.detail}`)
 
@@ -844,7 +838,7 @@ async function runDiagnose(outputPath) {
   const envKeys = [
     "FIRECRAWL_API_KEY", "STITCH_AI_API_KEY", "CONTEXT7_API_KEY",
     "EXA_API_KEY", "TAVILY_API_KEY", "OPENCODE_RAG_URL",
-    "MEMPALACE_PYTHON", "HIAI_PLAYWRIGHT_INSTALL_BROWSERS", "HIAI_MCP_AUTO_INSTALL",
+    "MEMPALACE_PYTHON", "HIAI_MCP_AUTO_INSTALL",
   ]
   for (const key of envKeys) {
     const hasValue = !!process.env[key]?.trim()

@@ -52,7 +52,7 @@ Use task(category="writing", ...) to write a one-paragraph bio for an AI coding 
 
 ## 5. View delegation logs
 
-When Bob or Guard delegates to sub-agents, check the system reminders for `<system-reminder>` notifications showing agent results.
+When Bob or Manager delegates to sub-agents, check the system reminders for `<system-reminder>` notifications showing agent results.
 
 ## Next steps
 

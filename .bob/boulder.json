@@ -1,0 +1,12 @@
+{
+  "active_plan": "/mnt/ai_data/projects/hiai-opencode/.bob/plans/recovery-refactoring.md",
+  "started_at": "2026-05-10T21:21:16.721Z",
+  "session_ids": [
+    "ses_1ed609101ffeaUIu7yOzC1Ndc4"
+  ],
+  "session_origins": {
+    "ses_1ed609101ffeaUIu7yOzC1Ndc4": "direct"
+  },
+  "plan_name": "recovery-refactoring",
+  "agent": "guard"
+}

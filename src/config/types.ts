@@ -27,20 +27,20 @@ export interface ModelSlotsConfig {
   bob?: ModelSlotConfig;
   coder?: ModelSlotConfig;
   strategist?: ModelSlotConfig;
-  guard?: ModelSlotConfig;
+  manager?: ModelSlotConfig;  // formerly "manager" - orchestrator/delegate role
   critic?: ModelSlotConfig;
   designer?: ModelSlotConfig;
   researcher?: ModelSlotConfig;
-  manager?: ModelSlotConfig;
-  brainstormer?: ModelSlotConfig;
+  writer?: ModelSlotConfig;   // formerly "brainstormer" - copy/content/SEO
   vision?: ModelSlotConfig;
   sub?: ModelSlotConfig;
 }
 
 // Canonical 12-agent model exposed by schema/default config.
+// Note: "guard" renamed to "manager", "brainstormer" renamed to "writer"
 export const CANONICAL_AGENT_NAMES = [
   "bob",
-  "guard",
+  "manager",
   "strategist",
   "critic",
   "coder",
@@ -49,8 +49,7 @@ export const CANONICAL_AGENT_NAMES = [
   "researcher",
   "multimodal",
   "quality-guardian",
-  "platform-manager",
-  "brainstormer",
+  "writer",
   "agent-skills",
 ] as const;
 
@@ -62,7 +61,6 @@ export const LEGACY_AGENT_ALIAS_NAMES = [
   "zoe",
   "build",
   "pre-plan",
-  "manager",
   "vision",
   "logician",
   "librarian",
@@ -74,6 +72,9 @@ export const LEGACY_AGENT_ALIAS_NAMES = [
   "ledger-creator",
   "bootstrapper",
   "project-initializer",
+  // Legacy agent name renames
+  "guard",
+  "brainstormer",
 ] as const;
 
 export type LegacyAgentAliasName = (typeof LEGACY_AGENT_ALIAS_NAMES)[number];
@@ -86,7 +87,6 @@ export const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<
   zoe: "bob",
   build: "bob",
   "pre-plan": "strategist",
-  manager: "platform-manager",
   vision: "multimodal",
   logician: "strategist",
   librarian: "researcher",
@@ -94,10 +94,13 @@ export const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<
   ui: "multimodal",
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
-  mindmodel: "platform-manager",
-  "ledger-creator": "platform-manager",
-  bootstrapper: "platform-manager",
-  "project-initializer": "platform-manager",
+  mindmodel: "researcher",
+  "ledger-creator": "researcher",
+  bootstrapper: "researcher",
+  "project-initializer": "researcher",
+  // Legacy renames
+  guard: "manager",
+  brainstormer: "writer",
 };
 
 export type KnownAgentName = CanonicalAgentName | LegacyAgentAliasName;
@@ -153,6 +156,11 @@ export interface McpServerConfig {
   timeout?: number;
   environment?: Record<string, string>;
   pythonPath?: string;
+  // CLI tool notes: agentBrowser and firecrawl-cli are CLI tools surfaced via skill system,
+  // not traditional MCP servers. They appear in mcp config for display/control purposes.
+  autoInstall?: boolean;
+  sessionPrefix?: string;
+  maxBatchCommands?: number;
 }
 
 export interface LspServerConfig {

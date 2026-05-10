@@ -15,12 +15,12 @@ interface LoadBuiltinCommandsOptions {
   useRegisteredAgents?: boolean
 }
 
-function resolveStartWorkAgent(options?: LoadBuiltinCommandsOptions): "guard" | "bob" {
+function resolveStartWorkAgent(options?: LoadBuiltinCommandsOptions): "manager" | "bob" {
   if (options?.useRegisteredAgents) {
-    return isAgentRegistered("guard") ? "guard" : "bob"
+    return isAgentRegistered("manager") ? "manager" : "bob"
   }
 
-  return "guard"
+  return "manager"
 }
 
 function createBuiltinCommandDefinitions(

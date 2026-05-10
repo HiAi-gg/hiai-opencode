@@ -8,12 +8,11 @@ import { createDesignerAgent, designerPromptMetadata } from "./designer"
 import { createAgentSkillsAgent, agentSkillsPromptMetadata } from "./agent-skills"
 import { createCriticAgent, criticPromptMetadata } from "./critic/agent"
 import { createMultimodalLookerAgent, MULTIMODAL_LOOKER_PROMPT_METADATA } from "./ui"
-import { createGuardAgent, guardPromptMetadata } from "./guard"
+import { createManagerAgent, managerPromptMetadata } from "./manager"
 import { createCoderAgent } from "./coder"
-import { createPlatformManagerAgent, platformManagerPromptMetadata } from "./platform-manager"
 import { createQualityGuardianAgent, qualityGuardianPromptMetadata } from "./quality-guardian"
 import { createResearcherAgent, researcherPromptMetadata } from "./researcher"
-import { createBrainstormerAgent, brainstormerPromptMetadata } from "./brainstormer"
+import { createWriterAgent, writerPromptMetadata } from "./writer"
 import { createBobJuniorAgentWithOverrides } from "./sub"
 import type { AvailableCategory } from "./dynamic-agent-prompt-builder"
 import {
@@ -27,7 +26,7 @@ import { buildAvailableSkills } from "./builtin-agents/available-skills"
 import { collectPendingBuiltinAgents } from "./builtin-agents/general-agents"
 import { maybeCreateBobConfig } from "./builtin-agents/bob-agent"
 import { maybeCreateCoderConfig } from "./builtin-agents/coder-agent"
-import { maybeCreateGuardConfig } from "./builtin-agents/guard-agent"
+import { maybeCreateManagerConfig } from "./builtin-agents/manager-agent"
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure-protocol"
 
 type AgentSource = AgentFactory | AgentConfig
@@ -38,13 +37,12 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
   "strategist": createBobAgent, // Strategist runtime config is assembled in agent-config-handler.
   "designer": createDesignerAgent,
   "multimodal": createMultimodalLookerAgent,
-  "brainstormer": createBrainstormerAgent,
+  "writer": createWriterAgent,
   "agent-skills": createAgentSkillsAgent,
   "critic": createCriticAgent,
-  "platform-manager": createPlatformManagerAgent,
   "quality-guardian": createQualityGuardianAgent,
+  "manager": createManagerAgent as AgentFactory,
   "researcher": createResearcherAgent,
-  "guard": createGuardAgent as AgentFactory,
   "sub": createBobJuniorAgentWithOverrides as unknown as AgentFactory,
 }
 
@@ -55,11 +53,10 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
 const agentMetadata: Partial<Record<BuiltinAgentName, AgentPromptMetadata>> = {
   "researcher": researcherPromptMetadata,
   "multimodal": MULTIMODAL_LOOKER_PROMPT_METADATA,
-  "guard": guardPromptMetadata,
+  "manager": managerPromptMetadata,
   "critic": criticPromptMetadata,
   "quality-guardian": qualityGuardianPromptMetadata,
-  "platform-manager": platformManagerPromptMetadata,
-  "brainstormer": brainstormerPromptMetadata,
+  "writer": writerPromptMetadata,
   "strategist": {
     category: "advisor",
     cost: "EXPENSIVE",
@@ -221,7 +218,7 @@ export async function createBuiltinAgents(
     result[name] = config
   }
 
-  const guardConfig = maybeCreateGuardConfig({
+  const managerConfig = maybeCreateManagerConfig({
     disabledAgents: runtimeDisabledAgents,
     agentOverrides,
     uiSelectedModel,
@@ -233,8 +230,8 @@ export async function createBuiltinAgents(
     directory,
     userCategories: categories,
   })
-  if (guardConfig) {
-    result["guard"] = guardConfig
+  if (managerConfig) {
+    result["manager"] = managerConfig
   }
 
   // Mandatory Closure Protocol Injection

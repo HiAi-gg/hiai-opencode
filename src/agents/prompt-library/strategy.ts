@@ -1,9 +1,8 @@
-import { PROMETHEUS_IDENTITY_CONSTRAINTS } from "../strategist/identity-constraints";
-import { PROMETHEUS_INTERVIEW_MODE } from "../strategist/interview-mode";
-import { PROMETHEUS_PLAN_GENERATION } from "../strategist/plan-generation";
-import { PROMETHEUS_HIGH_ACCURACY_MODE } from "../strategist/high-accuracy-mode";
-import { PROMETHEUS_PLAN_TEMPLATE } from "../strategist/plan-template";
-import { PROMETHEUS_BEHAVIORAL_SUMMARY } from "../strategist/behavioral-summary";
+import { STRATEGIST_INTERVIEW_MODE } from "../strategist/interview-mode";
+import { STRATEGIST_PLAN_GENERATION } from "../strategist/plan-generation";
+import { STRATEGIST_HIGH_ACCURACY_MODE } from "../strategist/high-accuracy-mode";
+import { STRATEGIST_PLAN_TEMPLATE } from "../strategist/plan-template";
+import { STRATEGIST_BEHAVIORAL_SUMMARY } from "../strategist/behavioral-summary";
 
 export type StrategistMode = "planning" | "interview" | "pre-check" | "architecture";
 
@@ -12,27 +11,27 @@ const STRATEGY_COUNCIL_MODES_HEADER = `
 ## Strategy Council (Merged Modes)
 
 You are the Unified Strategist, incorporating the wisdom of the full Strategy Council:
-- **Prometheus**: Strategic foresight and planning structure.
-- **Metis (Pre-Plan)**: Prudence, identifying hidden intentions and ambiguities.
-- **Momus (Critic)**: Ruthless pragmatism, finding blocking issues in plans.
-- **Athena**: Practical wisdom, "house on wheels" mobility, and rapid adaptability.
+- **Strategist**: Strategic foresight and planning structure.
+- **Pre-Plan**: Prudence, identifying hidden intentions and ambiguities.
+- **Critic**: Ruthless pragmatism, finding blocking issues in plans.
+- **Designer**: Practical wisdom, "house on wheels" mobility, and rapid adaptability.
 
 ---
 
-### MODE: Pre-Planning (Metis)
+### MODE: Pre-Planning
 When analyzing a request BEFORE creating a plan:
 Analyze requests carefully for ambiguities. Find hidden requirements and clarify before defining tasks.
 
 ---
 
-### MODE: Review & Critique (Momus)
+### MODE: Review & Critique
 When reviewing a plan saved at \`.bob/plans/*.md\`:
 Relentlessly find edge cases, logic gaps, missing dependencies, and point out failures in architecture before implementation can begin.
 
 ---
 
-### MODE: Athena's Wisdom
-Apply Athena's pragmatic adaptability when:
+### MODE: Designer Wisdom
+Apply Designer's pragmatic adaptability when:
 - Requirements are shifting rapidly.
 - The user needs a "house on wheels" solution (portable, modular, mobile-first).
 - Direct, rapid decisions are needed over deep deliberation.
@@ -47,11 +46,11 @@ Apply Athena's pragmatic adaptability when:
  * architecture: core + high_accuracy_mode + plan_generation — high-risk architecture decisions
  */
 export function getUnifiedStrategistPrompt(mode: StrategistMode = "planning"): string {
-  const core = `\n${PROMETHEUS_IDENTITY_CONSTRAINTS}\n${STRATEGY_COUNCIL_MODES_HEADER}\n`;
+  const core = `\n${STRATEGY_COUNCIL_MODES_HEADER}\n`;
 
   switch (mode) {
     case "interview":
-      return `${core}${PROMETHEUS_INTERVIEW_MODE}${PROMETHEUS_PLAN_GENERATION}${PROMETHEUS_HIGH_ACCURACY_MODE}${PROMETHEUS_PLAN_TEMPLATE}${PROMETHEUS_BEHAVIORAL_SUMMARY}`;
+      return `${core}${STRATEGIST_INTERVIEW_MODE}${STRATEGIST_PLAN_GENERATION}${STRATEGIST_HIGH_ACCURACY_MODE}${STRATEGIST_PLAN_TEMPLATE}${STRATEGIST_BEHAVIORAL_SUMMARY}`;
 
     case "pre-check":
       return `${core}
@@ -68,11 +67,11 @@ Once ambiguity is resolved, transition to planning mode.
 `;
 
     case "architecture":
-      return `${core}${PROMETHEUS_HIGH_ACCURACY_MODE}${PROMETHEUS_PLAN_GENERATION}`;
+      return `${core}${STRATEGIST_HIGH_ACCURACY_MODE}${STRATEGIST_PLAN_GENERATION}`;
 
     case "planning":
     default:
-      return `${core}${PROMETHEUS_PLAN_GENERATION}`;
+      return `${core}${STRATEGIST_PLAN_GENERATION}`;
   }
 }
 

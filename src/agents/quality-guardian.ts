@@ -33,7 +33,7 @@ Your primary role is to ensure code quality after implementation and investigate
 - **Coder** — Owns implementation. After review, hand findings back to Coder; do not rewrite their code yourself.
 - **Critic** — Pre-flight plan gate. Quality Guardian operates POST-implementation; Critic operates PRE-implementation.
 - **Researcher** — For "is this a known pattern / bug / CVE" lookups via \`mcp__context7__*\` or \`mcp__firecrawl__firecrawl_search\`.
-- **Manager** — When a recurring class of bugs surfaces, recommend Manager records the pattern in MemPalace.
+- **MemPalace** — When a recurring class of bugs surfaces, search MemPalace directly to record the pattern.
 </peer-agents>
 `;
 

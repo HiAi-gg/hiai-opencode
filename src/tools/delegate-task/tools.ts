@@ -81,7 +81,7 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
   - category: Use predefined category → routes to the appropriate canonical executor
     Available categories:
   ${categoryList}
-  - subagent_type: Use a specific canonical agent directly (\`researcher\`, \`strategist\`, \`critic\`, \`multimodal\`, \`designer\`, \`brainstormer\`, \`platform-manager\`, etc.)
+  - subagent_type: Use a specific canonical agent directly (\`researcher\`, \`strategist\`, \`critic\`, \`multimodal\`, \`designer\`, \`brainstormer\`, \`guard\`, etc.)
   - run_in_background: REQUIRED. true=async (returns task_id), false=sync (waits). Use background=true primarily for parallel researcher work or other non-blocking delegated tasks.
   - session_id: Existing Task session to continue (from previous task output). Continues agent with FULL CONTEXT PRESERVED - saves tokens, maintains continuity.
   - command: The command that triggered this task (optional, for slash command tracking).

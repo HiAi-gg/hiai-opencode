@@ -7,7 +7,7 @@ export const CRITIC_AGENT_CONFIG_KEY = "critic"
 
 export const CANONICAL_DELEGATE_AGENT_KEYS = [
   "bob",
-  "guard",
+  "manager",
   "strategist",
   "critic",
   "coder",
@@ -15,8 +15,7 @@ export const CANONICAL_DELEGATE_AGENT_KEYS = [
   "researcher",
   "multimodal",
   "designer",
-  "platform-manager",
-  "brainstormer",
+  "writer",
   "agent-skills",
 ] as const
 
@@ -40,14 +39,11 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   explore: "researcher",
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
-  "ledger-creator": "platform-manager",
-  bootstrapper: "platform-manager",
-  "project-initializer": "platform-manager",
-  mindmodel: "platform-manager",
+  mindmodel: "manager",
   ui: "multimodal",
-  writer: "brainstormer",
-  copywriter: "brainstormer",
-  "content-writer": "brainstormer",
+  brainstormer: "writer",
+  copywriter: "writer",
+  "content-writer": "writer",
   subagent: "sub",
   "bob-junior": "sub",
   oracle: "strategist",

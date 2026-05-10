@@ -17,7 +17,6 @@ hiai-opencode uses OpenCode's permission system to control agent access to files
 | `critic` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Read-only review |
 | `designer` | `*` | `*` | `ask` | UI/visual work |
 | `brainstormer` | `*` | `*` | `ask` | Writing/copy |
-| `platform-manager` | `*` | `*` | `*` | Full access for ops |
 | `multimodal` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Vision capabilities |
 | `bob` | `*` | `*` | `*` | Orchestrator |
 | `guard` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Verification |
@@ -65,7 +64,7 @@ Override permissions in `hiai-opencode.json`:
 2. **Deny secrets by default** - Protect `.env`, `.pem`, `credentials*` files
 3. **Git guard** - Never allow writes to `.git` directory
 4. **Use `sub` for bounded tasks** - Sub agent has restricted write permissions
-5. **Platform-manager for ops** - Use platform-manager for system-level operations
+4. **Use `guard` for system-level operations** - Use guard for system-level operations
 
 ## Runtime Checks
 

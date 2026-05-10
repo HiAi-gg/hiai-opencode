@@ -52,7 +52,7 @@ export function collectPendingBuiltinAgents(input: {
 
     if (agentName === "bob") continue
     if (agentName === "coder") continue
-    if (agentName === "guard") continue
+    if (agentName === "manager") continue
     if (agentName === "sub") continue
     if (disabledAgents.some((name) => name.toLowerCase() === agentName.toLowerCase())) continue
 

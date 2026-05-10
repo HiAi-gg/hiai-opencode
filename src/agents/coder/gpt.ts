@@ -262,10 +262,21 @@ ${strategistCriticSection}
 - **Designer** — When a task requires UI/visual generation, delegate via \`task(category="visual-engineering", ...)\`.
 - **Brainstormer** — When a task requires user-facing copy/SEO, delegate via \`task(category="writing", ...)\`.
 
+## MemPalace — Project Memory
+
+- **MemPalace** — Check \`mempalace_search\` for prior implementation patterns, bug fixes, and architectural decisions before writing code. After completing a feature or fix, record key decisions via \`mempalace_diary_write\`.
+
 ## Tooling Integrations
 
 - **LSP** — \`lsp_diagnostics\` after every edit (mandatory). Use \`lsp_hover\` / \`lsp_definition\` / \`lsp_references\` before changing types.
-- **Context7** — \`mcp__context7__resolve-library-id\` + \`mcp__context7__query-docs\` for library docs. First choice over knowledge cutoff.
+- **Context7** — AUTOMATIC check for ANY library/framework question:
+  \`\`\`typescript
+  // Step 1: Resolve library ID
+  mcp__context7__resolve-library-id({ libraryName: "{library}", query: "{what you need}" })
+  // Step 2: Query docs with resolved ID
+  mcp__context7__query-docs({ libraryId: "/org/project", query: "{specific question}" })
+  \`\`\`
+  Use BEFORE implementing with unfamiliar APIs. Do NOT delegate this to Researcher — call directly. Limit: 3 calls per question.
 - **Playwright** — \`mcp__playwright__*\` only for tests/automation, never as an implementation shortcut.
 - **Skills** — When self-spawning or routing through a category, pass \`load_skills=[...]\` with relevant skill names.`;
 }
