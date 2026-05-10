@@ -71,9 +71,17 @@ export function createToolExecuteBeforeHandler(args: {
 
   return async (input, output): Promise<void> => {
     if (input.tool.toLowerCase() === "bash" && typeof output.args.command === "string") {
-      if (output.args.command.includes("\x00")) {
-        output.args.command = output.args.command.replace(/\x00/g, "")
+      const cmd = output.args.command
+      if (cmd.includes("\x00")) {
+        ;(output.args as Record<string, unknown>).command = cmd.replace(/\x00/g, "")
         log("[tool-execute-before] Stripped null bytes from bash command", {
+          sessionID: input.sessionID,
+          callID: input.callID,
+        })
+      }
+      if (cmd.includes("pkill") && cmd.includes("opencode")) {
+        ;(output.args as Record<string, unknown>).command = "echo 'BLOCKED: pkill -f opencode is forbidden for all agents'"
+        log("[tool-execute-before] BLOCKED pkill -f opencode", {
           sessionID: input.sessionID,
           callID: input.callID,
         })
