@@ -39,14 +39,7 @@ export function migrateConfigFile(
     }
   }
 
-  // Migrate model slot names: guard → manager, brainstormer → writer
-  if (copy.models && typeof copy.models === "object") {
-    const { migrated, changed } = migrateAgentNames(copy.models as Record<string, unknown>)
-    if (changed) {
-      copy.models = migrated
-      needsWrite = true
-    }
-  }
+  
 
   // Migrate model versions in agents (skip already-applied migrations)
   if (copy.agents && typeof copy.agents === "object") {
@@ -151,7 +144,7 @@ export function migrateConfigFile(
     }
   }
 
-  if (needsWrite) {
+  if (needsWrite && process.env.HIAI_MIGRATION_WRITE_CONFIG?.trim().toLowerCase() === "true") {
     let finalConfig = JSON.parse(JSON.stringify(copy)) as Record<string, unknown>
     const newContent = JSON.stringify(finalConfig, null, 2) + "\n"
 

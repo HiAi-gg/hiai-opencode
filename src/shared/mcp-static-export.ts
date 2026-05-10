@@ -87,8 +87,8 @@ export function isManagedStaticMcpFile(path: string): boolean {
 }
 
 export function autoExportStaticMcpJson(directory: string, config: HiaiOpencodeConfig): void {
-  const mode = process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP?.trim().toLowerCase() || "if-missing"
-  if (mode === "0" || mode === "false" || mode === "no" || mode === "off") {
+  const mode = process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP?.trim().toLowerCase() || "never"
+  if (mode === "0" || mode === "false" || mode === "no" || mode === "off" || mode === "never") {
     return
   }
 

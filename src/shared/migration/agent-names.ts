@@ -72,10 +72,7 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   "website-writer": "writer",
   brainstormer: "writer",
 
-  // Multimodal / Vision
   ui: "multimodal",
-  vision: "multimodal",
-  multimodal: "multimodal",
   "multimodal-looker": "multimodal",
 }
 
