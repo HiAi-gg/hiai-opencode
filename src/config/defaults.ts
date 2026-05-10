@@ -109,7 +109,7 @@ function deriveAgents(models: Record<ModelSlot, string>): HiaiOpencodeConfig["ag
     designer: { model: models.designer },
     researcher: { model: models.researcher },
     writer: { model: models.writer },     // formerly "brainstormer"
-    multimodal: { model: models.vision },
+    vision: { model: models.vision },
     sub: { model: models.sub },
     "quality-guardian": { model: models.critic },
     "agent-skills": { model: models.researcher },
