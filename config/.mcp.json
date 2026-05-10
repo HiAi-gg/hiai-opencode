@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "generatedBy": "hiai-opencode",
+    "version": 1,
+    "generatedAt": "2026-05-11T00:00:00.000Z"
+  },
+  "mcpServers": {
+    "stitch": {
+      "type": "http",
+      "url": "https://stitch.googleapis.com/mcp",
+      "headers": {
+        "X-Goog-Api-Key": "{env:STITCH_AI_API_KEY}"
+      }
+    },
+    "sequential-thinking": {
+      "command": "node",
+      "args": [
+        "/mnt/ai_data/projects/hiai-opencode/assets/runtime/npm-package-runner.mjs",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headers": {
+        "X-API-KEY": "{env:CONTEXT7_API_KEY}"
+      }
+    },
+    "mempalace": {
+      "command": "node",
+      "args": [
+        "/mnt/ai_data/projects/hiai-opencode/assets/mcp/mempalace.mjs",
+        "--palace",
+        "./.opencode/palace"
+      ],
+      "env": {
+        "MEMPALACE_PYTHON": "{env:MEMPALACE_PYTHON}"
+      }
+    },
+    "grep_app": {
+      "type": "http",
+      "url": "https://mcp.grep.app"
+    }
+  }
+}
