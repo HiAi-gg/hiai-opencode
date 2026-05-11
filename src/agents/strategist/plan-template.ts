@@ -177,6 +177,10 @@ Plan UI tasks in this order: Designer task → Vision verification task → Code
 
 - [ ] 1. [Task Title]
 
+  **assigned_to**: coder (or: researcher, designer, writer, vision, sub)
+  **category**: deep | quick | visual-engineering | unspecified-high | writing
+  **skills**: [skill-1, skill-2]
+
   **What to do**:
   - [Clear implementation steps]
   - [Test cases to cover]
