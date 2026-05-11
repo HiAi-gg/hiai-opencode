@@ -90,3 +90,6 @@ todo.md
 
 # Stitch
 .stitch-project.json
+
+# Internal agent state and plans
+.bob/
