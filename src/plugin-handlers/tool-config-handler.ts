@@ -104,8 +104,12 @@ export function applyToolConfig(params: {
     apply: (agent) => {
       agent.permission = {
         ...agent.permission,
-        task: "allow",
+        write: "deny",
+        edit: "deny",
+        bash: "deny",
+        apply_patch: "deny",
         call_hiai_agent: "deny",
+        task: "allow",
         "task_*": "allow",
         teammate: "allow",
         ...denyTodoTools,
@@ -154,6 +158,11 @@ export function applyToolConfig(params: {
         question: questionPermission,
         "task_*": "allow",
         teammate: "allow",
+        pty_spawn: "deny",
+        pty_write: "deny",
+        pty_read: "deny",
+        pty_kill: "deny",
+        pty_list: "deny",
         ...denyTodoTools,
       };
     },

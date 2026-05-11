@@ -115,8 +115,6 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `FIRECRAWL_API_KEY`
    - `STITCH_AI_API_KEY`
    - `CONTEXT7_API_KEY`
-   - `EXA_API_KEY`
-   - `TAVILY_API_KEY`
    - `MEMPALACE_PYTHON`
    - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
    - `HIAI_MCP_AUTO_INSTALL`
@@ -136,7 +134,6 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 | `mempalace` | `uv` is available, or Python 3.9+ with pip is available | Launcher prefers `uv`; otherwise uses Python and can run `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is not disabled. Interpreter can be pinned via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` |
 | `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
 | `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
-| `websearch` | User wants remote web search | Defaults to Exa; `EXA_API_KEY` optional for Exa, `TAVILY_API_KEY` required for Tavily |
 | `grep_app` | User wants GitHub/code search | Remote MCP endpoint; no key required |
 
 ### Prompt For OpenCode Users
@@ -157,7 +154,6 @@ Check which services can run here:
 - mempalace: uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed; `HIAI_MCP_AUTO_INSTALL` controls first-run pip install.
 - stitch: STITCH_AI_API_KEY.
 - context7: optional CONTEXT7_API_KEY.
-- websearch: optional EXA_API_KEY for Exa, or TAVILY_API_KEY when provider is tavily.
 - grep_app: no key required.
 
 Report missing keys without printing secret values. Never invent or hardcode API keys.
@@ -340,7 +336,6 @@ Current MCP set:
 - `mempalace`
 - `stitch`
 - `context7`
-- `websearch`
 - `grep_app`
 
 ## Writing And Website Copy
@@ -430,8 +425,6 @@ Common service keys:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
-- `EXA_API_KEY`
-- `TAVILY_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
@@ -453,7 +446,7 @@ AGENTS:
   sub              — implementation (cheap, bounded)
   strategist       — planning (read-only, no code)
   critic           — review gate (APPROVED/REJECTED)
-  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/websearch/MemPalace
+  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/MemPalace
   designer         — UI via Stitch MCP
   writer     — copy/positioning/SEO (write to copy files only)
   vision           — PDF/image extraction
@@ -466,7 +459,6 @@ MCP INTEGRATIONS (who uses what):
   Firecrawl           -> researcher (CLI skill)
   Context7            -> researcher, coder (lib docs)
   grep_app            -> researcher (OSS code patterns)
-  websearch           -> researcher (general web)
   MemPalace           -> manager (primary), all agents (search before answer)
   Sequential-Thinking -> strategist, critic (deep reasoning)
 

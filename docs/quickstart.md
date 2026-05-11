@@ -23,8 +23,6 @@ Required for MCP services you want to enable:
 | `STITCH_AI_API_KEY` | Stitch (UI generation) | https://stitch.withgoogle.com |
 | `FIRECRAWL_API_KEY` | Firecrawl (web scraping) | https://firecrawl.ai |
 | `CONTEXT7_API_KEY` | Context7 (library docs) | https://context7.com |
-| `EXA_API_KEY` | Exa web search | https://exa.ai |
-| `TAVILY_API_KEY` | Tavily web search | https://tavily.com |
 
 Model keys (OpenAI-compatible providers) are configured through **OpenCode Connect**, not here.
 

@@ -2,16 +2,12 @@ import { join } from "node:path"
 import { existsSync } from "node:fs"
 import type { McpServerConfig } from "../config/types.js"
 
-// websearch is an external MCP service, configured via hiai-opencode.json,
-// not managed through the internal HIAI_MCP_REGISTRY.
-
 export type HiaiMcpName =
   | "stitch"
   | "sequential-thinking"
   | "context7"
   | "mempalace"
   | "grep_app"
-  | "websearch"
 
 export type HiaiMcpInstallKind = "bundled" | "npm" | "python" | "remote" | "user-service"
 
@@ -93,19 +89,6 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       enabled: true,
       type: "remote",
       url: "https://mcp.grep.app",
-      timeout: 600000,
-    },
-  },
-  websearch: {
-    name: "websearch",
-    enabledByDefault: false,
-    install: "remote",
-    optionalEnv: ["EXA_API_KEY"],
-    config: {
-      enabled: false,
-      type: "remote",
-      url: "https://mcp.exa.ai/mcp",
-      headers: {},
       timeout: 600000,
     },
   },

@@ -46,7 +46,6 @@ test("static MCP export includes marker metadata and servers", () => {
     ...baseConfig,
     mcp: {
       mempalace: { enabled: true, pythonPath: "/opt/venv/bin/python" },
-      websearch: { enabled: true },
     },
   })
   const exported = buildStaticMcpJson(resolved)
@@ -54,20 +53,7 @@ test("static MCP export includes marker metadata and servers", () => {
   expect(exported._meta?.generatedBy).toBe(MCP_EXPORT_MARKER)
   expect(exported._meta?.version).toBe(1)
   expect(exported.mcpServers.mempalace).toBeDefined()
-  expect(exported.mcpServers.websearch).toBeDefined()
   expect(exported.mcpServers.grep_app).toBeDefined()
-})
-
-test("websearch MCP provider is selected from the MCP switchboard", () => {
-  const resolved = applyModelSlots({
-    ...baseConfig,
-    mcp: {
-      websearch: { enabled: true, provider: "tavily" },
-    },
-  })
-
-  expect(resolved.mcp?.websearch?.url).toBe("https://mcp.tavily.com/mcp/")
-  expect(resolved.mcp?.websearch?.headers?.Authorization).toBe("Bearer {env:TAVILY_API_KEY}")
 })
 
 test("integration primer does not request model provider API keys", () => {

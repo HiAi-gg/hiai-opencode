@@ -1,6 +1,5 @@
 const SPECIAL_TOOL_MAPPINGS: Record<string, string> = {
   webfetch: "WebFetch",
-  websearch: "WebSearch",
   todoread: "TodoRead",
   todowrite: "TodoWrite",
 }

@@ -842,7 +842,7 @@ async function runDiagnose(outputPath) {
   sections.push("ENVIRONMENT (keys only, no values):")
   const envKeys = [
     "FIRECRAWL_API_KEY", "STITCH_AI_API_KEY", "CONTEXT7_API_KEY",
-    "EXA_API_KEY", "TAVILY_API_KEY", "OPENCODE_RAG_URL",
+    "OPENCODE_RAG_URL",
     "MEMPALACE_PYTHON", "HIAI_MCP_AUTO_INSTALL",
   ]
   for (const key of envKeys) {

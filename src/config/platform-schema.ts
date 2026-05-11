@@ -74,7 +74,6 @@ export const CategoryConfigSchema = z.object({
 export const McpServerConfigSchema = z.object({
   enabled: z.boolean().default(true),
   type: z.enum(["remote", "local"]).optional(),
-  provider: z.enum(["exa", "tavily"]).optional(),
   url: z.string().optional(),
   headers: z.record(z.string(), z.string()).optional(),
   command: z.array(z.string()).optional(),
@@ -127,7 +126,6 @@ export const PermissionsConfigSchema = z.object({
   todoread: z.enum(["allow", "deny"]).optional(),
   todowrite: z.enum(["allow", "deny"]).optional(),
   webfetch: z.enum(["allow", "deny"]).optional(),
-  websearch: z.enum(["allow", "deny"]).optional(),
   codesearch: z.enum(["allow", "deny"]).optional(),
   external_directory: z.record(z.string(), z.string()).optional(),
   ["*"]: z.record(z.string(), z.enum(["allow", "deny"])).optional(),

@@ -10,7 +10,7 @@
 
 - **14-agent canonical model (9 visible + 5 hidden)** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
 - **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
-- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns.
+- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns.
 - **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
 - **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
 
@@ -94,8 +94,6 @@ MCP integrations and which agents use them:
 | Firecrawl | `FIRECRAWL_API_KEY` | Researcher | CLI skill (not MCP) for web scraping, crawl, extract, search |
 | Context7 | `CONTEXT7_API_KEY` | Researcher, Coder | Library API documentation |
 | grep_app | — | Researcher | GitHub OSS code pattern search |
-| websearch (Exa) | `EXA_API_KEY` | Researcher | General web search |
-| websearch (Tavily) | `TAVILY_API_KEY` | Researcher | General web search (alt provider) |
 | MemPalace | MEMPALACE_PYTHON (optional) | Manager (primary), all agents | Project memory and past decisions |
 | Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
 
@@ -104,7 +102,7 @@ MCP integrations and which agents use them:
 - **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
-- MCP wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
+- MCP wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, and `grep_app`
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
 ## Continuation, Ralph-Loop, And Auto-Start
@@ -147,8 +145,6 @@ Optional, depending on which services you want:
 - `FIRECRAWL_API_KEY` for Firecrawl
 - `STITCH_AI_API_KEY` for Stitch
 - `CONTEXT7_API_KEY` for Context7
-- `EXA_API_KEY` for higher Exa websearch limits
-- `TAVILY_API_KEY` when `mcp.websearch.provider` is `tavily`
 - Python 3.9+ or `uv` for MemPalace
 - local language servers if you want LSP beyond the npm-bootstrapped helpers
 
@@ -166,14 +162,15 @@ Optional Dynamic Context Pruning plugin:
 opencode plugin @tarquinen/opencode-dcp@latest --global
 ```
 
-Do not put MCP server packages such as `firecrawl-mcp` or `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Install the CLI skill separately using `opencode plugin` or `npm install -g @mendableai/firecrawl`.
+Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Install the CLI skill separately using `opencode plugin` or `npm install -g @mendableai/firecrawl`.
 
 Manual OpenCode config equivalent:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@hiai-gg/hiai-opencode"]
+  "plugin": ["@hiai-gg/hiai-opencode",
+    "@tarquinen/opencode-dcp@latest"]
 }
 ```
 
@@ -202,11 +199,11 @@ If you installed only from npm/OpenCode and do not have this repository checked 
 ```json
 {
   "models": {
-    "bob": { "model": "openrouter/moonshotai/kimi-k2.6", "recommended": "xhigh" },
-    "coder": { "model": "openrouter/minimax/minimax-m2.7", "recommended": "high" },
-    "strategist": { "model": "openrouter/anthropic/claude-opus-latest", "recommended": "high" },
-    "manager": { "model": "openrouter/qwen/qwen3.6-plus", "recommended": "middle" },
-    "critic": { "model": "openrouter/xiaomi/mimo-v2.5-pro", "recommended": "high" },
+    "bob": { "model": "kimi-for-coding/k2p6", "recommended": "xhigh" },
+    "coder": { "model": "minimax-coding-plan/MiniMax-M2.7", "recommended": "high" },
+    "strategist": { "model": "deepseek/deepseek-v4-pro", "recommended": "high" },
+    "manager": { "model": "opencode-go/qwen3.6-plus", "recommended": "middle" },
+    "critic": { "model": "opencode-go/mimo-v2.5-pro", "recommended": "high" },
     "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
     "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
     "writer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
@@ -240,9 +237,6 @@ Use the exact model IDs printed by OpenCode in `hiai-opencode.json`. For example
 export FIRECRAWL_API_KEY=...
 export STITCH_AI_API_KEY=...
 export CONTEXT7_API_KEY=...
-export EXA_API_KEY=...
-# or, if mcp.websearch.provider is "tavily":
-export TAVILY_API_KEY=...
 ```
 
 See [Environment Variables And Keys](#environment-variables-and-keys) for the full list.
@@ -428,8 +422,6 @@ Important service variables:
 - `STITCH_AI_API_KEY`
 - `FIRECRAWL_API_KEY`
 - `CONTEXT7_API_KEY`
-- `EXA_API_KEY`
-- `TAVILY_API_KEY`
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
@@ -451,7 +443,6 @@ The user-facing MCP switchboard is the `mcp` object in `hiai-opencode.json`:
 {
   "mcp": {
     "mempalace": { "enabled": false },
-    "websearch": { "enabled": true, "provider": "exa" },
     "grep_app": { "enabled": true }
   }
 }
@@ -463,7 +454,6 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 
 - `stitch`
 - `context7`
-- `websearch`: defaults to Exa remote MCP. `EXA_API_KEY` is optional for Exa; set `"provider": "tavily"` and `TAVILY_API_KEY` to use Tavily.
 - `grep_app`
 
 ### Works with local helper bootstrap
