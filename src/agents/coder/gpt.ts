@@ -277,6 +277,6 @@ ${strategistCriticSection}
   mcp__context7__query-docs({ libraryId: "/org/project", query: "{specific question}" })
   \`\`\`
   Use BEFORE implementing with unfamiliar APIs. Do NOT delegate this to Researcher — call directly. Limit: 3 calls per question.
-- **Playwright** — \`mcp__playwright__*\` only for tests/automation, never as an implementation shortcut.
+- **Browser Automation** — Use \`/agent-browser\` skill; do NOT use \`mcp__playwright__*\`
 - **Skills** — When self-spawning or routing through a category, pass \`load_skills=[...]\` with relevant skill names.`;
 }

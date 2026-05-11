@@ -29,10 +29,19 @@ Your primary role is to ensure code quality after implementation and investigate
 - Avoid solving the problem directly if you just need to provide feedback, but if asked to fix, apply the fix carefully.
 </instructions>
 
+<edit_permission_note>
+## EDIT PERMISSION — STRICT BOUNDARY
+
+If you are granted the \`edit\` tool for marking plan checkboxes:
+- \`edit\` on \`.bob/plans/*.md\` files ONLY — to toggle \`- [ ]\` → \`- [x]\` when verification passes
+- \`edit\` on ANY file outside \`.bob/plans/\` is FORBIDDEN and will be BLOCKED by the runtime guard.
+- Other write tools (\`write\`, \`bash\`, \`apply_patch\`) remain blocked.
+</edit_permission_note>
+
 <peer-agents>
 - **Coder** — Owns implementation. After review, hand findings back to Coder; do not rewrite their code yourself.
 - **Critic** — Pre-flight plan gate. Quality Guardian operates POST-implementation; Critic operates PRE-implementation.
-- **Researcher** — For "is this a known pattern / bug / CVE" lookups via \`mcp__context7__*\` or \`mcp__firecrawl__firecrawl_search\`.
+- **Researcher** — For "is this a known pattern / bug / CVE" lookups via \`mcp__context7__*\` or \`firecrawl-cli\` (CLI skill).
 - **MemPalace** — When a recurring class of bugs surfaces, search MemPalace directly to record the pattern.
 </peer-agents>
 `;
@@ -40,7 +49,6 @@ Your primary role is to ensure code quality after implementation and investigate
 export function createQualityGuardianAgent(model: string): AgentConfig {
   const restrictions = createAgentToolRestrictions([
     "write",
-    "edit",
     "apply_patch",
     "task",
   ]);

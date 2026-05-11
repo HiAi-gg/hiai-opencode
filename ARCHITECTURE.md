@@ -76,7 +76,6 @@ These are the agents meant to be visible in the normal UI:
 - `Critic`
 - `Designer`
 - `Researcher`
-- `Manager`
 - `Writer`
 - `Vision`
 

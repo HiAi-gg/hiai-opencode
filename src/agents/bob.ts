@@ -195,7 +195,7 @@ ${researcherSection}
 
 ### MemPalace — Project Memory
 
-- **MemPalace** — Project memory. BEFORE delegating complex work, check \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5 }})\` for prior decisions, architecture choices, and past solutions. After significant outcomes, record via \`mempalace_diary_write\`.
+- **MemPalace** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` — BEFORE delegating complex work, check for prior decisions, architecture choices, and past solutions. After significant outcomes, record via \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "bob", entry: "<AAAK summary>" }})\`.
 
 ### Parallel Execution (DEFAULT behavior)
 

@@ -16,10 +16,10 @@ hiai-opencode uses OpenCode's permission system to control agent access to files
 | `strategist` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Architecture/planning |
 | `critic` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Read-only review |
 | `designer` | `*` | `*` | `ask` | UI/visual work |
-| `brainstormer` | `*` | `*` | `ask` | Writing/copy |
-| `multimodal` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Vision capabilities |
+| `writer` | `*` | `*` | `ask` | Writing/copy |
+| `vision` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Vision capabilities |
 | `bob` | `*` | `*` | `*` | Orchestrator |
-| `guard` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Verification |
+| `manager` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Memory stewardship |
 | `quality-guardian` | `*` | deny `**/.git/**`, `**/node_modules/**` | `ask` | Quality checks |
 
 ## Permission Levels
@@ -64,7 +64,7 @@ Override permissions in `hiai-opencode.json`:
 2. **Deny secrets by default** - Protect `.env`, `.pem`, `credentials*` files
 3. **Git guard** - Never allow writes to `.git` directory
 4. **Use `sub` for bounded tasks** - Sub agent has restricted write permissions
-4. **Use `guard` for system-level operations** - Use guard for system-level operations
+5. **Use `manager` for memory operations** - Manager owns MemPalace stewardship
 
 ## Runtime Checks
 

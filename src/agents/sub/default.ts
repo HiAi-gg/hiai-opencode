@@ -29,6 +29,10 @@ ${buildAntiDuplicationSection()}
 
 ${todoDiscipline}
 
+<MemPalace>
+Before quick fixes, check MemPalace for related patterns. After completing, record key decisions via MemPalace diary write.
+</MemPalace>
+
 <Verification>
 Task NOT complete without:
 - lsp_diagnostics clean on changed files

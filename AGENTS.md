@@ -176,7 +176,6 @@ Visible primary agents:
 - `Critic`
 - `Designer`
 - `Researcher`
-- `Manager`
 - `Writer`
 - `Vision`
 
@@ -446,33 +445,6 @@ Common service keys:
 
 Agent/MCP/LSP integration reference — which agents use which integrations:
 
-```
-AGENTS:
-  bob (you)        — orchestrator
-  coder            — implementation (deep)
-  sub              — implementation (cheap, bounded)
-  strategist       — planning (read-only, no code)
-  critic           — review gate (APPROVED/REJECTED)
-  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/websearch/MemPalace
-  designer         — UI via Stitch MCP
-  writer     — copy/positioning/SEO (write to copy files only)
-  vision           — PDF/image extraction
-  manager          — MemPalace memory steward
-  quality-guardian — post-impl review + bug investigation
-
-MCP INTEGRATIONS (who uses what):
-  Stitch              -> designer (UI generation)
-  Firecrawl           -> researcher (CLI skill)
-  Context7            -> researcher, coder (lib docs)
-  grep_app            -> researcher (OSS code patterns)
-  websearch           -> researcher (general web)
-  MemPalace           -> manager (primary), all agents (search before answer)
-  Sequential-Thinking -> strategist, critic (deep reasoning)
-  Playwright          -> coder (only for tests/automation)
-
-LSP:
-  typescript, svelte, eslint, bash, pyright
-  -> coder MUST run lsp_diagnostics after every edit
 ```
 AGENTS:
   bob (you)        — orchestrator

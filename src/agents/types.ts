@@ -2,7 +2,7 @@ import type { AgentConfig } from "@opencode-ai/sdk";
 
 /**
  * Agent mode determines UI model selection behavior:
- * - "primary": Respects user's UI-selected model (bob, guard)
+ * - "primary": Respects user's UI-selected model (bob)
  * - "subagent": Uses own fallback chain, ignores UI selection (researcher, quality-guardian, etc.)
  * - "all": Available in both contexts (OpenCode compatibility)
  */

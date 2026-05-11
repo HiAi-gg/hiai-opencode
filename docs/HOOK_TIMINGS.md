@@ -40,10 +40,10 @@ The timing log helps identify:
 
 | Category | Count | Notes |
 |----------|-------|-------|
-| Session hooks | 23 | Core lifecycle hooks |
-| Tool guard hooks | 14 | Pre/post tool execution |
+| Session hooks | 21 | Core lifecycle hooks |
+| Tool guard hooks | 15 | Pre/post tool execution |
 | Transform hooks | 5 | Message/prompt modification |
-| Continuation hooks | 7 | Multi-turn continuation logic |
+| Continuation hooks | 8 | Multi-turn continuation logic |
 | Skill hooks | 2 | Skill-related hooks |
 
 ## Typical Timings (reference)

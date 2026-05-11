@@ -36,6 +36,11 @@ const MCP_REGISTRY = {
     requiredEnv: [],
     check: checkNodeNpx,
   },
+  grep_app: {
+    defaultEnabled: true,
+    requiredEnv: [],
+    check: checkRemoteOptionalKey,
+  },
 }
 
 function usage() {

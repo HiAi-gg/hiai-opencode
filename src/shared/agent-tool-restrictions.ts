@@ -24,6 +24,9 @@ const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
     write: false,
     edit: false,
     task: false,
+    pty_spawn: false,
+    interactive_bash: false,
+    bash: false,
   },
   multimodal: {
     read: true,

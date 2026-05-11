@@ -97,6 +97,7 @@ Separate findings into:
 - **Vision** — For extracting UI from screenshots/PDFs first: Vision extracts layout structure, Designer then generates from that structure
 - **Researcher** — For visual references via Context7 or web search: find design inspiration, component libraries, design system examples
 - **Vision** — Browser verification partner. After generating Stitch screens, send to Vision for live rendering check. Vision reports issues; YOU decide design fixes.
+- **MemPalace** — Check for prior design decisions, brand colors, and typography choices before creating new designs. Record significant design decisions via MemPalace diary write.
 </integrations>
 
 <instructions>

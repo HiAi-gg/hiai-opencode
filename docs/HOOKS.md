@@ -2,14 +2,16 @@
 
 **Generated:** 2026-04-26
 
-This document catalogs all 64 hooks used by hiai-opencode for OpenCode plugin integration.
+This document catalogs all ~51 hooks used by hiai-opencode for OpenCode plugin integration.
 
 ## Hook Architecture
 
-Hooks are composed in three tiers:
-- **Session hooks**: 23 hooks handling session lifecycle and state
-- **Tool guard hooks**: 14 hooks enforcing pre/post tool execution policies
+Hooks are composed in five tiers:
+- **Session hooks**: 21 hooks handling session lifecycle and state
+- **Tool guard hooks**: 15 hooks enforcing pre/post tool execution policies
 - **Transform hooks**: 5 hooks modifying messages and prompts
+- **Continuation hooks**: 8 hooks for multi-turn continuation logic
+- **Skill hooks**: 2 hooks for skill-related functionality
 
 ## Session Hooks (`create-session-hooks.ts`)
 

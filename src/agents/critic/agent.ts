@@ -114,7 +114,7 @@ If REJECTED: do NOT let implementation proceed until issues are resolved.
 - **Researcher** — Recommend if a plan needs facts/source confirmation before approval.
 - **Quality Guardian** — Recommend for post-implementation review, separate from your pre-flight gate.
 - **Vision** — MANDATORY for UI changes (see <visual-verification> below). Drives agent-browser to verify a running app.
-- **MemPalace / Sequential-Thinking** — \`mcp__mempalace__mempalace_search\` for prior decisions (search with \`wing: 'hiai-opencode'\`); \`mcp__sequential-thinking__sequentialthinking\` for deep multi-step reasoning when verifying complex plans. Use sequential-thinking when the plan/implementation has 3+ interacting components or non-trivial architectural tradeoffs. Start with totalThoughts=3-5, iterate as needed.
+- **MemPalace / Sequential-Thinking** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<prior decision topic>", limit: 5, wing: "hiai-opencode" }})\` for prior decisions; \`skill_mcp({ mcp_name: "sequential-thinking", tool_name: "sequentialthinking", arguments: { ... }})\` for deep multi-step reasoning when verifying complex plans.
 </peer-agents>
 
 <verification_promise>

@@ -90,7 +90,7 @@ MCP integrations and which agents use them:
 
 ## What You Get
 
-- **10 visible primary agents** + **4 hidden system agents** (Agent Skills, Sub, build, plan)
+- **9 visible primary agents** + **4 hidden system agents** (Agent Skills, Sub, build, plan)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
 - Skill wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`

@@ -51,6 +51,27 @@ Do not add MCP packages to the OpenCode plugin array. MCP packages are launched 
 - \`stitch\`: requires \`STITCH_AI_API_KEY\`.
 - \`context7\`: remote docs/search; key optional but recommended for limits.
 
+## MemPalace Configuration
+
+The MemPalace stores project memory using a single-wing architecture:
+
+**Wing**: \`hiai-opencode\` (shared across all projects — single codebase = shared knowledge)
+
+**Room naming**: \`project-aspect\` format:
+- \`core-architecture\` — system architecture, ports, structure
+- \`core-decisions\` — global architecture decisions
+- \`core-plans\` — active plan index
+- \`hiai-opencode-plans\` — plugin-specific plans
+- \`hiai-opencode-results\` — audit results
+- \`shared-patterns\` — reusable code patterns
+
+**Agent MemPalace workflow**:
+1. BEFORE work: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\`
+2. AFTER work: record via \`mempalace_diary_write\` (with \`agent_name\`) or \`mempalace_add_drawer\` for durable decisions
+3. Filter by room: \`search(room="hiai-opencode-plans")\` for specific project context
+
+**Verification**: \`hiai-opencode mcp-status\` should show mempalace as enabled.
+
 ## Calling MCP
 
 - Use native MCP tools if OpenCode exposes them.

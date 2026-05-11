@@ -2,6 +2,9 @@ import { join } from "node:path"
 import { existsSync } from "node:fs"
 import type { McpServerConfig } from "../config/types.js"
 
+// websearch is an external MCP service, configured via hiai-opencode.json,
+// not managed through the internal HIAI_MCP_REGISTRY.
+
 export type HiaiMcpName =
   | "stitch"
   | "sequential-thinking"

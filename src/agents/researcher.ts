@@ -74,30 +74,32 @@ skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "su
 2. **firecrawl-cli** — Fallback for finding repos or examples via web research.
 
 ### Project / Codebase Knowledge
-1. **MemPalace** — MANDATORY CHECK before external search:
-   a. FIRST: Call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<user topic>", limit: 5, wing: "hiai-opencode" }})\`
-   b. If results exist AND are relevant → Use them, skip external search
-   c. If no results → Proceed to external web
+1. **PostgreSQL** — MANDATORY first step: use \`supabase-postgres-best-practices\` skill for database knowledge. Query schemas via \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "..."\` (port 5433) or \`docker exec webs-postgres psql -U admin -d webs -c "..."\` (port 5432). Check table structures, foreign keys, and metadata BEFORE any code changes.
+2. **MemPalace** — SECOND priority after PostgreSQL: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` — MANDATORY check for prior decisions. If results exist AND are relevant → Use them, skip external search.
 3. **Direct tools** (grep, glob, read) — Local file system exploration.
 
 ### Website / Web Research
-1. **Firecrawl CLI** — Web research: \`mcp__firecrawl__firecrawl_search\`, \`mcp__firecrawl__firecrawl_scrape\`, \`mcp__firecrawl__firecrawl_extract\`, \`mcp__firecrawl__firecrawl_crawl\` (+ \`firecrawl_check_crawl_status\`), \`mcp__firecrawl__firecrawl_map\`, \`mcp__firecrawl__firecrawl_agent\` (+ \`firecrawl_agent_status\`), \`mcp__firecrawl__firecrawl_browser_*\`.
-2. **firecrawl-cli** — Web research via CLI skill.
+1. **Firecrawl CLI** — Web research via CLI skill (default).
 
 ### Tool Summary
 | Tool | MCP Prefix | Best For |
 |------|-----------|----------|
 | Context7 | \`mcp__context7__*\` | Library docs, API references |
-| Firecrawl | \`mcp__firecrawl__*\` | Web scraping, crawling, extraction |
+| firecrawl-cli | CLI skill | Web scraping, crawling, extraction |
 | grep_app | \`mcp__grep_app__*\` | OSS code patterns on GitHub |
 | firecrawl-cli | CLI skill | Web scraping, crawling, extraction |
-| MemPalace | \`mcp__mempalace__*\` | Project memory / past decisions — MANDATORY check before external search |
+| MemPalace | CLI skill (via \`skill_mcp({ mcp_name: "mempalace" })\`) | Project memory / past decisions — SECOND priority after PostgreSQL |
 | Postgres/pgvector | \`docker exec psql\` | Project metadata, build history, vector search |
 
 ## Peer-Agents
 - **Vision** — When encountering PDFs, images, or binary files: return the file path and recommend the Vision agent for extraction. Vision can extract text from PDFs, describe UI from screenshots, and interpret diagrams.
 - **Output Contract**: Always cite the source (URL or MCP tool name) for each finding. If no source found, state clearly.
 </reference-grep-tools>
+
+## After Research
+Record significant findings via diary: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "researcher", entry: "<AAAK entry with key findings>" }})\`
+
+<references>
 
 <instructions>
 - Determine if the query requires internal repository knowledge (Explore) or external knowledge (Librarian).
