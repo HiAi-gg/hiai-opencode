@@ -185,6 +185,7 @@ Hidden/system or compatibility agents:
 - `Sub`
 - `build`
 - `plan`
+- `quality-guardian`
 
 Automatic task distribution:
 

@@ -11,6 +11,7 @@ export type HiaiMcpName =
   | "context7"
   | "mempalace"
   | "grep_app"
+  | "websearch"
 
 export type HiaiMcpInstallKind = "bundled" | "npm" | "python" | "remote" | "user-service"
 
@@ -92,6 +93,19 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       enabled: true,
       type: "remote",
       url: "https://mcp.grep.app",
+      timeout: 600000,
+    },
+  },
+  websearch: {
+    name: "websearch",
+    enabledByDefault: false,
+    install: "remote",
+    optionalEnv: ["EXA_API_KEY"],
+    config: {
+      enabled: false,
+      type: "remote",
+      url: "https://mcp.exa.ai/mcp",
+      headers: {},
       timeout: 600000,
     },
   },

@@ -42,7 +42,13 @@ test("compact MCP mempalace pythonPath is materialized into environment", () => 
 })
 
 test("static MCP export includes marker metadata and servers", () => {
-  const resolved = applyModelSlots(baseConfig)
+  const resolved = applyModelSlots({
+    ...baseConfig,
+    mcp: {
+      mempalace: { enabled: true, pythonPath: "/opt/venv/bin/python" },
+      websearch: { enabled: true },
+    },
+  })
   const exported = buildStaticMcpJson(resolved)
 
   expect(exported._meta?.generatedBy).toBe(MCP_EXPORT_MARKER)

@@ -151,6 +151,12 @@ function deriveMcp(config: HiaiOpencodeConfig): HiaiOpencodeConfig["mcp"] {
         }
       }
 
+      // Apply websearch provider overrides (tavily vs exa defaults)
+      if (name === "websearch" && merged.provider === "tavily") {
+        merged.url = "https://mcp.tavily.com/mcp/"
+        merged.headers = { "Authorization": "Bearer {env:TAVILY_API_KEY}" }
+      }
+
       // Internal launcher hint; do not leak unknown keys into final OpenCode MCP server config.
       delete merged.pythonPath
 

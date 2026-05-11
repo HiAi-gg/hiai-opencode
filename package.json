@@ -10,12 +10,13 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/index.js",
+      "import": "dist/index.js",
       "types": "./dist/index.d.ts"
     }
   },
   "files": [
     "dist/",
+    "docs/",
     "skills/",
     "assets/",
     "config/",
@@ -23,6 +24,7 @@
     "AGENTS.md",
     "ARCHITECTURE.md",
     "LICENSE.md",
+    "LICENCE.md",
     "README.md",
     "hiai-opencode.json"
   ],
