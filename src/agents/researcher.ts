@@ -75,7 +75,10 @@ skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "su
 
 ### Project / Codebase Knowledge
 1. **PostgreSQL** — MANDATORY first step: use \`supabase-postgres-best-practices\` skill for database knowledge. Query schemas via \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "..."\` (port 5433) or \`docker exec webs-postgres psql -U admin -d webs -c "..."\` (port 5432). Check table structures, foreign keys, and metadata BEFORE any code changes.
-2. **MemPalace** — SECOND priority after PostgreSQL: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` — MANDATORY check for prior decisions. If results exist AND are relevant → Use them, skip external search.
+2. **MemPalace** — SECOND priority after PostgreSQL: MANDATORY check for prior decisions. Search ALL wings:
+   - \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5 }})\` — search ALL wings (no wing filter)
+   - \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_kg_query", arguments: { entity: "<topic>" }})\` — check entity relationships
+   If results exist AND are relevant → Use them, skip external search.
 3. **Direct tools** (grep, glob, read) — Local file system exploration.
 
 ### Website / Web Research

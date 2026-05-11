@@ -47,6 +47,10 @@ Available browser tools (agent_browser_* via /agent-browser skill):
 - \`agent_browser_click\` / \`agent_browser_fill\` / \`agent_browser_press\` — interact
 - \`agent_browser_console\` — surface JS errors
 
+**Screenshot saving**: After each verification, save screenshots to \`images/screenshots/\`:
+- \`agent_browser_screenshot(filename="images/screenshots/{project}_{screen}_{viewport}.png")\` — desktop
+- \`agent_browser_screenshot(filename="images/screenshots/{project}_{screen}_mobile.png", fullPage=true)\` — mobile
+
 Visual verification checklist (run ALL that apply):
 1. **Page loads** — navigate, confirm no console errors, no failed network requests
 2. **Layout integrity** — snapshot + screenshot at default viewport. No overlapping elements, no clipped text, no broken images
@@ -111,6 +115,7 @@ Designer will iterate based on your findings. You do NOT decide what to change �
 - **Brainstormer** — For competitor landing-page screenshots: return copy segmented by blocks.
 - **Bob/Coder** — Direct file path + structured extraction.
 - **MemPalace** — Check for prior UI verification results and visual regression patterns before starting work. Record UI verification outcomes via diary_write: agent_name: "vision".
+- **Other agents (Coder, Strategist, Bob, Researcher)** — May request browser screenshots for review. Handle these requests normally; save to \`images/screenshots/\`.
 
 You never delegate further. You return findings; the caller decides next steps.
 </peer-agents>
@@ -124,21 +129,30 @@ You never delegate further. You return findings; the caller decides next steps.
 
 // Full browser automation access for Vision (primary agent-browser user)
 const VISION_AGENT_BROWSER_TOOLS = [
-  "Bash",                    // CLI to run agent-browser
-  "agent_browser_navigate",  // navigate to URLs
-  "agent_browser_snapshot",  // snapshot page state
-  "agent_browser_click",     // click elements
-  "agent_browser_fill",      // fill form fields
-  "agent_browser_type",      // type text
-  "agent_browser_screenshot", // take screenshots
-  "agent_browser_eval",      // evaluate JS
-  "agent_browser_wait",      // wait for conditions
-  "agent_browser_close",     // close browser
-  "agent_browser_console",   // console output
-  "agent_browser_select",    // select dropdowns
-  "agent_browser_hover",     // hover elements
-  "agent_browser_press",     // press keys
-  "agent_browser_batch",     // batch commands
+  "Bash",
+  "agent_browser_navigate",
+  "agent_browser_snapshot",
+  "agent_browser_click",
+  "agent_browser_fill",
+  "agent_browser_type",
+  "agent_browser_screenshot",
+  "agent_browser_eval",
+  "agent_browser_wait",
+  "agent_browser_close",
+  "agent_browser_console",
+  "agent_browser_select",
+  "agent_browser_hover",
+  "agent_browser_press",
+  "agent_browser_batch",
+]
+
+// Stitch MCP tools for viewing Designer-generated screens
+const VISION_STITCH_TOOLS = [
+  "stitch_get_project",
+  "stitch_get_screen",
+  "stitch_list_screens",
+  "stitch_list_projects",
+  "stitch_list_design_systems",
 ]
 
 export function createMultimodalLookerAgent(model: string): AgentConfig {
@@ -146,6 +160,7 @@ export function createMultimodalLookerAgent(model: string): AgentConfig {
     "read",
     "look_at",
     ...VISION_AGENT_BROWSER_TOOLS,
+    ...VISION_STITCH_TOOLS,
   ])
 
   return {

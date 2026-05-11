@@ -133,7 +133,7 @@ export function applyToolConfig(params: {
     },
   });
 
-  applyPermissionToAgentKeys({
+applyPermissionToAgentKeys({
     agentResult: params.agentResult,
     keys: ["coder"],
     apply: (agent) => {
@@ -142,7 +142,65 @@ export function applyToolConfig(params: {
         call_hiai_agent: "deny",
         task: "allow",
         question: questionPermission,
+        agent_browser_navigate: "allow",
+        agent_browser_screenshot: "allow",
+        agent_browser_console: "allow",
         ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: STRATEGIST_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_hiai_agent: "deny",
+        task: "allow",
+        question: questionPermission,
+        "task_*": "allow",
+        teammate: "allow",
+        agent_browser_navigate: "allow",
+        agent_browser_snapshot: "allow",
+        pty_spawn: "deny",
+        pty_write: "deny",
+        pty_read: "deny",
+        pty_kill: "deny",
+        pty_list: "deny",
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: BOB_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        call_hiai_agent: "deny",
+        task: "allow",
+        question: questionPermission,
+        "task_*": "allow",
+        teammate: "allow",
+        agent_browser_navigate: "allow",
+        agent_browser_screenshot: "allow",
+        ...denyTodoTools,
+      };
+    },
+  });
+
+  applyPermissionToAgentKeys({
+    agentResult: params.agentResult,
+    keys: RESEARCH_AGENT_KEYS,
+    apply: (agent) => {
+      agent.permission = {
+        ...agent.permission,
+        "grep_app_*": "allow",
+        agent_browser_navigate: "allow",
+        agent_browser_snapshot: "allow",
+        agent_browser_eval: "allow",
       };
     },
   });
