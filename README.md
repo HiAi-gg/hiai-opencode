@@ -8,7 +8,7 @@
 
 **What you get on top of plain OpenCode:**
 
-- **12-agent canonical model** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
+- **14-agent canonical model (9 visible + 5 hidden)** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
 - **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
 - **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, MemPalace, Sequential-Thinking, Playwright. Each agent's prompt knows which MCP servers it owns.
 - **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
