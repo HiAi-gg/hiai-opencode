@@ -25,12 +25,13 @@ Some are:
 | Planning / workflow influences | [obra/superpowers](https://github.com/obra/superpowers) | planning, review, and debugging ideas |
 | Specialist / platform influences | [vtemian/micode](https://github.com/vtemian/micode) | platform-style specialist behavior |
 | Agent skill ecosystem | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | tactical workflow skill ideas |
+| Supabase Postgres skill | [supabase/agent-skills](https://github.com/supabase/agent-skills/blob/main/skills/supabase-postgres-best-practices/SKILL.md) | Postgres best practices skill |
+| Browser automation | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | CLI-based browser automation via CDP |
 | Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | not bundled |
 | MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external upstream MCP/runtime |
-| Playwright MCP | [microsoft/playwright-mcp](https://github.com/microsoft/playwright-mcp) | external MCP |
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
-| Firecrawl MCP | [firecrawl-ai/firecrawl-mcp-server](https://github.com/firecrawl-ai/firecrawl-mcp-server) | external MCP |
-| Context7 MCP | [upstash/context7-mcp](https://github.com/upstash/context7-mcp) | external MCP |
+| Firecrawl CLI skill | [mendableai/firecrawl](https://github.com/mendableai/firecrawl) | CLI-based web scraping, crawl, extract, search |
+| Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
 ## What Is Bundled vs External

@@ -426,7 +426,7 @@ Important service variables:
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
 - `MEMPALACE_PALACE_PATH`
-- `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
+
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
@@ -463,13 +463,29 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 
 ### Browser Automation
 
-For browser automation, use the `/agent-browser` skill instead of an MCP server. Install Chromium if needed:
+For browser automation, use the `/agent-browser` skill instead of an MCP server. The CLI uses native Chrome via CDP — no Playwright.
 
+**Install** (Bun):
+```bash
+bun add -g agent-browser && agent-browser install
+```
+
+Or via npm:
 ```bash
 npm i -g agent-browser && agent-browser install
 ```
 
-Then use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
+Repo: https://github.com/vercel-labs/agent-browser
+
+Key environment variables (`AGENT_BROWSER_*`):
+- `AGENT_BROWSER_HEADED=1` — show browser window
+- `AGENT_BROWSER_SESSION=name` — isolated session
+- `AGENT_BROWSER_PROFILE=path` — persistent profile
+- `AGENT_BROWSER_PROVIDER=name` — cloud provider (browserbase, browseruse, kernel)
+- `AGENT_BROWSER_AUTO_CONNECT=1` — auto-discover running Chrome
+- `AGENT_BROWSER_EXECUTABLE_PATH` — custom browser binary
+
+Use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
 
 ### Needs upstream runtime or extra setup
 
@@ -542,6 +558,8 @@ opencode mcp list --print-logs --log-level INFO
 | Planning / workflow influences | [obra/superpowers](https://github.com/obra/superpowers) | planning, review, and debugging ideas |
 | Specialist / platform influences | [vtemian/micode](https://github.com/vtemian/micode) | platform-style specialist behavior |
 | Agent skill ecosystem | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | tactical workflow skill ideas |
+| Supabase Postgres skill | [supabase/agent-skills](https://github.com/supabase/agent-skills/blob/main/skills/supabase-postgres-best-practices/SKILL.md) | Postgres best practices skill |
+| Browser automation | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | CLI-based browser automation via CDP |
 | Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | installed separately |
 | MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external MCP/runtime |
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |

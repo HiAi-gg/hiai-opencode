@@ -116,7 +116,7 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `STITCH_AI_API_KEY`
    - `CONTEXT7_API_KEY`
    - `MEMPALACE_PYTHON`
-   - `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
+   
    - `HIAI_MCP_AUTO_INSTALL`
 7. Verify with:
    - `opencode debug config`
@@ -429,7 +429,7 @@ Common service keys:
 - `OLLAMA_MODEL`
 - `MEMPALACE_PYTHON`
 - `MEMPALACE_PALACE_PATH`
-- `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`
+
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
@@ -563,12 +563,27 @@ This bypasses the filter because explicit `environment` entries are an allowlist
 
 ### Browser Automation (agent-browser)
 
-For browser automation, use the `/agent-browser` skill instead of MCP. The CLI-based approach uses native Chrome via CDP, snapshot-based @eN refs, and doesn't require MCP server startup.
+For browser automation, use the `/agent-browser` skill instead of MCP. The CLI-based approach uses native Chrome via CDP, snapshot-based @eN refs, and doesn't require MCP server startup — no Playwright.
 
-Install:
+**Install** (Bun):
+```bash
+bun add -g agent-browser && agent-browser install
+```
+
+Or via npm:
 ```bash
 npm i -g agent-browser && agent-browser install
 ```
+
+Repo: https://github.com/vercel-labs/agent-browser
+
+Key environment variables (`AGENT_BROWSER_*`):
+- `AGENT_BROWSER_HEADED=1` — show browser window
+- `AGENT_BROWSER_SESSION=name` — isolated session
+- `AGENT_BROWSER_PROFILE=path` — persistent profile
+- `AGENT_BROWSER_PROVIDER=name` — cloud provider (browserbase, browseruse, kernel)
+- `AGENT_BROWSER_AUTO_CONNECT=1` — auto-discover running Chrome
+- `AGENT_BROWSER_EXECUTABLE_PATH` — custom browser binary
 
 Key pattern: `snapshot -i --json` → @eN refs → `click @e2` / `fill @e3 "text"`
 
