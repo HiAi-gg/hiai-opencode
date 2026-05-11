@@ -15,7 +15,7 @@
     "sequential-thinking": {
       "command": "node",
       "args": [
-        "/mnt/ai_data/projects/hiai-opencode/assets/runtime/npm-package-runner.mjs",
+        "{pluginRoot}/assets/runtime/npm-package-runner.mjs",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
@@ -29,7 +29,7 @@
     "mempalace": {
       "command": "node",
       "args": [
-        "/mnt/ai_data/projects/hiai-opencode/assets/mcp/mempalace.mjs",
+        "{pluginRoot}/assets/mcp/mempalace.mjs",
         "--palace",
         "./.opencode/palace"
       ],

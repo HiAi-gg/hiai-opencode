@@ -459,6 +459,7 @@ AGENTS:
   vision           — PDF/image extraction
   manager          — MemPalace memory steward
   quality-guardian — post-impl review + bug investigation
+  agent-skills      — skill registry, discovery
 
 MCP INTEGRATIONS (who uses what):
   Stitch              -> designer (UI generation)
@@ -468,7 +469,6 @@ MCP INTEGRATIONS (who uses what):
   websearch           -> researcher (general web)
   MemPalace           -> manager (primary), all agents (search before answer)
   Sequential-Thinking -> strategist, critic (deep reasoning)
-  Playwright          -> coder (only for tests/automation)
 
 LSP:
   typescript, svelte, eslint, bash, pyright

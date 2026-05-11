@@ -20,7 +20,7 @@ Required for MCP services you want to enable:
 
 | Key | Service | Get it at |
 |-----|---------|-----------|
-| `STITCH_AI_API_KEY` | Stitch (UI generation) | https://stitch.ai |
+| `STITCH_AI_API_KEY` | Stitch (UI generation) | https://stitch.withgoogle.com |
 | `FIRECRAWL_API_KEY` | Firecrawl (web scraping) | https://firecrawl.ai |
 | `CONTEXT7_API_KEY` | Context7 (library docs) | https://context7.com |
 | `EXA_API_KEY` | Exa web search | https://exa.ai |
@@ -56,7 +56,7 @@ When Bob or Manager delegates to sub-agents, check the system reminders for `<sy
 
 ## Next steps
 
-- Read [AGENTS.md](AGENTS.md) to understand each agent's role
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) to understand the plugin internals
+- Read [AGENTS.md](../AGENTS.md) to understand each agent's role
+- Read [ARCHITECTURE.md](../ARCHITECTURE.md) to understand the plugin internals
 - Edit `hiai-opencode.json` (or `.opencode/hiai-opencode.json`) to customize model slots and MCP enable/disable flags
 - Run `hiai-opencode export-mcp .mcp.json` if you need `opencode mcp list` to show hiai MCP servers

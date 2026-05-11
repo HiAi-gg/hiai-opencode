@@ -87,6 +87,7 @@ These exist for compatibility or system behavior and are not intended as user-fa
 - `Sub`
 - `build`
 - `plan`
+- `Quality Guardian`
 
 ### Canonical Source Files
 
@@ -258,13 +259,12 @@ Current MCP set:
 
 - `stitch`
 - `sequential-thinking`
-- `firecrawl`
-- `rag`
+- `firecrawl` (CLI skill, not MCP)
 - `mempalace`
 - `context7`
 - `websearch`
 - `grep_app`
-- `agent-browser`
+- `agent-browser` (CLI skill, not MCP)
 
 ## LSP
 

@@ -10,7 +10,7 @@
 
 - **14-agent canonical model (9 visible + 5 hidden)** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
 - **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
-- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, MemPalace, Sequential-Thinking, Playwright. Each agent's prompt knows which MCP servers it owns.
+- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, websearch, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns.
 - **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
 - **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
 
@@ -41,18 +41,30 @@ Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug
 
 For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
 
+
 ## Agents
+
+**9 Visible Primary Agents:**
 
 | Agent | Role | When to use |
 |-------|------|-------------|
 | `Bob` | Orchestrator, router, distributor | Entry point; complex tasks needing multi-agent coordination |
 | `Coder` | Deep implementation, focused execution | Complex features, refactors, deep work |
-| `Sub` | Bounded cheap executor | Small targeted changes, quick fixes |
 | `Strategist` | Planning, architecture, pre-check | Scope definition, architectural decisions |
-| `Manager` | Final acceptor, workflow enforcer | Closure validation, output acceptance |
+| `Manager` | Delegation orchestrator, TODO tracker | Coordinates specialists, maintains session continuity |
 | `Critic` | Review gate, high-accuracy verification | Plan review, code review, regression catch |
+| `Designer` | UI/visual direction via Stitch MCP | Visual problems, design systems, screen generation |
 | `Researcher` | Local + external search | Codebase exploration, documentation discovery |
-| `Manager` | Memory, bootstrap, ledger | Durable state, session continuity, project init |
+| `Writer` | Content, copy, positioning, SEO | Website copy, product messaging, naming |
+| `Vision` | PDF/image/diagram extraction, browser UI verification | Multimodal analysis, live browser verification |
+
+**5 Hidden System Agents** (used internally, not for direct selection):
+
+- `Agent Skills` — Skill registry, discovery, and capability orchestration
+- `Sub` — Compatibility wrapper for bounded execution (folded into Coder's contour)
+- `build` — Default executor (OpenCode system agent)
+- `plan` — Plan mode agent (OpenCode system agent)
+- `Quality Guardian` — Post-implementation review and bug investigation (compatibility alias for Critic)
 
 ## Modes (Task Routing)
 
@@ -60,16 +72,16 @@ Mode determines prompt append, variant, and reasoning effort. The executor agent
 
 | Mode | Agent | Prompt variant | When to use |
 |------|-------|----------------|-------------|
-| `quick` | `sub` | Fast bounded | Small targeted changes |
+| `quick` | `coder` (via fast bounded contour) | Fast bounded | Small targeted changes |
 | `writing` | `writer` | Docs/prose | Content, i18n, copy |
 | `deep` | `coder` | Deep reasoning | Complex implementation |
 | `ultrabrain` | `strategist` | Plan-only | Architecture, hard logic |
 | `visual-engineering` | `designer` | UI/visual | Visual problems |
 | `artistry` | `designer` | Creative | Brand, SEO, creative |
 | `git` | `platform-manager` | Git ops | Version control operations |
-| `bounded` | `sub` | Mid-tier bounded | Moderate effort changes |
+| `bounded` | `coder` (via fast bounded contour) | Mid-tier bounded | Moderate effort changes |
 | `cross-module` | `coder` | Deep substantial | Multi-component changes |
-| `unspecified-low` | `sub` | Bounded | Unclassified small tasks |
+| `unspecified-low` | `coder` (via fast bounded contour) | Bounded | Unclassified small tasks |
 | `unspecified-high` | `coder` | Deep | Unclassified substantial tasks |
 
 ## Integrations
@@ -79,21 +91,20 @@ MCP integrations and which agents use them:
 | Service | Key env var | Agent(s) | What it's for |
 |---------|------------|----------|---------------|
 | Stitch | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
-| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | CLI skill for web scraping, crawl, extract, search |
+| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | CLI skill (not MCP) for web scraping, crawl, extract, search |
 | Context7 | `CONTEXT7_API_KEY` | Researcher, Coder | Library API documentation |
 | grep_app | — | Researcher | GitHub OSS code pattern search |
 | websearch (Exa) | `EXA_API_KEY` | Researcher | General web search |
 | websearch (Tavily) | `TAVILY_API_KEY` | Researcher | General web search (alt provider) |
-| MemPalace | — | Manager (primary), all agents | Project memory and past decisions |
+| MemPalace | MEMPALACE_PYTHON (optional) | Manager (primary), all agents | Project memory and past decisions |
 | Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
-| Playwright | — | Coder | Browser tests and automation |
 
 ## What You Get
 
-- **9 visible primary agents** + **4 hidden system agents** (Agent Skills, Sub, build, plan)
+- **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
-- Skill wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
+- MCP wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, plus remote `websearch` and `grep_app`
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
 ## Continuation, Ralph-Loop, And Auto-Start
@@ -258,7 +269,7 @@ opencode mcp list --print-logs --log-level INFO
 Direct npm install is only needed for development or inspection:
 
 ```bash
-npm install @hiai-gg/hiai-opencode
+bun install
 ```
 
 Local development:
@@ -485,7 +496,6 @@ This most often affects `sequential-thinking` and `mempalace`, and sometimes loc
 
 ## Troubleshooting MCP Servers
 
-### Playwright MCP fails to find Chromium
 
 ## Diagnostics
 
