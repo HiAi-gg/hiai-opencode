@@ -124,6 +124,46 @@ function candidateOpenCodeConfigPaths() {
   return paths
 }
 
+function checkPgvectorConnectivity() {
+  const result = spawnSync("docker", ["exec", "ai-core-postgres", "psql", "-U", "aiuser", "-d", "ai_orchestration", "-c", "SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector';"], {
+    encoding: "utf-8",
+    timeout: 10000,
+  })
+  if (result.status === 0 && result.stdout.includes("1 row")) {
+    return { level: "ok", detail: "pgvector extension active" }
+  }
+  if (result.status === 0 && result.stdout.includes("0 rows")) {
+    return { level: "warn", detail: "pgvector extension not installed (vector search unavailable)" }
+  }
+  return { level: "error", detail: "pgvector connectivity check failed (docker exec psql)" }
+}
+
+function checkDelegationPermissions(config) {
+  const readOnly = config?.delegation?.read_only ?? []
+  const noPty = config?.delegation?.no_pty ?? []
+  const writeDenied = readOnly.filter((a) => a.toLowerCase().includes("manager"))
+  const ptyDenied = noPty.filter((a) => a.toLowerCase().includes("strategist"))
+  const detail = [
+    writeDenied.length > 0 ? `manager write deny: [${writeDenied.join(", ")}]` : null,
+    ptyDenied.length > 0 ? `strategist pty deny: [${ptyDenied.join(", ")}]` : null,
+  ].filter(Boolean).join(" | ") || "delegation permissions not configured"
+  return { level: detail.includes("deny") ? "ok" : "warn", detail }
+}
+
+function checkMemPalaceHookStatus() {
+  const hookPath = join(PACKAGE_ROOT, "src", "hooks", "mempalace-auto-save", "handler.ts")
+  const handlerPath = join(PACKAGE_ROOT, "src", "hooks", "mempalace-auto-save", "index.ts")
+  const hookExists = existsSync(hookPath)
+  const handlerExists = existsSync(handlerPath)
+  if (hookExists && handlerExists) {
+    return { level: "ok", detail: "mem palace auto-save hook installed" }
+  }
+  if (hookExists) {
+    return { level: "warn", detail: "mem palace auto-save hook partial (handler.ts only)" }
+  }
+  return { level: "warn", detail: "mem palace auto-save hook not found" }
+}
+
 function checkOpenCodePluginRegistration() {
   for (const path of candidateOpenCodeConfigPaths()) {
     if (!existsSync(path)) continue
@@ -141,10 +181,13 @@ function checkOpenCodePluginRegistration() {
         }
       }
 
-      if (plugins.includes("@hiai-gg/hiai-opencode")) {
+      const dcpRegistered = plugins.includes("@tarquinen/opencode-dcp@latest") || plugins.includes("@tarquinen/opencode-dcp")
+      const hiaiRegistered = plugins.includes("@hiai-gg/hiai-opencode")
+
+      if (hiaiRegistered) {
         return {
-          level: "ok",
-          detail: `plugin registered in ${path}`,
+          level: dcpRegistered ? "ok" : "warn",
+          detail: `plugin registered in ${path}${dcpRegistered ? "; DCP (opencode-dcp) also registered" : "; DCP (opencode-dcp) not found — optional for Dynamic Context Pruning"}`,
         }
       }
 
@@ -811,6 +854,15 @@ async function mcpStatus(options = {}) {
     const mempalacePython = detectMempalacePythonSource(config)
     const mempalacePythonIcon = mempalacePython.value ? "✅" : "⚠️ "
     console.log(`${mempalacePythonIcon} MemPalace python selection - ${mempalacePython.source}${mempalacePython.value ? ` (${mempalacePython.value})` : ""}`)
+
+    const pgvector = checkPgvectorConnectivity()
+    console.log(`${statusIcon(pgvector.level)} pgvector connectivity - ${pgvector.detail}`)
+
+    const delegation = checkDelegationPermissions(config)
+    console.log(`${statusIcon(delegation.level)} Delegation permissions - ${delegation.detail}`)
+
+    const mempalaceHook = checkMemPalaceHookStatus()
+    console.log(`${statusIcon(mempalaceHook.level)} MemPalace auto-save hook - ${mempalaceHook.detail}`)
 
     console.log("")
     console.log("MCP Tool Probes:")

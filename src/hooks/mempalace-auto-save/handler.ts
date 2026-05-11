@@ -7,6 +7,13 @@ import type { MemPalaceAutoSaveOptions, MemPalaceAutoSaveState } from "./types"
 
 const DEFAULT_DEBOUNCE_MS = 60_000
 
+interface ExtendedMemPalaceAutoSaveState extends MemPalaceAutoSaveState {
+  planSaved: boolean
+  reviewSaved: boolean
+  designSaved: boolean
+  workStartedSaved: boolean
+}
+
 export function createMemPalaceAutoSaveHandler(args: {
   ctx: PluginInput
   skillMcpManager: SkillMcpManager
@@ -16,13 +23,17 @@ export function createMemPalaceAutoSaveHandler(args: {
   const debounceMs = options?.debounceMs ?? DEFAULT_DEBOUNCE_MS
   const enabled = options?.enabled ?? true
 
-  const sessionStates = new Map<string, MemPalaceAutoSaveState>()
+  const sessionStates = new Map<string, ExtendedMemPalaceAutoSaveState>()
 
-  const getState = (sessionID: string): MemPalaceAutoSaveState => {
+  const getState = (sessionID: string): ExtendedMemPalaceAutoSaveState => {
     if (!sessionStates.has(sessionID)) {
       sessionStates.set(sessionID, {
         savedTodos: new Set<string>(),
         sessionEndSaved: false,
+        planSaved: false,
+        reviewSaved: false,
+        designSaved: false,
+        workStartedSaved: false,
       })
     }
     return sessionStates.get(sessionID)!
@@ -81,6 +92,23 @@ export function createMemPalaceAutoSaveHandler(args: {
     const props = event.properties as Record<string, unknown> | undefined
     const sessionID = props?.sessionID as string | undefined
 
+    if (event.type === "session.created" && sessionID) {
+      const state = getState(sessionID)
+      if (!state.workStartedSaved && canSave(sessionID)) {
+        const sessionInfo = props?.info as { id?: string; title?: string } | undefined
+        await saveToMemPalace({
+          wing: "hiai-opencode",
+          room: "plans",
+          content: `Plan started: ${sessionInfo?.title ?? sessionID}`,
+          agent_name: "strategist",
+          entry: `PLAN|${sessionID}|started|${sessionInfo?.title ?? sessionID}`,
+          topic: "plan-started",
+        })
+        state.workStartedSaved = true
+        markSaved(sessionID)
+      }
+    }
+
     if (event.type === "session.idle" && sessionID) {
       try {
         const todosResp = await ctx.client.session.todo({ path: { id: sessionID } })
@@ -93,13 +121,26 @@ export function createMemPalaceAutoSaveHandler(args: {
           for (const todo of completedTodos) {
             if (todo.id) {
               state.savedTodos.add(todo.id)
+              const content = todo.content ?? "unnamed todo"
+              let room = "tasks"
+              let agent_name = "coder"
+              if (content.toLowerCase().includes("plan")) {
+                room = "plans"
+                agent_name = "strategist"
+              } else if (content.toLowerCase().includes("review") || content.toLowerCase().includes("critic") || content.toLowerCase().includes("approve")) {
+                room = "reviews"
+                agent_name = "critic"
+              } else if (content.toLowerCase().includes("design") || content.toLowerCase().includes("stitch") || content.toLowerCase().includes("handoff")) {
+                room = "designs"
+                agent_name = "designer"
+              }
               await saveToMemPalace({
                 wing: "hiai-opencode",
-                room: "todos",
-                content: `TODO completed: ${todo.content ?? "unnamed todo"}`,
-                agent_name: "manager",
-                entry: `TODO|${todo.id}|done|${todo.content ?? "unnamed todo"}`,
-                topic: "todos",
+                room,
+                content: `Completed: ${content}`,
+                agent_name,
+                entry: `TODO|${todo.id}|done|${content}`,
+                topic: room.slice(0, -1),
               })
             }
           }
@@ -125,6 +166,36 @@ export function createMemPalaceAutoSaveHandler(args: {
         })
         markSaved(sessionID)
         sessionStates.delete(sessionID)
+      }
+    }
+
+    if (event.type === "session.compacted" && sessionID) {
+      const state = getState(sessionID)
+      if (canSave(sessionID)) {
+        const sessionInfo = props?.info as { id?: string; title?: string } | undefined
+        if (!state.reviewSaved) {
+          await saveToMemPalace({
+            wing: "hiai-opencode",
+            room: "reviews",
+            content: `Review/design cycle completed: ${sessionInfo?.title ?? sessionID}`,
+            agent_name: "critic",
+            entry: `REVIEW|${sessionID}|complete|${sessionInfo?.title ?? sessionID}`,
+            topic: "review-complete",
+          })
+          state.reviewSaved = true
+        }
+        if (!state.designSaved) {
+          await saveToMemPalace({
+            wing: "hiai-opencode",
+            room: "designs",
+            content: `Design handoff completed: ${sessionInfo?.title ?? sessionID}`,
+            agent_name: "designer",
+            entry: `DESIGN|${sessionID}|complete|${sessionInfo?.title ?? sessionID}`,
+            topic: "design-complete",
+          })
+          state.designSaved = true
+        }
+        markSaved(sessionID)
       }
     }
 
