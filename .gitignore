@@ -93,3 +93,4 @@ todo.md
 
 # Internal agent state and plans
 .bob/
+tests/
