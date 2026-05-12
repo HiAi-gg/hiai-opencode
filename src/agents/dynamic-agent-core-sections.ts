@@ -97,7 +97,7 @@ Core rules:
 MCP usage:
 - Run \`hiai-opencode doctor\` or \`hiai-opencode mcp-status\` for effective runtime MCP status.
 - \`opencode mcp list\` often reads only static \`.mcp.json\`; plugin runtime MCP may work even when that list is empty.
-- The plugin auto-exports \`.mcp.json\` when missing. Run \`hiai-opencode export-mcp .mcp.json\` to refresh static visibility.
+- The plugin auto-exports \`.opencode/.mcp.json\` when missing. Run \`hiai-opencode export-mcp .opencode/.mcp.json\` to refresh static visibility.
 - \`skill_mcp\` can call skill-embedded MCP and enabled hiai-opencode MCP. If an MCP is "not found", check whether the skill was loaded, whether \`hiai-opencode.json\` enables it, and whether static export is needed.
 
 Memory and retrieval:

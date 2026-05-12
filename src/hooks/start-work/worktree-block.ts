@@ -4,8 +4,8 @@ Worktree isolation active for parallel plan.
 Working in: {worktreePath}
 Registry: .bob/boulder-registry/{planName}.json
 
-All boulder state operations use the worktree-local .bob/boulder.json.
-On completion, state syncs back to root and worktree is removed.
+Active plan registry stays in the root project .bob/boulder-registry/.
+The worktree is only the execution directory referenced by worktree_path.
 `
 
 export function createWorktreeActiveBlock(worktreePath: string, planName?: string): string {
@@ -23,6 +23,7 @@ export function createWorktreeActiveBlock(worktreePath: string, planName?: strin
 - Every file read, write, edit, and git operation MUST target paths under: \`${worktreePath}\`
 - When delegating tasks to subagents, you MUST include the worktree path in your delegation prompt so they also operate exclusively within the worktree
 - NEVER operate on the main repository directory - always use the worktree path above
+- Plan registry remains in the root project at \`${registryPath}\`; the worktree only supplies \`worktree_path\`
 - On completion, state syncs back to root and worktree is removed via \`git worktree remove\`
 `
 }

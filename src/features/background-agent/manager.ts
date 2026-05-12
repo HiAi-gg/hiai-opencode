@@ -41,6 +41,7 @@ import {
 } from "./background-task-notification-template"
 import {
   isAbortedSessionError,
+  isRecoverablePromptInjectionError,
   extractErrorName,
   extractErrorMessage,
   getSessionErrorMessage,
@@ -1860,10 +1861,12 @@ export class BackgroundManager {
             noReply: !shouldReply,
           })
         } catch (error) {
-          if (isAbortedSessionError(error)) {
+          if (isAbortedSessionError(error) || isRecoverablePromptInjectionError(error)) {
             log("[background-agent] Parent session aborted while sending notification; continuing cleanup:", {
               taskId: task.id,
               parentSessionID: task.parentSessionID,
+              recoverable: true,
+              error: extractErrorMessage(error) ?? String(error),
             })
             this.queuePendingNotification(task.parentSessionID, notification)
           } else {

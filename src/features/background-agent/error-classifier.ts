@@ -7,6 +7,14 @@ export function isAbortedSessionError(error: unknown): boolean {
   return message.toLowerCase().includes("aborted")
 }
 
+export function isRecoverablePromptInjectionError(error: unknown): boolean {
+  const text = `${getErrorText(error)} ${extractErrorMessage(error) ?? ""}`.toLowerCase()
+  return text.includes("unknownerror")
+    || text.includes("createusermessage")
+    || text.includes("tool call not allowed while generating summary")
+    || text.includes("generating summary")
+}
+
 export function getErrorText(error: unknown): string {
   if (!error) return ""
   if (typeof error === "string") return error

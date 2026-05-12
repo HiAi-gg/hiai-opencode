@@ -53,10 +53,8 @@ async function injectContinuation(input: {
   input.sessionState.isInjectingContinuation = true
 
   try {
-    // Use worktreePath if available, otherwise use ctx.directory
     const effectiveDir = input.worktreePath ?? input.ctx.directory
     const currentBoulder = readBoulderForPlan(input.ctx.directory, input.planName)
-      ?? (input.worktreePath ? readBoulderState(effectiveDir) : null)
     const currentTask = currentBoulder
       ? readCurrentTopLevelTask(currentBoulder.active_plan)
       : null

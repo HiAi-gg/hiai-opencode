@@ -42,6 +42,10 @@ interface StartWorkHookOutput {
   parts: Array<{ type: string; text?: string }>
 }
 
+interface StartWorkProcessOptions {
+  allowMessageMutation: boolean
+}
+
 /**
  * Check if a directory is a git repository
  */
@@ -80,6 +84,7 @@ export function createStartWorkHook(ctx: PluginInput) {
   const processStartWork = async (
     input: StartWorkHookInput,
     output: StartWorkHookOutput,
+    options: StartWorkProcessOptions,
   ): Promise<void> => {
     const parts = output.parts
     const promptText =
@@ -101,24 +106,8 @@ export function createStartWorkHook(ctx: PluginInput) {
       ? "manager"
       : "bob"
     updateSessionAgent(input.sessionID, activeAgent)
-    if (output.message) {
+    if (options.allowMessageMutation && output.message) {
       output.message["agent"] = resolveRegisteredAgentName(activeAgent) ?? activeAgent
-    }
-
-    try {
-      log(`[${HOOK_NAME}] Reloading agent prompt`, { sessionID: input.sessionID, activeAgent })
-      await ctx.client.session.promptAsync({
-        path: { id: input.sessionID },
-        body: {
-          noReply: true,
-          agent: activeAgent,
-          parts: [{ type: "text", text: "/" }],
-        },
-        query: { directory: ctx.directory },
-      })
-      log(`[${HOOK_NAME}] Agent prompt reloaded`, { sessionID: input.sessionID, activeAgent })
-    } catch (err) {
-      log(`[${HOOK_NAME}] Failed to reload agent prompt`, { sessionID: input.sessionID, error: String(err) })
     }
 
     const existingState = readBoulderState(ctx.directory)
@@ -207,13 +196,13 @@ export function createStartWorkHook(ctx: PluginInput) {
 
   return {
     "chat.message": async (input: StartWorkHookInput, output: StartWorkHookOutput): Promise<void> => {
-      await processStartWork(input, output)
+      await processStartWork(input, output, { allowMessageMutation: true })
     },
     "command.execute.before": async (
       input: StartWorkCommandExecuteBeforeInput,
       output: StartWorkHookOutput,
     ): Promise<void> => {
-      await processStartWork(input, output)
+      await processStartWork(input, output, { allowMessageMutation: false })
     },
   }
 }

@@ -21,6 +21,46 @@ export const BLOCKED_TOOLS = [
   "interactive_bash",                     // interactive terminal
 ]
 
+export const UNCONDITIONAL_BLOCKED_TOOLS = [
+  "bash", "Bash",
+  "apply_patch",
+  "ast_grep_replace",
+  "hashline_edit",
+  "interactive_bash",
+]
+
+export const BLOCKED_EXECUTION_SKILLS = [
+  "executing-plans",
+  "incremental-implementation",
+  "verification-before-completion",
+  "git-master",
+]
+
+export const BLOCKED_EXECUTION_COMMANDS = [
+  "start-work",
+  "ralph-loop",
+  "ulw-loop",
+]
+
+export const ALLOWED_PLANNING_SUBAGENTS = [
+  "researcher",
+  "critic",
+  "strategist",
+  "designer",
+  "brainstormer",
+  "multimodal",
+]
+
+export const BLOCKED_EXECUTION_CATEGORIES = [
+  "quick",
+  "general",
+  "unspecified-low",
+  "unspecified-high",
+  "visual-engineering",
+  "ultrabrain",
+  "artistry",
+]
+
 export const PLANNING_CONSULT_WARNING = `
 
 ---
@@ -40,6 +80,17 @@ Return your findings and recommendations. The actual implementation will be hand
 
 ---
 
+`
+
+export const STRATEGIST_EXECUTION_BLOCK_MESSAGE = `${createSystemDirective(SystemDirectiveTypes.STRATEGIST_READ_ONLY)}
+
+Strategist is a planning-only agent.
+
+Do not start execution from Strategist.
+- Do not run shell or interactive terminal tools
+- Do not invoke execution skills
+- Do not delegate to execution categories or executor agents
+- Finish the plan, present the summary, and hand off via \`/start-work\`
 `
 
 export const STRATEGIST_WORKFLOW_REMINDER = `

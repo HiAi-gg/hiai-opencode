@@ -5,7 +5,7 @@ export const START_WORK_TEMPLATE = `You are starting a Bob work session.
 - \`/start-work [plan-name] [--worktree <path>]\`
   - \`plan-name\` (optional): name or partial match of the plan to start
   - \`--worktree <path>\` (optional): absolute path to an existing git worktree to work in
-    - If specified and valid: hook pre-sets worktree_path in boulder.json
+    - If specified and valid: hook pre-sets \`worktree_path\` in the active boulder registry entry
     - If specified but invalid: you must run \`git worktree add <path> <branch>\` first
     - If omitted: work directly in the current project directory (no worktree)
 
@@ -13,10 +13,10 @@ export const START_WORK_TEMPLATE = `You are starting a Bob work session.
 
 1. **Find available plans**: Search for Strategist-generated plan files at \`.bob/plans/\`
 
-2. **Check for active boulder state**: Read \`.bob/boulder.json\` if it exists
+2. **Check for active boulder state**: Read \`.bob/boulder-registry/\` for active plans
 
 3. **Decision logic**:
-   - If \`.bob/boulder.json\` exists AND plan is NOT complete (has unchecked boxes):
+   - If the plan already exists in \`.bob/boulder-registry/\` AND is NOT complete:
      - **APPEND** current session to session_ids
      - Continue work on existing plan
    - If no active plan OR plan is complete:
@@ -24,13 +24,13 @@ export const START_WORK_TEMPLATE = `You are starting a Bob work session.
      - If ONE plan: auto-select it
      - If MULTIPLE plans: show list with timestamps, ask user to select
 
-4. **Worktree Setup** (ONLY when \`--worktree\` was explicitly specified and \`worktree_path\` not already set in boulder.json):
+4. **Worktree Setup** (ONLY when \`--worktree\` was explicitly specified and \`worktree_path\` not already set in the active registry entry):
    1. \`git worktree list --porcelain\` - see available worktrees
    2. Create: \`git worktree add <absolute-path> <branch-or-HEAD>\`
-   3. Update boulder.json to add \`"worktree_path": "<absolute-path>"\`
+   3. Update the active registry entry to add \`"worktree_path": "<absolute-path>"\`
    4. All work happens inside that worktree directory
 
-5. **Create/Update boulder.json**:
+5. **Create/Update active boulder registry entry**:
    \`\`\`json
    {
      "active_plan": "/absolute/path/to/plan.md",
@@ -85,8 +85,8 @@ Reading plan and beginning execution...
 ## CRITICAL
 
 - The session_id is injected by the hook - use it directly
-- Always update boulder.json BEFORE starting work
-- If worktree_path is set in boulder.json, all work happens inside that worktree directory
+- Always update the active boulder registry entry BEFORE starting work
+- If \`worktree_path\` is set in the active registry entry, all work happens inside that worktree directory
 - Read the FULL plan file before delegating any tasks
 - Follow guard delegation protocols (7-section format)
 

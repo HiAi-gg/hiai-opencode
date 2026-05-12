@@ -92,7 +92,7 @@ export function autoExportStaticMcpJson(directory: string, config: HiaiOpencodeC
     return
   }
 
-  const outputPath = process.env.HIAI_OPENCODE_MCP_EXPORT_PATH?.trim() || join(directory, ".mcp.json")
+  const outputPath = process.env.HIAI_OPENCODE_MCP_EXPORT_PATH?.trim() || join(directory, ".opencode", ".mcp.json")
   if (mode === "if-missing" && existsSync(outputPath)) {
     return
   }

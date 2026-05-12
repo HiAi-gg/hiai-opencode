@@ -52,6 +52,7 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
     install: "npm",
     config: {
       enabled: true,
+      type: "local",
       command: createNpmPackageCommand("@modelcontextprotocol/server-sequential-thinking"),
       timeout: 600000,
     },

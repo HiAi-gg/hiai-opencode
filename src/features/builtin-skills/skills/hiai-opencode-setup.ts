@@ -27,7 +27,7 @@ opencode debug config
 If \`opencode mcp list\` is empty but doctor/mcp-status sees servers, explain that OpenCode's list may read only static \`.mcp.json\`. Refresh static visibility:
 
 \`\`\`bash
-hiai-opencode export-mcp .mcp.json
+hiai-opencode export-mcp .opencode/.mcp.json
 opencode mcp list --print-logs --log-level INFO
 \`\`\`
 

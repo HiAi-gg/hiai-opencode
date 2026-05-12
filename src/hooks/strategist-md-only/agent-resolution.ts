@@ -48,7 +48,7 @@ async function getAgentFromMessageFiles(
  * This fixes issue #927 where after interruption:
  * - In-memory map is cleared (process restart)
  * - Message files return "strategist" (oldest message from /plan)
- * - But boulder.json has agent: "guard" (set by /start-work)
+ * - But the boulder registry entry has agent: "guard" (set by /start-work)
  */
 export async function getAgentFromSession(
   sessionID: string,

@@ -53,10 +53,10 @@ function buildAutoSelectedPlanContext(params: {
   directory: string
   effectiveDirectory: string
 }): string {
-  const { planPath, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
+  const { planPath, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory } = params
   const progress = getPlanProgress(planPath)
   const newState = createBoulderState(planPath, sessionId, activeAgent, worktreePath)
-  writeBoulderState(effectiveDirectory, newState)
+  writeBoulderState(directory, newState)
 
   return `
 ## Auto-Selected Plan
@@ -68,7 +68,7 @@ function buildAutoSelectedPlanContext(params: {
 **Started**: ${timestamp}
 ${worktreeBlock}
 
-boulder.json has been created. Read the plan and begin execution.`
+The active boulder registry entry has been created. Read the plan and begin execution.`
 }
 
 function buildMissingPlanContext(explicitPlanName: string, allPlans: string[]): string {
@@ -153,7 +153,7 @@ function buildExistingSessionContext(params: {
   directory: string
   effectiveDirectory: string
 }): string {
-  const { existingState, sessionId, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
+  const { existingState, sessionId, activeAgent, worktreePath, worktreeBlock, directory } = params
   const progress = getPlanProgress(existingState.active_plan)
   if (progress.isComplete) {
     return `
@@ -171,14 +171,14 @@ Looking for new plans...`
   const shouldRewriteState = existingState.agent !== activeAgent || worktreePath !== undefined
 
   if (shouldRewriteState) {
-    writeBoulderState(effectiveDirectory, {
+    writeBoulderState(directory, {
       ...existingState,
       agent: activeAgent,
       ...(worktreePath !== undefined ? { worktree_path: worktreePath } : {}),
       session_ids: updatedSessions,
     })
   } else if (!sessionAlreadyTracked) {
-    appendSessionId(effectiveDirectory, sessionId)
+    appendSessionId(directory, sessionId)
   }
 
   const worktreeDisplay = effectiveWorktree

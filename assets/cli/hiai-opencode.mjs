@@ -343,7 +343,7 @@ function checkStaticMcpFreshness(outputPath, config) {
   }
 }
 
-function exportMcp(outputPath = join(process.cwd(), ".mcp.json")) {
+function exportMcp(outputPath = join(process.cwd(), ".opencode", ".mcp.json")) {
   const { path, config, error } = loadConfig()
   if (error) {
     console.error(`Config parse warning: ${error}`)
@@ -793,7 +793,7 @@ function statusIcon(level) {
 
 async function mcpStatus(options = {}) {
   const { path, config, error } = loadConfig()
-  const staticMcpPath = join(process.cwd(), ".mcp.json")
+  const staticMcpPath = join(process.cwd(), ".opencode", ".mcp.json")
   console.log(options.doctor ? "hiai-opencode doctor" : "hiai-opencode mcp-status")
   console.log(`Config: ${path ?? "not found; using defaults"}`)
   if (error) console.log(`Config parse warning: ${error}`)
@@ -873,7 +873,7 @@ async function mcpStatus(options = {}) {
 
     console.log("")
     console.log("Recommended follow-ups:")
-    console.log("  - hiai-opencode export-mcp .mcp.json")
+    console.log("  - hiai-opencode export-mcp .opencode/.mcp.json")
     console.log("  - opencode debug config")
     console.log("  - opencode mcp list --print-logs --log-level INFO")
   }
@@ -937,7 +937,7 @@ async function runDiagnose(outputPath) {
   sections.push(`  CWD: ${process.cwd()}`)
   sections.push(`  Package root: ${PACKAGE_ROOT}`)
   sections.push(`  Config: ${configPath ?? "(none)"}`)
-  sections.push(`  Static MCP: ${join(process.cwd(), ".mcp.json")}`)
+  sections.push(`  Static MCP: ${join(process.cwd(), ".opencode", ".mcp.json")}`)
   sections.push("")
 
   sections.push("=".repeat(60))

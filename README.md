@@ -247,12 +247,12 @@ See [Environment Variables And Keys](#environment-variables-and-keys) for the fu
 opencode
 hiai-opencode doctor
 hiai-opencode mcp-status
-hiai-opencode export-mcp .mcp.json
+hiai-opencode export-mcp .opencode/.mcp.json
 opencode debug config
 opencode mcp list --print-logs --log-level INFO
 ```
 
-`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by plugins may work but not appear there. If you want `opencode mcp list` visibility, run `hiai-opencode export-mcp .mcp.json` first.
+`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by plugins may work but not appear there. If you want `opencode mcp list` visibility, run `hiai-opencode export-mcp .opencode/.mcp.json` first.
 
 `hiai-opencode mcp-status` is the fastest visibility check. It does not change OpenCode config; it reports config location, enabled MCP services, missing keys, and basic local runtime availability.
 
@@ -302,7 +302,7 @@ Check .env.example, report missing keys without printing secret values, and neve
 Run verification commands where available:
 - opencode debug config
 - hiai-opencode mcp-status
-- hiai-opencode export-mcp .mcp.json
+- hiai-opencode export-mcp .opencode/.mcp.json
 - opencode mcp list --print-logs --log-level INFO
 
 If a dependency is missing, install only user-level or project-local dependencies, explain every command before running it, and do not use sudo/admin rights unless the user explicitly asks.
@@ -515,17 +515,17 @@ Available CLI:
 ```bash
 hiai-opencode doctor
 hiai-opencode mcp-status
-hiai-opencode export-mcp .mcp.json
+hiai-opencode export-mcp .opencode/.mcp.json
 ```
 
-By default, the plugin auto-exports `.mcp.json` at workspace startup when the file is missing. This closes the visibility gap where runtime plugin MCP works but `opencode mcp list` only reads static files. Control it with:
+By default, the plugin auto-exports `.opencode/.mcp.json` at workspace startup when the file is missing. This closes the visibility gap where runtime plugin MCP works but `opencode mcp list` only reads static files. Control it with:
 
 ```bash
 export HIAI_OPENCODE_AUTO_EXPORT_MCP=if-missing  # default
 export HIAI_OPENCODE_AUTO_EXPORT_MCP=always      # overwrite only managed hiai-opencode exports
 export HIAI_OPENCODE_AUTO_EXPORT_MCP=force       # force overwrite even non-managed files
 export HIAI_OPENCODE_AUTO_EXPORT_MCP=0           # disable auto-export
-export HIAI_OPENCODE_MCP_EXPORT_PATH=.mcp.json   # override path
+export HIAI_OPENCODE_MCP_EXPORT_PATH=.opencode/.mcp.json   # override path
 export HIAI_OPENCODE_EXPORT_MCP_MODE=safe        # export-mcp command mode: safe|force
 ```
 
@@ -542,7 +542,7 @@ Use:
 
 ```bash
 hiai-opencode mcp-status
-hiai-opencode export-mcp .mcp.json
+hiai-opencode export-mcp .opencode/.mcp.json
 opencode debug config
 opencode mcp list --print-logs --log-level INFO
 ```
@@ -592,7 +592,7 @@ Before publishing:
 1. run `bun run build`
 2. run `npm pack --dry-run`
 3. verify `debug config`
-4. run `hiai-opencode export-mcp .mcp.json` if you need static `mcp list` visibility
+4. run `hiai-opencode export-mcp .opencode/.mcp.json` if you need static `mcp list` visibility
 
 Publish:
 

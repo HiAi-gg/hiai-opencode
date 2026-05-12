@@ -57,4 +57,4 @@ When Bob or Manager delegates to sub-agents, check the system reminders for `<sy
 - Read [AGENTS.md](../AGENTS.md) to understand each agent's role
 - Read [ARCHITECTURE.md](../ARCHITECTURE.md) to understand the plugin internals
 - Edit `hiai-opencode.json` (or `.opencode/hiai-opencode.json`) to customize model slots and MCP enable/disable flags
-- Run `hiai-opencode export-mcp .mcp.json` if you need `opencode mcp list` to show hiai MCP servers
+- Run `hiai-opencode export-mcp .opencode/.mcp.json` if you need `opencode mcp list` to show hiai MCP servers

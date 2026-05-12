@@ -68,11 +68,11 @@ Manual alternative:
 opencode debug config
 hiai-opencode doctor
 hiai-opencode mcp-status
-hiai-opencode export-mcp .mcp.json
+hiai-opencode export-mcp .opencode/.mcp.json
 opencode mcp list --print-logs --log-level INFO
 ```
 
-`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by the plugin may work but not appear there until a static config exists. The plugin auto-exports `.mcp.json` on startup when missing. In `always` mode it overwrites only hiai-managed exports unless forced. `hiai-opencode export-mcp .mcp.json` can refresh it manually.
+`opencode mcp list` reads static `.opencode/.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by the plugin may work but not appear there until a static config exists. The plugin auto-exports `.opencode/.mcp.json` on startup when missing. In `always` mode it overwrites only hiai-managed exports unless forced. `hiai-opencode export-mcp .opencode/.mcp.json` can refresh it manually.
 
 ## Post-Install Bootstrap Instructions
 
@@ -122,7 +122,7 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `opencode debug config`
    - `hiai-opencode doctor`
    - `hiai-opencode mcp-status`
-   - `hiai-opencode export-mcp .mcp.json` when static MCP visibility is needed
+   - `hiai-opencode export-mcp .opencode/.mcp.json` when static MCP visibility is needed
    - `opencode mcp list --print-logs --log-level INFO`
 
 ### MCP Setup Matrix
@@ -158,7 +158,7 @@ Check which services can run here:
 
 Report missing keys without printing secret values. Never invent or hardcode API keys.
 
-Run hiai-opencode mcp-status and opencode debug config. If the user wants opencode mcp list visibility, run hiai-opencode export-mcp .mcp.json before opencode mcp list --print-logs --log-level INFO. If something is missing, propose or run only user-level/project-local install commands.
+Run hiai-opencode mcp-status and opencode debug config. If the user wants opencode mcp list visibility, run hiai-opencode export-mcp .opencode/.mcp.json before opencode mcp list --print-logs --log-level INFO. If something is missing, propose or run only user-level/project-local install commands.
 ```
 
 ## Expected Agent State
@@ -540,8 +540,8 @@ If an agent response is missing `<CLOSURE>` at runtime but the source prompts lo
 
 ### `opencode mcp list` does not show hiai-opencode MCP servers
 
-- `opencode mcp list` reads static `.mcp.json` files, not runtime plugin MCP
-- Run `hiai-opencode export-mcp .mcp.json` to write a static export
+- `opencode mcp list` reads static `.opencode/.mcp.json` files, not runtime plugin MCP
+- Run `hiai-opencode export-mcp .opencode/.mcp.json` to write a static export
 - The plugin auto-exports on startup when `HIAI_OPENCODE_AUTO_EXPORT_MCP` is not disabled
 
 ### Firecrawl tools return "FIRECRAWL_API_KEY missing" despite having the key set
