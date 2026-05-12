@@ -6,7 +6,7 @@ import {
   findNearestMessageWithFieldsFromSDK,
 } from "../../features/hook-message-injector"
 import { getSessionAgent } from "../../features/claude-code-session-state"
-import { readBoulderState } from "../../features/boulder-state"
+import { findPlanNameForSession, readBoulderForPlan } from "../../features/boulder-state"
 import { getMessageDir } from "../../shared/opencode-message-dir"
 import { isSqliteBackend } from "../../shared/opencode-storage-detection"
 
@@ -59,8 +59,9 @@ export async function getAgentFromSession(
   const memoryAgent = getSessionAgent(sessionID)
   if (memoryAgent) return memoryAgent
 
-  // Check boulder state (persisted across restarts) - fixes #927
-  const boulderState = readBoulderState(directory)
+  // Check boulder state via registry (persisted across restarts) - fixes #927
+  const planName = findPlanNameForSession(directory, sessionID)
+  const boulderState = planName ? readBoulderForPlan(directory, planName) : null
   if (boulderState?.session_ids?.includes(sessionID) && boulderState.agent) {
     return boulderState.agent
   }

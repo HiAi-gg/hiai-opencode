@@ -51,11 +51,12 @@ function buildAutoSelectedPlanContext(params: {
   worktreePath: string | undefined
   worktreeBlock: string
   directory: string
+  effectiveDirectory: string
 }): string {
-  const { planPath, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory } = params
+  const { planPath, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
   const progress = getPlanProgress(planPath)
   const newState = createBoulderState(planPath, sessionId, activeAgent, worktreePath)
-  writeBoulderState(directory, newState)
+  writeBoulderState(effectiveDirectory, newState)
 
   return `
 ## Auto-Selected Plan
@@ -107,8 +108,9 @@ function buildExplicitPlanContext(params: {
   worktreePath: string | undefined
   worktreeBlock: string
   directory: string
+  effectiveDirectory: string
 }): string {
-  const { explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory } = params
+  const { explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
   log(`[${HOOK_NAME}] Explicit plan name requested: ${explicitPlanName}`, { sessionID: sessionId })
 
   const allPlans = findStrategistPlans(directory)
@@ -138,6 +140,7 @@ function buildExplicitPlanContext(params: {
     worktreePath,
     worktreeBlock,
     directory,
+    effectiveDirectory,
   })
 }
 
@@ -148,8 +151,9 @@ function buildExistingSessionContext(params: {
   worktreePath: string | undefined
   worktreeBlock: string
   directory: string
+  effectiveDirectory: string
 }): string {
-  const { existingState, sessionId, activeAgent, worktreePath, worktreeBlock, directory } = params
+  const { existingState, sessionId, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
   const progress = getPlanProgress(existingState.active_plan)
   if (progress.isComplete) {
     return `
@@ -167,14 +171,14 @@ Looking for new plans...`
   const shouldRewriteState = existingState.agent !== activeAgent || worktreePath !== undefined
 
   if (shouldRewriteState) {
-    writeBoulderState(directory, {
+    writeBoulderState(effectiveDirectory, {
       ...existingState,
       agent: activeAgent,
       ...(worktreePath !== undefined ? { worktree_path: worktreePath } : {}),
       session_ids: updatedSessions,
     })
   } else if (!sessionAlreadyTracked) {
-    appendSessionId(directory, sessionId)
+    appendSessionId(effectiveDirectory, sessionId)
   }
 
   const worktreeDisplay = effectiveWorktree
@@ -212,8 +216,9 @@ function buildPlanDiscoveryContext(params: {
   worktreePath: string | undefined
   worktreeBlock: string
   directory: string
+  effectiveDirectory: string
 }): string {
-  const { contextInfo, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory } = params
+  const { contextInfo, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
   const plans = findStrategistPlans(directory)
   const incompletePlans = plans.filter((p) => !getPlanProgress(p).isComplete)
 
@@ -242,6 +247,7 @@ function buildPlanDiscoveryContext(params: {
       worktreePath,
       worktreeBlock,
       directory,
+      effectiveDirectory,
     })
   }
 
@@ -277,8 +283,21 @@ export function buildStartWorkContextInfo(params: {
   activeAgent: string
   worktreePath: string | undefined
   worktreeBlock: string
+  effectiveDirectory?: string
+  isolationError?: string | null
 }): string {
-  const { ctx, explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock } = params
+  const { ctx, explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, effectiveDirectory, isolationError } = params
+
+  // If there's an isolation error, return it immediately
+  if (isolationError) {
+    return `
+## Start-Work Error
+
+**Error**: ${isolationError}
+
+Cannot proceed with plan isolation. Please resolve the issue above.
+`
+  }
 
   let contextInfo = ""
   if (explicitPlanName) {
@@ -291,6 +310,7 @@ export function buildStartWorkContextInfo(params: {
       worktreePath,
       worktreeBlock,
       directory: ctx.directory,
+      effectiveDirectory: effectiveDirectory ?? ctx.directory,
     })
   } else if (existingState) {
     contextInfo = buildExistingSessionContext({
@@ -300,6 +320,7 @@ export function buildStartWorkContextInfo(params: {
       worktreePath,
       worktreeBlock,
       directory: ctx.directory,
+      effectiveDirectory: effectiveDirectory ?? ctx.directory,
     })
   }
 
@@ -312,6 +333,7 @@ export function buildStartWorkContextInfo(params: {
       worktreePath,
       worktreeBlock,
       directory: ctx.directory,
+      effectiveDirectory: effectiveDirectory ?? ctx.directory,
     })
   }
 

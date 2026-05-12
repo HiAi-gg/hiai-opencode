@@ -2,7 +2,7 @@ import type { PluginContext } from "./types"
 import { randomUUID } from "node:crypto"
 
 import { getMainSessionID } from "../features/claude-code-session-state"
-import { clearBoulderState } from "../features/boulder-state"
+import { deleteBoulderForPlan, findPlanNameForSession, completePlan, readBoulderForPlan } from "../features/boulder-state"
 import { log } from "../shared"
 import { getAgentConfigKey, stripInvisibleAgentCharacters } from "../shared/agent-display-names"
 import { resolveSessionAgent } from "./session-agent-resolver"
@@ -207,7 +207,25 @@ export function createToolExecuteBeforeHandler(args: {
         hooks.stopContinuationGuard?.stop(sessionID)
         hooks.todoContinuationEnforcer?.cancelAllCountdowns()
         hooks.ralphLoop?.cancelLoop(sessionID)
-        clearBoulderState(ctx.directory)
+        const planName = findPlanNameForSession(ctx.directory, sessionID)
+        if (planName) {
+          const planState = readBoulderForPlan(ctx.directory, planName)
+          const worktreePath = planState?.worktree_path
+
+          const cleaned = completePlan(ctx.directory, planName, worktreePath)
+          if (!cleaned) {
+            deleteBoulderForPlan(ctx.directory, planName)
+            log("[stop-continuation] completePlan failed, fallback to deleteOnly", {
+              planName,
+              worktreePath,
+            })
+          } else {
+            log("[stop-continuation] Plan fully cleaned up", {
+              planName,
+              worktreePath,
+            })
+          }
+        }
         log("[stop-continuation] All continuation mechanisms stopped", {
           sessionID,
         })

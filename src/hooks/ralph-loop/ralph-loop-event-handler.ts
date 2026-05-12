@@ -1,7 +1,10 @@
+import { existsSync, readFileSync } from "node:fs"
+import { join } from "node:path"
 import type { PluginInput } from "@opencode-ai/plugin"
 import { log } from "../../shared/logger"
 import type { RalphLoopOptions, RalphLoopState } from "./types"
 import { HOOK_NAME } from "./constants"
+import { getPlanProgress, findPlanNameForSession, readBoulderForPlan, syncBoulderNotepadsFromWorktree, deleteBoulderForPlan } from "../../features/boulder-state/storage"
 import { handleDetectedCompletion } from "./completion-handler"
 import {
 	detectCompletionInSessionMessages,
@@ -162,6 +165,66 @@ export function createRalphLoopEventHandler(
 					return
 				}
 
+				// Guard: exit loop if the plan has 0 tasks (empty or corrupted)
+				const planName = findPlanNameForSession(options.directory, sessionID)
+				if (planName) {
+					try {
+						const planFilePath = join(options.directory, ".bob", "plans", `${planName}.md`)
+						const progress = getPlanProgress(planFilePath)
+						if (progress && progress.total === 0) {
+							log(`[${HOOK_NAME}] Empty plan detected (0 tasks), stopping loop`, {
+								sessionID,
+								planName,
+								planFile: planFilePath,
+							})
+							options.loopState.clear()
+							await ctx.client.tui?.showToast?.({
+								body: {
+									title: "Ralph Loop Stopped",
+									message: `Plan "${planName}" has 0 tasks — nothing to execute.`,
+									variant: "warning",
+									duration: 5000,
+								},
+							}).catch(() => {})
+							return
+						}
+					} catch (err) {
+						// getPlanProgress returns { total:0, isComplete:true } for missing files
+						// Log but don't exit — file might not exist yet
+						log(`[${HOOK_NAME}] Plan progress check failed, continuing`, {
+							sessionID,
+							planName,
+							error: String(err),
+						})
+					}
+				}
+
+				{
+					const planName = findPlanNameForSession(options.directory, sessionID)
+					if (planName) {
+						const planPath = join(options.directory, ".bob", "plans", `${planName}.md`)
+						if (existsSync(planPath)) {
+							const content = readFileSync(planPath, "utf-8")
+							const hasCheckboxes = /- \[[ x]\]/.test(content)
+							const hasNumberedTasks = /^\d+\.\s+\*\*Task/i.test(content)
+							if (!hasCheckboxes && hasNumberedTasks) {
+								log(`[${HOOK_NAME}] Plan file lacks checkboxes but has numbered tasks`, {
+									planName,
+									sessionID,
+								})
+								await ctx.client.tui?.showToast?.({
+									body: {
+										title: "Plan Format Warning",
+										message: `Plan "${planName}" uses numbered tasks instead of checkboxes. The automation system requires \`- [ ]\` format.`,
+										variant: "warning",
+										duration: 8000,
+									},
+								}).catch(() => {})
+							}
+						}
+					}
+				}
+
 				if (
 					typeof state.max_iterations === "number"
 					&& state.iteration >= state.max_iterations
@@ -221,6 +284,29 @@ export function createRalphLoopEventHandler(
 
 		if (event.type === "session.deleted") {
 			if (!handleDeletedLoopSession(props, options.loopState, options.sessionRecovery)) return
+
+			const deletedSessionID = (props as Record<string, unknown> | undefined)?.sessionID as string | undefined
+			if (deletedSessionID) {
+				const planName = findPlanNameForSession(options.directory, deletedSessionID)
+				if (planName) {
+					try {
+						const planState = readBoulderForPlan(options.directory, planName)
+						if (planState?.worktree_path) {
+							syncBoulderNotepadsFromWorktree(options.directory, planState.worktree_path)
+							deleteBoulderForPlan(options.directory, planName)
+							log(`[${HOOK_NAME}] Synced notepads from deleted session worktree`, {
+								sessionID: deletedSessionID,
+								planName,
+								worktreePath: planState.worktree_path,
+							})
+						}
+					} catch (err) {
+						log(`[${HOOK_NAME}] Failed to cleanup worktree on session deleted`, {
+							error: String(err),
+						})
+					}
+				}
+			}
 			return
 		}
 

@@ -115,6 +115,10 @@ task(category="quick", load_skills=[], run_in_background=false, prompt="Task 4..
 </parallel_execution>`
 
 export const DEFAULT_MANAGER_BOUNDARIES = `<boundaries>
+## Plan Format (Enforced)
+
+All plan task items MUST use \`- [ ]\` (empty checkbox) syntax. Never output task items without checkbox prefix. Never use numbered lists in plan files.
+
 ## What You Do vs Delegate
 
 **YOU DO**:
@@ -143,6 +147,18 @@ export const DEFAULT_MANAGER_BOUNDARIES = `<boundaries>
 export const DEFAULT_MANAGER_CRITICAL_RULES = `<critical_overrides>
 ## Critical Rules
 
+**PLAN FORMAT: NON-NEGOTIABLE**
+
+Every plan file (.bob/plans/*.md) MUST use checkbox syntax for task items:
+- \` - [ ] Task description\` — correct (empty = not yet executed)
+- \` - [x] Task description\` — WRONG (checked = only for post-execution tracking)
+- \` 1. Task description\` — WRONG (numbered list breaks automation)
+
+When creating or decomposing a plan:
+- Output ONLY \`- [ ]\` for every task item
+- NEVER omit the checkbox prefix
+- NEVER use checked checkboxes during planning
+
 **NEVER**:
 - Write/edit code yourself - always delegate
 - Perform verification or error checking - delegate to Critic
@@ -150,6 +166,7 @@ export const DEFAULT_MANAGER_CRITICAL_RULES = `<critical_overrides>
 - Send prompts under 30 lines
 - Skip reading notepad before delegation
 - Start fresh session for failures - use session_id
+- Use pty_spawn, pty_read, pty_write, pty_kill, pty_list, interactive_bash, or bash directly — delegate all shell work via \`task()\` to Coder/Sub
 
 **ALWAYS**:
 - Include full context in delegation prompts

@@ -2,13 +2,15 @@ import { statSync } from "node:fs"
 import type { PluginInput } from "@opencode-ai/plugin"
 import {
   readBoulderState,
-  writeBoulderState,
   appendSessionId,
   findStrategistPlans,
   getPlanProgress,
   createBoulderState,
   getPlanName,
-  clearBoulderState,
+  getActivePlans,
+  hasConflictingPlan,
+  ensureRegistryExists,
+  writeBoulderForPlan,
 } from "../../features/boulder-state"
 import { log } from "../../shared/logger"
 import {
@@ -16,7 +18,7 @@ import {
   resolveRegisteredAgentName,
   updateSessionAgent,
 } from "../../features/claude-code-session-state"
-import { detectWorktreePath } from "./worktree-detector"
+import { detectWorktreePath, createWorktreeForPlan, validateWorktreeHealth } from "./worktree-detector"
 import { parseUserRequest } from "./parse-user-request"
 import { buildStartWorkContextInfo } from "./context-info-builder"
 import { createWorktreeActiveBlock } from "./worktree-block"
@@ -38,6 +40,22 @@ interface StartWorkCommandExecuteBeforeInput {
 interface StartWorkHookOutput {
   message?: Record<string, unknown>
   parts: Array<{ type: string; text?: string }>
+}
+
+/**
+ * Check if a directory is a git repository
+ */
+async function checkIfGitRepo(directory: string): Promise<boolean> {
+  try {
+    const { exec } = await import("child_process")
+    return await new Promise((resolve) => {
+      exec("git rev-parse --show-toplevel", { cwd: directory }, (error) => {
+        resolve(!error)
+      })
+    })
+  } catch {
+    return false
+  }
 }
 
 function resolveWorktreeContext(
@@ -108,6 +126,54 @@ export function createStartWorkHook(ctx: PluginInput) {
     const timestamp = new Date().toISOString()
 
     const { planName: explicitPlanName, explicitWorktreePath } = parseUserRequest(promptText)
+
+    // Phase 4: Auto-isolation decision flow
+    // Ensure registry exists (triggers migration if v1 found)
+    ensureRegistryExists(ctx.directory)
+
+    let effectiveDirectory = ctx.directory
+    let isolationError: string | null = null
+
+    // Get the plan name for conflict checking
+    let planName = explicitPlanName
+    if (!planName && existingState) {
+      planName = existingState.plan_name
+    }
+
+    // Check for conflicting plans if we have a plan name
+    if (planName) {
+      const conflict = hasConflictingPlan(ctx.directory, planName)
+      if (conflict) {
+        // Need isolation — check if git repo
+        const isGitRepo = await checkIfGitRepo(ctx.directory)
+        if (!isGitRepo) {
+          isolationError = "Cannot isolate parallel plans: not a git repository. Complete the other plan first, or initialize git."
+        } else {
+          // Create or reuse worktree
+          const worktreePath = createWorktreeForPlan(ctx.directory, planName)
+          if (!worktreePath) {
+            isolationError = "Failed to create worktree for plan isolation"
+          } else {
+            // Validate health
+            const health = validateWorktreeHealth(worktreePath)
+            if (!health.valid) {
+              isolationError = `Worktree unhealthy: ${health.reason}`
+            } else {
+              effectiveDirectory = worktreePath
+            }
+          }
+        }
+      }
+    }
+
+    // Handle explicit worktree path (manual override)
+    if (explicitWorktreePath !== null && !isolationError) {
+      const { worktreePath: manualWorktreePath, block: manualBlock } = resolveWorktreeContext(explicitWorktreePath)
+      if (manualWorktreePath) {
+        effectiveDirectory = manualWorktreePath
+      }
+    }
+
     const { worktreePath, block: worktreeBlock } = resolveWorktreeContext(explicitWorktreePath)
 
     const contextInfo = buildStartWorkContextInfo({
@@ -119,6 +185,8 @@ export function createStartWorkHook(ctx: PluginInput) {
       activeAgent,
       worktreePath,
       worktreeBlock,
+      effectiveDirectory,
+      isolationError,
     })
 
     const idx = output.parts.findIndex((p) => p.type === "text" && p.text)

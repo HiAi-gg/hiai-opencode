@@ -113,16 +113,21 @@ Register these as task/todo items so progress is tracked and visible throughout 
 
 ## WORKTREE COMPLETION
 
-When working in a worktree (\`worktree_path\` is set in boulder.json) and ALL plan tasks are complete:
-1. Commit all remaining changes in the worktree
-2. **Sync .bob state back**: Copy \`.bob/\` from the worktree to the main repo before removal.
-   This is CRITICAL when \`.bob/\` is gitignored - state written during worktree execution would otherwise be lost.
-   \`\`\`bash
-   cp -r <worktree-path>/.bob/* <main-repo>/.bob/ 2>/dev/null || true
-   \`\`\`
-3. Switch to the main working directory (the original repo, NOT the worktree)
-4. Merge the worktree branch into the current branch: \`git merge <worktree-branch>\`
-5. If merge succeeds, clean up: \`git worktree remove <worktree-path>\`
-6. Remove the boulder.json state
+When ALL plan tasks are complete:
+1. Commit remaining changes in the worktree
+2. The plugin auto-syncs \`.bob/notepads/\` back to the main repo
+3. The worktree is auto-removed via \`git worktree remove\`
+4. The plan is deregistered from \`boulder-registry/\`
 
-This is the DEFAULT behavior when \`--worktree\` was used. Skip merge only if the user explicitly instructs otherwise (e.g., asks to create a PR instead).`
+Do NOT manually copy \`.bob/\` -- the plugin handles this.
+
+## PARALLEL PLANS
+
+Multiple plans can run simultaneously. Each plan lives in its own git worktree
+at \`.opencode/worktrees/<plan-name>/\` for complete filesystem isolation.
+
+- Auto-worktree: created automatically when a second plan starts - no \`--worktree\` needed
+- Manual worktree: \`--worktree <path>\` overrides the default location
+- Registry: \`.bob/boulder-registry/{plan-name}.json\` tracks each plan independently
+- Stop-continuation: only affects the calling session's plan, not other active plans
+`

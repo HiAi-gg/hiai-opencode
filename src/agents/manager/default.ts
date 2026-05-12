@@ -16,7 +16,7 @@ export const MANAGER_SYSTEM_PROMPT = buildManagerPrompt({
   workflow: DEFAULT_MANAGER_WORKFLOW,
   parallelExecution: DEFAULT_MANAGER_PARALLEL_EXECUTION,
   verificationRules: "", // Removed - Critic handles verification
-  boundaries: DEFAULT_MANAGER_BOUNDARIES,
+  boundaries: DEFAULT_MANAGER_BOUNDARIES + `\n\n- All plan task items MUST use \`- [ ]\` (empty checkbox) syntax\n- Never output task items without checkbox prefix\n- Never use checked checkboxes (\`- [x]\`) during planning — only for post-completion tracking`,
   criticalRules: DEFAULT_MANAGER_CRITICAL_RULES,
 })
 

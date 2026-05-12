@@ -82,7 +82,7 @@ Tests and linters CANNOT catch: visual bugs, wrong CLI output, broken user flows
 **If this task produced anything a user would SEE or INTERACT with, you MUST launch it and verify yourself.**
 
 - **Frontend/UI**: \`/agent-browser\` skill - load the page, click through the flow, check console. Verify: page loads, interactions work, console clean, responsive.
-- **TUI/CLI**: \`interactive_bash\` - run the command, try good input, try bad input, try --help. Verify: command runs, output correct, error messages helpful, edge inputs handled.
+- **TUI/CLI**: Use \`/agent-browser\` skill or \`Bash\` - run the command, try good input, try bad input, try --help. Verify: command runs, output correct, error messages helpful, edge inputs handled.
 - **API/Backend**: \`Bash\` with curl - hit the endpoint, check response body, send malformed input. Verify: returns 200, body correct, error cases return proper errors.
 - **Config/Build**: Actually start the service or import the config. Verify: loads without error, backward compatible.
 
@@ -147,7 +147,7 @@ If Phase 1 found issues but Phase 2 passes: Phase 2 is WRONG. Fix the code.
 **PHASE 3: HANDS-ON QA (MANDATORY for user-facing changes)**
 
 - **Frontend/UI**: \`/agent-browser\`
-- **TUI/CLI**: \`interactive_bash\`
+- **TUI/CLI**: \`/agent-browser\` or \`Bash\`
 - **API/Backend**: \`Bash\` with curl
 
 **If user-facing and you did not run it, you are shipping UNTESTED BROKEN work.**

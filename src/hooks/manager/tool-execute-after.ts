@@ -1,9 +1,10 @@
 import type { PluginInput } from "@opencode-ai/plugin"
 import {
   appendSessionId,
+  findPlanNameForSession,
   getPlanProgress,
   getTaskSessionState,
-  readBoulderState,
+  readBoulderForPlan,
   upsertTaskSessionState,
 } from "../../features/boulder-state"
 import { log } from "../../shared/logger"
@@ -74,7 +75,9 @@ export function createToolExecuteAfterHandler(input: {
     if (toolInput.callID) {
       pendingTaskRefs.delete(toolInput.callID)
     }
-    const boulderState = readBoulderState(ctx.directory)
+    // Use registry lookup to find the plan for this session's orchestrator
+    const planName = toolInput.sessionID ? findPlanNameForSession(ctx.directory, toolInput.sessionID) : null
+    const boulderState = planName ? readBoulderForPlan(ctx.directory, planName) : null
     const isBackgroundLaunch = outputStr.includes("Background task launched") || outputStr.includes("Background task continued")
       || outputStr.includes("Background delegate launched")
       || outputStr.includes("Background agent task launched")

@@ -5,6 +5,23 @@
  * Named after Bob's boulder - the eternal task that must be rolled.
  */
 
+/**
+ * BoulderState - DO NOT MODIFY
+ *
+ * This type is used by 10+ consumer files across the codebase.
+ * Any changes require updating ALL consumers:
+ * - resolve-active-boulder-session.ts
+ * - idle-event.ts (lines 54, 162, 205)
+ * - boulder-continuation-injector.ts
+ * - tool-execute-after.ts
+ * - tool-execute-before.ts
+ * - agent-resolution.ts
+ * - boulder-session-lineage.ts
+ * - background-launch-session-tracking.ts
+ *
+ * For new fields, add to BoulderState interface here AND update all consumers.
+ * For registry-specific data, use separate BoulderRegistry type (not this one).
+ */
 export interface BoulderState {
   /** Absolute path to the active plan file */
   active_plan: string

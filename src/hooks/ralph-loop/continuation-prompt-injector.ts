@@ -66,6 +66,10 @@ export async function injectContinuationPrompt(
 				}
 				: undefined
 		tools = currentMessage?.tools
+		log("[ralph-loop] API model resolution failed, using file-based fallback", {
+			sessionID: options.sessionID,
+			sourceSessionID,
+		})
 	}
 
 	const inheritedTools = resolveInheritedPromptTools(sourceSessionID, tools)
@@ -75,17 +79,40 @@ export async function injectContinuationPrompt(
 		: undefined
 	const launchVariant = model?.variant
 
-	await ctx.client.session.promptAsync({
-		path: { id: options.sessionID },
-		body: {
-			...(agent !== undefined ? { agent } : {}),
-			...(launchModel ? { model: launchModel } : {}),
-			...(launchVariant ? { variant: launchVariant } : {}),
-			...(inheritedTools ? { tools: inheritedTools } : {}),
-			parts: [createInternalAgentTextPart(options.prompt)],
-		},
-		query: { directory: options.directory },
-	})
+	if (!agent && !launchModel) {
+		log("[ralph-loop] Skipping continuation: no agent or model resolved", {
+			sessionID: options.sessionID,
+			inheritFromSessionID: options.inheritFromSessionID,
+		})
+		return
+	}
 
-	log("[ralph-loop] continuation injected", { sessionID: options.sessionID })
+	if (launchModel && (!launchModel.providerID || !launchModel.modelID)) {
+		log("[ralph-loop] Skipping continuation: incomplete model info", {
+			sessionID: options.sessionID,
+			providerID: launchModel.providerID,
+			modelID: launchModel.modelID,
+		})
+		return
+	}
+
+	try {
+		await ctx.client.session.promptAsync({
+			path: { id: options.sessionID },
+			body: {
+				...(agent !== undefined ? { agent } : {}),
+				...(launchModel ? { model: launchModel } : {}),
+				...(launchVariant ? { variant: launchVariant } : {}),
+				...(inheritedTools ? { tools: inheritedTools } : {}),
+				parts: [createInternalAgentTextPart(options.prompt)],
+			},
+			query: { directory: options.directory },
+		})
+		log("[ralph-loop] continuation injected", { sessionID: options.sessionID })
+	} catch (err) {
+		log(`[ralph-loop] continuation injection failed: ${String(err)}`, {
+			sessionID: options.sessionID,
+		})
+		throw err
+	}
 }

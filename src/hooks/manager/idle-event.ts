@@ -2,6 +2,8 @@ import type { PluginInput } from "@opencode-ai/plugin"
 import {
   getPlanProgress,
   getTaskSessionState,
+  findPlanNameForSession,
+  readBoulderForPlan,
   readBoulderState,
   readCurrentTopLevelTask,
 } from "../../features/boulder-state"
@@ -51,12 +53,15 @@ async function injectContinuation(input: {
   input.sessionState.isInjectingContinuation = true
 
   try {
-    const currentBoulder = readBoulderState(input.ctx.directory)
+    // Use worktreePath if available, otherwise use ctx.directory
+    const effectiveDir = input.worktreePath ?? input.ctx.directory
+    const currentBoulder = readBoulderForPlan(input.ctx.directory, input.planName)
+      ?? (input.worktreePath ? readBoulderState(effectiveDir) : null)
     const currentTask = currentBoulder
       ? readCurrentTopLevelTask(currentBoulder.active_plan)
       : null
     const preferredTaskSession = currentTask
-      ? getTaskSessionState(input.ctx.directory, currentTask.key)
+      ? getTaskSessionState(effectiveDir, currentTask.key)
       : null
 
     if (!currentBoulder) {
@@ -159,7 +164,9 @@ function scheduleRetry(input: {
       return
     }
 
-    const currentBoulder = readBoulderState(ctx.directory)
+    const planName = findPlanNameForSession(ctx.directory, sessionID)
+    if (!planName) return
+    const currentBoulder = readBoulderForPlan(ctx.directory, planName)
     if (!currentBoulder) return
     if (!currentBoulder.session_ids?.includes(sessionID)) return
 

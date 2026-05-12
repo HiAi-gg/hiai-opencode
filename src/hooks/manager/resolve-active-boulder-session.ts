@@ -1,7 +1,12 @@
 import type { PluginInput } from "@opencode-ai/plugin"
-import { getPlanProgress, readBoulderState } from "../../features/boulder-state"
+import { getPlanProgress, findPlanNameForSession, readBoulderForPlan } from "../../features/boulder-state"
 import type { BoulderState, PlanProgress } from "../../features/boulder-state"
 
+/**
+ * Resolve active boulder session using registry-aware lookup.
+ * Uses findPlanNameForSession to locate which plan owns this session,
+ * then reads the plan-specific boulder state from registry.
+ */
 export async function resolveActiveBoulderSession(input: {
   client: PluginInput["client"]
   directory: string
@@ -11,7 +16,13 @@ export async function resolveActiveBoulderSession(input: {
   progress: PlanProgress
   appendedSession: boolean
 } | null> {
-  const boulderState = readBoulderState(input.directory)
+  // Find which plan owns this session via registry lookup
+  const planName = findPlanNameForSession(input.directory, input.sessionID)
+  if (!planName) {
+    return null
+  }
+
+  const boulderState = readBoulderForPlan(input.directory, planName)
   if (!boulderState) {
     return null
   }

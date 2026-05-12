@@ -81,6 +81,8 @@ export async function injectBoulderContinuation(input: {
       : undefined
     const launchVariant = promptContext.model?.variant
 
+    const effectiveDirectory = worktreePath ?? ctx.directory
+
     await ctx.client.session.promptAsync({
       path: { id: sessionID },
       body: {
@@ -90,7 +92,7 @@ export async function injectBoulderContinuation(input: {
         ...(inheritedTools ? { tools: inheritedTools } : {}),
         parts: [createInternalAgentTextPart(prompt)],
       },
-      query: { directory: ctx.directory },
+      query: { directory: effectiveDirectory },
     })
 
     sessionState.promptFailureCount = 0
