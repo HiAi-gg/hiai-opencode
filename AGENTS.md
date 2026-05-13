@@ -498,20 +498,20 @@ All agents MUST wrap their final response in a structured `<CLOSURE>` block. Thi
 
 ### Readiness Values
 
-| Value | Meaning |
-|-------|---------|
-| `done` | Task completed successfully |
-| `accept` | Reviewer approved the proposed changes |
-| `reject` | Reviewer denied the changes with feedback |
+| Value | Meaning | Used By |
+|-------|---------|---------|
+| `done` | Task completed successfully | All agents |
+| `accept` | Reviewer approved the proposed changes | Critic, Quality Guardian |
+| `reject` | Reviewer denied the changes with feedback | Critic, Quality Guardian |
 
 **WARNING**: Responses without a valid `<CLOSURE>` block will be automatically REJECTED by the system.
 
 ### Relationship to `<promise>DONE</promise>`
 
-The ralph-loop continuation system uses `<promise>DONE</promise>` as its signal to stop iterating. This is separate from `<CLOSURE>`:
+The ralph-loop and ULW loop continuation systems use `<promise>DONE</promise>` as their signal to stop iterating. This is separate from `<CLOSURE>`:
 
 - `<CLOSURE>` — task completion marker, required on every agent response
-- `<promise>DONE</promise>` — ralph-loop continuation signal, stops the loop when emitted
+- `<promise>DONE</promise>` — ralph-loop/ULW loop continuation signal, stops the loop when emitted
 
 Both can appear together; they do not conflict. The closure validator lives in [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts).
 
