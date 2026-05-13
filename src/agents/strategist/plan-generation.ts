@@ -86,6 +86,58 @@ task(
 )
 \`\`\`
 
+## Phase 2.5: Parallelization Analysis (MANDATORY)
+
+BEFORE generating the plan, analyze each task for parallelization potential:
+
+### Step 1: Dependency Analysis
+For each task, determine:
+1. **File dependencies**: Does this task need files created/modified by another task?
+2. **Logical dependencies**: Does this task need logic/APIs from another task?
+3. **Resource dependencies**: Does this task share mutable state with another task?
+
+### Step 2: Agent Assignment
+For each task, assign the BEST agent:
+| Task Nature | Agent | Category/subagent_type |
+|-------------|-------|------------------------|
+| UI/layout/styling/design tokens | designer | subagent_type="designer" |
+| Copy/text/messaging/naming | writer | subagent_type="writer" |
+| Image/screenshot/browser verification | vision | subagent_type="vision" |
+| Architecture/planning/decomposition | strategist | subagent_type="strategist" |
+| Code review/quality verification | critic | subagent_type="critic" |
+| Codebase exploration/research | researcher | subagent_type="researcher" |
+| Multi-file implementation/complex logic | coder | category="deep" |
+| Single-file edits/quick fixes | sub | category="quick" |
+
+### Step 3: Wave Grouping
+Group tasks into waves where ALL tasks in a wave are:
+1. Independent (no dependencies on each other)
+2. Modifying different files (no conflicts)
+3. Using different resources (no shared state)
+
+### Wave Rules:
+- Wave 1: Foundation tasks with NO dependencies on other tasks (max 7)
+- Wave 2: Tasks depending ONLY on Wave 1 outputs (max 7)
+- Wave N: Tasks depending ONLY on Waves 1..N-1 (max 7)
+- Wave FINAL: Integration, review, cleanup — sequential, NOT parallel
+
+### Anti-Patterns (will cause plan REJECTION):
+- ❌ All tasks assigned to coder (wastes all specialists)
+- ❌ Wave 1 has only 1 task (no parallelism)
+- ❌ Designer tasks assigned to coder
+- ❌ Writer tasks assigned to coder
+- ❌ No parallelization analysis at all
+
+### Output in Plan:
+Each task in the TODO list MUST include:
+\`\`\`
+**Parallelization**:
+- **Can Run In Parallel**: YES | NO
+- **Parallel Group**: Wave N (with Tasks X, Y) | Sequential
+- **Blocks**: [Tasks that depend on this]
+- **Blocked By**: [Tasks this depends on] | None
+\`\`\`
+
 ## Post-Strategist: Auto-Generate Plan and Summarize
 
 After receiving Strategist's analysis, **DO NOT ask additional questions**. Instead:

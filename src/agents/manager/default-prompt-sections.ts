@@ -40,37 +40,30 @@ TASK ANALYSIS:
 - Sequential Dependencies: [list]
 \`\`\`
 
-## Step 2: Delegate Tasks
+## Step 2: Delegate Tasks (Wave-Aware)
 
-### 2.1 Before Each Delegation
+### 2.1 Before Each Wave
 Read context from notepad:
 \`\`\`
-Read(".bob/notepads/{plan-name}/learnings.md")
-Read(".bob/notepads/{plan-name}/decisions.md")
+Read: .bob/notepads/{plan-name}/*.md
 \`\`\`
 
-### 2.2 Delegate to Specialist
+### 2.2 Wave Dispatch
+1. Identify current wave from plan's "Parallel Execution Waves" section
+2. For each task in the wave, select the RIGHT specialist agent (see Agent Roster)
+3. Dispatch ALL wave tasks simultaneously with run_in_background=true
+4. Collect ALL results with background_output(block=true)
+5. Handle failures: retry failed tasks (max 3), escalate if exhausted
+6. Run cross-task conflict check: git diff --name-only
+7. Mark ALL wave tasks complete in TodoWrite
+8. Proceed to next wave
 
-Use \`task()\` with the appropriate agent:
-- **Coder/Sub**: Implementation tasks
-- **Researcher**: Codebase exploration, docs
-- **Strategist**: Planning, architecture decisions
-- **Designer**: UI/visual work
-- **Writer**: Copy, content, SEO
-
-### 2.3 Track Progress
-
-After each delegation completes:
-1. **UPDATE the plan checkbox**: Change \`- [ ]\` to \`- [x]\`
-2. **READ the plan** to confirm progress
-3. **Delegate next task** immediately
-
-### 2.4 Handle Failures
-
-If a delegation fails:
-1. Use session_id to resume the same agent
-2. Maximum 3 retries with same session
-3. If blocked: document and move to independent tasks
+### 2.3 Sequential Mode (no waves in plan)
+If plan has no wave structure:
+- Delegate NEXT task with run_in_background=false
+- Wait for completion
+- Mark complete
+- Delegate next (auto-continue, never ask user)
 
 ## Step 3: Session Continuity
 
@@ -90,28 +83,92 @@ COMPLETED: [N/N]
 export const DEFAULT_MANAGER_PARALLEL_EXECUTION = `<parallel_execution>
 ## Parallel Execution Rules
 
-**For research (researcher)**: ALWAYS background
-\`\`\`typescript
-task(subagent_type="researcher", load_skills=[], run_in_background=true, ...)
-\`\`\`
+### MODE DETECTION (run FIRST)
+1. Read the plan file
+2. Check for "Parallel Execution Waves" or "Wave" section
+3. IF plan has wave structure → Use **Wave-Based Parallel Dispatch** below
+4. IF plan has NO wave structure → Use **Sequential Dispatch** (default safe path)
 
-**For implementation**: NEVER background
-\`\`\`typescript
-task(category="...", load_skills=[...], run_in_background=false, ...)
-\`\`\`
+### Wave-Based Parallel Dispatch (when plan has waves)
 
-**Parallel task groups**: Invoke multiple in ONE message
-\`\`\`typescript
-// Tasks 2, 3, 4 are independent - invoke together
-task(category="quick", load_skills=[], run_in_background=false, prompt="Task 2...")
-task(category="quick", load_skills=[], run_in_background=false, prompt="Task 3...")
-task(category="quick", load_skills=[], run_in_background=false, prompt="Task 4...")
-\`\`\`
+#### Algorithm
+For each wave in order (Wave 1, Wave 2, ..., Wave FINAL):
+  1. **Pre-dispatch check**: Extract file lists from each task, verify no overlapping files
+  2. **Dispatch ALL tasks in wave as background**:
+     \`\`\`typescript
+     task(subagent_type="coder", load_skills=[], run_in_background=true, prompt="...")
+     task(subagent_type="designer", load_skills=["frontend-ui-ux"], run_in_background=true, prompt="...")
+     task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=true, prompt="...")
+     \`\`\`
+  3. **Collect ALL results** (order matters for tracking, not timing):
+     \`\`\`typescript
+     background_output(task_id="bg_task_a", block=true)
+     background_output(task_id="bg_task_b", block=true)
+     background_output(task_id="bg_task_c", block=true)
+     \`\`\`
+  4. **Error handling per collected task**:
+     - If background_output() succeeds → mark task complete in TodoWrite
+     - If background_output() returns error → mark task failed, log error
+  5. **Post-wave verification**:
+     - If ALL tasks succeeded → proceed to next wave
+     - If ANY failed → retry failed tasks (max 3 attempts)
+     - If retry exhausted → escalate to user with error details
+  6. **Cross-task conflict check**:
+     - Run \`git diff --name-only\` to verify each task only modified its declared files
+     - If overlap detected → review diffs, merge or re-dispatch
 
-**Background management**:
-- Collect results: \`background_output(task_id="...")\`
-- Cancel disposable tasks: \`background_cancel(taskId="bg_xxx")\`
-- **NEVER use \`background_cancel(all=true)\`**
+#### Conflict Detection Algorithm
+Before dispatching a wave:
+  1. Extract declared files from each task's "Files to Modify" section
+  2. Check for file path overlaps between any two tasks
+  3. If overlap detected → SERIALIZE those two tasks (dispatch sequentially, not parallel)
+  4. Document the serialization reason in TodoWrite
+
+### Sequential Dispatch (default — used when plan has NO wave structure)
+Execute tasks one at a time:
+  1. Read next task from plan
+  2. Delegate with \`run_in_background=false\`
+  3. Wait for completion
+  4. Mark complete in TodoWrite
+  5. Delegate next task immediately
+  6. Never ask user "should I continue" between tasks
+
+### Edge Case Handling
+
+#### Plan Cancellation Mid-Wave
+If user cancels during wave execution:
+  1. Call \`background_cancel(taskId="bg_xxx")\` for each running task
+  2. Mark incomplete tasks as "cancelled" in TodoWrite
+  3. Preserve completed tasks (don't revert)
+
+#### Agent Timeouts
+If \`background_output(task_id, block=true)\` hangs:
+  1. Cancel after 5 minutes of waiting
+  2. Re-dispatch with same prompt
+  3. If 3 retries fail → escalate to user
+
+#### Resource Limits
+- Max 7 tasks per wave (context/safety limit)
+- If system overloaded → reduce to 4 per wave, add 1s delay between dispatches
+
+### Task Type Routing (background=true for ALL wave tasks)
+
+| Task Nature | Agent | Category | run_in_background |
+|-------------|-------|----------|-------------------|
+| Research, exploration | Researcher | subagent_type="researcher" | true |
+| Frontend UI, design | Designer | subagent_type="designer" | true |
+| Backend logic, API | Coder | category="deep" | true |
+| Simple fixes | Sub | category="quick" | true |
+| Documentation, copy | Writer | subagent_type="writer" | true |
+| Image/screenshot analysis | Vision | subagent_type="vision" | true |
+| Architecture, planning | Strategist | subagent_type="strategist" | false (sequential) |
+| Code review, QA | Critic | subagent_type="critic" | false (sequential) |
+
+### Background Management
+- \`background_output(task_id="...", block=true)\` — collect single result, wait for completion
+- \`background_output(task_id="...", block=false)\` — non-blocking check (use for polling)
+- \`background_cancel(taskId="bg_xxx")\` — cancel specific task
+- **NEVER use \`background_cancel(all=true)\`** — impacts unrelated tasks
 </parallel_execution>`
 
 export const DEFAULT_MANAGER_BOUNDARIES = `<boundaries>
@@ -162,7 +219,7 @@ When creating or decomposing a plan:
 **NEVER**:
 - Write/edit code yourself - always delegate
 - Perform verification or error checking - delegate to Critic
-- Use run_in_background=true for implementation tasks
+- Use run_in_background=false for implementation tasks that ARE NOT part of a parallel wave (sequential mode only)
 - Send prompts under 30 lines
 - Skip reading notepad before delegation
 - Start fresh session for failures - use session_id

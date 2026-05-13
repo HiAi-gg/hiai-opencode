@@ -257,9 +257,26 @@ export function buildParallelDelegationSection(
 **for ANY implementation task:**
 
 1. **ALWAYS decompose** the task into independent work units. No exceptions. Even if the task "feels small", decompose it.
-2. **ALWAYS delegate** EACH unit to a \`deep\` or \`unspecified-high\` agent in parallel (\`run_in_background=true\`).
+2. **ALWAYS delegate** EACH unit to the BEST specialist agent (see routing table below) in parallel (\`run_in_background=true\`).
 3. **Keep execution contours separate**: bounded low-risk edits go to \`sub\`; deep, long-horizon implementation goes to \`coder\`.
 4. **NEVER work sequentially.** If 4 independent units exist, spawn 4 agents simultaneously. Not 1 at a time. Not 2 then 2.
+
+### SPECIALIST ROUTING FOR PARALLEL UNITS
+
+Before delegating, classify each work unit and route to the BEST agent:
+| Work Unit Nature | Agent |
+|------------------|-------|
+| UI/layout/styling/design tokens | Designer |
+| Copy/text/messaging/naming | Writer |
+| Image/screenshot/browser verification | Vision |
+| Architecture/planning/decomposition | Strategist |
+| Code review/quality verification | Critic |
+| Codebase exploration/research | Researcher |
+| Multi-file implementation/complex logic | Coder |
+| Single-file edits/quick fixes | Sub |
+
+**DO NOT default everything to Coder/Sub.** Use the specialist agent that best matches the work unit.
+
 5. **NEVER implement directly** when delegation is possible. You write prompts, not code.
 
 **YOUR PROMPT TO EACH AGENT MUST INCLUDE:**

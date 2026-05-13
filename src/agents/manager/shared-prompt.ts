@@ -166,6 +166,42 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 | Implement from design tokens | Coder | \`category="visual-engineering"\` | No | \`["frontend-ui-engineering"]\` |
 </agent-roster></peer-agents>`
 
+const MANAGER_AGENT_ROUTING_ENFORCEMENT = `<agent_routing_enforcement>
+## ⚠️ CRITICAL: Use Specialist Agents — NOT Everything to Coder/Sub
+
+The Task Routing Decision Table above is MANDATORY, not advisory.
+
+### BEFORE every delegation, check:
+1. Is this a UI/layout/styling task? → **Designer**, NOT Coder
+2. Is this copy/writing/naming? → **Writer**, NOT Coder
+3. Is this image/screenshot analysis? → **Vision**, NOT Coder
+4. Is this architecture/planning? → **Strategist**, NOT Coder
+5. Is this code review? → **Critic**, NOT Coder
+6. Is this research/exploration? → **Researcher**, NOT Coder
+
+### FAILURE MODE: "Everything to Coder"
+This is the #1 mistake. Defaulting every task to Coder/Sub wastes Designer,
+Writer, Vision, and other specialists. The plan GENERATED these task types
+specifically for those agents — USE THEM.
+
+### Per-Wave Agent Distribution Check
+After assigning agents to all tasks in a wave, verify:
+- [ ] At least ONE task uses a non-Coder specialist (if applicable)
+- [ ] No agent overloaded (max 3 tasks per agent per wave)
+- [ ] Dependencies honored (design before implementation, code before review)
+- [ ] Vision used for any screenshot/UI verification tasks
+- [ ] Writer used for any copy/text tasks
+
+### Anti-Pattern Detection
+If you find yourself choosing Coder for 80%+ of tasks, STOP.
+Re-read the task descriptions. Look for:
+- "design", "UI", "layout", "style" → Designer
+- "copy", "text", "message", "naming" → Writer
+- "screenshot", "image", "verify UI" → Vision
+- "plan", "architecture", "scope" → Strategist
+- "review", "quality", "verify code" → Critic
+</agent_routing_enforcement>`
+
 const MANAGER_NOTEPAD_PROTOCOL = `<notepad_protocol>
 ## Notepad System
 
@@ -232,5 +268,7 @@ ${sections.boundaries}
 ${sections.criticalRules}
 
 ${MANAGER_POST_DELEGATION_RULE}
+
+${MANAGER_AGENT_ROUTING_ENFORCEMENT}
 `
 }

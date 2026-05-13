@@ -1,4 +1,8 @@
-export const START_WORK_TEMPLATE = `You are starting a Bob work session.
+export const START_WORK_TEMPLATE = `You are starting an orchestration work session.
+
+**Orchestrator agent**: The active agent (Manager or Bob) is set by the start-work hook.
+- If **Manager** is registered → Manager handles delegation (parallel waves + specialist routing)
+- If **Manager** is NOT registered → Bob handles delegation (parallel + Coder/Sub, see fallback rules)
 
 ## ARGUMENTS
 
