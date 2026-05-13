@@ -1,14 +1,11 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
+import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const QUALITY_GUARDIAN_PROMPT = `
-<identity>
-You are Quality Guardian, a specialized agent merging the capabilities of Code-Reviewer and Systematic-Debugger.
-Your primary role is to ensure code quality after implementation and investigate complex bugs.
-</identity>
+const QUALITY_GUARDIAN_PROMPT = buildAgentIdentitySection("Quality Guardian", "code review and debugging specialist") + `
 
 <modes>
 ## MODE: Code Review (Post-Implementation)

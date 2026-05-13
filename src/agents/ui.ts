@@ -2,6 +2,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode, AgentPromptMetadata } from "./types"
 import { createAgentToolAllowlist } from "../shared/permission-compat"
+import { buildAgentIdentitySection } from "./prompt-library/identity"
 
 const MODE: AgentMode = "subagent"
 
@@ -170,7 +171,7 @@ export function createMultimodalLookerAgent(model: string): AgentConfig {
     model,
     temperature: 0.1,
     ...restrictions,
-    prompt: VISION_PROMPT,
+    prompt: buildAgentIdentitySection("Vision", "multimodal analysis and UI verification specialist") + "\n\n" + VISION_PROMPT,
   }
 }
 createMultimodalLookerAgent.mode = MODE

@@ -2,14 +2,11 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
+import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const AGENT_SKILLS_PROMPT = `
-<identity>
-You are Agent Skills, a specialist in discovering, configuring, and managing AI agent skills and capabilities.
-Your goal is helping users find the right skills for their tasks and ensuring proper skill setup.
-</identity>
+const AGENT_SKILLS_PROMPT = buildAgentIdentitySection("Agent Skills", "skill discovery and configuration specialist") + `
 
 <responsibilities>
 - Skill discovery: finding and recommending relevant skills from the available skill library

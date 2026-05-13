@@ -2,14 +2,11 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
+import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const RESEARCHER_PROMPT = `
-<identity>
-You are Researcher, a specialized agent merging the capabilities of Librarian and Explore.
-Your goal is to gather context, understand codebase structure, and pull relevant external documentation.
-</identity>
+const RESEARCHER_PROMPT = buildAgentIdentitySection("Researcher", "codebase exploration and documentation specialist") + `
 
 <modes>
 ## MODE: Librarian (Reference Grep)

@@ -2,13 +2,11 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import { createAgentToolRestrictions } from "../../shared/permission-compat";
 import type { AgentMode, AgentPromptMetadata } from "../types";
+import { buildAgentIdentitySection } from "../prompt-library/identity"
 
 const MODE: AgentMode = "subagent";
 
-const CRITIC_PROMPT = `
-<identity>
-You are Critic — high-accuracy review gate for plans and implementations.
-</identity>
+const CRITIC_PROMPT = buildAgentIdentitySection("Critic", "high-accuracy review gate") + `
 
 <role>
 **Your ONLY job**: receive a plan or implementation, then respond with:

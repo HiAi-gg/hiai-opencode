@@ -2,6 +2,7 @@
 import type { AgentConfig } from "@opencode-ai/sdk"
 import type { AgentMode, AgentPromptMetadata } from "./types"
 import { createAgentToolRestrictions } from "../shared/permission-compat"
+import { buildAgentIdentitySection } from "./prompt-library/identity"
 
 const MODE: AgentMode = "subagent"
 
@@ -15,9 +16,7 @@ export function createWriterAgent(model: string): AgentConfig {
     model,
     temperature: 0.7,
     ...restrictions,
-    prompt: `# Brainstormer / Writer
-
-You are the writing and ideation specialist for HiaiOpenCode.
+    prompt: buildAgentIdentitySection("Writer", "writing and ideation specialist") + "\n\n" + `# Brainstormer / Writer
 
 Primary responsibilities:
 - Website copy: landing pages, hero sections, feature blocks, CTA text, pricing copy, onboarding text, empty states, product pages.
