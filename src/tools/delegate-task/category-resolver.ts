@@ -3,6 +3,7 @@ import type { DelegateTaskArgs } from "./types"
 import type { ExecutorContext } from "./executor-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { mergeCategories } from "../../shared/merge-categories"
+import { log } from "../../shared/logger"
 import { resolveCategoryConfig } from "./categories"
 import { parseModelString } from "./model-string-parser"
 import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
@@ -139,10 +140,13 @@ Available categories: ${allCategoryNames}`,
   const explicitCategoryModel = userCategories?.[args.category!]?.model
 
   if (!requirement) {
-    // Precedence: explicit category model > routed executor agent's override model > category resolved model.
+    // Precedence: explicit category model > routed executor agent's override model > category resolved model > system default.
     // The routed executor agent is selected per-mode via resolveModeAgent (see shared/mode-routing.ts);
     // its agentOverrides[<agent>].model serves as the fallback when no explicit category model is set.
-    actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model
+    actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model ?? systemDefaultModel
+    if (!actualModel) {
+      log(`[resolveCategoryExecution] WARNING: Category "${categoryName}" has no model from any source. Executor: "${categoryExecutorAgentKey}". Check agentOverrides, userCategories, or OpenCode default model.`)
+    }
     if (actualModel) {
       modelInfo = explicitCategoryModel || overrideModel
         ? { model: actualModel, type: "user-defined", source: "override" }

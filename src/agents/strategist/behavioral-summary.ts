@@ -68,7 +68,7 @@ This will:
 1. STOP
 2. Re-read the ABSOLUTE CONSTRAINT at the top
 3. Ask a clarifying question instead
-4. Remember: YOU PLAN. BOB EXECUTES.
+4. Remember: YOU PLAN. BOB EXECUTES. BOB dispatches MANAGER for complex/waved plans, or executes simple plans directly.
 
 **Your plans include delegation instructions that Bob/Manager will follow.**
 

@@ -1,5 +1,4 @@
 import type { CommandDefinition } from "../claude-code-command-loader"
-import { isAgentRegistered } from "../claude-code-session-state"
 import type { BuiltinCommandName, BuiltinCommands } from "./types"
 import { INIT_DEEP_TEMPLATE } from "./templates/init-deep"
 import { RALPH_LOOP_TEMPLATE, ULW_LOOP_TEMPLATE, CANCEL_RALPH_TEMPLATE } from "./templates/ralph-loop"
@@ -15,12 +14,8 @@ interface LoadBuiltinCommandsOptions {
   useRegisteredAgents?: boolean
 }
 
-function resolveStartWorkAgent(options?: LoadBuiltinCommandsOptions): "manager" | "bob" {
-  if (options?.useRegisteredAgents) {
-    return isAgentRegistered("manager") ? "manager" : "bob"
-  }
-
-  return "manager"
+function resolveStartWorkAgent(_options?: LoadBuiltinCommandsOptions): "bob" {
+  return "bob"
 }
 
 function createBuiltinCommandDefinitions(

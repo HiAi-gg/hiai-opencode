@@ -1,8 +1,6 @@
 export const START_WORK_TEMPLATE = `You are starting an orchestration work session.
 
-**Orchestrator agent**: The active agent (Manager or Bob) is set by the start-work hook.
-- If **Manager** is registered → Manager handles delegation (parallel waves + specialist routing)
-- If **Manager** is NOT registered → Bob handles delegation (parallel + Coder/Sub, see fallback rules)
+**Orchestrator agent**: Bob is the primary orchestrator. For complex/waved plans, Bob dispatches Manager as a subagent for parallel wave coordination. For simple plans, Bob executes directly without dispatching Manager.
 
 ## ARGUMENTS
 

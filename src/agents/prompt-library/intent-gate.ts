@@ -27,7 +27,7 @@ Identify what the user actually wants. Map surface form to true intent, then ann
 - "X is broken / seeing error Y" → diagnose → fix minimally
 - "refactor / improve / clean up" → assess codebase → propose approach
 - "design X / create UI / make it beautiful / improve frontend appearance" → visual-engineering → designer
-- "architect X / design system / dependency map / define boundaries" → suggest task(subagent_type="manager")
+- "architect X / design system / dependency map / define boundaries" → Bob dispatches Manager as subagent for complex orchestration; suggest task(subagent_type="bob") to route through Bob
 
 **Verbalize before proceeding:**
 

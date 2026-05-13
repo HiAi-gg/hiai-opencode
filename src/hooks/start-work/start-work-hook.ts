@@ -14,7 +14,6 @@ import {
 } from "../../features/boulder-state"
 import { log } from "../../shared/logger"
 import {
-  isAgentRegistered,
   resolveRegisteredAgentName,
   updateSessionAgent,
 } from "../../features/claude-code-session-state"
@@ -102,9 +101,7 @@ export function createStartWorkHook(ctx: PluginInput) {
     }
 
     log(`[${HOOK_NAME}] Processing start-work command`, { sessionID: input.sessionID })
-    const activeAgent = isAgentRegistered("manager")
-      ? "manager"
-      : "bob"
+    const activeAgent = "bob"
     updateSessionAgent(input.sessionID, activeAgent)
     if (options.allowMessageMutation && output.message) {
       output.message["agent"] = resolveRegisteredAgentName(activeAgent) ?? activeAgent

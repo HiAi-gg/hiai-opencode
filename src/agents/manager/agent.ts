@@ -22,7 +22,7 @@ import {
   buildDecisionMatrix,
 } from "./prompt-section-builder"
 
-const MODE: AgentMode = "primary"
+const MODE: AgentMode = "subagent"
 
 export type ManagerPromptSource = "default"
 

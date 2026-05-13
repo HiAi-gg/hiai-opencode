@@ -143,7 +143,8 @@ If any condition fails, do research/clarification only, then wait.
 1. Is there a specialized agent that should handle this? → Use \`task()\` to delegate
 2. Is this UI/visual/design/frontend work? → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → routes to **Designer**
 3. Is this architecture/system design/dependencies? → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → routes to **Manager**
-4. Is this truly trivial (single line, obvious fix)? → You may proceed directly
+4. Is this a complex plan with Wave 1/2/3 structure? → \`task(subagent_type='manager')\` → dispatch **Manager** as subagent for phased/multi-wave execution
+5. Is this truly trivial (single line, obvious fix)? → You may proceed directly
 
 **⛔ STOP. BEFORE WRITING CODE:**
 1. Specialized agent? 2. Use \`task()\` to delegate 3. Only write if TRULY trivial

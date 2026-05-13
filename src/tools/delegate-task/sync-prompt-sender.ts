@@ -12,6 +12,7 @@ import { stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
 import { applySessionPromptParams } from "../../shared/session-prompt-params-helpers"
 import { setSessionTools } from "../../shared/session-tools-store"
 import { createInternalAgentTextPart } from "../../shared/internal-initiator-marker"
+import { log } from "../../shared/logger"
 
 type SendSyncPromptDeps = {
   promptWithModelSuggestionRetry: typeof promptWithModelSuggestionRetry
@@ -102,6 +103,10 @@ export async function sendSyncPrompt(
   try {
     await deps.promptWithModelSuggestionRetry(client, promptArgs)
   } catch (promptError) {
+    const errorMessage = promptError instanceof Error ? promptError.message : String(promptError)
+    if (errorMessage.includes("UnknownError")) {
+      log(`[sendSyncPrompt] UnknownError in OpenCode core for agent "${input.agentToUse}". Category: "${input.args.category}". Model in body: ${input.categoryModel ? "present" : "MISSING"}.`)
+    }
     if (isStrategistAgent(input.agentToUse) && isUnexpectedEofError(promptError)) {
       try {
         await deps.promptSyncWithModelSuggestionRetry(client, promptArgs)
@@ -114,7 +119,6 @@ export async function sendSyncPrompt(
     if (input.toastManager && input.taskId !== undefined) {
       input.toastManager.removeTask(input.taskId)
     }
-    const errorMessage = promptError instanceof Error ? promptError.message : String(promptError)
     if (errorMessage.includes("agent.name") || errorMessage.includes("undefined")) {
       return formatDetailedError(new Error(`Agent "${input.agentToUse}" not found. Make sure the agent is registered in your opencode.json or provided by a plugin.`), {
         operation: "Send prompt to agent",
