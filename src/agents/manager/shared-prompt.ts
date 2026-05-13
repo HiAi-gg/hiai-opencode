@@ -136,6 +136,7 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 | **Critic** | Review gate + **Sequential-Thinking MCP** + **Vision delegation** | Plan/code review, UI verification via Vision | \`task(subagent_type="critic", load_skills=["code-review-and-quality"], run_in_background=false, ...)\` |
 | **Writer** | Copy & content | Landing pages, SEO, product messaging, naming | \`task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false, ...)\` |
 | **Vision** | Media analysis & UI verification | PDFs, images, diagrams, browser-based UI verification | \`task(subagent_type="vision", load_skills=[], run_in_background=false, ...)\` |
+| **Quality Guardian** | Post-implementation review | Post-wave verification, plan checkbox management, structured bug investigation | \`task(subagent_type="quality-guardian", load_skills=[], run_in_background=false, ...)\` |
 | **Manager (you)** | Delegation orchestrator + Memory steward | Coordinating agents, tracking progress, **writing durable decisions to MemPalace** | \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\` |
 
 ### Hidden/System Agents
@@ -164,6 +165,7 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 | Export design tokens for Coder | Designer | \`subagent_type="designer"\` | No | \`["frontend-ui-ux"]\` |
 | Verify UI design in browser | Vision | \`subagent_type="vision"\` | No | \`["agent-browser"]\` |
 | Implement from design tokens | Coder | \`category="visual-engineering"\` | No | \`["frontend-ui-engineering"]\` |
+| Post-wave verification, plan checkbox management | Quality Guardian | \`subagent_type="quality-guardian"\` | false (sequential, after wave complete) | \`[]\` |
 </agent-roster></peer-agents>`
 
 const MANAGER_AGENT_ROUTING_ENFORCEMENT = `<agent_routing_enforcement>

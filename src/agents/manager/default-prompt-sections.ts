@@ -162,7 +162,8 @@ If \`background_output(task_id, block=true)\` hangs:
 | Documentation, copy | Writer | subagent_type="writer" | true |
 | Image/screenshot analysis | Vision | subagent_type="vision" | true |
 | Architecture, planning | Strategist | subagent_type="strategist" | false (sequential) |
-| Code review, QA | Critic | subagent_type="critic" | false (sequential) |
+| Pre-implementation review, plan gate | Critic | subagent_type="critic" | false (sequential) |
+| Post-wave verification, plan management | Quality Guardian | subagent_type="quality-guardian" | false (sequential) |
 
 ### Background Management
 - \`background_output(task_id="...", block=true)\` — collect single result, wait for completion
