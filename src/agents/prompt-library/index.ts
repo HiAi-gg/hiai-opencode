@@ -1,5 +1,4 @@
 export * from "./identity";
-export * from "./orchestration";
 export * from "./specialized";
 export * from "./strategy";
 export * from "./intent-gate";

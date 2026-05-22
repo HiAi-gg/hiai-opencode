@@ -618,7 +618,7 @@ Inspect layer 6 first when runtime output diverges from source.
 
 ### Installing MCP server packages as OpenCode plugins
 
-MCP servers (`firecrawl-mcp`, `@modelcontextprotocol/server-sequential-thinking`) are NOT OpenCode plugins. Adding them to the `plugin` array in `opencode.json` will not work.
+MCP servers (`@modelcontextprotocol/server-sequential-thinking`, `@upstash/context7-mcp`) are NOT OpenCode plugins. Adding them to the `plugin` array in `opencode.json` will not work. Note: Firecrawl is a CLI skill, not an MCP server.
 
 Register only `@hiai-gg/hiai-opencode` as a plugin. MCP wiring is handled through the `mcp` object in `hiai-opencode.json`.
 

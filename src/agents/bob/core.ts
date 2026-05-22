@@ -19,6 +19,12 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import {
+  buildSearchStopConditionsSection,
+  buildDelegationPromptSection,
+  buildSessionContinuitySection,
+  buildFailureRecoverySection,
+} from "../prompt-library/shared-execution";
 
 /**
  * Build Bob's full prompt. Model-agnostic — all model-specific
@@ -235,15 +241,7 @@ result = task(..., run_in_background=false)  // Never wait synchronously for res
 
 ${buildAntiDuplicationSection()}
 
-### Search Stop Conditions
-
-STOP searching when:
-- You have enough context to proceed confidently
-- Same information appearing across multiple sources
-- 2 search iterations yielded no new useful data
-- Direct answer found
-
-**DO NOT over-research. Time is precious.**
+${buildSearchStopConditionsSection()}
 
 ---
 
@@ -261,52 +259,9 @@ ${parallelDelegationSection}
 
 ${delegationTable}
 
-### Delegation Prompt Structure (ALL 6 sections):
+${buildDelegationPromptSection()}
 
-When delegating, your prompt MUST include:
-
-\`\`\`
-1. TASK: Atomic, specific goal (one action per delegation)
-2. EXPECTED OUTCOME: Concrete deliverables with success criteria
-3. REQUIRED TOOLS: Explicit tool whitelist (prevents tool sprawl)
-4. MUST DO: Exhaustive requirements - leave NOTHING implicit
-5. MUST NOT DO: Forbidden actions - anticipate and block rogue behavior
-6. CONTEXT: File paths, existing patterns, constraints
-\`\`\`
-
-AFTER THE WORK YOU DELEGATED SEEMS DONE, ALWAYS VERIFY THE RESULTS AS FOLLOWING:
-- DOES IT WORK AS EXPECTED?
-- DOES IT FOLLOWED THE EXISTING CODEBASE PATTERN?
-- EXPECTED RESULT CAME OUT?
-- DID THE AGENT FOLLOWED "MUST DO" AND "MUST NOT DO" REQUIREMENTS?
-
-**Vague prompts = rejected. Be exhaustive.**
-
-### Session Continuity
-
-Every \`task()\` output includes a session_id. **USE IT.**
-
-**ALWAYS continue when:**
-- Task failed/incomplete → \`session_id="{session_id}", prompt="Fix: {specific error}"\`
-- Follow-up question on result → \`session_id="{session_id}", prompt="Also: {question}"\`
-- Multi-turn with same agent → \`session_id="{session_id}"\` - NEVER start fresh
-- Verification failed → \`session_id="{session_id}", prompt="Failed verification: {error}. Fix."\`
-
-**Why session_id is important:**
-- Subagent has FULL conversation context preserved
-- No repeated file reads, exploration, or setup
-- Saves 70%+ tokens on follow-ups
-- Subagent knows what it already tried/learned
-
-\`\`\`typescript
-// WRONG: Starting fresh loses all context
-task(category="quick", load_skills=[], run_in_background=false, description="Fix type error", prompt="Fix the type error in auth.ts...")
-
-// CORRECT: Resume preserves everything
-task(session_id="ses_abc123", load_skills=[], run_in_background=false, description="Fix type error", prompt="Fix: Type error on line 42")
-\`\`\`
-
-**After EVERY delegation, STORE the session_id for potential continuation.**
+${buildSessionContinuitySection("full")}
 
 ### Code Changes:
 - Match existing patterns (if codebase is disciplined)
@@ -336,24 +291,7 @@ If project has build/test commands, run them at task completion.
 
 ---
 
-## Phase 2C - Failure Recovery
-
-### When Fixes Fail:
-
-1. Fix root causes, not symptoms
-2. Re-verify after EVERY fix attempt
-3. Never shotgun debug (random changes hoping something works)
-
-### After 3 Consecutive Failures:
-
-1. **STOP** all further edits immediately
-2. **REVERT** to last known working state (git checkout / undo edits)
-3. **DOCUMENT** what was attempted and what failed
-4. **CONSULT** Strategist with full failure context
-5. If high-risk uncertainty remains, **ESCALATE** to Critic for final gate
-6. If Strategist/Critic cannot resolve → **ASK USER** before proceeding
-
-**Never**: Leave code in broken state, continue hoping it'll work, delete failing tests to "pass"
+${buildFailureRecoverySection("full")}
 
 ---
 

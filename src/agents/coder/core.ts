@@ -20,6 +20,12 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import {
+  buildSearchStopConditionsSection,
+  buildDelegationPromptSection,
+  buildSessionContinuitySection,
+  buildFailureRecoverySection,
+} from "../prompt-library/shared-execution";
 
 export function buildCoderPrompt(
   availableAgents: AvailableAgent[] = [],
@@ -124,15 +130,7 @@ task(subagent_type="researcher", run_in_background=true, load_skills=[], descrip
 
 ${buildAntiDuplicationSection()}
 
-### Search Stop Conditions
-
-STOP searching when:
-- You have enough context to proceed confidently
-- Same information appearing across multiple sources
-- 2 search iterations yielded no new useful data
-- Direct answer found
-
-**DO NOT over-research. Time is precious.**
+${buildSearchStopConditionsSection()}
 
 ---
 
@@ -176,29 +174,9 @@ ${categorySkillsGuide}
 
 ${delegationTable}
 
-### Delegation Prompt (6 sections)
+${buildDelegationPromptSection()}
 
-\`\`\`
-1. TASK: Atomic, specific goal (one action per delegation)
-2. EXPECTED OUTCOME: Concrete deliverables with success criteria
-3. REQUIRED TOOLS: Explicit tool whitelist
-4. MUST DO: Exhaustive requirements - leave NOTHING implicit
-5. MUST NOT DO: Forbidden actions - anticipate and block rogue behavior
-6. CONTEXT: File paths, existing patterns, constraints
-\`\`\`
-
-**Vague prompts = rejected. Be exhaustive.**
-
-After delegation, ALWAYS verify: works as expected? follows codebase pattern? MUST DO / MUST NOT DO respected?
-**NEVER trust subagent self-reports. ALWAYS verify with your own tools.**
-
-### Session Continuity
-
-Every \`task()\` output includes a session_id. **USE IT for follow-ups.**
-
-- **Task failed/incomplete** - \`session_id="{id}", prompt="Fix: {error}"\`
-- **Follow-up on result** - \`session_id="{id}", prompt="Also: {question}"\`
-- **Verification failed** - \`session_id="{id}", prompt="Failed: {error}. Fix."\`
+${buildSessionContinuitySection("compact")}
 
 ${
   strategistCriticSection
@@ -241,17 +219,7 @@ ${strategistCriticSection}
 
 **NO EVIDENCE = NOT COMPLETE.**
 
-## Failure Recovery
-
-1. Fix root causes, not symptoms. Re-verify after EVERY attempt.
-2. If first approach fails → try alternative (different algorithm, pattern, library)
-3. After 3 DIFFERENT approaches fail:
-   - STOP all edits → REVERT to last working state
-   - DOCUMENT what you tried → CONSULT Strategist
-   - If high-risk uncertainty remains → ESCALATE Critic
-   - If Strategist/Critic fails → ASK USER with clear explanation
-
-**Never**: Leave code broken, delete failing tests, shotgun debug
+${buildFailureRecoverySection("compact")}
 
 ## Peer-Agents
 

@@ -26,7 +26,7 @@
         "strategist": {
           "$ref": "#/definitions/modelSlot"
         },
-        "guard": {
+        "manager": {
           "$ref": "#/definitions/modelSlot"
         },
         "critic": {
@@ -38,10 +38,7 @@
         "researcher": {
           "$ref": "#/definitions/modelSlot"
         },
-        "manager": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "brainstormer": {
+        "writer": {
           "$ref": "#/definitions/modelSlot"
         },
         "vision": {
@@ -55,18 +52,18 @@
         "bob",
         "coder",
         "strategist",
-        "guard",
+        "manager",
         "critic",
         "designer",
         "researcher",
-        "manager",
-        "brainstormer",
-        "vision"
+        "writer",
+        "vision",
+        "sub"
       ]
     },
     "auth": {
       "type": "object",
-      "description": "Service auth placeholders. Keys: stitch, context7. Others are not valid.",
+      "description": "Service auth placeholders. Keys: stitch, context7, firecrawl.",
       "additionalProperties": false,
       "properties": {
         "stitch": {
@@ -76,6 +73,10 @@
         "context7": {
           "type": "string",
           "description": "Context7 API key placeholder, e.g. {env:HIAI_CONTEXT7_AUTH}"
+        },
+        "firecrawl": {
+          "type": "string",
+          "description": "Firecrawl API key placeholder, e.g. {env:FIRECRAWL_API_KEY}"
         }
       }
     },
@@ -83,9 +84,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "playwright": {
-          "$ref": "#/definitions/toggle"
-        },
         "stitch": {
           "$ref": "#/definitions/toggle"
         },
