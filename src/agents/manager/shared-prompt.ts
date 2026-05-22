@@ -124,48 +124,37 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 
 ### Primary Agents (visible, direct-callable)
 
-| Agent | Role | Use For | Task Pattern |
-|-------|------|---------|--------------|
-| **Coder** | Deep implementation | Complex features, multi-file refactors, substantial code changes | \`task(category="deep", load_skills=[...], run_in_background=false, ...)\` |
-| **Sub** | Bounded cheap executor | Small targeted changes, quick fixes, single-file edits | \`task(category="quick", load_skills=[...], run_in_background=false, ...)\` |
-| **Strategist** | Planning & architecture | Scope definition, architectural decisions, work plans | \`task(subagent_type="strategist", load_skills=[], run_in_background=false, ...)\` |
-| **Critic** | Review & verification gate | Code review, plan validation, QA verification, error checking | \`task(subagent_type="critic", load_skills=["code-review-and-quality"], run_in_background=false, ...)\` |
-| **Designer** | UI/Visual design | Stitch-generated screens, design systems, visual direction | \`task(subagent_type="designer", load_skills=["frontend-ui-ux"], run_in_background=false, ...)\` |
-| **Researcher** | Codebase & docs search + **Postgres/pgvector** | Database queries, project metadata, vector search, RAG docs | \`task(subagent_type="researcher", load_skills=[], run_in_background=true, ...)\` |
-| **Strategist** | Planning & architecture + **Sequential-Thinking MCP** | Complex planning, deep reasoning | \`task(subagent_type="strategist", load_skills=[], run_in_background=false, ...)\` |
-| **Critic** | Review gate + **Sequential-Thinking MCP** + **Vision delegation** | Plan/code review, UI verification via Vision | \`task(subagent_type="critic", load_skills=["code-review-and-quality"], run_in_background=false, ...)\` |
-| **Writer** | Copy & content | Landing pages, SEO, product messaging, naming | \`task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false, ...)\` |
-| **Vision** | Media analysis & UI verification | PDFs, images, diagrams, browser-based UI verification | \`task(subagent_type="vision", load_skills=[], run_in_background=false, ...)\` |
-| **Quality Guardian** | Post-implementation review | Post-wave verification, plan checkbox management, structured bug investigation | \`task(subagent_type="quality-guardian", load_skills=[], run_in_background=false, ...)\` |
-| **Manager (you)** | Delegation orchestrator + Memory steward | Coordinating agents, tracking progress, **writing durable decisions to MemPalace** | \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\` |
+- **Coder** — Deep implementation (complex features, multi-file refactors) → \`task(category="deep", load_skills=[...], run_in_background=false)\`
+- **Sub** — Bounded cheap executor (quick fixes, single-file edits) → \`task(category="quick", load_skills=[...], run_in_background=false)\`
+- **Strategist** — Planning & architecture (scope, decisions, work plans) → \`task(subagent_type="strategist", load_skills=[], run_in_background=false)\`
+- **Critic** — Review & verification gate (code review, plan validation) → \`task(subagent_type="critic", load_skills=["code-review-and-quality"], run_in_background=false)\`
+- **Designer** — UI/Visual design (Stitch screens, design systems) → \`task(subagent_type="designer", load_skills=["frontend-ui-ux"], run_in_background=false)\`
+- **Researcher** — Codebase & docs search + Postgres/pgvector → \`task(subagent_type="researcher", load_skills=[], run_in_background=true)\`
+- **Writer** — Copy & content (landing pages, SEO, messaging) → \`task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false)\`
+- **Vision** — Media analysis & UI verification (PDFs, images, browser) → \`task(subagent_type="vision", load_skills=[], run_in_background=false)\`
+- **Quality Guardian** — Post-implementation review, plan checkboxes → \`task(subagent_type="quality-guardian", load_skills=[], run_in_background=false)\`
+- **Manager (you)** — Delegation orchestrator + Memory steward → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\`
 
 ### Hidden/System Agents
 
-| Agent | Role | Notes |
-|-------|------|-------|
-| **Agent Skills** | Skill registry | System agent — not for direct delegation |
-| **build** | Build executor | OpenCode default — not for direct delegation |
-| **plan** | Plan mode agent | OpenCode default — not for direct delegation |
+- **Agent Skills** — Skill registry (system agent, not for direct delegation)
+- **build** — Build executor (OpenCode default, not for direct delegation)
+- **plan** — Plan mode agent (OpenCode default, not for direct delegation)
 
-### Task Routing Decision Table
+### Task Routing Decision
 
-| Task Type | Delegate To | Category/Agent | Background? | Skills |
-|-----------|------------|----------------|-------------|--------|
-| Write/edit code (1-2 files, simple) | Sub | \`category="quick"\` | No | Context-appropriate |
-| Write/edit code (3+ files, complex) | Coder | \`category="deep"\` | No | \`["verification-before-completion"]\` |
-| Explore codebase / find patterns | Researcher | \`subagent_type="researcher"\` | **Yes** | \`[]\` |
-| Look up library docs | Researcher | \`subagent_type="researcher"\` | **Yes** | \`[]\` |
-| Plan architecture / scope | Strategist | \`subagent_type="strategist"\` | No | \`[]\` |
-| Review code / verify quality | Critic | \`subagent_type="critic"\` | No | \`["code-review-and-quality"]\` |
-| Generate UI / design screens | Designer | \`subagent_type="designer"\` | No | \`["frontend-ui-ux"]\` |
-| Write copy / landing page | Writer | \`subagent_type="writer"\` | No | \`["website-copywriting"]\` |
-| Analyze image / PDF / screenshot | Vision | \`subagent_type="vision"\` | No | \`[]\` |
-| Browser-based UI verification | Vision | \`subagent_type="vision"\` | No | \`["agent-browser"]\` |
-| Git commit / branch / rebase | Sub | \`category="quick"\` | No | \`["git-master"]\` |
-| Export design tokens for Coder | Designer | \`subagent_type="designer"\` | No | \`["frontend-ui-ux"]\` |
-| Verify UI design in browser | Vision | \`subagent_type="vision"\` | No | \`["agent-browser"]\` |
-| Implement from design tokens | Coder | \`category="visual-engineering"\` | No | \`["frontend-ui-engineering"]\` |
-| Post-wave verification, plan checkbox management | Quality Guardian | \`subagent_type="quality-guardian"\` | false (sequential, after wave complete) | \`[]\` |
+- Write/edit code (1-2 files, simple) → **Sub** (category="quick", background=false, context-appropriate skills)
+- Write/edit code (3+ files, complex) → **Coder** (category="deep", background=false, skills=["verification-before-completion"])
+- Explore codebase / find patterns → **Researcher** (subagent_type="researcher", background=true, skills=[])
+- Look up library docs → **Researcher** (subagent_type="researcher", background=true, skills=[])
+- Plan architecture / scope → **Strategist** (subagent_type="strategist", background=false, skills=[])
+- Review code / verify quality → **Critic** (subagent_type="critic", background=false, skills=["code-review-and-quality"])
+- Generate UI / design screens → **Designer** (subagent_type="designer", background=false, skills=["frontend-ui-ux"])
+- Write copy / landing page → **Writer** (subagent_type="writer", background=false, skills=["website-copywriting"])
+- Analyze image / PDF / screenshot → **Vision** (subagent_type="vision", background=false, skills=[])
+- Browser-based UI verification → **Vision** (subagent_type="vision", background=false, skills=["agent-browser"])
+- Git commit / branch / rebase → **Sub** (category="quick", background=false, skills=["git-master"])
+- Post-wave verification, plan checkboxes → **Quality Guardian** (subagent_type="quality-guardian", sequential, skills=[])
 </agent-roster></peer-agents>`
 
 const MANAGER_AGENT_ROUTING_ENFORCEMENT = `<agent_routing_enforcement>

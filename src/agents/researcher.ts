@@ -82,14 +82,11 @@ skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "su
 1. **Firecrawl CLI** — Web research via CLI skill (default).
 
 ### Tool Summary
-| Tool | MCP Prefix | Best For |
-|------|-----------|----------|
-| Context7 | \`mcp__context7__*\` | Library docs, API references |
-| firecrawl-cli | CLI skill | Web scraping, crawling, extraction |
-| grep_app | \`mcp__grep_app__*\` | OSS code patterns on GitHub |
-| firecrawl-cli | CLI skill | Web scraping, crawling, extraction |
-| MemPalace | CLI skill (via \`skill_mcp({ mcp_name: "mempalace" })\`) | Project memory / past decisions — SECOND priority after PostgreSQL |
-| Postgres/pgvector | \`docker exec psql\` | Project metadata, build history, vector search |
+- **Context7** (mcp__context7__*) — Library docs, API references
+- **firecrawl-cli** (CLI skill) — Web scraping, crawling, extraction
+- **grep_app** (mcp__grep_app__*) — OSS code patterns on GitHub
+- **MemPalace** (CLI skill via skill_mcp) — Project memory / past decisions — SECOND priority after PostgreSQL
+- **Postgres/pgvector** (docker exec psql) — Project metadata, build history, vector search
 
 ## Peer-Agents
 - **Vision** — When encountering PDFs, images, or binary files: return the file path and recommend the Vision agent for extraction. Vision can extract text from PDFs, describe UI from screenshots, and interpret diagrams.

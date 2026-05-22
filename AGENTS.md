@@ -422,13 +422,13 @@ Model provider credentials are configured through OpenCode Connect. Do not ask u
 
 Common service keys:
 
-- `STITCH_AI_API_KEY`
-- `FIRECRAWL_API_KEY`
-- `CONTEXT7_API_KEY`
+- `STITCH_AI_API_KEY` (MCP)
+- `FIRECRAWL_API_KEY` (CLI skill, not MCP)
+- `CONTEXT7_API_KEY` (MCP)
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
-- `MEMPALACE_PYTHON`
-- `MEMPALACE_PALACE_PATH`
+- `MEMPALACE_PYTHON` (MCP)
+- `MEMPALACE_PALACE_PATH` (MCP)
 
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
@@ -455,12 +455,14 @@ AGENTS:
   agent-skills      — skill registry, discovery
 
 MCP INTEGRATIONS (who uses what):
-  Stitch              -> designer (UI generation)
-  Firecrawl           -> researcher (CLI skill)
-  Context7            -> researcher, coder (lib docs)
-  grep_app            -> researcher (OSS code patterns)
-  MemPalace           -> manager (primary), all agents (search before answer)
-  Sequential-Thinking -> strategist, critic (deep reasoning)
+  Stitch              -> designer (UI generation) [MCP]
+  Context7            -> researcher, coder (lib docs) [MCP]
+  grep_app            -> researcher (OSS code patterns) [MCP]
+  MemPalace           -> manager (primary), all agents (search before answer) [MCP]
+  Sequential-Thinking -> strategist, critic (deep reasoning) [MCP]
+
+CLI SKILLS (not MCP):
+  Firecrawl           -> researcher (web scraping, crawl, extract, search)
 
 LSP:
   typescript, svelte, eslint, bash, pyright
@@ -546,20 +548,13 @@ If an agent response is missing `<CLOSURE>` at runtime but the source prompts lo
 
 ### Firecrawl tools return "FIRECRAWL_API_KEY missing" despite having the key set
 
-The `skill_mcp` env scrubber strips secret-shaped env vars before launching stdio MCP servers. If your key only lives in `process.env`, move it into the explicit `environment` block in `hiai-opencode.json`:
+Firecrawl is a CLI skill (not an MCP server). The `FIRECRAWL_API_KEY` env var must be available in the shell environment where the CLI skill runs. If your key only lives in `process.env`, export it before starting OpenCode:
 
-```json
-{
-  "mcp": {
-    "firecrawl-cli": {
-      "enabled": true,
-      "environment": { "FIRECRAWL_API_KEY": "fc-..." }
-    }
-  }
-}
+```bash
+export FIRECRAWL_API_KEY=fc-...
 ```
 
-This bypasses the filter because explicit `environment` entries are an allowlist.
+Or set it in `.env` in your project root. Firecrawl is NOT configured via `hiai-opencode.json` MCP section.
 
 ### Browser Automation (agent-browser)
 
@@ -638,13 +633,15 @@ Never put actual API key values in `hiai-opencode.json`. Use `{env:VARIABLE_NAME
 ```json
 {
   "mcp": {
-    "firecrawl-cli": {
+    "stitch": {
       "enabled": true,
-      "environment": { "FIRECRAWL_API_KEY": "{env:FIRECRAWL_API_KEY}" }
+      "environment": { "STITCH_AI_API_KEY": "{env:STITCH_AI_API_KEY}" }
     }
   }
 }
 ```
+
+Note: Firecrawl is a CLI skill, not an MCP server. Its `FIRECRAWL_API_KEY` is set via shell env or `.env`, not in the `mcp` config block.
 
 Check with: `grep -E '(AQ\.|fc-|ctx7sk-|sk-|key-)' hiai-opencode.json` — should return 0 matches.
 

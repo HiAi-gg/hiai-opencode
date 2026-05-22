@@ -10,7 +10,7 @@
 
 - **14-agent canonical model (9 visible + 5 hidden)** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
 - **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
-- **MCP wiring out of the box** — Stitch, Firecrawl, Context7, grep_app, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns.
+- **MCP wiring out of the box** — Stitch, Context7, grep_app, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns. Firecrawl is available as a CLI skill (not MCP).
 - **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
 - **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
 
@@ -54,7 +54,7 @@ For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
 | `Manager` | Delegation orchestrator, TODO tracker | Coordinates specialists, maintains session continuity |
 | `Critic` | Review gate, high-accuracy verification | Plan review, code review, regression catch |
 | `Designer` | UI/visual direction via Stitch MCP | Visual problems, design systems, screen generation |
-| `Researcher` | Local + external search | Codebase exploration, documentation discovery |
+| `Researcher` | Local + external search | Codebase exploration, documentation discovery via Context7/grep_app/Firecrawl CLI/MemPalace |
 | `Writer` | Content, copy, positioning, SEO | Website copy, product messaging, naming |
 | `Vision` | PDF/image/diagram extraction, browser UI verification | Multimodal analysis, live browser verification |
 
@@ -102,7 +102,7 @@ MCP integrations and which agents use them:
 - **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
-- MCP wiring for `stitch`, `sequential-thinking`, `firecrawl-cli`, `mempalace`, `context7`, and `grep_app`
+- MCP wiring for `stitch`, `sequential-thinking`, `mempalace`, `context7`, and `grep_app` (Firecrawl is CLI skill only, not MCP)
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
 ## Continuation, Ralph-Loop, And Auto-Start
@@ -134,7 +134,7 @@ Minimum:
 
 - OpenCode installed
 - Node.js 18+
-- Bun 1.1+
+- Bun 1.3.14+
 
 Usually required:
 
@@ -142,10 +142,10 @@ Usually required:
 
 Optional, depending on which services you want:
 
-- `FIRECRAWL_API_KEY` for Firecrawl
-- `STITCH_AI_API_KEY` for Stitch
-- `CONTEXT7_API_KEY` for Context7
-- Python 3.9+ or `uv` for MemPalace
+- `FIRECRAWL_API_KEY` for Firecrawl (CLI skill, not MCP)
+- `STITCH_AI_API_KEY` for Stitch (MCP)
+- `CONTEXT7_API_KEY` for Context7 (MCP)
+- Python 3.9+ or `uv` for MemPalace (MCP)
 - local language servers if you want LSP beyond the npm-bootstrapped helpers
 
 ## Install
@@ -162,7 +162,7 @@ Optional Dynamic Context Pruning plugin:
 opencode plugin @tarquinen/opencode-dcp@latest --global
 ```
 
-Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Install the CLI skill separately using `opencode plugin` or `npm install -g @mendableai/firecrawl`.
+Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Firecrawl is available as a CLI skill at `skills/firecrawl-cli/`, not as an MCP server.
 
 Manual OpenCode config equivalent:
 
@@ -292,10 +292,11 @@ Keep skill discovery deterministic unless I explicitly ask for external skills. 
 
 Enable only services that can run on this machine:
 - sequential-thinking: requires node/npx.
-- firecrawl-cli: uses CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks.
 - mempalace: requires uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed. Leave `HIAI_MCP_AUTO_INSTALL` enabled unless the user forbids package installation.
 - stitch: requires STITCH_AI_API_KEY.
 - context7: works without a key but use CONTEXT7_API_KEY if available.
+- grep_app: no key required.
+- firecrawl-cli: CLI skill (not MCP) at `skills/firecrawl-cli/`; requires FIRECRAWL_API_KEY.
 
 Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
 
@@ -419,13 +420,13 @@ Model provider keys are handled by OpenCode Connect. Do not add `OPENROUTER_API_
 
 Important service variables:
 
-- `STITCH_AI_API_KEY`
-- `FIRECRAWL_API_KEY`
-- `CONTEXT7_API_KEY`
+- `STITCH_AI_API_KEY` (MCP)
+- `FIRECRAWL_API_KEY` (CLI skill, not MCP)
+- `CONTEXT7_API_KEY` (MCP)
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
-- `MEMPALACE_PYTHON`
-- `MEMPALACE_PALACE_PATH`
+- `MEMPALACE_PYTHON` (MCP)
+- `MEMPALACE_PALACE_PATH` (MCP)
 
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
@@ -459,7 +460,10 @@ The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that
 ### Works with local helper bootstrap
 
 - `sequential-thinking`: launches `@modelcontextprotocol/server-sequential-thinking` through the helper npm runner.
-- `firecrawl`: uses the CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks.
+
+### CLI skills (not MCP)
+
+- `firecrawl`: uses the CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks. No MCP server needed.
 
 ### Browser Automation
 
@@ -508,7 +512,7 @@ This most often affects `sequential-thinking` and `mempalace`, and sometimes loc
 The plugin now emits startup warnings for common misconfiguration, including:
 
 - `.opencode/opencode.json` containing `plugin: ["list"]`
-- enabled MCP integrations with missing required env vars such as `FIRECRAWL_API_KEY` or `STITCH_AI_API_KEY`
+- enabled MCP integrations with missing required env vars such as `STITCH_AI_API_KEY`
 
 Available CLI:
 
@@ -563,7 +567,7 @@ opencode mcp list --print-logs --log-level INFO
 | Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | installed separately |
 | MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external MCP/runtime |
 | Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
-| Firecrawl CLI skill | [firecrawl/firecrawl](https://github.com/firecrawl/firecrawl) | CLI-based web scraping, crawl, extract, search |
+| Firecrawl CLI skill | [firecrawl/firecrawl](https://github.com/firecrawl/firecrawl) | CLI-based web scraping, crawl, extract, search (NOT an MCP server) |
 | Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
 
