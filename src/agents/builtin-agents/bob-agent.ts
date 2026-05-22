@@ -41,8 +41,8 @@ export function maybeCreateBobConfig(input: {
     disableOmoEnv = false,
   } = input
 
-  const bobOverride = agentOverrides["bob"]
-  const bobRequirement = AGENT_MODEL_REQUIREMENTS["bob"]
+  const bobOverride = agentOverrides.bob
+  const bobRequirement = AGENT_MODEL_REQUIREMENTS.bob
   const hasBobExplicitConfig = bobOverride !== undefined
   const meetsBobAnyModelRequirement =
     !bobRequirement?.requiresAnyModel ||

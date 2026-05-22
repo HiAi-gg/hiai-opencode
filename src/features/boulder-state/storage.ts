@@ -12,6 +12,12 @@ import { BOULDER_DIR, BOULDER_FILE, STRATEGIST_PLANS_DIR, BOULDER_REGISTRY_DIR, 
 
 const RESERVED_KEYS = new Set(["__proto__", "prototype", "constructor"])
 
+export function validatePlanName(planName: string): void {
+  if (!planName || planName.includes("..") || planName.includes("/") || planName.includes("\\")) {
+    throw new Error(`Invalid plan name: ${planName}`)
+  }
+}
+
 export function getBoulderFilePath(directory: string): string {
   return join(directory, BOULDER_DIR, BOULDER_FILE)
 }
@@ -397,6 +403,7 @@ export function getRegistryDir(directory: string): string {
  * @returns BoulderState | null if not found or invalid
  */
 export function readBoulderForPlan(directory: string, planName: string): BoulderState | null {
+  validatePlanName(planName)
   const registryDir = getRegistryDir(directory)
   const planPath = join(registryDir, `${planName}.json`)
 
@@ -454,6 +461,7 @@ export function writeBoulderForPlan(
  * @returns true on success, false if file doesn't exist or error
  */
 export function deleteBoulderForPlan(directory: string, planName: string): boolean {
+  validatePlanName(planName)
   const registryDir = getRegistryDir(directory)
   const planPath = join(registryDir, `${planName}.json`)
 

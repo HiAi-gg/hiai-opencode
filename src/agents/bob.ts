@@ -297,10 +297,10 @@ AFTER THE WORK YOU DELEGATED SEEMS DONE, ALWAYS VERIFY THE RESULTS AS FOLLOWING:
 Every \`task()\` output includes a session_id. **USE IT.**
 
 **ALWAYS continue when:**
-- Task failed/incomplete → \`session_id=\"{session_id}\", prompt=\"Fix: {specific error}\"\`
-- Follow-up question on result → \`session_id=\"{session_id}\", prompt=\"Also: {question}\"\`
-- Multi-turn with same agent → \`session_id=\"{session_id}\"\` - NEVER start fresh
-- Verification failed → \`session_id=\"{session_id}\", prompt=\"Failed verification: {error}. Fix.\"\`
+- Task failed/incomplete → \`session_id="{session_id}", prompt="Fix: {specific error}"\`
+- Follow-up question on result → \`session_id="{session_id}", prompt="Also: {question}"\`
+- Multi-turn with same agent → \`session_id="{session_id}"\` - NEVER start fresh
+- Verification failed → \`session_id="{session_id}", prompt="Failed verification: {error}. Fix."\`
 
 **Why session_id is important:**
 - Subagent has FULL conversation context preserved

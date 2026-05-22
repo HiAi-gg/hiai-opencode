@@ -144,3 +144,13 @@ export type AgentOverrideConfig = Partial<AgentConfig> & {
 export type AgentOverrides = Partial<
   Record<OverridableAgentName, AgentOverrideConfig>
 >;
+
+export function getModelThinkingConfig(model: string): Record<string, unknown> {
+  if (isGptModel(model)) {
+    return { reasoningEffort: "medium" };
+  }
+  if (isGlmModel(model)) {
+    return {};
+  }
+  return { thinking: { type: "enabled", budgetTokens: 32000 } };
+}

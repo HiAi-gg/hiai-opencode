@@ -1,0 +1,13 @@
+categories:
+  - name: Ideas
+    description: Feature requests and brainstorming
+    color: C2E0F4
+  - name: Q&A
+    description: Questions about using hiai-opencode
+    color: F1E5F5
+  - name: General
+    description: General discussion
+    color: D4E4F0
+  - name: Announcements
+    description: Release notes and updates
+    color: E8F5E9

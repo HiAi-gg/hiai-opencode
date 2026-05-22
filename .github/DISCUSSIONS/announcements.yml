@@ -1,0 +1,53 @@
+name: Announcements
+description: Release notes and updates
+title: "[Announcement] "
+labels: ["announcement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Brief summary of what changed
+      placeholder: One or two sentences summarizing the release
+    validations:
+      required: true
+  - type: textarea
+    id: whats-new
+    attributes:
+      label: What's New
+      description: What are the main changes or features?
+      placeholder: List the main changes and new features
+    validations:
+      required: false
+  - type: textarea
+    id: breaking-changes
+    attributes:
+      label: Breaking Changes
+      description: Any breaking changes? List them here.
+      placeholder: Describe breaking changes and migration steps
+    validations:
+      required: false
+  - type: textarea
+    id: bug-fixes
+    attributes:
+      label: Bug Fixes
+      description: List of bug fixes included in this release
+      placeholder: List fixed bugs with issue references
+    validations:
+      required: false
+  - type: textarea
+    id: upgrade-notes
+    attributes:
+      label: Upgrade Notes
+      description: Any special steps needed to upgrade?
+      placeholder: Describe upgrade steps or migration instructions
+    validations:
+      required: false
+  - type: textarea
+    id: changelog
+    attributes:
+      label: Full Changelog
+      description: Link to full changelog or list of commits
+      placeholder: Paste a link or commit list
+    validations:
+      required: false

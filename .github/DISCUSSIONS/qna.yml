@@ -1,0 +1,61 @@
+name: Q&A
+description: Questions about using hiai-opencode
+title: "[Question] "
+labels: ["question"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you want to ask? Be specific.
+      placeholder: State your question clearly
+    validations:
+      required: true
+  - type: input
+    id: hiai-version
+    attributes:
+      label: hiai-opencode version
+      description: Your installed hiai-opencode version
+      placeholder: e.g. 0.5.0
+    validations:
+      required: false
+  - type: input
+    id: opencode-version
+    attributes:
+      label: OpenCode version
+      description: Your OpenCode version
+      placeholder: e.g. 1.2.3
+    validations:
+      required: false
+  - type: input
+    id: models
+    attributes:
+      label: Model(s) used
+      description: Which model(s) are you using?
+      placeholder: e.g. anthropic/claude-sonnet-4-20250514
+    validations:
+      required: false
+  - type: input
+    id: mcp-servers
+    attributes:
+      label: MCP servers enabled
+      description: Which MCP servers are enabled?
+      placeholder: e.g. context7, mcp-rag, firecrawl
+    validations:
+      required: false
+  - type: textarea
+    id: tried
+    attributes:
+      label: What I've Tried
+      description: What have you already tried?
+      placeholder: Describe steps you've already taken
+    validations:
+      required: false
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Any logs, error messages, screenshots, or other relevant information
+      placeholder: Paste logs, error output, or add screenshots
+    validations:
+      required: false

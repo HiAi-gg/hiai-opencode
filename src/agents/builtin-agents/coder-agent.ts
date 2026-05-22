@@ -40,8 +40,8 @@ export function maybeCreateCoderConfig(input: {
 
   if (disabledAgents.includes("coder")) return undefined
 
-  const coderOverride = agentOverrides["coder"]
-  const coderRequirement = AGENT_MODEL_REQUIREMENTS["coder"]
+  const coderOverride = agentOverrides.coder
+  const coderRequirement = AGENT_MODEL_REQUIREMENTS.coder
   const hasCoderExplicitConfig = coderOverride !== undefined
 
   const hasRequiredProvider =

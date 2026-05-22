@@ -72,8 +72,10 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   "website-writer": "writer",
   brainstormer: "writer",
 
-  ui: "multimodal",
-  "multimodal-looker": "multimodal",
+  ui: "vision",
+  multimodal: "vision",
+  vision: "vision",
+  "multimodal-looker": "vision",
 }
 
 export const BUILTIN_AGENT_NAMES = new Set([
@@ -83,7 +85,7 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "critic",
   "designer",
   "researcher",
-  "multimodal",
+  "vision",
   "manager",
   "writer",
 ])

@@ -92,7 +92,7 @@ function getStoredMainSessionModel(
   return getSessionModel(input.sessionID)
 }
 
-function parseRawLoopSlashCommand(promptText: string): RawLoopCommand | null {
+export function parseRawLoopSlashCommand(promptText: string): RawLoopCommand | null {
   const trimmed = promptText.trim()
   const commandText = trimmed.startsWith("/")
     ? trimmed

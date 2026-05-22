@@ -39,7 +39,6 @@ export function collectPendingBuiltinAgents(input: {
     browserProvider,
     uiSelectedModel,
     availableModels,
-    isFirstRunNoCache,
     disabledSkills,
     disableOmoEnv = false,
   } = input

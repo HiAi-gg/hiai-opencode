@@ -28,7 +28,7 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "guard": "manager",
   "manager": "Manager",
   "sub": "Sub",
-  "multimodal": "Vision",
+  "vision": "Vision",
   "ui": "Vision",
 }
 
@@ -115,9 +115,9 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "website-writer": "writer",
   "agent skills - skill composer": "agent-skills",
   "subagent": "sub",
-  "ui": "multimodal",
-  "vision": "multimodal",
-  "ui - multimodal": "multimodal",
+  "ui": "vision",
+  "vision": "vision",
+  "ui - multimodal": "vision",
 }
 
 function resolveKnownAgentConfigKey(agentName: string): string | undefined {

@@ -1,24 +1,29 @@
-import { log } from "./logger"
-
-interface SafeCreateHookOptions {
-  enabled?: boolean
-}
-
 export function safeCreateHook<T>(
-  name: string,
-  factory: () => T,
-  options?: SafeCreateHookOptions,
+  hookNameOrFactory: string | (() => T | null),
+  factoryOrOptions?: (() => T | null) | { enabled?: boolean },
+  options?: { enabled?: boolean }
 ): T | null {
-  const enabled = options?.enabled ?? true
+  // Handle both 2-arg and 3-arg call signatures
+  let factory: () => T | null;
+  let enabled: boolean;
 
-  if (!enabled) {
-    return factory() ?? null
+  if (typeof hookNameOrFactory === 'string') {
+    // 3-arg: safeCreateHook(hookName, factory, options)
+    factory = factoryOrOptions as () => T | null;
+    enabled = options?.enabled ?? true;
+  } else {
+    // 2-arg: safeCreateHook(factory, options)
+    factory = hookNameOrFactory;
+    enabled = (factoryOrOptions as { enabled?: boolean })?.enabled ?? true;
   }
 
+  if (!enabled) {
+    return null;
+  }
   try {
-    return factory() ?? null
+    return factory() ?? null;
   } catch (error) {
-    log(`[safe-create-hook] Hook creation failed: ${name}`, { error })
-    return null
+    console.error('[safe-create-hook] Error creating hook:', error);
+    return null;
   }
 }

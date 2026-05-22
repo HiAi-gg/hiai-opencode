@@ -1,0 +1,37 @@
+name: General
+description: General discussion
+title: "[Discussion] "
+labels: ["discussion"]
+body:
+  - type: textarea
+    id: topic
+    attributes:
+      label: Topic
+      description: What do you want to discuss?
+      placeholder: Describe the topic clearly
+    validations:
+      required: true
+  - type: textarea
+    id: background
+    attributes:
+      label: Background / Context
+      description: Provide some background for the discussion
+      placeholder: Share relevant context or history
+    validations:
+      required: false
+  - type: textarea
+    id: points
+    attributes:
+      label: Points to Consider
+      description: What aspects should we think about?
+      placeholder: List key points or angles to consider
+    validations:
+      required: false
+  - type: textarea
+    id: questions
+    attributes:
+      label: Questions for the Community
+      description: What do you want to ask or hear others' perspectives on?
+      placeholder: Pose specific questions for discussion
+    validations:
+      required: false

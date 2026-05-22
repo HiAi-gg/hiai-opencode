@@ -168,7 +168,7 @@ export function loadConfig(projectDir: string): HiaiOpencodeConfig {
 export function resolveEnvVars(value: string): string {
   return value.replace(/\{env:([^}]+)\}/g, (_, expression) => {
     const [key, fallback] = String(expression).split(":-", 2);
-    return process.env[key] || fallback || "";
+    return process.env[key] ?? fallback ?? "";
   });
 }
 

@@ -35,8 +35,8 @@ export function maybeCreateManagerConfig(input: {
 
   if (disabledAgents.includes("manager")) return undefined
 
-  const orchestratorOverride = agentOverrides["manager"]
-  const managerRequirement = AGENT_MODEL_REQUIREMENTS["manager"]
+  const orchestratorOverride = agentOverrides.manager
+  const managerRequirement = AGENT_MODEL_REQUIREMENTS.manager
 
   const managerResolution = applyModelResolution({
     uiSelectedModel: orchestratorOverride?.model !== undefined ? undefined : uiSelectedModel,

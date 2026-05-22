@@ -6,7 +6,7 @@ import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const AGENT_SKILLS_PROMPT = buildAgentIdentitySection("Agent Skills", "skill discovery and configuration specialist") + `
+const AGENT_SKILLS_PROMPT = `${buildAgentIdentitySection("Agent Skills", "skill discovery and configuration specialist")}
 
 <responsibilities>
 - Skill discovery: finding and recommending relevant skills from the available skill library

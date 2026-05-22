@@ -11,7 +11,7 @@ import { dirname, join, normalize } from "node:path"
 import { createDefaultMcpConfig } from "../mcp/registry.js"
 import type { HiaiOpencodeConfig, LspServerConfig } from "./types.js"
 
-const REQUIRED_MODEL_SLOTS = [
+export const REQUIRED_MODEL_SLOTS = [
   "bob",
   "coder",
   "strategist",

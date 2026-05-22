@@ -6,7 +6,8 @@ import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const DESIGNER_PROMPT = buildAgentIdentitySection("Designer", "visual and UX specialist") + `
+const DESIGNER_PROMPT = `${buildAgentIdentitySection("Designer", "visual and UX specialist")}
+
 
 <responsibilities>
 - Visual direction: concept, art direction, layout, branding, design-system guidance
