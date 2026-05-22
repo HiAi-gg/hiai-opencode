@@ -264,16 +264,14 @@ export function buildParallelDelegationSection(
 ### SPECIALIST ROUTING FOR PARALLEL UNITS
 
 Before delegating, classify each work unit and route to the BEST agent:
-| Work Unit Nature | Agent |
-|------------------|-------|
-| UI/layout/styling/design tokens | Designer |
-| Copy/text/messaging/naming | Writer |
-| Image/screenshot/browser verification | Vision |
-| Architecture/planning/decomposition | Strategist |
-| Code review/quality verification | Critic |
-| Codebase exploration/research | Researcher |
-| Multi-file implementation/complex logic | Coder |
-| Single-file edits/quick fixes | Sub |
+- UI/layout/styling/design tokens → **Designer**
+- Copy/text/messaging/naming → **Writer**
+- Image/screenshot/browser verification → **Vision**
+- Architecture/planning/decomposition → **Strategist**
+- Code review/quality verification → **Critic**
+- Codebase exploration/research → **Researcher**
+- Multi-file implementation/complex logic → **Coder**
+- Single-file edits/quick fixes → **Sub**
 
 **DO NOT default everything to Coder/Sub.** Use the specialist agent that best matches the work unit.
 

@@ -98,16 +98,14 @@ For each task, determine:
 
 ### Step 2: Agent Assignment
 For each task, assign the BEST agent:
-| Task Nature | Agent | Category/subagent_type |
-|-------------|-------|------------------------|
-| UI/layout/styling/design tokens | designer | subagent_type="designer" |
-| Copy/text/messaging/naming | writer | subagent_type="writer" |
-| Image/screenshot/browser verification | vision | subagent_type="vision" |
-| Architecture/planning/decomposition | strategist | subagent_type="strategist" |
-| Code review/quality verification | critic | subagent_type="critic" |
-| Codebase exploration/research | researcher | subagent_type="researcher" |
-| Multi-file implementation/complex logic | coder | category="deep" |
-| Single-file edits/quick fixes | sub | category="quick" |
+- UI/layout/styling/design tokens → **designer** (subagent_type="designer")
+- Copy/text/messaging/naming → **writer** (subagent_type="writer")
+- Image/screenshot/browser verification → **vision** (subagent_type="vision")
+- Architecture/planning/decomposition → **strategist** (subagent_type="strategist")
+- Code review/quality verification → **critic** (subagent_type="critic")
+- Codebase exploration/research → **researcher** (subagent_type="researcher")
+- Multi-file implementation/complex logic → **coder** (category="deep")
+- Single-file edits/quick fixes → **sub** (category="quick")
 
 ### Step 3: Wave Grouping
 Group tasks into waves where ALL tasks in a wave are:

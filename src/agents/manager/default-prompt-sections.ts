@@ -153,17 +153,15 @@ If \`background_output(task_id, block=true)\` hangs:
 
 ### Task Type Routing (background=true for ALL wave tasks)
 
-| Task Nature | Agent | Category | run_in_background |
-|-------------|-------|----------|-------------------|
-| Research, exploration | Researcher | subagent_type="researcher" | true |
-| Frontend UI, design | Designer | subagent_type="designer" | true |
-| Backend logic, API | Coder | category="deep" | true |
-| Simple fixes | Sub | category="quick" | true |
-| Documentation, copy | Writer | subagent_type="writer" | true |
-| Image/screenshot analysis | Vision | subagent_type="vision" | true |
-| Architecture, planning | Strategist | subagent_type="strategist" | false (sequential) |
-| Pre-implementation review, plan gate | Critic | subagent_type="critic" | false (sequential) |
-| Post-wave verification, plan management | Quality Guardian | subagent_type="quality-guardian" | false (sequential) |
+- Research, exploration → **Researcher** (subagent_type="researcher", background=true)
+- Frontend UI, design → **Designer** (subagent_type="designer", background=true)
+- Backend logic, API → **Coder** (category="deep", background=true)
+- Simple fixes → **Sub** (category="quick", background=true)
+- Documentation, copy → **Writer** (subagent_type="writer", background=true)
+- Image/screenshot analysis → **Vision** (subagent_type="vision", background=true)
+- Architecture, planning → **Strategist** (subagent_type="strategist", sequential)
+- Pre-implementation review, plan gate → **Critic** (subagent_type="critic", sequential)
+- Post-wave verification, plan management → **Quality Guardian** (subagent_type="quality-guardian", sequential)
 
 ### Background Management
 - \`background_output(task_id="...", block=true)\` — collect single result, wait for completion

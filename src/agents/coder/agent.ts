@@ -10,7 +10,7 @@ import type {
 import { categorizeTools, buildAgentIdentitySection } from "../dynamic-agent-prompt-builder";
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard";
 
-import { buildCoderPrompt } from "./gpt";
+import { buildCoderPrompt } from "./core";
 
 const MODE: AgentMode = "primary";
 
