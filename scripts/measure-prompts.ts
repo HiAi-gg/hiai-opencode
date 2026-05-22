@@ -14,14 +14,14 @@ import { join } from "node:path"
 import { createBobAgent } from "../src/agents/bob"
 import { createCoderAgent } from "../src/agents/coder/agent"
 import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent"
-import { createGuardAgent } from "../src/agents/guard/agent"
+import { createManagerAgent } from "../src/agents/manager/agent"
 import { getStrategistPrompt } from "../src/agents/strategist/system-prompt"
 import { createResearcherAgent } from "../src/agents/researcher"
 import { createDesignerAgent } from "../src/agents/designer"
-import { createBrainstormerAgent } from "../src/agents/brainstormer"
 import { createMultimodalLookerAgent } from "../src/agents/ui"
 import { createCriticAgent } from "../src/agents/critic/agent"
 import { createQualityGuardianAgent } from "../src/agents/quality-guardian"
+import { createWriterAgent } from "../src/agents/writer"
 
 interface Snapshot {
   agent: string
@@ -44,14 +44,14 @@ function asPrompt(cfg: { prompt?: string }): string {
 const stubModel = "openrouter/anthropic/claude-sonnet-4-20250514"
 
 const snapshots: Snapshot[] = [
-  snapshot("bob", asPrompt(createBobAgent(stubModel, [], [], [], [], false))),
-  snapshot("coder", asPrompt(createCoderAgent(stubModel, [], [], [], [], false))),
-  snapshot("sub", asPrompt(createBobJuniorAgentWithOverrides(undefined, stubModel, false))),
-  snapshot("guard", asPrompt(createGuardAgent({ model: stubModel }))),
+  snapshot("bob", asPrompt(createBobAgent(stubModel))),
+  snapshot("coder", asPrompt(createCoderAgent(stubModel))),
+  snapshot("sub", asPrompt(createBobJuniorAgentWithOverrides(undefined, stubModel))),
+  snapshot("manager", asPrompt(createManagerAgent({ model: stubModel }))),
   snapshot("strategist", getStrategistPrompt(stubModel)),
   snapshot("researcher", asPrompt(createResearcherAgent(stubModel))),
   snapshot("designer", asPrompt(createDesignerAgent(stubModel))),
-  snapshot("brainstormer", asPrompt(createBrainstormerAgent(stubModel))),
+  snapshot("writer", asPrompt(createWriterAgent(stubModel))),
   snapshot("vision", asPrompt(createMultimodalLookerAgent(stubModel))),
   snapshot("critic", asPrompt(createCriticAgent(stubModel))),
   snapshot("quality-guardian", asPrompt(createQualityGuardianAgent(stubModel))),

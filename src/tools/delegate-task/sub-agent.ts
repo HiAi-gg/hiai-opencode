@@ -13,7 +13,7 @@ export const CANONICAL_DELEGATE_AGENT_KEYS = [
   "coder",
   "sub",
   "researcher",
-  "multimodal",
+  "vision",
   "designer",
   "writer",
   "agent-skills",
@@ -40,7 +40,7 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
   mindmodel: "manager",
-  ui: "multimodal",
+  ui: "vision",
   brainstormer: "writer",
   copywriter: "writer",
   "content-writer": "writer",
@@ -51,7 +51,7 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   metis: "strategist",
   momus: "critic",
   "sisyphus-junior": "sub",
-  "multimodal-looker": "multimodal",
+  "multimodal-looker": "vision",
 }
 
 export function resolveCanonicalDelegateAgentKey(agentName: string): string {

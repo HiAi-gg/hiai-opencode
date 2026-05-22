@@ -429,6 +429,7 @@ export function writeBoulderForPlan(
   planName: string,
   state: BoulderState,
 ): boolean {
+  validatePlanName(planName)
   const registryDir = getRegistryDir(directory)
   const planPath = join(registryDir, `${planName}.json`)
   const tmpPath = `${planPath}.tmp`

@@ -21,7 +21,7 @@ test("canonical keys include the 12 expected agents", () => {
     "coder",
     "sub",
     "researcher",
-    "multimodal",
+    "vision",
     "designer",
     "writer",
     "agent-skills",
@@ -42,7 +42,7 @@ test("legacy omo aliases resolve to canonical agents", () => {
   expect(resolveCanonicalDelegateAgentKey("metis")).toBe("strategist")
   expect(resolveCanonicalDelegateAgentKey("momus")).toBe("critic")
   expect(resolveCanonicalDelegateAgentKey("sisyphus-junior")).toBe("sub")
-  expect(resolveCanonicalDelegateAgentKey("multimodal-looker")).toBe("multimodal")
+  expect(resolveCanonicalDelegateAgentKey("multimodal-looker")).toBe("vision")
 })
 
 test("legacy descriptive aliases resolve to canonical agents", () => {
