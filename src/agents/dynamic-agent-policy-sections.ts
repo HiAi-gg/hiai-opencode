@@ -143,43 +143,7 @@ export function buildUltraworkSection(
 
 export function buildAntiDuplicationSection(): string {
   return `<Anti_Duplication>
-## Anti-Duplication Rule
-
-Once you delegate research to researcher, **DO NOT perform the same search yourself**.
-
-### What this means:
-
-**FORBIDDEN:**
-- After firing researcher, manually grep/search for the same information
-- Re-doing the research the agents were just tasked with
-- "Just quickly checking" the same files the background agents are checking
-
-**ALLOWED:**
-- Continue with **non-overlapping work** - work that doesn't depend on the delegated research
-- Work on unrelated parts of the codebase
-- Preparation work (e.g., setting up files, configs) that can proceed independently
-
-### Wait for Results Properly:
-
-When you need the delegated results but they're not ready:
-
-1. **End your response** - do NOT continue with work that depends on those results
-2. **Wait for the completion notification** - the system will trigger your next turn
-3. **Then** collect results via \`background_output(task_id="...")\`
-4. **Do NOT** impatiently re-search the same topics while waiting
-
-### Example:
-
-\`\`\`typescript
-// WRONG: After delegating, re-doing the search
-task(subagent_type="researcher", run_in_background=true, ...)
-// Then immediately grep for the same thing yourself - FORBIDDEN
-
-// CORRECT: Continue non-overlapping work
-task(subagent_type="researcher", run_in_background=true, ...)
-// Work on a different, unrelated file while they search
-// End your response and wait for the notification
-\`\`\`
+Once you delegate research, **DO NOT re-search the same topic yourself**. Continue non-overlapping work only. If you need delegated results but they are not ready: end your response and wait for the completion notification, then collect via \`background_output(task_id="...")\`.
 </Anti_Duplication>`
 }
 
