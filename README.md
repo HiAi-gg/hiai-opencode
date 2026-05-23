@@ -335,15 +335,14 @@ Prompting has two main layers:
 
 Important prompt entrypoints:
 
-- `Bob`: [src/agents/bob.ts](src/agents/bob.ts) and `src/agents/bob/*`
+- `Bob`: `src/agents/bob/*`
 - `Coder`: `src/agents/coder/*`
 - `Strategist`: `src/agents/strategist/*`
 - `Manager`: `src/agents/manager/*`
 - `Critic`: `src/agents/critic/*`
 - `Vision`: [src/agents/ui.ts](src/agents/ui.ts)
-- `Manager`: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - `Researcher`: [src/agents/researcher.ts](src/agents/researcher.ts)
-- `Writer` / `Writer`: [src/agents/writer.ts](src/agents/writer.ts)
+- `Writer`: [src/agents/writer.ts](src/agents/writer.ts)
 
 Name mapping and visibility:
 

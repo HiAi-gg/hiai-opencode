@@ -223,13 +223,13 @@ Use this table when you need to change something and want the right file immedia
 | Change a user-facing default model slot | [hiai-opencode.json](hiai-opencode.json) | This is the canonical model source |
 | Change how categories inherit the 10 model slots | [src/config/defaults.ts](src/config/defaults.ts) | Category routing is internal |
 | Change MCP/LSP user-facing switches | [hiai-opencode.json](hiai-opencode.json) | Users only toggle enabled state there |
-| Change Bob behavior or prompt text | [src/agents/bob.ts](src/agents/bob.ts), `src/agents/bob/*` | Bob prompt authoring lives there |
+| Change Bob behavior or prompt text | `src/agents/bob/*` | Bob prompt authoring lives there |
 | Change Coder behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
 | Change Strategist behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
 | Change Manager behavior or prompt text | `src/agents/manager/*` | Manager prompt authoring lives there |
 | Change Critic prompt text | `src/agents/critic/*` | Critic prompt authoring lives there |
 | Change Vision prompt text | [src/agents/ui.ts](src/agents/ui.ts) | Vision lives there |
-| Change Manager prompt text | [src/agents/platform-manager.ts](src/agents/platform-manager.ts) | Manager lives there |
+| Change Manager prompt text | `src/agents/manager/*` | Manager lives there |
 | Change reusable policy blocks used by several agents | `src/agents/prompt-library/*` | Shared prompt sections live there |
 | Change dynamic prompt sections assembled from agent/tool/category context | `src/agents/dynamic-agent-*` | Dynamic sections are built there |
 | Change runtime display names | [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts) | Final display-name mapping lives there |
@@ -256,21 +256,20 @@ Prompting is layered.
 
 These decide the high-level config object for each agent:
 
-- Bob: [src/agents/bob.ts](src/agents/bob.ts)
+- Bob: `src/agents/bob/*`
 - Coder: `src/agents/coder/*`
 - Strategist: `src/agents/strategist/*`
 - Manager: `src/agents/manager/*`
 - Critic: `src/agents/critic/*`
 - Vision: [src/agents/ui.ts](src/agents/ui.ts)
-- Manager: [src/agents/platform-manager.ts](src/agents/platform-manager.ts)
 - Researcher: [src/agents/researcher.ts](src/agents/researcher.ts)
 
 ### Layer 2: Model-Specific Prompt Variants
 
 Examples:
 
-- Bob: `src/agents/bob.ts` (single file — variants are merged via factory logic)
-- Coder: `src/agents/coder/agent.ts`, `src/agents/coder/gpt.ts` (model routing via index.ts)
+- Bob: `src/agents/bob/claude.ts`, `src/agents/bob/gpt.ts` (model routing via index.ts)
+- Coder: `src/agents/coder/agent.ts`, `src/agents/coder/core.ts` (model routing via index.ts)
 - Strategist: `src/agents/strategist/index.ts` (mode variants via sub-directory files)
 - Manager: `src/agents/manager/agent.ts`, `src/agents/manager/default.ts`, `src/agents/manager/default-prompt-sections.ts`
 

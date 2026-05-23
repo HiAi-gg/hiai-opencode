@@ -102,7 +102,7 @@ async function hasInternalMarker(
   }
 }
 
-async function isOmoInternalMessage(input: ChatHeadersInput, client: PluginContext["client"]): Promise<boolean> {
+async function isHiaiInternalMessage(input: ChatHeadersInput, client: PluginContext["client"]): Promise<boolean> {
   if (input.message.role !== "user") {
     return false
   }
@@ -134,7 +134,7 @@ export function createChatHeadersHandler(args: { ctx: PluginContext }): (input: 
     const api = model && isRecord(model.api) ? model.api as Record<string, unknown> : undefined
     if (api?.npm === "@ai-sdk/github-copilot") return
 
-    if (!(await isOmoInternalMessage(normalizedInput, ctx.client))) return
+    if (!(await isHiaiInternalMessage(normalizedInput, ctx.client))) return
 
     output.headers["x-initiator"] = "agent"
   }

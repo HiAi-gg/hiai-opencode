@@ -44,7 +44,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function createConnectedProvidersCacheStore(
-	getCacheDir: () => string = dataPath.getOmoOpenCodeCacheDir
+	getCacheDir: () => string = dataPath.getHiaiOpenCodeCacheDir
 ) {
 	const connectedProvidersCacheStore = createJsonFileCacheStore<ConnectedProvidersCache>({
 		getCacheDir,
@@ -201,7 +201,7 @@ export function findProviderModelMetadata(
 }
 
 const defaultConnectedProvidersCacheStore = createConnectedProvidersCacheStore(
-	() => dataPath.getOmoOpenCodeCacheDir()
+	() => dataPath.getHiaiOpenCodeCacheDir()
 )
 
 export const {

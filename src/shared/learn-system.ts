@@ -1,6 +1,6 @@
 import * as fs from "node:fs"
 import * as path from "node:path"
-import { getOmoOpenCodeCacheDir } from "./data-path.js"
+import { getHiaiOpenCodeCacheDir } from "./data-path.js"
 
 export interface LearnEntry {
   id: string
@@ -21,7 +21,7 @@ const LEARN_FILE = "learn-history.jsonl"
 const MAX_ENTRIES = 1000
 
 function getLearnPath(): string {
-  return path.join(getOmoOpenCodeCacheDir(), LEARN_FILE)
+  return path.join(getHiaiOpenCodeCacheDir(), LEARN_FILE)
 }
 
 export function captureLearn(entry: Omit<LearnEntry, "id" | "timestamp">): LearnEntry {

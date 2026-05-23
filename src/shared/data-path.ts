@@ -51,7 +51,7 @@ export function getCacheDir(): string {
  * Returns the hiai-opencode cache directory.
  * All platforms: ~/.cache/hiai-opencode
  */
-export function getOmoOpenCodeCacheDir(): string {
+export function getHiaiOpenCodeCacheDir(): string {
   return path.join(getCacheDir(), CACHE_DIR_NAME)
 }
 

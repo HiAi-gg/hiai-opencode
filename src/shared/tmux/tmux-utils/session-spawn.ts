@@ -6,7 +6,7 @@ import { isInsideTmux } from "./environment"
 import { isServerRunning } from "./server-health"
 import { shellEscapeForDoubleQuotedCommand } from "../../shell-env"
 
-const ISOLATED_SESSION_NAME = "omo-agents"
+const ISOLATED_SESSION_NAME = "hiai-agents"
 
 async function getWindowDimensions(
 	tmux: string,
@@ -123,7 +123,7 @@ export async function spawnTmuxSession(
 		return { success: false }
 	}
 
-	const title = `omo-subagent-${description.slice(0, 20)}`
+	const title = `hiai-subagent-${description.slice(0, 20)}`
 	const titleProc = spawn([tmux, "select-pane", "-t", paneId, "-T", title], {
 		stdout: "ignore",
 		stderr: "pipe",

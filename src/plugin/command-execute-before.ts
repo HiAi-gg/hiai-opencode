@@ -13,7 +13,7 @@ type CommandExecuteBeforeOutput = {
   message?: Record<string, unknown>
 }
 
-const NATIVE_LOOP_TRIGGERED_FLAG = "__omoNativeLoopTriggered"
+const NATIVE_LOOP_TRIGGERED_FLAG = "__hiaiNativeLoopTriggered"
 
 function hasPartsOutput(value: unknown): value is CommandExecuteBeforeOutput {
   if (typeof value !== "object" || value === null) return false

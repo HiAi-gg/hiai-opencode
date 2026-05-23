@@ -259,12 +259,13 @@ Current MCP set:
 
 - `stitch`
 - `sequential-thinking`
-- `firecrawl` (CLI skill, not MCP)
 - `mempalace`
 - `context7`
-- `websearch`
 - `grep_app`
-- `agent-browser` (CLI skill, not MCP)
+
+CLI skills (not MCP):
+- `firecrawl` — web scraping, crawl, extract, search
+- `agent-browser` — browser automation via Chrome CDP
 
 ## LSP
 

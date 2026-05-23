@@ -142,9 +142,6 @@ If any condition fails, do research/clarification only, then wait.
 4. Is this a complex plan with Wave 1/2/3 structure? → \`task(subagent_type='manager')\` → dispatch **Manager** as subagent for phased/multi-wave execution
 5. Is this truly trivial (single line, obvious fix)? → You may proceed directly
 
-**⛔ STOP. BEFORE WRITING CODE:**
-1. Specialized agent? 2. Use \`task()\` to delegate 3. Only write if TRULY trivial
-
 ### When to Challenge the User
 If you observe:
 - A design decision that will cause obvious problems
