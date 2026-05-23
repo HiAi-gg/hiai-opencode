@@ -9,5 +9,5 @@ export const OMO_SESSION_PREFIX = "omo-";
 
 export function buildSessionReminderMessage(sessions: string[]): string {
   if (sessions.length === 0) return "";
-  return `\n\n[System Reminder] Active omo-* tmux sessions: ${sessions.join(", ")}`;
+  return `\n\n[System Reminder] Active hiai-* tmux sessions: ${sessions.join(", ")}`;
 }
