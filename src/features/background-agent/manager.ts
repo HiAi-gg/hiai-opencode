@@ -96,6 +96,7 @@ import {
   enqueueNotificationForParent as enqueueNotificationForParentFn,
   notifyParentSession as notifyParentSessionFn,
 } from "./manager-notifier"
+export type { SubagentSessionCreatedEvent, OnSubagentSessionCreated } from "./manager-types"
 
 type OpencodeClient = PluginInput["client"]
 
