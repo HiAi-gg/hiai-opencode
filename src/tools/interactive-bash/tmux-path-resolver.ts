@@ -66,6 +66,6 @@ export function getCachedTmuxPath(): string | null {
 export function startBackgroundCheck(): void {
   if (!initPromise) {
     initPromise = getTmuxPath()
-    initPromise.catch(() => {})
+    initPromise.catch(() => { /* intentionally ignored — tmux path resolution is best-effort */ })
   }
 }

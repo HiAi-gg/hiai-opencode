@@ -96,7 +96,7 @@ export function createAnthropicContextWindowLimitRecoveryHook(
               duration: 3000,
             },
           })
-          .catch(() => {})
+          .catch(() => { /* intentionally ignored — toast is non-critical */ })
 
         clearSessionTimeout(pendingCompactionTimeoutBySession, sessionID)
 
@@ -169,7 +169,7 @@ export function createAnthropicContextWindowLimitRecoveryHook(
             duration: 3000,
           },
         })
-        .catch(() => {})
+        .catch(() => { /* intentionally ignored — toast is non-critical */ })
 
       await dependencies.executeCompact(
         sessionID,

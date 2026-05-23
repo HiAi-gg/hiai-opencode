@@ -82,7 +82,7 @@ export function createToolExecuteBeforeHandler(ctx: PluginInput, config: PluginC
 						duration: 4000,
 					},
 				})
-				.catch(() => {})
+				.catch(() => { /* intentionally ignored — toast is non-critical */ })
 			throw new Error(result.reason ?? "Hook blocked the operation")
 		}
 

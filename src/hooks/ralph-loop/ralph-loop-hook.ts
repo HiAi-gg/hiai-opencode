@@ -80,7 +80,7 @@ export function createRalphLoopHook(
 					const messageCountAtStart = getMessageCountFromResponse(messagesResponse)
 					loopState.setMessageCountAtStart(sessionID, messageCountAtStart)
 				})
-				.catch(() => {})
+				.catch(() => { /* intentionally ignored — message count fetch is non-critical */ })
 
 			return startSuccess
 		},

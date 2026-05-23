@@ -249,7 +249,7 @@ export async function handleSessionIdle(args: {
             variant: "info",
             duration: 6000,
           },
-        }).catch(() => {})
+        }).catch(() => { /* intentionally ignored — toast is non-critical */ })
         return
       }
     }

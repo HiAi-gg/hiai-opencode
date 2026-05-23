@@ -31,7 +31,7 @@ async function killAllTrackedSessions(
   }
 
   for (const sessionId of subagentSessions) {
-    abortSession({ path: { id: sessionId } }).catch(() => {})
+    abortSession({ path: { id: sessionId } }).catch(() => { /* intentionally ignored — subagent session may already be terminated */ })
   }
 }
 

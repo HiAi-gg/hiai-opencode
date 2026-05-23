@@ -34,7 +34,7 @@ export async function dispatchFallbackRetry(
           duration: 5000,
         },
       })
-      .catch(() => {})
+      .catch(() => { /* intentionally ignored — toast is non-critical */ })
   }
 
   if (result.success && result.newModel) {

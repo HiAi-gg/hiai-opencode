@@ -138,7 +138,7 @@ export function createSessionHooks(args: {
         body: { title: newTitle },
         query: { directory: ctx.directory },
       })
-      .catch(() => {})
+      .catch(() => { /* intentionally ignored — title update is non-critical */ })
 
     existing.lastKey = key
     fallbackTitleState.set(input.sessionID, existing)
@@ -162,7 +162,7 @@ export function createSessionHooks(args: {
                 duration: duration ?? 5000,
               },
             })
-            .catch(() => {})
+            .catch(() => { /* intentionally ignored — toast is non-critical */ })
         },
         onApplied: enableFallbackTitle ? updateFallbackTitle : undefined,
       }))

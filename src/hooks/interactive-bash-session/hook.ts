@@ -39,7 +39,7 @@ export function createInteractiveBashSessionHook(ctx: PluginInput) {
     await killAllTrackedSessions(state);
     
     for (const sessionId of subagentSessions) {
-      ctx.client.session.abort({ path: { id: sessionId } }).catch(() => {})
+      ctx.client.session.abort({ path: { id: sessionId } }).catch(() => { /* intentionally ignored — subagent session may already be terminated */ })
     }
   }
 

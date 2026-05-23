@@ -255,7 +255,7 @@ export function createChatMessageHandler(args: {
             duration: 6000,
           },
         })
-        .catch(() => {})
+        .catch(() => { /* intentionally ignored — toast is non-critical */ })
     }
 
     if (hooks.ralphLoop && output.message[NATIVE_LOOP_TRIGGERED_FLAG] !== true) {

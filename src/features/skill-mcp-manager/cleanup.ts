@@ -34,7 +34,7 @@ export function registerProcessCleanup(state: SkillMcpManagerState): void {
   // Use void + catch to trigger async cleanup without awaiting it in the signal handler.
 
   const register = (signal: NodeJS.Signals) => {
-    const listener = () => void cleanup().catch(() => {})
+    const listener = () => void cleanup().catch(() => { /* intentionally ignored — signal handler cleanup must not throw */ })
     state.cleanupHandlers.push({ signal, listener })
     process.on(signal, listener)
   }
@@ -59,7 +59,7 @@ export function startCleanupTimer(state: SkillMcpManagerState): void {
   if (state.cleanupInterval) return
 
   state.cleanupInterval = setInterval(() => {
-    void cleanupIdleClients(state).catch(() => {})
+    void cleanupIdleClients(state).catch(() => { /* intentionally ignored — idle cleanup is non-critical */ })
   }, 60_000)
 
   state.cleanupInterval.unref()

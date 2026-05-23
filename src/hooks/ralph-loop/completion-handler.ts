@@ -24,7 +24,7 @@ export async function handleDetectedCompletion(
 
 	if (state.ultrawork && !state.verification_pending) {
 		if (state.verification_session_id) {
-			ctx.client.session.abort({ path: { id: state.verification_session_id } }).catch(() => {})
+			ctx.client.session.abort({ path: { id: state.verification_session_id } }).catch(() => { /* intentionally ignored — session may already be terminated */ })
 		}
 
 		const verificationState = loopState.markVerificationPending(sessionID)
@@ -49,7 +49,7 @@ export async function handleDetectedCompletion(
 				variant: "info",
 				duration: 5000,
 			},
-		}).catch(() => {})
+		}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 		return
 	}
 
@@ -61,5 +61,5 @@ export async function handleDetectedCompletion(
 		: `Task completed after ${state.iteration} iteration(s)`
 	await ctx.client.tui?.showToast?.({
 		body: { title, message, variant: "success", duration: 5000 },
-	}).catch(() => {})
+	}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 }

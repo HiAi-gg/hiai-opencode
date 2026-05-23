@@ -46,7 +46,7 @@ export function createLegacyPluginToastHook(ctx: PluginInput, deps: LegacyPlugin
               duration: 8000,
             },
           })
-          .catch(() => {})
+          .catch(() => { /* intentionally ignored — toast is non-critical */ })
       } else {
         logFn("[legacy-plugin-toast] Legacy entry detected but migration failed", {
           legacyEntries: result.legacyEntries,
@@ -61,7 +61,7 @@ export function createLegacyPluginToastHook(ctx: PluginInput, deps: LegacyPlugin
               duration: 10000,
             },
           })
-          .catch(() => {})
+          .catch(() => { /* intentionally ignored — toast is non-critical */ })
       }
     },
   }

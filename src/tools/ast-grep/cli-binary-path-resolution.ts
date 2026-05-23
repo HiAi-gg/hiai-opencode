@@ -39,7 +39,7 @@ export async function getAstGrepPath(): Promise<string | null> {
 export function startBackgroundInit(): void {
 	if (!initPromise) {
 		initPromise = getAstGrepPath()
-		initPromise.catch(() => {})
+		initPromise.catch(() => { /* intentionally ignored — ast-grep path resolution is best-effort */ })
 	}
 }
 

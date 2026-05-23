@@ -81,7 +81,7 @@ export function createSessionRecoveryHook(ctx: PluginInput, options?: SessionRec
         onAbortCallback(sessionID)
       }
 
-      await ctx.client.session.abort({ path: { id: sessionID } }).catch(() => {})
+      await ctx.client.session.abort({ path: { id: sessionID } }).catch(() => { /* intentionally ignored — session may already be terminated */ })
 
       const messagesResp = await ctx.client.session.messages({
         path: { id: sessionID },
@@ -118,7 +118,7 @@ export function createSessionRecoveryHook(ctx: PluginInput, options?: SessionRec
             duration: 3000,
           },
         })
-        .catch(() => {})
+        .catch(() => { /* intentionally ignored — toast is non-critical */ })
 
       let success = false
 

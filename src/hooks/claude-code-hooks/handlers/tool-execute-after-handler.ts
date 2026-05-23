@@ -131,7 +131,7 @@ export function createToolExecuteAfterHandler(ctx: PluginInput, config: PluginCo
 						duration: 4000,
 					},
 				})
-				.catch(() => {})
+				.catch(() => { /* intentionally ignored — toast is non-critical */ })
 		}
 
 		if (result.warnings && result.warnings.length > 0) {
@@ -154,7 +154,7 @@ export function createToolExecuteAfterHandler(ctx: PluginInput, config: PluginCo
 						duration: 2000,
 					},
 				})
-				.catch(() => {})
+				.catch(() => { /* intentionally ignored — toast is non-critical */ })
 		}
 	}
 }

@@ -185,7 +185,7 @@ export function createRalphLoopEventHandler(
 									variant: "warning",
 									duration: 5000,
 								},
-							}).catch(() => {})
+							}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 							return
 						}
 					} catch (err) {
@@ -219,7 +219,7 @@ export function createRalphLoopEventHandler(
 										variant: "warning",
 										duration: 8000,
 									},
-								}).catch(() => {})
+								}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 							}
 						}
 					}
@@ -238,7 +238,7 @@ export function createRalphLoopEventHandler(
 
 					await ctx.client.tui?.showToast?.({
 						body: { title: "Ralph Loop Stopped", message: `Max iterations (${state.max_iterations}) reached without completion`, variant: "warning", duration: 5000 },
-						}).catch(() => {})
+						}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 					return
 				}
 
@@ -261,7 +261,7 @@ export function createRalphLoopEventHandler(
 						variant: "info",
 						duration: 2000,
 					},
-					}).catch(() => {})
+					}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 
 				try {
 					await continueIteration(ctx, newState, {

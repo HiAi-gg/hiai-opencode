@@ -34,7 +34,7 @@ export async function executeCompact(
           duration: 5000,
         },
       })
-      .catch(() => {});
+      .catch(() => { /* intentionally ignored — toast is non-critical */ });
     return;
   }
   autoCompactState.compactionInProgress.add(sessionID);

@@ -26,7 +26,7 @@ async function showCountdownToast(
         duration: TOAST_DURATION_MS,
       },
     })
-    .catch(() => {})
+    .catch(() => { /* intentionally ignored — toast is non-critical */ })
 }
 
 export function startCountdown(args: {

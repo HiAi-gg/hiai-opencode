@@ -69,7 +69,7 @@ export async function handleFailedVerification(
 	}
 
 	if (state.verification_session_id) {
-		ctx.client.session.abort({ path: { id: state.verification_session_id } }).catch(() => {})
+		ctx.client.session.abort({ path: { id: state.verification_session_id } }).catch(() => { /* intentionally ignored — session may already be terminated */ })
 	}
 
 	const resumedState = loopState.restartAfterFailedVerification(
@@ -97,7 +97,7 @@ export async function handleFailedVerification(
 			variant: "warning",
 			duration: 5000,
 		},
-	}).catch(() => {})
+	}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 
 	return true
 }

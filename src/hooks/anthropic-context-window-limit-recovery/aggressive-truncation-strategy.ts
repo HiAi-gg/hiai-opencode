@@ -54,7 +54,7 @@ export async function runAggressiveTruncationStrategy(params: {
         duration: 4000,
       },
     })
-    .catch(() => {})
+    .catch(() => { /* intentionally ignored — toast is non-critical */ })
 
   log("[auto-compact] aggressive truncation completed", aggressiveResult)
 

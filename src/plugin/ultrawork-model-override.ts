@@ -28,7 +28,7 @@ function showToast(tui: unknown, title: string, message: string): void {
   if (typeof toastFn.showToast !== "function") return
   toastFn.showToast({
     body: { title, message, variant: "warning" as const, duration: 3000 },
-  }).catch(() => {})
+  }).catch(() => { /* intentionally ignored — toast is non-critical */ })
 }
 
 export type UltraworkOverrideResult = {

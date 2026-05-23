@@ -177,7 +177,7 @@ class LSPServerManager {
       .catch(() => {
         // Warmup failures must not permanently block future initialization.
         this.clients.delete(key);
-        void client.stop().catch(() => {});
+        void client.stop().catch(() => { /* intentionally ignored — cleanup after warmup failure */ });
       });
   }
 

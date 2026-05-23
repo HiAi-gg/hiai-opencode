@@ -201,7 +201,7 @@ export class TaskToastManager {
         variant: "info",
         duration: running.length + queued.length > 2 ? 5000 : 3000,
       },
-    }).catch(() => {})
+    }).catch(() => { /* intentionally ignored — toast is non-critical */ })
   }
 
   /**
@@ -228,7 +228,7 @@ export class TaskToastManager {
         variant: "success",
         duration: 5000,
       },
-    }).catch(() => {})
+    }).catch(() => { /* intentionally ignored — toast is non-critical */ })
   }
 }
 
