@@ -79,63 +79,26 @@ import {
   resolveSubagentSpawnContext,
   type SubagentSpawnContext,
 } from "./subagent-spawn-limits"
+import type {
+  MessagePartInfo,
+  EventProperties,
+  Todo,
+  QueueItem,
+  OnSubagentSessionCreated,
+  SubagentSessionCreatedEvent,
+  BackgroundEvent,
+} from "./manager-types"
+import {
+  resolveMessagePartInfo,
+  MAX_TASK_REMOVAL_RESCHEDULES,
+} from "./manager-types"
+import {
+  enqueueNotificationForParent as enqueueNotificationForParentFn,
+  notifyParentSession as notifyParentSessionFn,
+} from "./manager-notifier"
 
 type OpencodeClient = PluginInput["client"]
 
-
-interface MessagePartInfo {
-  id?: string
-  sessionID?: string
-  type?: string
-  tool?: string
-  state?: { status?: string; input?: Record<string, unknown> }
-}
-
-interface EventProperties {
-  sessionID?: string
-  info?: { id?: string }
-  [key: string]: unknown
-}
-
-interface Event {
-  type: string
-  properties?: EventProperties
-}
-
-function resolveMessagePartInfo(properties: EventProperties | undefined): MessagePartInfo | undefined {
-  if (!properties || typeof properties !== "object") {
-    return undefined
-  }
-
-  const nestedPart = properties.part
-  if (nestedPart && typeof nestedPart === "object") {
-    return nestedPart as MessagePartInfo
-  }
-
-  return properties as MessagePartInfo
-}
-
-interface Todo {
-  content: string
-  status: string
-  priority: string
-  id: string
-}
-
-interface QueueItem {
-  task: BackgroundTask
-  input: LaunchInput
-}
-
-export interface SubagentSessionCreatedEvent {
-  sessionID: string
-  parentID: string
-  title: string
-}
-
-export type OnSubagentSessionCreated = (event: SubagentSessionCreatedEvent) => Promise<void>
-
-const MAX_TASK_REMOVAL_RESCHEDULES = 6
 
 export class BackgroundManager {
 
@@ -982,7 +945,7 @@ export class BackgroundManager {
     return field === "text" || field === "reasoning"
   }
 
-  handleEvent(event: Event): void {
+  handleEvent(event: BackgroundEvent): void {
     const props = event.properties
 
     if (event.type === "message.updated") {
@@ -1713,177 +1676,9 @@ export class BackgroundManager {
   }
 
   private async notifyParentSession(task: BackgroundTask): Promise<void> {
-    const duration = formatDuration(task.startedAt ?? new Date(), task.completedAt)
-
-    log("[background-agent] notifyParentSession called for task:", task.id)
-
-    // Show toast notification
-    const toastManager = getTaskToastManager()
-    if (toastManager) {
-      toastManager.showCompletionToast({
-        id: task.id,
-        description: task.description,
-        duration,
-      })
-    }
-
-    if (!this.completedTaskSummaries.has(task.parentSessionID)) {
-      this.completedTaskSummaries.set(task.parentSessionID, [])
-    }
-    this.completedTaskSummaries.get(task.parentSessionID)!.push({
-      id: task.id,
-      description: task.description,
-      status: task.status,
-      error: task.error,
-    })
-
-    // Update pending tracking and check if all tasks complete
-    const pendingSet = this.pendingByParent.get(task.parentSessionID)
-    let allComplete = false
-    let remainingCount = 0
-    if (pendingSet) {
-      pendingSet.delete(task.id)
-      remainingCount = pendingSet.size
-      allComplete = remainingCount === 0
-      if (allComplete) {
-        this.pendingByParent.delete(task.parentSessionID)
-      }
-    } else {
-      remainingCount = Array.from(this.tasks.values())
-        .filter(t => t.parentSessionID === task.parentSessionID && t.id !== task.id && (t.status === "running" || t.status === "pending"))
-        .length
-      allComplete = remainingCount === 0
-    }
-
-    const completedTasks = allComplete
-      ? (this.completedTaskSummaries.get(task.parentSessionID) ?? [{ id: task.id, description: task.description, status: task.status, error: task.error }])
-      : []
-
-    if (allComplete) {
-      this.completedTaskSummaries.delete(task.parentSessionID)
-    }
-
-    const statusText = task.status === "completed"
-      ? "COMPLETED"
-      : task.status === "interrupt"
-        ? "INTERRUPTED"
-        : task.status === "error"
-          ? "ERROR"
-          : "CANCELLED"
-    const notification = buildBackgroundTaskNotificationText({
-      task,
-      duration,
-      statusText,
-      allComplete,
-      remainingCount,
-      completedTasks,
-    })
-
-      let agent: string | undefined = task.parentAgent
-      let model: { providerID: string; modelID: string } | undefined
-      let tools: Record<string, boolean> | undefined = task.parentTools
-      let promptContext: ReturnType<typeof resolvePromptContextFromSessionMessages> = null
-
-      if (this.enableParentSessionNotifications) {
-        try {
-          const messagesResp = await this.client.session.messages({ path: { id: task.parentSessionID } })
-          const messages = normalizeSDKResponse(messagesResp, [] as Array<{
-            info?: {
-              agent?: string
-              model?: { providerID: string; modelID: string }
-              modelID?: string
-              providerID?: string
-              tools?: Record<string, boolean | "allow" | "deny" | "ask">
-            }
-          }>)
-          promptContext = resolvePromptContextFromSessionMessages(
-            messages,
-            task.parentSessionID,
-          )
-          const normalizedTools = isRecord(promptContext?.tools)
-            ? normalizePromptTools(promptContext.tools)
-            : undefined
-
-          if (promptContext?.agent || promptContext?.model || normalizedTools) {
-            agent = promptContext?.agent ?? task.parentAgent
-            model = promptContext?.model?.providerID && promptContext.model.modelID
-              ? { providerID: promptContext.model.providerID, modelID: promptContext.model.modelID }
-              : undefined
-            tools = normalizedTools ?? tools
-          }
-        } catch (error) {
-          if (isAbortedSessionError(error)) {
-            log("[background-agent] Parent session aborted while loading messages; using messageDir fallback:", {
-              taskId: task.id,
-              parentSessionID: task.parentSessionID,
-            })
-          }
-          const messageDir = join(MESSAGE_STORAGE, task.parentSessionID)
-          const currentMessage = messageDir
-            ? findNearestMessageExcludingCompaction(messageDir, task.parentSessionID)
-            : null
-          agent = currentMessage?.agent ?? task.parentAgent
-          model = currentMessage?.model?.providerID && currentMessage?.model?.modelID
-            ? { providerID: currentMessage.model.providerID, modelID: currentMessage.model.modelID }
-            : undefined
-          tools = normalizePromptTools(currentMessage?.tools) ?? tools
-        }
-
-        const resolvedTools = resolveInheritedPromptTools(task.parentSessionID, tools)
-
-        log("[background-agent] notifyParentSession context:", {
-          taskId: task.id,
-          resolvedAgent: agent,
-          resolvedModel: model,
-        })
-
-        const isTaskFailure = task.status === "error" || task.status === "cancelled" || task.status === "interrupt"
-        const shouldReply = allComplete || isTaskFailure
-
-        const variant = promptContext?.model?.variant
-
-        try {
-          await this.client.session.promptAsync({
-            path: { id: task.parentSessionID },
-            body: {
-              noReply: !shouldReply,
-              ...(agent !== undefined ? { agent } : {}),
-              ...(model !== undefined ? { model } : {}),
-              ...(variant !== undefined ? { variant } : {}),
-              ...(resolvedTools ? { tools: resolvedTools } : {}),
-              parts: [createInternalAgentTextPart(notification)],
-            },
-          })
-          log("[background-agent] Sent notification to parent session:", {
-            taskId: task.id,
-            allComplete,
-            isTaskFailure,
-            noReply: !shouldReply,
-          })
-        } catch (error) {
-          if (isAbortedSessionError(error) || isRecoverablePromptInjectionError(error)) {
-            log("[background-agent] Parent session aborted while sending notification; continuing cleanup:", {
-              taskId: task.id,
-              parentSessionID: task.parentSessionID,
-              recoverable: true,
-              error: extractErrorMessage(error) ?? String(error),
-            })
-            this.queuePendingNotification(task.parentSessionID, notification)
-          } else {
-            log("[background-agent] Failed to send notification:", error)
-          }
-        }
-      } else {
-        log("[background-agent] Parent session notifications disabled, skipping prompt injection:", {
-          taskId: task.id,
-          parentSessionID: task.parentSessionID,
-        })
-      }
-
-    if (task.status !== "running" && task.status !== "pending") {
-      this.scheduleTaskRemoval(task.id)
-    }
+    return notifyParentSessionFn(this as unknown as Parameters<typeof notifyParentSessionFn>[0], task)
   }
+
 
   private hasRunningTasks(): boolean {
     for (const task of this.tasks.values()) {
@@ -2194,30 +1989,7 @@ export class BackgroundManager {
     parentSessionID: string | undefined,
     operation: () => Promise<void>
   ): Promise<void> {
-    if (!parentSessionID) {
-      return operation()
-    }
-
-    const previous = this.notificationQueueByParent.get(parentSessionID) ?? Promise.resolve()
-    const cleanupQueueEntry = (): void => {
-      if (this.notificationQueueByParent.get(parentSessionID) === current) {
-        this.notificationQueueByParent.delete(parentSessionID)
-      }
-    }
-
-    const current = previous
-      .catch((error) => {
-        log("[background-agent] Continuing notification queue after previous failure:", {
-          parentSessionID,
-          error,
-        })
-      })
-      .then(operation)
-
-    this.notificationQueueByParent.set(parentSessionID, current)
-
-    void current.then(cleanupQueueEntry, cleanupQueueEntry)
-
-    return current
+    return enqueueNotificationForParentFn(this as unknown as Parameters<typeof enqueueNotificationForParentFn>[0], parentSessionID, operation)
   }
+
 }

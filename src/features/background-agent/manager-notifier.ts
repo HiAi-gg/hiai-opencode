@@ -1,0 +1,247 @@
+import type { BackgroundTask } from "./types"
+import type { BackgroundTaskNotificationTask } from "./background-task-notification-template"
+import { buildBackgroundTaskNotificationText } from "./background-task-notification-template"
+import { formatDuration } from "./duration-formatter"
+import { log, normalizeSDKResponse, normalizePromptTools, resolveInheritedPromptTools, createInternalAgentTextPart } from "../../shared"
+import { isRecord } from "../../shared/record-type-guard"
+import { getTaskToastManager } from "../task-toast-manager"
+import { findNearestMessageExcludingCompaction, resolvePromptContextFromSessionMessages } from "./compaction-aware-message-resolver"
+import { isAbortedSessionError, isRecoverablePromptInjectionError, extractErrorMessage } from "./error-classifier"
+import { join } from "node:path"
+import { MESSAGE_STORAGE } from "../hook-message-injector"
+
+export interface NotifierAdapter {
+  client: {
+    session: {
+      messages: (input: { path: { id: string } }) => Promise<unknown>
+      promptAsync: (input: {
+        path: { id: string }
+        body: {
+          noReply?: boolean
+          agent?: string
+          model?: { providerID: string; modelID: string }
+          variant?: string
+          tools?: Record<string, boolean | "allow" | "deny" | "ask">
+          parts: Array<{ type: "text"; text: string }>
+        }
+      }) => Promise<unknown>
+    }
+  }
+  directory: string
+  enableParentSessionNotifications: boolean
+  tasks: Map<string, BackgroundTask>
+  completedTaskSummaries: Map<string, BackgroundTaskNotificationTask[]>
+  pendingByParent: Map<string, Set<string>>
+  pendingNotifications: Map<string, string[]>
+  notificationQueueByParent: Map<string, Promise<void>>
+  queuePendingNotification: (parentSessionID: string, notification: string) => void
+  scheduleTaskRemoval: (taskId: string, rescheduleCount?: number) => void
+  clearNotificationsForTask: (taskId: string) => void
+  cleanupPendingByParent: (task: BackgroundTask) => void
+  getTasksByParentSession: (sessionID: string) => BackgroundTask[]
+}
+
+export function enqueueNotificationForParent(
+  adapter: NotifierAdapter,
+  parentSessionID: string | undefined,
+  operation: () => Promise<void>,
+): Promise<void> {
+  if (!parentSessionID) {
+    return operation()
+  }
+
+  const previous = adapter.notificationQueueByParent.get(parentSessionID) ?? Promise.resolve()
+  const cleanupQueueEntry = (): void => {
+    if (adapter.notificationQueueByParent.get(parentSessionID) === current) {
+      adapter.notificationQueueByParent.delete(parentSessionID)
+    }
+  }
+
+  const current = previous
+    .catch((error) => {
+      log("[background-agent] Continuing notification queue after previous failure:", {
+        parentSessionID,
+        error,
+      })
+    })
+    .then(operation)
+
+  adapter.notificationQueueByParent.set(parentSessionID, current)
+
+  void current.then(cleanupQueueEntry, cleanupQueueEntry)
+
+  return current
+}
+
+export async function notifyParentSession(adapter: NotifierAdapter, task: BackgroundTask): Promise<void> {
+  const duration = formatDuration(task.startedAt ?? new Date(), task.completedAt)
+
+  log("[background-agent] notifyParentSession called for task:", task.id)
+
+  // Show toast notification
+  const toastManager = getTaskToastManager()
+  if (toastManager) {
+    toastManager.showCompletionToast({
+      id: task.id,
+      description: task.description,
+      duration,
+    })
+  }
+
+  if (!adapter.completedTaskSummaries.has(task.parentSessionID)) {
+    adapter.completedTaskSummaries.set(task.parentSessionID, [])
+  }
+  adapter.completedTaskSummaries.get(task.parentSessionID)!.push({
+    id: task.id,
+    description: task.description,
+    status: task.status,
+    error: task.error,
+  })
+
+  // Update pending tracking and check if all tasks complete
+  const pendingSet = adapter.pendingByParent.get(task.parentSessionID)
+  let allComplete = false
+  let remainingCount = 0
+  if (pendingSet) {
+    pendingSet.delete(task.id)
+    remainingCount = pendingSet.size
+    allComplete = remainingCount === 0
+    if (allComplete) {
+      adapter.pendingByParent.delete(task.parentSessionID)
+    }
+  } else {
+    remainingCount = Array.from(adapter.tasks.values())
+      .filter(t => t.parentSessionID === task.parentSessionID && t.id !== task.id && (t.status === "running" || t.status === "pending"))
+      .length
+    allComplete = remainingCount === 0
+  }
+
+  const completedTasks = allComplete
+    ? (adapter.completedTaskSummaries.get(task.parentSessionID) ?? [{ id: task.id, description: task.description, status: task.status, error: task.error }])
+    : []
+
+  if (allComplete) {
+    adapter.completedTaskSummaries.delete(task.parentSessionID)
+  }
+
+  const statusText = task.status === "completed"
+    ? "COMPLETED"
+    : task.status === "interrupt"
+      ? "INTERRUPTED"
+      : task.status === "error"
+        ? "ERROR"
+        : "CANCELLED"
+  const notification = buildBackgroundTaskNotificationText({
+    task,
+    duration,
+    statusText,
+    allComplete,
+    remainingCount,
+    completedTasks,
+  })
+
+  let agent: string | undefined = task.parentAgent
+  let model: { providerID: string; modelID: string } | undefined
+  let tools: Record<string, boolean> | undefined = task.parentTools
+  let promptContext: ReturnType<typeof resolvePromptContextFromSessionMessages> = null
+
+  if (adapter.enableParentSessionNotifications) {
+    try {
+      const messagesResp = await adapter.client.session.messages({ path: { id: task.parentSessionID } })
+      const messages = normalizeSDKResponse(messagesResp, [] as Array<{
+        info?: {
+          agent?: string
+          model?: { providerID: string; modelID: string }
+          modelID?: string
+          providerID?: string
+          tools?: Record<string, boolean | "allow" | "deny" | "ask">
+        }
+      }>)
+      promptContext = resolvePromptContextFromSessionMessages(
+        messages,
+        task.parentSessionID,
+      )
+      const normalizedTools = isRecord(promptContext?.tools)
+        ? normalizePromptTools(promptContext.tools)
+        : undefined
+
+      if (promptContext?.agent || promptContext?.model || normalizedTools) {
+        agent = promptContext?.agent ?? task.parentAgent
+        model = promptContext?.model?.providerID && promptContext.model.modelID
+          ? { providerID: promptContext.model.providerID, modelID: promptContext.model.modelID }
+          : undefined
+        tools = normalizedTools ?? tools
+      }
+    } catch (error) {
+      if (isAbortedSessionError(error)) {
+        log("[background-agent] Parent session aborted while loading messages; using messageDir fallback:", {
+          taskId: task.id,
+          parentSessionID: task.parentSessionID,
+        })
+      }
+      const messageDir = join(MESSAGE_STORAGE, task.parentSessionID)
+      const currentMessage = messageDir
+        ? findNearestMessageExcludingCompaction(messageDir, task.parentSessionID)
+        : null
+      agent = currentMessage?.agent ?? task.parentAgent
+      model = currentMessage?.model?.providerID && currentMessage?.model?.modelID
+        ? { providerID: currentMessage.model.providerID, modelID: currentMessage.model.modelID }
+        : undefined
+      tools = normalizePromptTools(currentMessage?.tools) ?? tools
+    }
+
+    const resolvedTools = resolveInheritedPromptTools(task.parentSessionID, tools)
+
+    log("[background-agent] notifyParentSession context:", {
+      taskId: task.id,
+      resolvedAgent: agent,
+      resolvedModel: model,
+    })
+
+    const isTaskFailure = task.status === "error" || task.status === "cancelled" || task.status === "interrupt"
+    const shouldReply = allComplete || isTaskFailure
+
+    const variant = promptContext?.model?.variant
+
+    try {
+      await adapter.client.session.promptAsync({
+        path: { id: task.parentSessionID },
+        body: {
+          noReply: !shouldReply,
+          ...(agent !== undefined ? { agent } : {}),
+          ...(model !== undefined ? { model } : {}),
+          ...(variant !== undefined ? { variant } : {}),
+          ...(resolvedTools ? { tools: resolvedTools } : {}),
+          parts: [createInternalAgentTextPart(notification)],
+        },
+      })
+      log("[background-agent] Sent notification to parent session:", {
+        taskId: task.id,
+        allComplete,
+        isTaskFailure,
+        noReply: !shouldReply,
+      })
+    } catch (error) {
+      if (isAbortedSessionError(error) || isRecoverablePromptInjectionError(error)) {
+        log("[background-agent] Parent session aborted while sending notification; continuing cleanup:", {
+          taskId: task.id,
+          parentSessionID: task.parentSessionID,
+          recoverable: true,
+          error: extractErrorMessage(error) ?? String(error),
+        })
+        adapter.queuePendingNotification(task.parentSessionID, notification)
+      } else {
+        log("[background-agent] Failed to send notification:", error)
+      }
+    }
+  } else {
+    log("[background-agent] Parent session notifications disabled, skipping prompt injection:", {
+      taskId: task.id,
+      parentSessionID: task.parentSessionID,
+    })
+  }
+
+  if (task.status !== "running" && task.status !== "pending") {
+    adapter.scheduleTaskRemoval(task.id)
+  }
+}
