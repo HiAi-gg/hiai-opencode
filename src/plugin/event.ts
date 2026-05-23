@@ -593,7 +593,7 @@ export function createEventHandler(args: {
                 body: { parts: [{ type: "text", text: "continue" }] },
                 query: { directory: pluginContext.directory },
               })
-              .catch(() => {});
+              .catch(() => { /* intentionally ignored — toast notification is non-critical */ });
           }
         }
         // Second, try model fallback for model errors (rate limit, quota, provider issues, etc.)

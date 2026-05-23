@@ -124,7 +124,7 @@ export async function tryFallbackRetry(args: {
   }
 
   if (previousSessionID) {
-    await abortWithTimeout(client, previousSessionID).catch(() => {})
+    await abortWithTimeout(client, previousSessionID).catch(() => { /* intentionally ignored — session may already be terminated */ })
   }
 
   queue.push({ task, input: retryInput })
