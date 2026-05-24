@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.3.0] — 2026-05-24
+## [0.2.2] — 2026-05-24
 
 ### Added
 - **open-design integration** — 48 design skills, 150+ brand design-systems (Apple, Linear, Stripe, Vercel, Airbnb, etc.), 12 craft guidelines (typography, color, UX, animation, accessibility), prompt-templates for image/video generation. All sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0).
