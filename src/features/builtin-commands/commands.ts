@@ -2,6 +2,7 @@ import type { CommandDefinition } from "../claude-code-command-loader"
 import type { BuiltinCommandName, BuiltinCommands } from "./types"
 import { INIT_DEEP_TEMPLATE } from "./templates/init-deep"
 import { RALPH_LOOP_TEMPLATE, ULW_LOOP_TEMPLATE, CANCEL_RALPH_TEMPLATE } from "./templates/ralph-loop"
+import { LOOP_COMMAND_TEMPLATE, CANCEL_LOOP_TEMPLATE } from "./templates/loop"
 import { STOP_CONTINUATION_TEMPLATE } from "./templates/stop-continuation"
 import { REFACTOR_TEMPLATE } from "./templates/refactor"
 import { START_WORK_TEMPLATE } from "./templates/start-work"
@@ -33,8 +34,25 @@ $ARGUMENTS
 </user-request>`,
       argumentHint: "[--create-new] [--max-depth=N]",
     },
+    loop: {
+      description: "(builtin) Unified development loop — normal or ultrawork mode",
+      template: `<command-instruction>
+${LOOP_COMMAND_TEMPLATE}
+</command-instruction>
+
+<user-task>
+$ARGUMENTS
+</user-task>`,
+      argumentHint: '"task description" [--mode=normal|ultrawork] [--completion-promise=TEXT] [--strategy=reset|continue]',
+    },
+    "cancel-loop": {
+      description: "(builtin) Cancel active development loop",
+      template: `<command-instruction>
+${CANCEL_LOOP_TEMPLATE}
+</command-instruction>`,
+    },
      "ralph-loop": {
-       description: "(builtin) Start self-referential development loop until completion",
+       description: "(builtin) [DEPRECATED: use /loop] Start self-referential development loop",
        template: `<command-instruction>
 ${RALPH_LOOP_TEMPLATE}
 </command-instruction>
@@ -45,7 +63,7 @@ $ARGUMENTS
        argumentHint: '"task description" [--completion-promise=TEXT] [--max-iterations=N] [--strategy=reset|continue]',
      },
      "ulw-loop": {
-        description: "(builtin) Start ultrawork loop - continues until completion with ultrawork mode",
+        description: "(builtin) [DEPRECATED: use /loop --mode=ultrawork] Start ultrawork loop",
         template: `<command-instruction>
 ${ULW_LOOP_TEMPLATE}
 </command-instruction>
@@ -56,7 +74,7 @@ $ARGUMENTS
         argumentHint: '"task description" [--completion-promise=TEXT] [--strategy=reset|continue]',
       },
     "cancel-ralph": {
-      description: "(builtin) Cancel active Ralph Loop",
+      description: "(builtin) [DEPRECATED: use /cancel-loop] Cancel active Ralph Loop",
       template: `<command-instruction>
 ${CANCEL_RALPH_TEMPLATE}
 </command-instruction>`,

@@ -11,47 +11,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.2] — 2026-05-24
 
-### Added
-- **open-design integration** — 48 design skills, 150+ brand design-systems (Apple, Linear, Stripe, Vercel, Airbnb, etc.), 12 craft guidelines (typography, color, UX, animation, accessibility), prompt-templates for image/video generation. All sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0).
-- **Designer agent research** — Deep integration plan for using design-systems library with the Designer agent
-- **event-handlers/** — Extracted 5 files from event.ts: `session-error.ts` (117 lines), `message-updated.ts` (110 lines), `session-status.ts` (92 lines), `types.ts`, `utils.ts`
-- **manager-types.ts** — Extracted types from BackgroundManager (MessagePartInfo, EventProperties, Todo, QueueItem, BackgroundEvent, etc.)
-- **manager-notifier.ts** — Extracted notifyParentSession() + enqueueNotificationForParent() from BackgroundManager
-- **Smoke test** — `tests/integration/plugin-smoke.test.ts` with 43 checks (build artifacts, agent factories, identity injection, permissions)
-- **Shared execution module** — `prompt-library/shared-execution.ts` with buildSearchStopConditionsSection, buildDelegationPromptSection, buildSessionContinuitySection, buildFailureRecoverySection
-- **Intent gate** — `prompt-library/intent-gate.ts` with router and executor variants
-- **Changelog, Contributing, Security docs** — Full community documentation set
+### Breaking Changes
+- **Removed `HIAI_PLAYWRIGHT_INSTALL_BROWSERS`** — no longer needed
+- **Playwright MCP removed** — replaced by `agent-browser` CLI (vercel-labs/agent-browser)
+- **`multimodal` renamed to `vision`** — all references across 16 files updated
+
+### New in This Release
+
+**open-design Integration**
+- 48 design skills, 150+ brand design-systems (Apple, Linear, Stripe, Vercel, Airbnb, etc.)
+- 12 craft guidelines (typography, color, UX, animation, accessibility)
+- prompt-templates for image/video generation
+- All sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0)
+
+**Browser Automation (agent-browser)**
+- Full `agent-browser` CLI documentation with 6 key environment variables:
+  - `AGENT_BROWSER_HEADED`, `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_PROFILE`
+  - `AGENT_BROWSER_PROVIDER` (browserbase, browseruse, kernel)
+  - `AGENT_BROWSER_AUTO_CONNECT`, `AGENT_BROWSER_EXECUTABLE_PATH`
+- Install via `bun add -g agent-browser && agent-browser install` or `npm i -g agent-browser`
+
+**Agent Architecture**
+- Bob/Coder core+overlay split — model-specific overlays separated from shared prompt core
+- event.ts extraction — 640→310 lines, handlers moved to `event-handlers/`
+- manager.ts extraction — types + notifier moved to separate modules
+- Shared execution module — `prompt-library/shared-execution.ts` with reusable prompt sections
+- Intent gate — `prompt-library/intent-gate.ts` with router and executor variants
+- Smoke test — `tests/integration/plugin-smoke.test.ts` with 43 checks
+
+**Delegation Rules (Bob)**
+- UX Verification Gate — never close UX task without Vision + agent-browser
+- UX Development Gate — never do UX work without Designer + design skills
+- Content Gate — all text/copy/translation goes to Writer
+
+**Project Context (All Agents)**
+- Bob now queries PostgreSQL/RAG + MemPalace before delegating
+- Manager queries MemPalace + RAG before orchestrating
+- Strategist queries MemPalace + RAG before planning
+- All 10 visible agents check MemPalace at session start
+
+**Vision Agent**
+- Screenshot saving capability added
+- agent-browser integration for live UI verification
+- Renamed from `multimodal` across entire codebase
+
+**Updated Upstream References**
+- Firecrawl: `mendableai/firecrawl` → `firecrawl/firecrawl`
+- Agent-browser: `vercel-labs/agent-browser` now documented
+- Supabase Postgres skill: `supabase/agent-skills` added to attribution table
+
+**Agent Count Accuracy**
+- `14-agent canonical model (9 visible + 5 hidden)` — reflected across all docs
+- `Quality Guardian` properly documented as hidden agent
+- Removed phantom duplicate Manager row from agent table
 
 ### Changed
-- **Bob prompt** — Split into core+overlay architecture: `bob/core.ts` (16.5KB) + `bob/claude.ts` (1.9KB) + `bob/gpt.ts` (1.8KB). Was single 20KB file.
-- **Coder prompt** — Split into core+overlay: `coder/core.ts` (10KB) + `coder/agent.ts` (3.9KB). Was 15KB single file.
-- **event.ts** — Reduced from 640 to 310 lines (-52%) by extracting handlers to `event-handlers/`
-- **manager.ts** — Reduced from 2223 to 1996 lines (-10%) by extracting types + notifier
-- **Anti-duplication section** — Compressed from 40 lines to 3 lines (-1.2KB per agent)
-- **Tables → bullets** — Converted all markdown tables in agent prompts to compact bullet lists (-1428 bytes across 6 files)
 - **Schema** — Fixed stale model keys: guard→manager, brainstormer→writer, removed playwright, added firecrawl
-- **.env.example** — Added CONTEXT7_API_KEY and HIAI_OPENCODE_LOG_LEVEL
-- **Build** — Scoped package to `@hiai-gg/hiai-opencode`, added bin CLI, minified build (2.82MB), prepublishOnly script
-- **Logger** — Added log levels (debug/info/warn/error/silent), logDebug(), setLogLevel(), restrictive file permissions
+- **.env.example** — Added CONTEXT7_API_KEY, HIAI_OPENCODE_LOG_LEVEL, PostgreSQL env vars
+- **Build** — Scoped package to `@hiai-gg/hiai-opencode`, added bin CLI, minified build (2.69MB), prepublishOnly script
+- **Logger** — Added log levels (debug/info/warn/error/silent), logDebug(), setLogLevel()
 - **Error handling** — All 61 `.catch(() => {})` replaced with commented explanations across 28 files
 - **Anti-duplication** — Compressed from 40 lines to 3 per agent
-- **multimodal → vision** — Renamed across entire codebase: BuiltinAgentName, agentSources, config types, schemas, delegate-task aliases, display names, migration maps, tool restrictions (16 files)
-- **Agent model resolution** — Agents no longer silently dropped when model resolution fails; systemDefaultModel used as fallback
+- **Tables → bullets** — Converted all markdown tables in agent prompts to compact bullet lists
+- **Agent model resolution** — Agents no longer silently dropped when model resolution fails
 - **Linter quality pass** — 27 files touched: nullish coalescing, import ordering, mechanical fixes
-- **START.md** — Clean-machine install guide for @hiai-gg/hiai-opencode
 
 ### Fixed
-- **Vision agent not found** — Root cause: agent registered as "multimodal" in agentSources but config used "vision". Bridged via legacy alias lookup in override/requirement resolution.
-- **Agent model resolution drop** — Agents without fallback chains silently dropped from registry; now falls back to systemDefaultModel
-- **68 failing tests** — All agent prompt section tests, closure protocol tests, snapshot tests, migration tests, boulder validation tests fixed
+- **Vision agent not found** — Root cause: agent registered as "multimodal" but config used "vision"
+- **Agent model resolution drop** — Agents without fallback chains now fall back to systemDefaultModel
+- **68 failing tests** — All agent prompt section tests, closure protocol tests, snapshot tests fixed
 - **Empty catch blocks** — 23→0 `catch {}` blocks, 61→0 `.catch(() => {})` patterns
-- **Dead code** — Deleted orchestration.ts (1.8KB duplicate), bob.ts re-export (301B)
+- **Dead code** — Deleted orchestration.ts (1.8KB duplicate), bob.ts re-export
 - **Schema validation** — Removed stale model keys, added missing entries
+- **Memory leaks** — Agents losing project context; fixed with MemPalace + RAG checks
 
 ### Removed
-- **NonClaudePlannerSection** — Removed from bob.ts, bob/default.ts, bob/gpt-pro.ts, coder/gpt.ts
+- **Playwright MCP** — Replaced by agent-browser CLI
+- **`HIAI_PLAYWRIGHT_INSTALL_BROWSERS`** — No longer needed
+- **Unused `websearch` MCP** — Removed from architecture
+- **`TAVILY_API_KEY` / `EXA_API_KEY`** — Removed unused env vars
+- **NonClaudePlannerSection** — Removed from bob.ts, coder/gpt.ts
 - **bob.ts re-export** — Replaced with bob/index.ts directory resolution
-- **orchestration.ts** — Dead code, 100% duplicate of dynamic-agent-core-sections.ts
+- **orchestration.ts** — Dead code, 100% duplicate
 
 ---
 
