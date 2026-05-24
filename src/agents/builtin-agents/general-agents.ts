@@ -88,7 +88,22 @@ export function collectPendingBuiltinAgents(input: {
         resolution = getFirstFallbackModel(requirement)
       }
     }
-    if (!resolution) continue
+    if (!resolution) {
+      // If no model resolved but systemDefaultModel exists, use it as ultimate fallback
+      // instead of silently dropping the agent from the registry.
+      if (systemDefaultModel) {
+        resolution = { model: systemDefaultModel, provenance: "system-default" as const }
+        log("[agent-registration] No model resolved, falling back to system default", {
+          agent: agentName,
+          systemDefault: systemDefaultModel,
+        })
+      } else {
+        log("[agent-registration] Skipping agent — no model available and no system default", {
+          agent: agentName,
+        })
+        continue
+      }
+    }
     const { model, variant: resolvedVariant } = resolution
 
     let config = buildAgent(source, model, mergedCategories, gitMasterConfig, browserProvider, disabledSkills)
