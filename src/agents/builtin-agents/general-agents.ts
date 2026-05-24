@@ -4,11 +4,20 @@ import type { CategoryConfig, GitMasterConfig } from "../../config/schema"
 import type { BrowserAutomationProvider } from "../../config/schema"
 import type { AvailableAgent } from "../dynamic-agent-prompt-builder"
 import { AGENT_MODEL_REQUIREMENTS, isModelAvailable } from "../../shared"
+import { LEGACY_AGENT_ALIAS_TO_CANONICAL } from "../../config/types"
 import { buildAgent, isFactory } from "../agent-builder"
 import { applyOverrides } from "./agent-overrides"
 import { applyEnvironmentContext } from "./environment-context"
 import { applyModelResolution, getFirstFallbackModel } from "./model-resolution"
 import { log } from "../../shared/logger"
+
+// Reverse map: canonical name -> list of legacy alias keys
+// e.g. "multimodal" -> ["vision", "ui"]
+const CANONICAL_TO_LEGACY_ALIASES: Record<string, string[]> = {}
+for (const [alias, canonical] of Object.entries(LEGACY_AGENT_ALIAS_TO_CANONICAL)) {
+  if (!CANONICAL_TO_LEGACY_ALIASES[canonical]) CANONICAL_TO_LEGACY_ALIASES[canonical] = []
+  CANONICAL_TO_LEGACY_ALIASES[canonical].push(alias)
+}
 
 export function collectPendingBuiltinAgents(input: {
   agentSources: Record<BuiltinAgentName, import("../agent-builder").AgentSource>
@@ -55,9 +64,35 @@ export function collectPendingBuiltinAgents(input: {
     if (agentName === "sub") continue
     if (disabledAgents.some((name) => name.toLowerCase() === agentName.toLowerCase())) continue
 
-    const override = agentOverrides[agentName]
-      ?? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === agentName.toLowerCase())?.[1]
-    const requirement = AGENT_MODEL_REQUIREMENTS[agentName]
+    // Check override by canonical name, then by legacy alias keys
+    let override = agentOverrides[agentName]
+    if (!override) {
+      const legacyKeys = CANONICAL_TO_LEGACY_ALIASES[agentName]
+      if (legacyKeys) {
+        for (const key of legacyKeys) {
+          const legacyOverride = (agentOverrides as Record<string, unknown>)[key]
+          if (legacyOverride) {
+            override = legacyOverride as unknown as typeof override
+            break
+          }
+        }
+      }
+    }
+
+    // Check requirement by canonical name, then by legacy alias keys
+    let requirement = AGENT_MODEL_REQUIREMENTS[agentName] ?? undefined
+    if (!requirement) {
+      const legacyReqKeys = CANONICAL_TO_LEGACY_ALIASES[agentName]
+      if (legacyReqKeys) {
+        for (const key of legacyReqKeys) {
+          const legacyReq = AGENT_MODEL_REQUIREMENTS[key]
+          if (legacyReq) {
+            requirement = legacyReq
+            break
+          }
+        }
+      }
+    }
 
     // Check if agent requires a specific model
     if (requirement?.requiresModel && availableModels) {

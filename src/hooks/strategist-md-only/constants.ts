@@ -48,7 +48,7 @@ export const ALLOWED_PLANNING_SUBAGENTS = [
   "strategist",
   "designer",
   "brainstormer",
-  "multimodal",
+  "vision",
 ]
 
 export const BLOCKED_EXECUTION_CATEGORIES = [

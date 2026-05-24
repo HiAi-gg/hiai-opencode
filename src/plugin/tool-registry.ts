@@ -181,7 +181,7 @@ export function createToolRegistry(args: {
   )
 
   const isMultimodalLookerEnabled = !(pluginConfig.disabled_agents ?? []).some(
-    (agent) => agent.toLowerCase() === "ui",
+    (agent) => agent.toLowerCase() === "vision",
   )
   const lookAt = isMultimodalLookerEnabled ? factories.createLookAt(ctx) : null
 

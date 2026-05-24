@@ -29,7 +29,6 @@ export const AGENT_DISPLAY_NAMES: Record<string, string> = {
   "manager": "Manager",
   "sub": "Sub",
   "vision": "Vision",
-  "ui": "Vision",
 }
 
 const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {}
@@ -115,7 +114,6 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "website-writer": "writer",
   "agent skills - skill composer": "agent-skills",
   "subagent": "sub",
-  "ui": "vision",
   "vision": "vision",
   "ui - multimodal": "vision",
 }

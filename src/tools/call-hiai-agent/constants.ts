@@ -5,7 +5,7 @@ export const PRIMARY_ALLOWED_AGENTS = [
   "critic",
   "designer",
   "writer",
-  "multimodal",
+  "vision",
 ] as const
 
 export const ALLOWED_AGENTS = [

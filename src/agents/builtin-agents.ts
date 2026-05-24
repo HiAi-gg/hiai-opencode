@@ -36,7 +36,7 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
   "coder": createCoderAgent,
   "strategist": createBobAgent, // Strategist runtime config is assembled in agent-config-handler.
   "designer": createDesignerAgent,
-  "multimodal": createMultimodalLookerAgent,
+  "vision": createMultimodalLookerAgent,
   "writer": createWriterAgent,
   "agent-skills": createAgentSkillsAgent,
   "critic": createCriticAgent,
@@ -52,7 +52,7 @@ const agentSources: Record<BuiltinAgentName, AgentSource> = {
  */
 const agentMetadata: Partial<Record<BuiltinAgentName, AgentPromptMetadata>> = {
   "researcher": researcherPromptMetadata,
-  "multimodal": MULTIMODAL_LOOKER_PROMPT_METADATA,
+  "vision": MULTIMODAL_LOOKER_PROMPT_METADATA,
   "manager": managerPromptMetadata,
   "critic": criticPromptMetadata,
   "quality-guardian": qualityGuardianPromptMetadata,

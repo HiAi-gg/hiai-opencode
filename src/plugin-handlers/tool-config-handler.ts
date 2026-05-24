@@ -38,7 +38,7 @@ function applyPermissionToAgentKeys(args: {
 }
 
 const RESEARCH_AGENT_KEYS = ["researcher"];
-const MULTIMODAL_AGENT_KEYS = ["multimodal", "ui"];
+const MULTIMODAL_AGENT_KEYS = ["vision"];
 const BOB_AGENT_KEYS = ["bob", "general", "build", "zoe"];
 const STRATEGIST_AGENT_KEYS = ["strategist", "plan-consultant"];
 const CRITIC_AGENT_KEYS = ["critic"];

@@ -52,6 +52,7 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   momus: "critic",
   "sisyphus-junior": "sub",
   "multimodal-looker": "vision",
+  multimodal: "vision",
 }
 
 export function resolveCanonicalDelegateAgentKey(agentName: string): string {

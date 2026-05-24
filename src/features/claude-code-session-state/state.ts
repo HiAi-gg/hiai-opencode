@@ -29,10 +29,10 @@ const LEGACY_AGENT_KEY_TO_CANONICAL: Record<string, string> = {
   "code-reviewer": "critic",
   "systematic-debugger": "critic",
   subagent: "coder",
-  ui: "multimodal",
+  ui: "vision",
 }
 const CANONICAL_AGENT_COMPATIBILITY_KEYS: Record<string, string[]> = {
-  multimodal: ["ui"],
+  vision: ["ui", "multimodal"],
 }
 
 function normalizeRegisteredAgentName(name: string): string {

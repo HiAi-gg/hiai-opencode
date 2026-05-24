@@ -67,7 +67,6 @@ export const AgentOverridesSchema = z.object({
   "designer": AgentOverrideConfigSchema.optional(),
   "sub": AgentOverrideConfigSchema.optional(),
   researcher: AgentOverrideConfigSchema.optional(),
-  "multimodal": AgentOverrideConfigSchema.optional(),
   "quality-guardian": AgentOverrideConfigSchema.optional(),
   "writer": AgentOverrideConfigSchema.optional(),
   "agent-skills": AgentOverrideConfigSchema.optional(),

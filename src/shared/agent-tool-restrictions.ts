@@ -41,7 +41,7 @@ const LEGACY_AGENT_RESTRICTION_OVERRIDES: Record<string, Record<string, boolean>
 }
 
 const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<string, string> = {
-  ui: "multimodal",
+  vision: "multimodal",
   "plan-consultant": "critic",
 }
 

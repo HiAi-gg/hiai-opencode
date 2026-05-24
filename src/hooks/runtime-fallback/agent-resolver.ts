@@ -9,7 +9,7 @@ export const AGENT_NAMES = [
   "sub",
   "build",
   "plan",
-  "ui",
+  "vision",
 ]
 
 export const agentPattern = new RegExp(

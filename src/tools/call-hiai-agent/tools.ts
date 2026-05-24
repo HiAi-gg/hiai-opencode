@@ -101,7 +101,7 @@ export function createCallHiaiAgent(
         return "- designer: Canonical agent for visual direction, interface design, and creative execution";
       case "writer":
         return "- writer: Writing and ideation agent for website copy, positioning, naming, messaging, and option generation";
-      case "multimodal":
+      case "vision":
         return "- multimodal: Canonical agent for visual and multimodal tasks (runtime display name: Vision)";
     }
   }).join("\n");
