@@ -24,6 +24,8 @@ export interface CommandDefinition {
   model?: string
   subtask?: boolean
   argumentHint?: string
+  /** If true, command is hidden from / autocomplete but still works when typed manually */
+  hidden?: boolean
   /** Handoff definitions for workflow transitions */
   handoffs?: HandoffDefinition[]
 }

@@ -52,6 +52,7 @@ ${CANCEL_LOOP_TEMPLATE}
 </command-instruction>`,
     },
      "ralph-loop": {
+       hidden: true,
        description: "(builtin) [DEPRECATED: use /loop] Start self-referential development loop",
        template: `<command-instruction>
 ${RALPH_LOOP_TEMPLATE}
@@ -63,6 +64,7 @@ $ARGUMENTS
        argumentHint: '"task description" [--completion-promise=TEXT] [--max-iterations=N] [--strategy=reset|continue]',
      },
      "ulw-loop": {
+        hidden: true,
         description: "(builtin) [DEPRECATED: use /loop --mode=ultrawork] Start ultrawork loop",
         template: `<command-instruction>
 ${ULW_LOOP_TEMPLATE}
@@ -74,6 +76,7 @@ $ARGUMENTS
         argumentHint: '"task description" [--completion-promise=TEXT] [--strategy=reset|continue]',
       },
     "cancel-ralph": {
+      hidden: true,
       description: "(builtin) [DEPRECATED: use /cancel-loop] Cancel active Ralph Loop",
       template: `<command-instruction>
 ${CANCEL_RALPH_TEMPLATE}
