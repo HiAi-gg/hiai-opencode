@@ -211,9 +211,15 @@ ${toolSelection}
 
 ${researcherSection}
 
-### MemPalace — Project Memory
+### Project Context — MANDATORY BEFORE ANY WORK
 
-- **MemPalace** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` — BEFORE delegating complex work, check for prior decisions, architecture choices, and past solutions. After significant outcomes, record via \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "bob", entry: "<AAAK summary>" }})\`.
+**Every session start and every complex task: check project context FIRST.**
+
+1. **MemPalace (recent notes)** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "recent decisions project context", limit: 5, wing: "hiai-opencode" }})\` — Check what the team has been working on, recent decisions, open problems.
+2. **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
+3. **After significant outcomes** — record via \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "bob", entry: "<AAAK summary>" }})\`.
+
+**WHY**: Agents lose context about what project they're working on. Checking MemPalace + RAG at the start prevents this.
 
 ### Parallel Execution (DEFAULT behavior)
 

@@ -1,7 +1,6 @@
 // PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "./types";
-import { createAgentToolRestrictions } from "../shared/permission-compat";
 import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
@@ -96,6 +95,7 @@ Separate findings into:
 - **Researcher** — For visual references via Context7 or web search: find design inspiration, component libraries, design system examples
 - **Vision** — Browser verification partner. After generating Stitch screens, send to Vision for live rendering check. Vision reports issues; YOU decide design fixes.
 - **MemPalace** — Check for prior design decisions, brand colors, and typography choices before creating new designs. Record significant design decisions via MemPalace diary write.
+- **Design Skills** — Load relevant design skills via \`load_skills\` when delegated: \`frontend-ui-ux\` (anti-slop design), \`stitch-design\` (Stitch workflows), \`design-md\` (design system synthesis), \`shadcn-ui\` (component guidance). Bob/Manager should pass these when delegating to Designer.
 </integrations>
 
 <instructions>

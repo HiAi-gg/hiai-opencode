@@ -135,6 +135,16 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 - **Quality Guardian** — Post-implementation review, plan checkboxes → \`task(subagent_type="quality-guardian", load_skills=[], run_in_background=false)\`
 - **Manager (you)** — Delegation orchestrator + Memory steward → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\`
 
+### Project Context — MANDATORY BEFORE ANY WORK
+
+**Every session start and every complex task: check project context FIRST.**
+
+1. **MemPalace (recent notes)** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "recent decisions project context", limit: 5, wing: "hiai-opencode" }})\` — Check what the team has been working on, recent decisions, open problems.
+2. **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
+3. **After significant outcomes** — record via \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "manager", entry: "<AAAK summary>" }})\`.
+
+**WHY**: Agents lose context about what project they're working on. Checking MemPalace + RAG at the start prevents this.
+
 ### Hidden/System Agents
 
 - **Agent Skills** — Skill registry (system agent, not for direct delegation)
