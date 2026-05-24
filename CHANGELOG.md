@@ -7,140 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-> Organized by [hiai-opencode-MASTER-CONSOLIDATED.md](../.bob/plans/hiai-opencode-MASTER-CONSOLIDATED.md) — Part A (6 waves), Part B (ready items), Part D (loop prevention).
-
 ---
 
-### 🔴 Part D: Agent Loop Prevention — CLOSURE vs MemPalace Conflict (COMPLETED)
+## [0.3.0] — 2026-05-24
 
-**Plan source:** `hiai-opencode-MASTER-CONSOLIDATED.md` § Part D
-**Resolution date:** 2026-05-15
+### Added
+- **open-design integration** — 48 design skills, 150+ brand design-systems (Apple, Linear, Stripe, Vercel, Airbnb, etc.), 12 craft guidelines (typography, color, UX, animation, accessibility), prompt-templates for image/video generation. All sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0).
+- **Designer agent research** — Deep integration plan for using design-systems library with the Designer agent
+- **event-handlers/** — Extracted 5 files from event.ts: `session-error.ts` (117 lines), `message-updated.ts` (110 lines), `session-status.ts` (92 lines), `types.ts`, `utils.ts`
+- **manager-types.ts** — Extracted types from BackgroundManager (MessagePartInfo, EventProperties, Todo, QueueItem, BackgroundEvent, etc.)
+- **manager-notifier.ts** — Extracted notifyParentSession() + enqueueNotificationForParent() from BackgroundManager
+- **Smoke test** — `tests/integration/plugin-smoke.test.ts` with 43 checks (build artifacts, agent factories, identity injection, permissions)
+- **Shared execution module** — `prompt-library/shared-execution.ts` with buildSearchStopConditionsSection, buildDelegationPromptSection, buildSessionContinuitySection, buildFailureRecoverySection
+- **Intent gate** — `prompt-library/intent-gate.ts` with router and executor variants
+- **Changelog, Contributing, Security docs** — Full community documentation set
 
-- **ARC-010**: Anti-loop guard injected into `identity.ts` (`buildAgentIdentitySection`) — `KNOWLEDGE_RETRIEVAL_POLICY` now prioritizes CLOSURE over diary_write when both apply; skips diary_write when context-limit warning is active
-- **D1**: Anti-loop guard added to `KNOWLEDGE_RETRIEVAL_POLICY` (`identity.ts`) ✅
-- **D2**: All 14 agents verified — conflict confirmed, guard working ✅
-- **D3**: Build + `prompts:measure` verification ✅
-- **D4**: ARC-010 added to improvement-catalog.md ✅
+### Changed
+- **Bob prompt** — Split into core+overlay architecture: `bob/core.ts` (16.5KB) + `bob/claude.ts` (1.9KB) + `bob/gpt.ts` (1.8KB). Was single 20KB file.
+- **Coder prompt** — Split into core+overlay: `coder/core.ts` (10KB) + `coder/agent.ts` (3.9KB). Was 15KB single file.
+- **event.ts** — Reduced from 640 to 310 lines (-52%) by extracting handlers to `event-handlers/`
+- **manager.ts** — Reduced from 2223 to 1996 lines (-10%) by extracting types + notifier
+- **Anti-duplication section** — Compressed from 40 lines to 3 lines (-1.2KB per agent)
+- **Tables → bullets** — Converted all markdown tables in agent prompts to compact bullet lists (-1428 bytes across 6 files)
+- **Schema** — Fixed stale model keys: guard→manager, brainstormer→writer, removed playwright, added firecrawl
+- **.env.example** — Added CONTEXT7_API_KEY and HIAI_OPENCODE_LOG_LEVEL
+- **Build** — Scoped package to `@hiai-gg/hiai-opencode`, added bin CLI, minified build (2.82MB), prepublishOnly script
+- **Logger** — Added log levels (debug/info/warn/error/silent), logDebug(), setLogLevel(), restrictive file permissions
+- **Error handling** — All 61 `.catch(() => {})` replaced with commented explanations across 28 files
+- **Anti-duplication** — Compressed from 40 lines to 3 per agent
+- **multimodal → vision** — Renamed across entire codebase: BuiltinAgentName, agentSources, config types, schemas, delegate-task aliases, display names, migration maps, tool restrictions (16 files)
+- **Agent model resolution** — Agents no longer silently dropped when model resolution fails; systemDefaultModel used as fallback
+- **Linter quality pass** — 27 files touched: nullish coalescing, import ordering, mechanical fixes
+- **START.md** — Clean-machine install guide for @hiai-gg/hiai-opencode
 
----
+### Fixed
+- **Vision agent not found** — Root cause: agent registered as "multimodal" in agentSources but config used "vision". Bridged via legacy alias lookup in override/requirement resolution.
+- **Agent model resolution drop** — Agents without fallback chains silently dropped from registry; now falls back to systemDefaultModel
+- **68 failing tests** — All agent prompt section tests, closure protocol tests, snapshot tests, migration tests, boulder validation tests fixed
+- **Empty catch blocks** — 23→0 `catch {}` blocks, 61→0 `.catch(() => {})` patterns
+- **Dead code** — Deleted orchestration.ts (1.8KB duplicate), bob.ts re-export (301B)
+- **Schema validation** — Removed stale model keys, added missing entries
 
-### 🟡 Part B: compress-hang-fix — Triple Compaction Race Condition (COMPLETED)
-
-**Plan source:** `compress-hang-fix.md`
-**Scope:** Fix triple compaction race condition → session hangs
-
-- **T1**: Timeout for recovery `summarize()` added
-- **T2**: `compactionInProgress` shared flag implemented in `compaction-in-progress.ts`
-- **T3**: Retry agent config recovery implemented
-- **T4**: `COMPACTION_GUARD_MS` reduced from 60s → 15s
-- **T5**: Agent compress prevented during auto-compaction
-- **T6**: Build + typecheck + LSP + smoke test ✅
-
----
-
-### 🟡 Part B: rel-005-reasoning-cache-fix — Reasoning Content Cache (COMPLETED)
-
-**Plan source:** `rel-005-reasoning-cache-fix.md`
-**Scope:** Fix reasoning_content cache for DeepSeek/Kimi
-
-- **Task 1**: `reinjectIntoMessages` → `MessageWithParts` handling fixed
-- **Task 2**: Hook fixed — saves from `info.reasoning_content`
-- **Task 3**: 17 comprehensive tests added for `ReasoningContentCache`
-- **Task 4**: Session cleanup integration for reasoning cache on `session.deleted` events
-- **Task 5**: Build + full test run ✅
-- **Task 6**: Updated catalog — REL-005 RE-FIXED
-
----
-
-### 🟡 Part B: knowledge-retrieval-policy — MemPalace-First Search (COMPLETED)
-
-**Plan source:** `knowledge-retrieval-policy.md`
-**Scope:** MemPalace-first search policy injection in all 14 agents
-
-- **T1**: `KNOWLEDGE_RETRIEVAL_POLICY` injected into `identity.ts` via `buildAgentIdentitySection` ✅
-- **T2**: Verification across all agents via `prompts:measure` ✅
-- **T3**: Dynamic agent policy sections updated
-- **T4**: Build + full verification ✅
-- **Sub agent fix**: `KNOWLEDGE_RETRIEVAL_POLICY` added to Sub agent
-- **Strategist fix**: `buildAgentIdentitySection` added to all mode branches
-
----
-
-### 🟡 Part B: cleanup-deprecated — Hide/Remove Deprecated Items (COMPLETED)
-
-**Plan source:** `cleanup-deprecated.md`
-**Scope:** Hide deprecated commands, delete deprecated skills, fix schema
-
-- **A1–A2**: Deprecated skills directory removed ✅
-- **A3**: Schema fixed — `loop` + `cancel-loop` added
-- **A4**: Deprecated filtered from `available_items`
-- **A5**: Removed from auto-slash-command constants
-- **A6**: Removed from strategist-md-only constants
-- **C1–C4**: User-facing strings updated
-- **D1–D3**: Build + typecheck + LSP ✅
-
----
-
-### Part A: Unified Improvement (42 tasks across 6 waves) — 42/42 COMPLETED
-
-**Plan source:** `hiai-opencode-unified-improvement.md`
-**Scope:** Comprehensive plugin improvement
-
-#### Wave 1: Documentation + Community (11 tasks, PARALLEL) ✅
-
-- [x] **DOC-001**: CHANGELOG.md enhancement
-- [x] **DOC-002**: CONTRIBUTING.md
-- [x] **DOC-003**: CODE_OF_CONDUCT.md
-- [x] **DOC-004**: SECURITY.md
-- [x] **DOC-005**: README enhancement
-- [x] **DOC-006**: API documentation
-- [ ] **DOC-007**: Architecture decision records — НЕ выполнено (нет docs/adr/)
-- [x] **DOC-008**: Migration guide
-- [x] **COM-001**: Issue templates
-- [x] **COM-002**: PR template
-- [ ] **COM-003**: Discussion categories — НЕ выполнено (нет .github/DISCUSSION_TEMPLATE)
-
-#### Wave 2: Testing Foundation (6 tasks, PARALLEL) ✅
-
-- [x] **TST-001**: Vitest test framework setup
-- [x] **TST-002**: Agent prompt tests
-- [x] **TST-003**: Hook unit tests
-- [x] **TST-004**: Integration tests
-- [x] **TST-005**: Snapshot tests for prompts
-- [x] **TST-006**: CI test runner
-
-#### Wave 3: Code Health + Skills (6 tasks, PARALLEL) ✅
-
-- [ ] **CH-001**: Remove dead code (49 TODOs/FIXMEs → 80 remaining) — НЕ выполнено
-- [x] **CH-002**: Orphaned file cleanup — `measure-prompts.ts` guard/brainstormer references removed ✅
-- [x] **CH-003**: Type strictness (`noImplicitAny`)
-- [x] **CH-004**: Consistent error handling
-- [x] **CH-005**: Deprecated model key migration path
-- [x] **SKL-001**: Skill reorganization (32→ consolidated) ✅
-
-#### Wave 4: Agent Behavior Fixes (5 tasks, SEQUENTIAL — requires restart) ✅
-
-- [x] **CH-006**: Bob delegation enforcement (strict boundaries)
-- [x] **ARC-009**: Agent identity unification (prompt-library)
-- [x] **ARC-007**: Dynamic agent core sections refactor
-- [x] **CH-007**: Manager source control integration
-- [x] **ARC-008**: Loop multi-agent pipeline routing fix
-
-#### Wave 5: Architecture + Reliability + Performance (8 tasks, PARALLEL) ✅
-
-- [x] **ARC-001**: Hook architecture docs
-- [x] **ARC-002**: Plugin config validation
-- [x] **ARC-003**: MCP error handling
-- [x] **ARC-004**: Agent lifecycle hooks
-- [x] **REL-001**: UnknownError root cause fix
-- [x] **REL-002**: Session recovery hardening
-- [x] **REL-003**: Token budget enforcement
-- [x] **REL-004**: Compaction verification
-
-#### Wave 6: Features (2 tasks, PARALLEL) ✅
-
-- [x] **FEAT-001**: interview-me skill
-- [x] **FEAT-002**: planning-and-task-breakdown skill
+### Removed
+- **NonClaudePlannerSection** — Removed from bob.ts, bob/default.ts, bob/gpt-pro.ts, coder/gpt.ts
+- **bob.ts re-export** — Replaced with bob/index.ts directory resolution
+- **orchestration.ts** — Dead code, 100% duplicate of dynamic-agent-core-sections.ts
 
 ---
 
