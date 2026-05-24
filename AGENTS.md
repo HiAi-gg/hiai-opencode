@@ -460,6 +460,9 @@ MCP INTEGRATIONS (who uses what):
   MemPalace           -> manager (primary), all agents (search before answer) [MCP]
   Sequential-Thinking -> strategist, critic (deep reasoning) [MCP]
 
+DESIGN SYSTEMS:
+  open-design         -> designer (150+ brand design-systems, 48 skills, craft guidelines)
+
 CLI SKILLS (not MCP):
   Firecrawl           -> researcher (web scraping, crawl, extract, search)
 

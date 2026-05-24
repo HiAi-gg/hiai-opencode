@@ -148,6 +148,19 @@ Explicit `environment` entries are an allowlist and bypass the filter that strip
 
 ---
 
+## Bundled Design Library
+
+The plugin ships a comprehensive design library sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0). The Designer agent uses these assets to ground its output in real brand systems instead of generic AI aesthetics.
+
+| Asset | Location | Contents |
+|---|---|---|
+| Brand design systems | `design-systems/` | 150+ brands (Apple, Linear, Stripe, Vercel, Airbnb, etc.) — each with `DESIGN.md`, `tokens.css`, `components.html` |
+| Design skills | `skills/` | 48 skills covering visual storytelling, Figma integration, canvas design, accessibility, animation |
+| Craft guidelines | `craft/` | Typography, color systems, UX patterns, anti-AI-slop references |
+| Prompt templates | `prompt-templates/` | Ready-made prompts for image generation and video production |
+
+---
+
 ## Skill Discovery Options
 
 The `skill_discovery` object controls which external skill folders are scanned.
