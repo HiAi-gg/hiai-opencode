@@ -597,6 +597,7 @@ opencode mcp list --print-logs --log-level INFO
 | Firecrawl CLI skill | [firecrawl/firecrawl](https://github.com/firecrawl/firecrawl) | CLI-based web scraping, crawl, extract, search (NOT an MCP server) |
 | Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
+| Design systems and skills | [nexu-io/open-design](https://github.com/nexu-io/open-design) | brand-grade design systems, design skills, craft guidelines (Apache 2.0) |
 
 ## Build And Publish
 

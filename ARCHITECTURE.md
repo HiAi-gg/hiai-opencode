@@ -61,6 +61,7 @@ User input
 - [assets/mcp](assets/mcp): helper launchers for bundled MCP integrations
 - [assets/runtime](assets/runtime): npm bootstrap helpers and runtime tooling
 - [skills](skills): packaged project skills
+- [design-systems](design-systems): 150+ brand design-systems sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0)
 - [config](config): packaged sample OpenCode config
 
 ## Agent Model

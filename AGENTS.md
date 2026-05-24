@@ -446,7 +446,7 @@ AGENTS:
   strategist       — planning (read-only, no code)
   critic           — review gate (APPROVED/REJECTED)
   researcher       — discovery: local grep + Context7/Firecrawl/grep_app/MemPalace
-  designer         — UI via Stitch MCP
+  designer         — UI via Stitch MCP, design systems from open-design
   writer     — copy/positioning/SEO (write to copy files only)
   vision           — PDF/image extraction
   manager          — MemPalace memory steward
