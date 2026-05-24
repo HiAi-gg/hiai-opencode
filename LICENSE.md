@@ -33,6 +33,7 @@ Some are:
 | Firecrawl CLI skill | [firecrawl/firecrawl](https://github.com/firecrawl/firecrawl) | CLI-based web scraping, crawl, extract, search |
 | Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
 | bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
+| Design skills, design systems, craft guidelines, prompt templates | [nexu-io/open-design](https://github.com/nexu-io/open-design) | Apache 2.0 — bundled skill definitions, 150+ brand DESIGN.md files, craft typography/color/UX guidelines, image/video prompt templates |
 
 ## What Is Bundled vs External
 
@@ -58,3 +59,16 @@ If you publish this package publicly:
 - keep upstream links accurate
 - do not imply ownership of upstream MCP servers or external plugins
 - document clearly when a dependency is external rather than bundled
+
+## Third-party: open-design
+
+This project includes content from [nexu-io/open-design](https://github.com/nexu-io/open-design).
+Copyright (c) nexu-io.
+Licensed under the Apache License, Version 2.0.
+Full license: https://github.com/nexu-io/open-design/blob/main/LICENSE
+
+Included content:
+- `skills/` — 130+ skill definitions with SKILL.md prompts and checklists
+- `design-systems/` — 150+ brand DESIGN.md files with tokens.css and components.html
+- `prompt-templates/` — image and video prompt templates
+- `craft/` — typography, color, accessibility, animation, and UX guidelines

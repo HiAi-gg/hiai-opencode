@@ -97,6 +97,34 @@ MCP integrations and which agents use them:
 | MemPalace | MEMPALACE_PYTHON (optional) | Manager (primary), all agents | Project memory and past decisions |
 | Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
 
+## Design System
+
+The plugin bundles a comprehensive design library sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0).
+
+**150+ brand design systems** in `design-systems/` — each contains:
+- `DESIGN.md` — brand voice, typography, color palette, component patterns, layout principles
+- `tokens.css` — CSS custom properties for colors, spacing, typography, shadows
+- `components.html` — reference HTML for key UI components
+
+Brands include: Apple, Linear, Stripe, Vercel, Airbnb, BMW, Spotify, Notion, Figma, Supabase, and 140+ more.
+
+**48 design skills** in `skills/` — covering:
+- Visual storytelling, editorial layouts, motion design
+- Figma integration (create, generate, implement, export)
+- Canvas design, poster/hero layouts, slide decks
+- Accessibility baselines, animation discipline, color theory
+
+**Craft guidelines** in `craft/` — deep references on:
+- Typography hierarchy (editorial + standard)
+- Color systems and accessibility
+- Form validation UX, state coverage patterns
+- Laws of UX, RTL/bidirectional layout
+- Anti-AI-slop patterns (preventing generic output)
+
+**Prompt templates** in `prompt-templates/` — ready-made prompts for image generation and video production.
+
+The Designer agent uses these assets to ground its output in real brand systems instead of generic AI aesthetics. When the Designer agent works on a task, it can reference brand-specific tokens, typography scales, and component patterns from the design-systems library.
+
 ## What You Get
 
 - **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
