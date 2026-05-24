@@ -11,12 +11,10 @@ import { applyEnvironmentContext } from "./environment-context"
 import { applyModelResolution, getFirstFallbackModel } from "./model-resolution"
 import { log } from "../../shared/logger"
 
-// Reverse map: canonical name -> list of legacy alias keys
-// e.g. "multimodal" -> ["vision", "ui"]
-const CANONICAL_TO_LEGACY_ALIASES: Record<string, string[]> = {}
-for (const [alias, canonical] of Object.entries(LEGACY_AGENT_ALIAS_TO_CANONICAL)) {
-  if (!CANONICAL_TO_LEGACY_ALIASES[canonical]) CANONICAL_TO_LEGACY_ALIASES[canonical] = []
-  CANONICAL_TO_LEGACY_ALIASES[canonical].push(alias)
+// For a given BuiltinAgentName (e.g. "multimodal"), find the config key
+// by checking the forward alias map (e.g. multimodal -> "vision").
+function resolveConfigKeyForAgent(agentName: string): string | undefined {
+  return (LEGACY_AGENT_ALIAS_TO_CANONICAL as Record<string, string>)[agentName]
 }
 
 export function collectPendingBuiltinAgents(input: {
@@ -64,33 +62,21 @@ export function collectPendingBuiltinAgents(input: {
     if (agentName === "sub") continue
     if (disabledAgents.some((name) => name.toLowerCase() === agentName.toLowerCase())) continue
 
-    // Check override by canonical name, then by legacy alias keys
+    // Check override by canonical name, then by config key via alias map
     let override = agentOverrides[agentName]
     if (!override) {
-      const legacyKeys = CANONICAL_TO_LEGACY_ALIASES[agentName]
-      if (legacyKeys) {
-        for (const key of legacyKeys) {
-          const legacyOverride = (agentOverrides as Record<string, unknown>)[key]
-          if (legacyOverride) {
-            override = legacyOverride as unknown as typeof override
-            break
-          }
-        }
+      const configKey = resolveConfigKeyForAgent(agentName)
+      if (configKey && configKey !== agentName) {
+        override = (agentOverrides as Record<string, unknown>)[configKey] as typeof override
       }
     }
 
-    // Check requirement by canonical name, then by legacy alias keys
+    // Check requirement by canonical name, then by config key via alias map
     let requirement = AGENT_MODEL_REQUIREMENTS[agentName] ?? undefined
     if (!requirement) {
-      const legacyReqKeys = CANONICAL_TO_LEGACY_ALIASES[agentName]
-      if (legacyReqKeys) {
-        for (const key of legacyReqKeys) {
-          const legacyReq = AGENT_MODEL_REQUIREMENTS[key]
-          if (legacyReq) {
-            requirement = legacyReq
-            break
-          }
-        }
+      const configKey = resolveConfigKeyForAgent(agentName)
+      if (configKey && configKey !== agentName) {
+        requirement = AGENT_MODEL_REQUIREMENTS[configKey] ?? undefined
       }
     }
 
