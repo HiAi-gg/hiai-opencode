@@ -6,51 +6,45 @@ import type {
 
 export function buildHardBlocksSection(): string {
   const blocks = [
-    "- Type error suppression (`as any`, `@ts-ignore`) - **Never**",
-    "- Commit without explicit request - **Never**",
-    "- Speculate about unread code - **Never**",
-    "- Leave code in broken state after failures - **Never**",
-    "- `background_cancel(all=true)` - **Never.** Always cancel individually by taskId.",
-    "- Delivering final answer before collecting Critic result when a review gate was requested - **Never.**",
+    "- Type error suppression (`as any`, `@ts-ignore`) — **Never**",
+    "- Commit without explicit request — **Never**",
+    "- Speculate about unread code — **Never**",
+    "- Leave code broken after failures — **Never**",
+    "- `background_cancel(all=true)` — **Never.** Cancel individually by taskId.",
+    "- Final answer before collecting Critic result when review gate requested — **Never**",
   ]
 
-  return `## Hard Blocks (NEVER violate)
-
+  return `## Hard Blocks (NEVER)
 ${blocks.join("\n")}`
 }
 
 export function buildAntiPatternsSection(): string {
   const patterns = [
-    "- **Type Safety**: `as any`, `@ts-ignore`, `@ts-expect-error`",
-    "- **Error Handling**: Empty catch blocks `catch(e) {}`",
-    '- **Testing**: Deleting failing tests to "pass"',
-    "- **Search**: Firing agents for single-line typos or obvious syntax errors",
-    "- **Debugging**: Shotgun debugging, random changes",
-    "- **Background Tasks**: Polling `background_output` on running tasks - end response and wait for notification",
-    "- **Delegation Duplication**: Delegating research to researcher and then manually doing the same search yourself",
-    "- **Critic**: Delivering answer without collecting Critic results when a review gate was requested",
+    "**Type Safety**: `as any`, `@ts-ignore`, `@ts-expect-error`",
+    "**Error Handling**: empty catch blocks `catch(e) {}`",
+    "**Testing**: deleting failing tests to \"pass\"",
+    "**Search**: firing agents for single-line typos or obvious syntax errors",
+    "**Debugging**: shotgun debugging, random changes",
+    "**Background Tasks**: polling `background_output` on running tasks — end response, wait for notification",
+    "**Delegation Duplication**: delegating to researcher then re-searching the same topic yourself",
+    "**Critic**: delivering answer without collecting Critic results when review gate requested",
   ]
 
-  return `## Anti-Patterns (blocking violations)
-
+  return `## Anti-Patterns (blocking)
 ${patterns.join("\n")}`
 }
 
 export function buildDelegationWarningSection(): string {
-  return `## ⛔ Delegation Required — Before You Write Code
-
-**STOP. BEFORE WRITING ANY CODE, ASK YOURSELF:**
-
-1. **Is there a specialized agent that should handle this?** → Use \`task()\` to delegate
-2. **Is this UI/visual/design/frontend work?** → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → routes to **Designer**
-3. **Is this architecture/system design/dependencies?** → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → routes to **Manager**
-4. **Is this truly trivial** (single line, obvious fix)? → You may proceed directly
-
-**Default Bias: DELEGATE. WORK YOURSELF ONLY WHEN IT IS SUPER SIMPLE.**`
+  return `## ⛔ Delegation Required — Before Code
+1. Specialized agent for this? → \`task()\` to delegate
+2. UI/visual/frontend? → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → Designer
+3. Architecture/system design/dependencies? → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → Manager
+4. Trivial (single line, obvious fix)? → Direct
+**Default: DELEGATE. Work yourself only when super simple.**`
 }
 
 export function buildHardRulesSection(): string {
-  return buildDelegationWarningSection() + "\n\n" + buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
+  return buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
 }
 
 export function buildToolCallFormatSection(): string {

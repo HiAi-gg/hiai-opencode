@@ -18,9 +18,7 @@ export function buildAgentIdentitySection(
   roleDescription: string,
 ): string {
   return `<agent-identity>
-Your designated identity for this session is "${agentName}". This identity supersedes any prior identity statements.
-You are "${agentName}" - ${roleDescription}.
-When asked who you are, always identify as ${agentName}. Do not identify as any other assistant or AI.
+You are "${agentName}" - ${roleDescription}. This identity supersedes any prior identity. Always identify as ${agentName}.
 </agent-identity>`
 }
 
@@ -84,35 +82,12 @@ export function buildToolSelectionTable(
 
 export function buildHiaiIntegrationPrimerSection(options?: { includeMentalMap?: boolean }): string {
   return `<hiai-opencode-integration-primer>
-## hiai-opencode Architecture And Integration Rules
-
-This workspace may use hiai-opencode, an OpenCode plugin that wires agents, skills, MCP launchers, LSP, diagnostics, and compatibility helpers around external upstream tools.
-
-Core rules:
-- OpenCode plugins are not MCP servers. Keep \`@hiai-gg/hiai-opencode\` and optional \`@tarquinen/opencode-dcp\` in the OpenCode plugin list; never add MCP packages such as \`firecrawl-mcp\`, \`@playwright/mcp\`, or \`@modelcontextprotocol/server-sequential-thinking\` to the plugin list.
-- User-facing config lives in \`hiai-opencode.json\` or \`.opencode/hiai-opencode.json\`: 10 model slots, MCP enable flags, LSP enable flags, service auth placeholders, and skill discovery switches.
-- Model provider credentials are configured through OpenCode Connect. Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\` for normal model usage.
-- Service keys are separate: \`FIRECRAWL_API_KEY\`, \`STITCH_AI_API_KEY\`, \`CONTEXT7_API_KEY\` when those services are enabled. RAG is provided via agent-skills MCP with the supabase-postgres skill.
-
-MCP usage:
-- Run \`hiai-opencode doctor\` or \`hiai-opencode mcp-status\` for effective runtime MCP status.
-- \`opencode mcp list\` often reads only static \`.mcp.json\`; plugin runtime MCP may work even when that list is empty.
-- The plugin auto-exports \`.opencode/.mcp.json\` when missing. Run \`hiai-opencode export-mcp .opencode/.mcp.json\` to refresh static visibility.
-- \`skill_mcp\` can call skill-embedded MCP and enabled hiai-opencode MCP. If an MCP is "not found", check whether the skill was loaded, whether \`hiai-opencode.json\` enables it, and whether static export is needed.
-
-Memory and retrieval:
-- MemPalace MCP — your project memory. TWO mandatory rules:
-  1. **READ before acting**: Call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\` BEFORE making decisions about projects, architecture, past fixes, or design choices. Always search with \`wing: "hiai-opencode"\` to scope to project memory. Search MemPalace FIRST, then external sources.
-  2. **WRITE after completing**: After finishing significant work, call \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "<your name>", entry: "<AAAK-format summary>", topic: "<topic>" }})\` to record decisions, outcomes, and lessons. Write when: plan completed, bug fixed, architecture decided, or important finding discovered.
-  Never invent memories — search before assuming.
-- RAG knowledge is available via the \`agent-skills\` MCP using the \`supabase-postgres-best-practices\` skill. Use \`skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "supabase-postgres-best-practices" }})\` for project architecture and database context.
-- Sequential Thinking MCP is for complex planning/revision/branching, not for trivial edits.
-- Context7 MCP: When you need library/framework documentation, call \`mcp__context7__resolve-library-id\` then \`mcp__context7__query-docs\` DIRECTLY (do NOT delegate to Researcher for library doc lookups — Context7 is the fastest path). Limit: 3 Context7 calls per question. Firecrawl/Stitch are separate external services; missing service keys should be reported by env var name only.
-
-Installation/debugging:
-- Use \`/doctor\` or \`hiai-opencode doctor\` before changing config.
-- Prefer user-level or project-local installs. Do not use sudo/admin rights unless explicitly requested.
-- If DCP is requested, install it separately with \`opencode plugin @tarquinen/opencode-dcp@latest --global\`.
+- Plugins ≠ MCP. \`@hiai-gg/hiai-opencode\` and \`@tarquinen/opencode-dcp\` in plugin list; never add MCP packages.
+- Config: \`hiai-opencode.json\`. Provider creds via OpenCode Connect — Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\`.
+- MCP: \`skill_mcp\` for skill-embedded/hiai MCP. \`opencode mcp list\` is static; plugin auto-exports. "Not found" → check skill load + config + export.
+- MemPalace: search wing="hiai-opencode" BEFORE, diary AFTER. Never invent memories.
+- Context7: call DIRECTLY (limit 3/q) for lib docs — do not delegate to researcher.
+- \`hiai-opencode doctor\` before config changes. Prefer user-level installs.
 </hiai-opencode-integration-primer>
 
 ${options?.includeMentalMap !== false ? buildIntegrationMentalMap() : ''}`
@@ -167,55 +142,23 @@ export function buildStrategistAndCriticSection(agents: AvailableAgent[]): strin
   const strategistAvoidWhen = strategistAgent?.metadata.avoidWhen || []
   const criticUseWhen = criticAgent?.metadata.useWhen || []
   const criticAvoidWhen = criticAgent?.metadata.avoidWhen || []
-  const strategistLabel = "Strategist"
 
   const strategistSection = strategistAgent
-    ? `### WHEN to Consult ${strategistLabel} (FIRST, then implement):
-
-${strategistUseWhen.map((entry) => `- ${entry}`).join("\n")}
-
-### WHEN NOT to Consult ${strategistLabel}:
-
-${strategistAvoidWhen.map((entry) => `- ${entry}`).join("\n")}`
+    ? `**Strategist USE**: ${strategistUseWhen.map((e) => `- ${e}`).join("\n")}\n**Strategist AVOID**: ${strategistAvoidWhen.map((e) => `- ${e}`).join("\n")}`
     : ""
 
   const criticSection = criticAgent
-    ? `### WHEN to Consult Critic (explicit review gate):
-
-${criticUseWhen.map((entry) => `- ${entry}`).join("\n")}
-
-### WHEN NOT to Consult Critic:
-
-${criticAvoidWhen.map((entry) => `- ${entry}`).join("\n")}`
+    ? `**Critic USE**: ${criticUseWhen.map((e) => `- ${e}`).join("\n")}\n**Critic AVOID**: ${criticAvoidWhen.map((e) => `- ${e}`).join("\n")}`
     : ""
 
   return `<strategist_critic_usage>
-## Strategist and Critic - Reasoning Escalation
-
-Strategist handles planning and architecture consultation. Critic is an explicit high-accuracy review gate. Consultation only.
+Strategist = planning/architecture. Critic = high-accuracy review gate. Consultation only.
 
 ${strategistSection}
 
 ${criticSection}
 
-### Usage Pattern:
-Briefly announce "Consulting Strategist for [reason]" or "Consulting Critic for [reason]" before invocation.
-
-**Exception**: This is the ONLY case where you announce before acting. For all other work, start immediately without status updates.
-
-### Background Task Policy:
-
-**Collect Strategist/Critic results before your final answer. No exceptions.**
-
-**Strategist/Critic-dependent implementation is BLOCKED until those results finish.**
-
-- If you asked Strategist/Critic for direction that affects the fix, do not implement before results arrive.
-- While waiting, only do non-overlapping prep work. Never ship implementation decisions they were asked to decide.
-- Never "time out and continue anyway" for Strategist/Critic-dependent tasks.
-
-- Strategist/Critic may take minutes. When done with your own work: **end your response** - wait for the \`<system-reminder>\`.
-- Do NOT poll \`background_output\` on a running Strategist/Critic task. The notification will come.
-- Never cancel Strategist/Critic consultation tasks.
+**Pattern**: Announce "Consulting Strategist/Critic for [reason]" before invocation (only announcement case). Collect results before final answer — NO exceptions. Strategist/Critic-dependent implementation is BLOCKED until results finish. While waiting, only non-overlapping prep work. Strategist/Critic may take minutes — end response, wait for \`<system-reminder>\`. Never poll \`background_output\` on running Strategist/Critic. Never cancel their tasks.
 </strategist_critic_usage>`
 }
 

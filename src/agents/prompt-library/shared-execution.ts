@@ -10,14 +10,7 @@
 
 export function buildSearchStopConditionsSection(): string {
   return `### Search Stop Conditions
-
-STOP searching when:
-- You have enough context to proceed confidently
-- Same information appearing across multiple sources
-- 2 search iterations yielded no new useful data
-- Direct answer found
-
-**DO NOT over-research. Time is precious.**`;
+STOP when: enough context, duplicate info across sources, 2 iterations yield nothing, direct answer found. Do NOT over-research.`;
 }
 
 // ----------------------------------------------------------------
@@ -25,26 +18,9 @@ STOP searching when:
 // ----------------------------------------------------------------
 
 export function buildDelegationPromptSection(): string {
-  return `### Delegation Prompt Structure (ALL 6 sections):
-
-When delegating, your prompt MUST include:
-
-\`\`\`
-1. TASK: Atomic, specific goal (one action per delegation)
-2. EXPECTED OUTCOME: Concrete deliverables with success criteria
-3. REQUIRED TOOLS: Explicit tool whitelist (prevents tool sprawl)
-4. MUST DO: Exhaustive requirements - leave NOTHING implicit
-5. MUST NOT DO: Forbidden actions - anticipate and block rogue behavior
-6. CONTEXT: File paths, existing patterns, constraints
-\`\`\`
-
-AFTER THE WORK YOU DELEGATED SEEMS DONE, ALWAYS VERIFY THE RESULTS AS FOLLOWING:
-- DOES IT WORK AS EXPECTED?
-- DOES IT FOLLOWED THE EXISTING CODEBASE PATTERN?
-- EXPECTED RESULT CAME OUT?
-- DID THE AGENT FOLLOWED "MUST DO" AND "MUST NOT DO" REQUIREMENTS?
-
-**Vague prompts = rejected. Be exhaustive.**`;
+  return `### Delegation Prompt Structure (6 sections, ALL required)
+1. TASK: atomic specific goal | 2. EXPECTED OUTCOME: concrete deliverables + success criteria | 3. REQUIRED TOOLS: explicit whitelist | 4. MUST DO: exhaustive requirements | 5. MUST NOT DO: forbidden actions | 6. CONTEXT: file paths + patterns + constraints
+After delegation: verify (works? codebase pattern followed? expected result? MUST DO/NOT followed?). Vague prompts = rejected.`;
 }
 
 // ----------------------------------------------------------------
@@ -55,39 +31,18 @@ export function buildSessionContinuitySection(
   variant: "full" | "compact" = "full",
 ): string {
   const core = `### Session Continuity
-
-Every \`task()\` output includes a session_id. **USE IT for follow-ups.**
-
-- **Task failed/incomplete** - \`session_id="{id}", prompt="Fix: {error}"\`
-- **Follow-up on result** - \`session_id="{id}", prompt="Also: {question}"\`
-- **Multi-turn with same agent** - \`session_id="{id}"\` - NEVER start fresh
-- **Verification failed** - \`session_id="{id}", prompt="Failed: {error}. Fix."\``;
+Every \`task()\` output includes session_id. USE IT for follow-ups. \`session_id="{id}", prompt="Fix: {error}"\` for failures; same id for multi-turn. NEVER start fresh.`;
 
   if (variant === "compact") {
     return core;
   }
 
   return `${core}
-
-**Why session_id is important:**
-- Subagent has FULL conversation context preserved
-- No repeated file reads, exploration, or setup
-- Saves 70%+ tokens on follow-ups
-- Subagent knows what it already tried/learned
-
-\`\`\`typescript
-// WRONG: Starting fresh loses all context
-task(category="quick", load_skills=[], run_in_background=false, description="Fix type error", prompt="Fix the type error in auth.ts...")
-
-// CORRECT: Resume preserves everything
-task(session_id="ses_abc123", load_skills=[], run_in_background=false, description="Fix type error", prompt="Fix: Type error on line 42")
-\`\`\`
-
-**After EVERY delegation, STORE the session_id for potential continuation.**`;
+Subagent has full context preserved (saves 70%+ tokens on follow-ups). After EVERY delegation, STORE the session_id for continuation.`;
 }
 
 // ----------------------------------------------------------------
-// Failure Recovery — Bob (6-step) and Coder (3-step) share core
+// Failure Recovery — Bob (full) and Coder (compact) share core
 // ----------------------------------------------------------------
 
 export function buildFailureRecoverySection(
@@ -95,28 +50,15 @@ export function buildFailureRecoverySection(
 ): string {
   if (variant === "full") {
     return `### Failure Recovery
-
-1. Fix root causes, not symptoms. Re-verify after EVERY attempt.
-2. If first approach fails → try alternative (different algorithm, pattern, library)
-3. After 3 DIFFERENT approaches fail:
-   - **STOP** all edits → **REVERT** to last known working state (git checkout / undo edits)
-   - **DOCUMENT** what was attempted and what failed
-   - **CONSULT** Strategist with full failure context
-   - If high-risk uncertainty remains → **ESCALATE** to Critic for final gate
-   - If Strategist/Critic cannot resolve → **ASK USER** with clear explanation
-
-**Never**: Leave code in broken state, continue hoping it'll work, delete failing tests to "pass"`;
+1. Fix root causes (not symptoms). Re-verify after EVERY attempt.
+2. If first approach fails → try alternative.
+3. After 3 DIFFERENT approaches fail: STOP edits → REVERT (git checkout / undo) → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.
+Never: leave code broken, shotgun debug, delete failing tests to "pass".`;
   }
 
   return `### Failure Recovery
-
-1. Fix root causes, not symptoms. Re-verify after EVERY attempt.
-2. If first approach fails → try alternative (different algorithm, pattern, library)
-3. After 3 DIFFERENT approaches fail:
-   - STOP all edits → REVERT to last working state
-   - DOCUMENT what you tried → CONSULT Strategist
-   - If high-risk uncertainty remains → ESCALATE Critic
-   - If Strategist/Critic fails → ASK USER with clear explanation
-
-**Never**: Leave code broken, delete failing tests, shotgun debug`;
+1. Root causes, re-verify each attempt.
+2. Try alternative on first failure.
+3. After 3 fails: STOP → REVERT → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.
+Never: leave broken, shotgun debug, delete tests.`;
 }

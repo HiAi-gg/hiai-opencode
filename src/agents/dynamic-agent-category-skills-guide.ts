@@ -72,73 +72,25 @@ export function buildCategorySkillsDelegationGuide(
 > **User-installed skills get PRIORITY.** When in doubt, INCLUDE rather than omit.`
       : ""
 
-  return `### Category + Skills Delegation System
+  return `### Category + Skills Delegation
 
-**task() combines categories and skills for optimal task execution.**
+\`task()\` combines categories (domain-optimized models) and skills (instruction packs).
 
-#### Available Categories (Domain-Optimized Models)
-
-Each category is configured with a model optimized for that domain. Read the description to understand when to use it.
-
+#### Available Categories
 ${categoryRows.join("\n")}
 
 ${skillsSection}
 
 ---
 
-### Category + Skill Selection Protocol
-
-**STEP 1: Select Category**
-- Read each category's description
-- Match task requirements to category domain
-- Select the category whose domain BEST fits the task
-
-**STEP 2: Evaluate ALL Skills**
-Check the \`skill\` tool for available skills and their descriptions. For EVERY skill, ask:
-> "Does this skill's expertise domain overlap with my task?"
-
-- If YES → INCLUDE in \`load_skills=[...]\`
-- If NO → OMIT (no justification needed)${customPriorityNote}
-
----
-
-### Delegation Pattern
+**STEP 1: Select Category** — match task to category domain.
+**STEP 2: Evaluate ALL Skills** — for each, ask: "Does this overlap with my task?" → INCLUDE in \`load_skills=[...]\` if yes, OMIT if no.${customPriorityNote}
 
 \`\`\`typescript
-task(
-  category="[selected-category]",
-  load_skills=["skill-1", "skill-2"],  // Include ALL relevant skills - ESPECIALLY user-installed ones
-  prompt="..."
-)
+task(category="[domain]", load_skills=["skill-1", "skill-2"], prompt="...")
+// ANTI-PATTERN: empty load_skills without justification
 \`\`\`
-
-**ANTI-PATTERN (will produce poor results):**
-\`\`\`typescript
-task(category="...", load_skills=[], run_in_background=false, prompt="...")  // Empty load_skills without justification
-\`\`\`
-
----
 
 ### Category Domain Matching (ZERO TOLERANCE)
-
-Every delegation MUST use the category that matches the task's domain. Mismatched categories produce measurably worse output because each category runs on a model optimized for that specific domain.
-
-**VISUAL WORK = ALWAYS \`visual-engineering\`. NO EXCEPTIONS.**
-
-Any task involving UI, UX, CSS, styling, layout, animation, design, or frontend components MUST go to \`visual-engineering\`. Never delegate visual work to \`quick\`, \`unspecified-*\`, or any other category.
-
-\`\`\`typescript
-// CORRECT: Visual work → visual-engineering category
-task(category="visual-engineering", load_skills=["frontend-ui-ux"], prompt="Redesign the sidebar layout with new spacing...")
-
-// WRONG: Visual work in wrong category - WILL PRODUCE INFERIOR RESULTS
-task(category="quick", load_skills=[], prompt="Redesign the sidebar layout with new spacing...")
-\`\`\`
-
-**UI, styling, animations, layout, design** → \`visual-engineering\`
-**Hard logic, architecture decisions, algorithms** → \`ultrabrain\`
-**Autonomous research + end-to-end implementation** → \`deep\`
-**Single-file typo, trivial config change** → \`quick\`
-
-**When in doubt about category, it is almost never \`quick\` or \`unspecified-*\`. Match the domain.**`
+**VISUAL WORK = ALWAYS \`visual-engineering\`.** UI/UX/CSS/styling/layout/animation/design/frontend → \`visual-engineering\`. Hard logic/architecture/algorithms → \`ultrabrain\`. Research + end-to-end impl → \`deep\`. Trivial single-file fix → \`quick\`. **Almost never \`quick\` or \`unspecified-*\` — match the domain.**`
 }
