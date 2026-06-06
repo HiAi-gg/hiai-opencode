@@ -17,7 +17,12 @@ function makeToolErrorHandler(toolName: string) {
   }
 }
 
-export function createAgentBrowserIntegrationTool(): ToolDefinition[] {
+export interface AgentBrowserIntegrationToolEntry {
+  name: string
+  tool: ToolDefinition
+}
+
+export function createAgentBrowserIntegrationTool(): AgentBrowserIntegrationToolEntry[] {
   const agent_browser_install: ToolDefinition = tool({
     description: "Install agent-browser globally via npm and run browser installation. Use this when agent-browser is not found or needs to be updated. Returns installation output and version check.",
     args: {},
@@ -68,7 +73,10 @@ export function createAgentBrowserIntegrationTool(): ToolDefinition[] {
     },
   })
 
-  return [agent_browser_install, agent_browser_doctor]
+  return [
+    { name: "agent_browser_install", tool: agent_browser_install },
+    { name: "agent_browser_doctor", tool: agent_browser_doctor },
+  ]
 }
 
 async function executeWithTimeout(

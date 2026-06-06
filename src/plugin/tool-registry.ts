@@ -262,10 +262,7 @@ export function createToolRegistry(args: {
     ? { edit: factories.createHashlineEditTool(ctx) }
     : {}
 
-  const agentBrowserIntegrationTools: NamedTool[] = Array.from(factories.createAgentBrowserIntegrationTool()).map((t, i, arr) => ({
-    name: arr.length === 2 ? (i === 0 ? "agent_browser_install" : "agent_browser_doctor") : (t as { name?: string }).name ?? "unknown",
-    tool: t,
-  }))
+  const agentBrowserIntegrationTools: NamedTool[] = factories.createAgentBrowserIntegrationTool()
   const agentBrowserTools: NamedTool[] = Array.from(factories.createAgentBrowserTool(ctx)).map((t) => ({
     name: (t as { name?: string }).name ?? "unknown",
     tool: t,
