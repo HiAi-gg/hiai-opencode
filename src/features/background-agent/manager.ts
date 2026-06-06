@@ -97,6 +97,13 @@ import {
 import {
   enqueueNotificationForParent as enqueueNotificationForParentFn,
   notifyParentSession as notifyParentSessionFn,
+  notifyTaskStarted as notifyTaskStartedFn,
+  notifyTaskCompleted as notifyTaskCompletedFn,
+  notifyTaskFailed as notifyTaskFailedFn,
+  notifyTaskProgress as notifyTaskProgressFn,
+  startBatch as startBatchFn,
+  endBatch as endBatchFn,
+  isBatchMode as isBatchModeFn,
 } from "./manager-notifier"
 export type { SubagentSessionCreatedEvent, OnSubagentSessionCreated } from "./manager-types"
 
@@ -314,17 +321,14 @@ export class BackgroundManager {
 
       log("[background-agent] Task queued:", { taskId: task.id, key, queueLength: queue.length })
 
-      const toastManager = getTaskToastManager()
-      if (toastManager) {
-        toastManager.addTask({
-          id: task.id,
-          description: input.description,
-          agent: input.agent,
-          isBackground: true,
-          status: "queued",
-          skills: input.skills,
-        })
-      }
+      notifyTaskStartedFn({
+        id: task.id,
+        description: input.description,
+        agent: input.agent,
+        isBackground: true,
+        status: "queued",
+        skills: input.skills,
+      })
 
       spawnReservation.commit()
       this.markPreStartDescendantReservation(task)
@@ -538,15 +542,13 @@ export class BackgroundManager {
       this.state.pendingByParent.set(input.parentSessionID, pending)
     }
 
-    const toastManager = getTaskToastManager()
-    if (toastManager) {
-      toastManager.addTask({
-        id: existingTask.id,
-        description: existingTask.description,
-        agent: existingTask.agent,
-        isBackground: true,
-      })
-    }
+    notifyTaskStartedFn({
+      id: existingTask.id,
+      description: existingTask.description,
+      agent: existingTask.agent,
+      isBackground: true,
+      status: "running",
+    })
 
     log("[background-agent] Resuming task:", { taskId: existingTask.id, sessionID: existingTask.sessionID })
 
@@ -997,10 +999,7 @@ export class BackgroundManager {
 
     this.cleanupPendingByParent(task)
     this.clearNotificationsForTask(task.id)
-    const toastManager = getTaskToastManager()
-    if (toastManager) {
-      toastManager.removeTask(task.id)
-    }
+    removeTaskToastTracking(task.id)
     this.scheduleTaskRemoval(task.id)
     if (task.sessionID) {
       SessionCategoryRegistry.remove(task.sessionID)

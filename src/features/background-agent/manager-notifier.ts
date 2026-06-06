@@ -10,6 +10,81 @@ import { isAbortedSessionError, isRecoverablePromptInjectionError, extractErrorM
 import { join } from "node:path"
 import { MESSAGE_STORAGE } from "../hook-message-injector"
 
+export interface TaskLifecycleEvent {
+  id: string
+  description: string
+  agent: string
+  isBackground: boolean
+  status?: "queued" | "running" | "completed" | "error"
+  skills?: string[]
+}
+
+let batchMode = false
+let pendingEvents: TaskLifecycleEvent[] = []
+
+export function startBatch(): void {
+  batchMode = true
+}
+
+export function endBatch(): void {
+  batchMode = false
+  const events = pendingEvents
+  pendingEvents = []
+  const toastManager = getTaskToastManager()
+  if (!toastManager) return
+  for (const event of events) {
+    toastManager.addTask(event)
+  }
+}
+
+function shouldQueueInBatch(): boolean {
+  return batchMode
+}
+
+export function notifyTaskStarted(event: TaskLifecycleEvent): void {
+  if (shouldQueueInBatch()) {
+    pendingEvents.push(event)
+    return
+  }
+  const toastManager = getTaskToastManager()
+  if (!toastManager) return
+  toastManager.addTask({ ...event, status: event.status ?? "running" })
+}
+
+export function notifyTaskProgress(task: BackgroundTask, event: TaskLifecycleEvent): void {
+  if (shouldQueueInBatch()) {
+    pendingEvents.push(event)
+    return
+  }
+  const toastManager = getTaskToastManager()
+  if (!toastManager) return
+  toastManager.addTask({ ...event, status: event.status ?? "running" })
+}
+
+export function notifyTaskCompleted(task: BackgroundTask, event: TaskLifecycleEvent): void {
+  if (shouldQueueInBatch()) {
+    pendingEvents.push(event)
+    return
+  }
+  const toastManager = getTaskToastManager()
+  if (!toastManager) return
+  toastManager.addTask({ ...event, status: "completed" })
+}
+
+export function notifyTaskFailed(task: BackgroundTask, event: TaskLifecycleEvent): void {
+  if (shouldQueueInBatch()) {
+    pendingEvents.push(event)
+    return
+  }
+  const toastManager = getTaskToastManager()
+  if (!toastManager) return
+  toastManager.addTask({ ...event, status: "error" })
+}
+
+export function isBatchMode(): boolean {
+  return batchMode
+}
+
 export interface NotifierAdapter {
   client: {
     session: {
