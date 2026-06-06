@@ -1,5 +1,7 @@
-bob 12333 241
-coder 9184 174
+# Auto-generated baseline — do not edit manually
+# Update by running: bun scripts/regen-baseline.ts
+bob 12185 241
+coder 9036 174
 critic 7707 191
 designer 7202 130
 manager 24754 537

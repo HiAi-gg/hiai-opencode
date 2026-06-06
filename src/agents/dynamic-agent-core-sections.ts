@@ -83,7 +83,7 @@ export function buildToolSelectionTable(
 export function buildHiaiIntegrationPrimerSection(options?: { includeMentalMap?: boolean }): string {
   return `<hiai-opencode-integration-primer>
 - Plugins ≠ MCP. \`@hiai-gg/hiai-opencode\` and \`@tarquinen/opencode-dcp\` in plugin list; never add MCP packages.
-- Config: \`hiai-opencode.json\`. Provider creds via OpenCode Connect — Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\`.
+- Config: \`hiai-opencode.json\`. OpenCode Connect creds — Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\`.
 - MCP: \`skill_mcp\` for skill-embedded/hiai MCP. \`opencode mcp list\` is static; plugin auto-exports. "Not found" → check skill load + config + export.
 - MemPalace: search wing="hiai-opencode" BEFORE, diary AFTER. Never invent memories.
 - Context7: call DIRECTLY (limit 3/q) for lib docs — do not delegate to researcher.
