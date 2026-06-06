@@ -351,6 +351,8 @@ All 12/12 tasks DONE.
 | Files changed | 0 | **~220** | — | — |
 | BackgroundManager lines | 1996 | 1996 | **1726** (TaskStateStore+TaskExecutor+Notifier+PollingManager extracted) | ≤1400 ⚠️ |
 | E2E smoke test | None | None | **10-check script** (scripts/e2e-smoke-test.sh) | Present ✅ |
+| Browser verification (live UI) | N/A | T35 PENDING | Requires clean Linux + OpenCode runtime install | T35 |
+| OpenCode runtime bug | N/A | N/A | `session_message.seq NOT NULL` crash on `agent.switched` — OpenCode internal, not hiai-opencode | Upstream |
 
 ---
 
