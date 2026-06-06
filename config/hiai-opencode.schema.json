@@ -183,9 +183,8 @@
           "default": 0,
           "description": "Auto-start ralph-loop when this many or more open todos exist in a single session. 0 disables auto-start."
         }
-}
-  }
-}
+      }
+    }
   },
   "required": [
     "models"
