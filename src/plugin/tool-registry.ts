@@ -9,6 +9,11 @@ import type { McpServerConfig } from "../config/types"
 import { isInteractiveBashEnabled } from "../create-runtime-tmux-config"
 import type { PluginContext, ToolsRecord } from "./types"
 
+interface NamedTool {
+  name: string
+  tool: ToolDefinition
+}
+
 import {
   builtinTools,
   createBackgroundTools,
@@ -257,15 +262,21 @@ export function createToolRegistry(args: {
     ? { edit: factories.createHashlineEditTool(ctx) }
     : {}
 
-  const agentBrowserIntegrationTools: ToolDefinition[] = Array.from(factories.createAgentBrowserIntegrationTool())
-  const agentBrowserTools: ToolDefinition[] = Array.from(factories.createAgentBrowserTool(ctx))
+  const agentBrowserIntegrationTools: NamedTool[] = Array.from(factories.createAgentBrowserIntegrationTool()).map((t, i, arr) => ({
+    name: arr.length === 2 ? (i === 0 ? "agent_browser_install" : "agent_browser_doctor") : (t as { name?: string }).name ?? "unknown",
+    tool: t,
+  }))
+  const agentBrowserTools: NamedTool[] = Array.from(factories.createAgentBrowserTool(ctx)).map((t) => ({
+    name: (t as { name?: string }).name ?? "unknown",
+    tool: t,
+  }))
 
   const agentBrowserToolEntries: Record<string, ToolDefinition> = {}
-  for (const t of agentBrowserIntegrationTools) {
-    ;(agentBrowserToolEntries as any)[(t as any).name] = t
+  for (const { name, tool: t } of agentBrowserIntegrationTools) {
+    agentBrowserToolEntries[name] = t
   }
-  for (const t of agentBrowserTools) {
-    ;(agentBrowserToolEntries as any)[(t as any).name] = t
+  for (const { name, tool: t } of agentBrowserTools) {
+    agentBrowserToolEntries[name] = t
   }
 
   const allTools: Record<string, ToolDefinition> = {
