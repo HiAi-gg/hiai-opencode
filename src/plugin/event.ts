@@ -116,16 +116,23 @@ export function createEventHandler(args: {
     return properties.sessionID;
   };
 
+  const SLOW_HOOK_THRESHOLD_MS = 100
   const runEventHookSafely = async (
     hookName: string,
     handler: ((input: EventInput) => unknown | Promise<unknown>) | null | undefined,
     input: EventInput,
   ): Promise<void> => {
     if (!handler) return;
+    const start = performance.now();
     try {
       await Promise.resolve(handler(input));
     } catch (error) {
       log("[event] hook execution failed", { hook: hookName, eventType: input.event.type, sessionID: getEventSessionID(input), error });
+    } finally {
+      const elapsed = performance.now() - start
+      if (elapsed > SLOW_HOOK_THRESHOLD_MS) {
+        log("[event] slow hook", { hook: hookName, elapsedMs: Math.round(elapsed), eventType: input.event.type })
+      }
     }
   };
 
