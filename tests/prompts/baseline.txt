@@ -6,8 +6,8 @@ critic 7707 191
 designer 7202 130
 manager 24754 537
 quality-guardian 2886 67
-researcher 7219 128
+researcher 7224 128
 strategist 10078 287
 sub 2184 66
 vision 6507 146
-writer 5436 97
+writer 5421 97

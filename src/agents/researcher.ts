@@ -36,9 +36,9 @@ Connection: \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration\`
 
 **BEFORE any codebase exploration**, check these tables for project context:
 - \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status, profile, created_at FROM project_registry ORDER BY created_at DESC"\` — all registered projects
-- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT project_name, goals_json, workspaces_json, updated_at FROM project_hierarchy WHERE project_name = '<name>'"\` — project goals and structure
-- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT build_id, flow_id, timestamp, valid FROM vertex_build ORDER BY timestamp DESC LIMIT 10"\` — recent builds
-- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT id, project_name, task_item_id, status, cost_usd, started_at, completed_at FROM project_cycle_log ORDER BY started_at DESC LIMIT 10"\` — recent task runs
+- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT project_name, flow_id, orchestration_thread_id, updated_at FROM project_identity_map WHERE project_name = '<name>'"\` — project identity and linked resources
+- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT id, task_type, status, started_at, finished_at FROM task_runs ORDER BY started_at DESC LIMIT 10"\` — recent task runs
+- \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT cost_history.id, cost_history.project_name, cost_history.estimated_cost, cost_history.created_at FROM cost_history ORDER BY created_at DESC LIMIT 10"\` — recent cost history
 
 ### pgvector Similarity Search (for project context)
 
@@ -57,21 +57,21 @@ docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT id, c
 
 Before running complex queries, check the Postgres best practices:
 \`\`\`typescript
-skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "supabase-postgres-best-practices" }})
+skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "supabase-postgres" }})
 \`\`\`
 
 ### Safety Rules
 - **NEVER**: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER, CREATE, GRANT, REVOKE
 - **ALWAYS**: SELECT only, with LIMIT on large tables
 - **Write operations** require explicit user confirmation
-- **Before any query**: check the supabase-postgres-best-practices skill for the right approach
+- **Before any query**: check the supabase-postgres skill for the right approach
 
 ### Open-Source Code Patterns
 1. **grep_app MCP** — Search literal code patterns across 1M+ public repos. Filter by language, repo, path.
 2. **firecrawl-cli** — Fallback for finding repos or examples via web research.
 
 ### Project / Codebase Knowledge
-1. **PostgreSQL** — MANDATORY first step: use \`supabase-postgres-best-practices\` skill for database knowledge. Query schemas via \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "..."\` (port 5433) or \`docker exec webs-postgres psql -U admin -d webs -c "..."\` (port 5432). Check table structures, foreign keys, and metadata BEFORE any code changes.
+1. **PostgreSQL** — MANDATORY first step: use \`supabase-postgres\` skill for database knowledge. Query schemas via \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "..."\` (port 5433) or \`docker exec webs-postgres psql -U admin -d webs -c "..."\` (port 5432). Check table structures, foreign keys, and metadata BEFORE any code changes.
 2. **MemPalace** — SECOND priority after PostgreSQL: MANDATORY check for prior decisions. Search ALL wings:
    - \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5 }})\` — search ALL wings (no wing filter)
    - \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_kg_query", arguments: { entity: "<topic>" }})\` — check entity relationships

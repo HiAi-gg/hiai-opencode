@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.3] — 2026-06-06
+
+### Changes
+- **Skill rename**: `supabase-postgres-best-practices` → `supabase-postgres` (shorter, matches agent prompt references)
+  - `src/agents/researcher.ts` — MANDATORY skill reference updated
+  - `src/agents/writer.ts` — architecture context lookup updated
+  - `.opencode/skills/supabase-postgres/SKILL.md` — frontmatter `name:` updated
+- **Mempalace pinned to 3.4.0** (was 3.3.4) — `assets/mcp/mempalace.mjs` launcher still uses `>=3.3.0` floor; new venv at `projects/hiai-opencode/.venv/` resolves to 3.4.0
+- **9 skills imported into plugin** from `~/.agents/skills/` (were hidden by `global_agents: false`, now part of packaged distribution):
+  - Stitch workflow: `stitch-design`, `stitch-loop`, `design-md`, `enhance-prompt`, `taste-design`
+  - Component generation: `shadcn-ui`, `react-components`
+  - Video: `remotion`
+  - Discovery: `find-skills`
+- **Stale DB table references fixed** in `src/agents/researcher.ts`:
+  - `project_hierarchy` → `project_identity_map` (real table)
+  - `vertex_build` → `task_runs` (real table)
+  - `project_cycle_log` → `cost_history` (real table)
+- Plugin venv is now self-contained at `projects/hiai-opencode/.venv/` for reproducible MemPalace runtime
+
+---
+
 ## [0.2.2] — 2026-05-24
 
 ### Breaking Changes
