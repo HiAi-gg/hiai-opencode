@@ -8,17 +8,17 @@ import type {
   AvailableCategory,
   AvailableSkill,
 } from "../../agents/dynamic-agent-prompt-builder"
-import {
-  resolveSkillContent,
-  resolveParentContext,
-  executeBackgroundContinuation,
-  executeSyncContinuation,
-  resolveCategoryExecution,
-  resolveSubagentExecution,
-  executeUnstableAgentTask,
-  executeBackgroundTask,
-  executeSyncTask,
-} from "./executor"
+import { resolveSkillContent } from "./skill-resolver"
+import { resolveParentContext } from "./parent-context-resolver"
+import { executeBackgroundContinuation } from "./background-continuation"
+import { executeSyncContinuation } from "./sync-continuation"
+import { resolveCategoryExecution } from "./category-resolver"
+import { resolveSubagentExecution } from "./subagent-resolver"
+import { executeUnstableAgentTask } from "./unstable-agent-task"
+import { executeBackgroundTask } from "./background-task"
+import { executeSyncTask } from "./sync-task"
+import { validateDelegateTaskArgs, validateRequiredFields } from "./arg-validator"
+import { determineExecutionMode } from "./execution-router"
 
 export { resolveCategoryConfig } from "./categories"
 export type { SyncSessionCreatedEvent, DelegateTaskToolOptions, BuildSystemContentInput } from "./types"
@@ -97,7 +97,7 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
     description,
     args: {
       load_skills: tool.schema.array(tool.schema.string()).describe("Skill names to inject. REQUIRED - pass [] if no skills needed."),
-      description: tool.schema.string().optional().describe("Short task description (3-5 words). Auto-generated from prompt if omitted."),
+      description: tool.schema.string().describe("Short task description (3-5 words). REQUIRED for new tasks."),
       prompt: tool.schema.string().describe("Full detailed prompt for the agent"),
       run_in_background: tool.schema.boolean().describe("REQUIRED. true=async (returns task_id), false=sync (waits). Use false for task delegation, true ONLY for parallel exploration."),
       category: tool.schema.string().optional().describe(`REQUIRED if subagent_type not provided. Do NOT provide both category and subagent_type.`),
@@ -108,26 +108,31 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
     async execute(args: DelegateTaskArgs, toolContext) {
       const ctx = toolContext as ToolContextWithMetadata
 
-      if (args.category) {
-        if (args.subagent_type) {
-          log("[task] category provided - ignoring explicit subagent_type", {
-            category: args.category,
-            subagent_type: args.subagent_type,
-          })
-        }
+      if (!validateDelegateTaskArgs(args)) {
+        return "Invalid task arguments"
+      }
+
+      const validationErrors = validateRequiredFields(args)
+      if (validationErrors.length > 0) {
+        return validationErrors.join("; ")
+      }
+
+      if (args.category && args.subagent_type) {
+        log("[task] category provided - ignoring explicit subagent_type", {
+          category: args.category,
+          subagent_type: args.subagent_type,
+        })
         args.subagent_type = undefined
       }
-      // Auto-generate description from prompt when missing or empty
-      if (!args.description || typeof args.description !== "string" || args.description.trim() === "") {
-        const words = (args.prompt || "").trim().split(/\s+/)
-        args.description = words.slice(0, 4).join(" ") || "Delegated task"
-      }
+
       await ctx.metadata?.({
         title: args.description,
       })
+
       if (args.run_in_background === undefined) {
         throw new Error(`Invalid arguments: 'run_in_background' parameter is REQUIRED. Specify run_in_background=false for task delegation, or run_in_background=true for parallel exploration.`)
       }
+
       if (typeof args.load_skills === "string") {
         try {
           const parsed = JSON.parse(args.load_skills)
@@ -136,9 +141,11 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
           args.load_skills = []
         }
       }
+
       if (args.load_skills === undefined) {
         throw new Error(`Invalid arguments: 'load_skills' parameter is REQUIRED. Pass [] if no skills needed.`)
       }
+
       if (args.load_skills === null) {
         throw new Error(`Invalid arguments: load_skills=null is not allowed. Pass [] if no skills needed.`)
       }
@@ -162,10 +169,6 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
           return executeBackgroundContinuation(args, ctx, options, parentContext)
         }
         return executeSyncContinuation(args, ctx, options)
-      }
-
-      if (!args.category && !args.subagent_type) {
-        return `Invalid arguments: Must provide either category or subagent_type.`
       }
 
       let systemDefaultModel: string | undefined

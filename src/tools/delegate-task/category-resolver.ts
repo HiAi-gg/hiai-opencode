@@ -8,25 +8,18 @@ import { resolveCategoryConfig } from "./categories"
 import { parseModelString } from "./model-string-parser"
 import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
 import { normalizeFallbackModels, flattenToFallbackModelStrings } from "../../shared/model-resolver"
-import { buildFallbackChainFromModels, findMostSpecificFallbackEntry } from "../../shared/fallback-chain-from-models"
+import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models"
 import { CONFIG_BASENAME } from "../../shared/plugin-identity"
 import { getAvailableModelsForDelegateTask } from "./available-models"
 import { resolveModelForDelegateTask } from "./model-selection"
 import { getAgentDisplayName } from "../../shared/agent-display-names"
 import { resolveModeAgent } from "../../shared/mode-routing"
+import { applyCategoryParams } from "./delegated-model-config"
+import { resolveEffectiveFallbackEntry } from "./fallback-entry-resolution"
+import { applyFallbackEntrySettings } from "./fallback-entry-settings"
 
 import type { CategoryConfig } from "../../config/schema"
 import type { DelegatedModelConfig } from "./types"
-
-function applyCategoryParams(base: DelegatedModelConfig, config: CategoryConfig): DelegatedModelConfig {
-  const result = { ...base }
-  if (config.temperature !== undefined) result.temperature = config.temperature
-  if (config.top_p !== undefined) result.top_p = config.top_p
-  if (config.maxTokens !== undefined) result.maxTokens = config.maxTokens
-  if (config.reasoningEffort !== undefined) result.reasoningEffort = config.reasoningEffort
-  if (config.thinking !== undefined) result.thinking = config.thinking
-  return result
-}
 
 export interface CategoryResolutionResult {
   agentToUse: string
@@ -274,29 +267,18 @@ Available categories: ${categoryNames.join(", ")}`,
     defaultProviderID,
   )
 
-  // Only promote fallback-only settings when resolution actually selected a fallback model.
-  const effectiveEntry = matchedFallback && categoryModel
-    ? (
-        fallbackEntry
-        ?? (configuredFallbackChain
-          ? findMostSpecificFallbackEntry(categoryModel.providerID, categoryModel.modelID, configuredFallbackChain)
-          : undefined)
-      )
-    : undefined
+  const effectiveEntry = resolveEffectiveFallbackEntry({
+    categoryModel,
+    configuredFallbackChain,
+    resolution: isModelResolutionSkipped ? { skipped: true } : { fallbackEntry, matchedFallback },
+  })
 
   if (categoryModel && effectiveEntry) {
-    categoryModel = {
-      ...categoryModel,
-      variant: userCategories?.[args.category!]?.variant
-        ?? categoryExecutorOverride?.variant
-        ?? effectiveEntry.variant
-        ?? categoryModel.variant,
-      reasoningEffort: effectiveEntry.reasoningEffort ?? categoryModel.reasoningEffort,
-      temperature: effectiveEntry.temperature ?? categoryModel.temperature,
-      top_p: effectiveEntry.top_p ?? categoryModel.top_p,
-      maxTokens: effectiveEntry.maxTokens ?? categoryModel.maxTokens,
-      thinking: effectiveEntry.thinking ?? categoryModel.thinking,
-    }
+    categoryModel = applyFallbackEntrySettings({
+      categoryModel,
+      effectiveEntry,
+      variantOverride: userCategories?.[args.category!]?.variant ?? categoryExecutorOverride?.variant,
+    })
   }
 
   return {

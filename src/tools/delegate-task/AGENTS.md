@@ -18,7 +18,7 @@
 | File | Purpose |
 |------|---------|
 | `tools.ts` | `createDelegateTask()` factory — main entry point |
-| `executor.ts` | Route to background or sync execution |
+| `tools.ts` | Main entry point — routes to background or sync execution |
 | `types.ts` | `DelegateTaskArgs`, `DelegateTaskToolOptions`, `ToolContextWithMetadata` |
 | `category-resolver.ts` | Map category name → model + config |
 | `subagent-resolver.ts` | Map subagent_type → agent + model |

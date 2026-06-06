@@ -1,29 +1,33 @@
 {
   "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Manager, Critic, Designer, Researcher, Writer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, manager, critic, designer, researcher, writer, vision.",
   "$schema": "./config/hiai-opencode.schema.json",
-  "models": {
+   "models": {
     "bob": {
-      "model": "openrouter/moonshotai/kimi-k2.6",
+      "model": "kimi-for-coding/k2p6",
       "recommended": "high"
     },
     "coder": {
-      "model": "minimax-coding-plan/MiniMax-M2.7",
+      "model": "minimax-coding-plan/MiniMax-M3",
       "recommended": "high"
     },
     "strategist": {
       "model": "deepseek/deepseek-v4-pro",
       "recommended": "xhigh"
     },
+    "manager": {
+      "model": "opencode-go/deepseek-v4-flash",
+      "recommended": "middle"
+    },
     "critic": {
-      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
+      "model": "opencode-go/mimo-v2.5",
       "recommended": "high"
     },
     "designer": {
-      "model": "openrouter/google/gemini-3.1-pro-preview",
+      "model": "google/gemini-3.5-flash",
       "recommended": "design"
     },
     "researcher": {
-      "model": "openrouter/deepseek/deepseek-v4-flash",
+      "model": "minimax-coding-plan/MiniMax-M2.7",
       "recommended": "fast"
     },
     "writer": {
@@ -31,16 +35,12 @@
       "recommended": "writing"
     },
     "vision": {
-      "model": "openrouter/google/gemma-4-26b-a4b-it",
+      "model": "openrouter/google/gemma-3-12b-it",
       "recommended": "vision"
     },
     "sub": {
       "model": "minimax-coding-plan/MiniMax-M2.7",
       "recommended": "fast"
-    },
-    "manager": {
-      "model": "openrouter/qwen/qwen3.6-plus",
-      "recommended": "middle"
     }
   },
   "auth": {
