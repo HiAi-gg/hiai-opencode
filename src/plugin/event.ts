@@ -313,5 +313,25 @@ export function createEventHandler(args: {
         log("[event] model-fallback error in session.error:", { sessionID, error: err });
       }
     }
+
+    if (!isHandledEventType(event.type)) {
+      log("[event] unhandled event type", { type: event.type, propertiesKeys: props ? Object.keys(props) : [] })
+    }
   };
+}
+
+const HANDLED_EVENT_TYPES = new Set<string>([
+  "session.idle",
+  "session.created",
+  "session.deleted",
+  "session.status",
+  "session.error",
+  "message.updated",
+  "message.removed",
+])
+
+function isHandledEventType(type: string): boolean {
+  if (HANDLED_EVENT_TYPES.has(type)) return true
+  if (type.startsWith("message.")) return true
+  return false
 }
