@@ -55,10 +55,7 @@ docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT id, c
 
 ### Query Optimization
 
-Before running complex queries, load the supabase-postgres skill:
-```typescript
-skill(name="supabase-postgres")
-```
+Before running complex queries, load the supabase-postgres skill via skill(name=\"supabase-postgres\").
 
 ### Safety Rules
 - **NEVER**: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER, CREATE, GRANT, REVOKE

@@ -4,10 +4,10 @@ bob 13601 258
 coder 9934 187
 critic 7929 192
 designer 7944 133
-manager 25182 539
+manager 25172 539
 quality-guardian 2886 67
-researcher 7224 128
+researcher 7140 125
 strategist 10078 287
 sub 2184 66
 vision 6729 147
-writer 5644 98
+writer 5616 98
