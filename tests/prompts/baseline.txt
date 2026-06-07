@@ -1,7 +1,7 @@
 # Auto-generated baseline — do not edit manually
 # Update by running: bun run prompts:measure && update this file
-bob 13146 251
-coder 9479 180
+bob 13601 258
+coder 9934 187
 critic 7929 192
 designer 7944 133
 manager 25182 539
