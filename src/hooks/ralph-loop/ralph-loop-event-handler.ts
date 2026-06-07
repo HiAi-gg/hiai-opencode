@@ -28,13 +28,14 @@ type LoopStateController = {
 	setVerificationSessionID: (sessionID: string, verificationSessionID: string) => RalphLoopState | null
 	restartAfterFailedVerification: (sessionID: string, messageCountAtStart?: number) => RalphLoopState | null
 }
-type RalphLoopEventHandlerOptions = { directory: string; apiTimeoutMs: number; getTranscriptPath: (sessionID: string) => string | undefined; checkSessionExists?: RalphLoopOptions["checkSessionExists"]; sessionRecovery: SessionRecovery; loopState: LoopStateController }
+type RalphLoopEventHandlerOptions = { directory: string; apiTimeoutMs: number; getTranscriptPath: (sessionID: string) => string | undefined; checkSessionExists?: RalphLoopOptions["checkSessionExists"]; sessionRecovery: SessionRecovery; loopState: LoopStateController; minimumIdleMs?: number }
 
 export function createRalphLoopEventHandler(
 	ctx: PluginInput,
 	options: RalphLoopEventHandlerOptions,
 ) {
 	const inFlightSessions = new Set<string>()
+	const lastContinuationTime = new Map<string, number>()
 
 	return async ({ event }: { event: { type: string; properties?: unknown } }): Promise<void> => {
 		const props = event.properties as Record<string, unknown> | undefined
@@ -241,6 +242,16 @@ export function createRalphLoopEventHandler(
 						}).catch(() => { /* intentionally ignored — toast is non-critical */ })
 					return
 				}
+
+				// Check minimum idle delay before continuing
+				const minIdleMs = options.minimumIdleMs ?? 120_000
+				const lastTime = lastContinuationTime.get(sessionID) ?? 0
+				const elapsed = Date.now() - lastTime
+				if (elapsed < minIdleMs) {
+					log(`[${HOOK_NAME}] Skipped: minimum idle delay not reached (${elapsed}ms < ${minIdleMs}ms)`, { sessionID })
+					return
+				}
+				lastContinuationTime.set(sessionID, Date.now())
 
 				const newState = options.loopState.incrementIteration()
 				if (!newState) {

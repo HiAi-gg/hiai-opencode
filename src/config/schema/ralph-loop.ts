@@ -21,6 +21,12 @@ export const RalphLoopConfigSchema = z.object({
    * ulw mode in the existing session.
    */
   auto_start_with_strategist: z.boolean().default(false),
+  /**
+   * Minimum idle time in milliseconds before ralph-loop continues iteration.
+   * Gives background tasks time to complete before the loop fires again.
+   * 0 disables the delay (legacy behavior).
+   */
+  minimum_idle_ms: z.number().min(0).max(600_000).default(120_000),
 })
 
 export type RalphLoopConfig = z.infer<typeof RalphLoopConfigSchema>

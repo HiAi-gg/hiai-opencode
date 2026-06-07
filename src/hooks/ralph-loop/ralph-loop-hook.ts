@@ -61,6 +61,7 @@ export function createRalphLoopHook(
 		checkSessionExists,
 		sessionRecovery,
 		loopState,
+		minimumIdleMs: options?.minimumIdleMs,
 	})
 
 	return {

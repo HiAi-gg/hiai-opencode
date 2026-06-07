@@ -192,6 +192,7 @@ export function createSessionHooks(args: {
         createRalphLoopHook(ctx, {
           config: pluginConfig.ralph_loop,
           checkSessionExists: async (sessionId) => await sessionExists(sessionId),
+          minimumIdleMs: pluginConfig.ralph_loop?.minimum_idle_ms,
         }))
     : null
 
