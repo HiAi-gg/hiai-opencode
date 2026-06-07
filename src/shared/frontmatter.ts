@@ -1,4 +1,4 @@
-import yaml from "js-yaml"
+import YAML from "yaml"
 
 export interface FrontmatterResult<T = Record<string, unknown>> {
   data: T
@@ -21,8 +21,10 @@ export function parseFrontmatter<T = Record<string, unknown>>(
   const body = match[2]
 
   try {
-    // Use JSON_SCHEMA for security - prevents code execution via YAML tags
-    const parsed = yaml.load(yamlContent, { schema: yaml.JSON_SCHEMA })
+    // `yaml` (eemeli/yaml v2) is safe by default — its core schema is YAML 1.2
+    // and does not support arbitrary code-execution tags (e.g. !!js/function),
+    // so no explicit JSON_SCHEMA option is needed.
+    const parsed = YAML.parse(yamlContent)
     const data = (parsed ?? {}) as T
     return { data, body, hadFrontmatter: true, parseError: false }
   } catch {
