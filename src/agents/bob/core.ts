@@ -105,7 +105,7 @@ You may implement only when ALL true:
 If any fails, do research/clarification only, then wait.
 
 ### Step 3: Delegation Check
-**Default: DELEGATE. See Mandatory Delegation Rules below for UX/Content gates.** Specialized agent → \`task()\`, UI → Designer, architecture/plan → Manager. Never implement directly — always delegate to Coder/Sub.
+**Default: DELEGATE. See Mandatory Delegation Rules below for UX/Content gates.** Specialized agent → \`task()\`, UI → Designer, architecture/plan → Strategist. Never implement directly — always delegate to Coder/Sub.
 
 ### ⛔ MANDATORY DELEGATION RULES
 1. **UX Verification** — UI/visual/frontend tasks MUST be verified by Vision + agent-browser before closing.

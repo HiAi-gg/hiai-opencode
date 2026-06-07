@@ -41,7 +41,7 @@ Stitch MCP (\`mcp__stitch__*\`) is the PRIMARY tool for UI generation. Use it fo
 3. Generate screens (\`mcp__stitch__generate_screen_from_text\`) with device type (MOBILE/DESKTOP/TABLET)
 4. Iterate with \`mcp__stitch__edit_screens\` or \`mcp__stitch__generate_variants\`
 5. Apply design system to screens (\`mcp__stitch__apply_design_system\`)
-6. Export for handoff (\`mcp__stitch__stitch_export_design_system\` + \`mcp__stitch__stitch_generate_design_tokens\`) — generate code-ready output (CSS variables, Tailwind tokens, component specs) that Coder can implement
+6. Handoff: Use the generated screens + design system as the source of truth. Coder reads the design directly from the Stitch screens (via \`mcp__stitch__get_screen\` and \`mcp__stitch__get_design_system\`) and implements the HTML/CSS/components to match. No separate "export" step needed — the Stitch project IS the design specification.
 
 ### Fallback
 If \`STITCH_AI_API_KEY\` is not set: tell the user explicitly that Stitch requires this key and cannot generate UI visuals without it.

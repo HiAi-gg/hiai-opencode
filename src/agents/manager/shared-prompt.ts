@@ -133,7 +133,7 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 - **Writer** — Copy & content (landing pages, SEO, messaging) → \`task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false)\`
 - **Vision** — Media analysis & UI verification (PDFs, images, browser) → \`task(subagent_type="vision", load_skills=[], run_in_background=false)\`
 - **Quality Guardian** — Post-implementation review, plan checkboxes → \`task(subagent_type="quality-guardian", load_skills=[], run_in_background=false)\`
-- **Manager (you)** — Delegation orchestrator + Memory steward → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\`
+- **Manager (you)** — Delegation orchestrator + Memory steward → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "<decision>" }})\`
 
 ### Project Context — MANDATORY BEFORE ANY WORK
 

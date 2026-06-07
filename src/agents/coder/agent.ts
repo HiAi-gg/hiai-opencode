@@ -80,7 +80,7 @@ export function createCoderAgent(
 
   const base: AgentConfig = {
     description:
-      "High-depth executor for autonomous software engineering work. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic, and also owns the bounded execution contour used by quick, writing, and unspecified-low task categories. (Coder - HiaiOpenCode)",
+      "High-depth executor for autonomous software engineering work. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic. Note: quick, writing, and unspecified-low task categories are owned by Sub, not Coder. (Coder - HiaiOpenCode)",
     mode: MODE,
     model,
     maxTokens: 32000,
