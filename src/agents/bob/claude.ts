@@ -55,6 +55,8 @@ export function createBobAgent(
     permission: {
       question: "allow",
       bash: "deny",
+      edit: "deny",
+      write: "deny",
       call_hiai_agent: "deny",
     } as AgentConfig["permission"],
     thinking: { type: "enabled", budgetTokens: 32000 },

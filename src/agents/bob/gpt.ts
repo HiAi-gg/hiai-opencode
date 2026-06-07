@@ -49,6 +49,8 @@ export function createGptBobAgent(
     permission: {
       question: "allow",
       bash: "deny",
+      edit: "deny",
+      write: "deny",
       call_hiai_agent: "deny",
       ...getGptApplyPatchPermission(model),
     } as AgentConfig["permission"],
