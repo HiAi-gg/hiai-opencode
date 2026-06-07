@@ -2,6 +2,7 @@ import type { InteractiveBashSessionState } from "./types";
 import { loadInteractiveBashSessionState } from "./storage";
 import { OMO_SESSION_PREFIX } from "./constants";
 import { spawnWithWindowsHide } from "../../shared/spawn-with-windows-hide";
+import { logWarn } from "../../shared/logger";
 
 export function getOrCreateState(sessionID: string, sessionStates: Map<string, InteractiveBashSessionState>): InteractiveBashSessionState {
   if (!sessionStates.has(sessionID)) {
@@ -30,6 +31,14 @@ export async function killAllTrackedSessions(
         stderr: "ignore",
       });
       await proc.exited;
-    } catch {}
+    } catch (error) {
+      // Best-effort teardown during session shutdown. tmux may already be
+      // gone, the server may be unreachable, or kill-session may be unsupported.
+      // Continue with the remaining tracked sessions regardless.
+      logWarn("[interactive-bash] failed to kill tracked tmux session", {
+        sessionName,
+        error: String(error),
+      });
+    }
   }
 }

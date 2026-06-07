@@ -101,7 +101,11 @@ export function convertImageToJpeg(inputPath: string, mimeType: string): string 
       if (existsSync(outputPath)) {
         unlinkSync(outputPath)
       }
-    } catch {}
+    } catch (cleanupError) {
+      // Best-effort cleanup of partial output. Conversion failed anyway, and
+      // the temp file may be in a tmp dir that the OS will eventually reap.
+      log(`[image-converter] cleanup of partial output failed: ${cleanupError}`)
+    }
 
     if (error instanceof Error) {
       const conversionError = error as Error & { temporaryOutputPath?: string }
@@ -157,7 +161,11 @@ export function convertBase64ImageToJpeg(
     tempFiles.forEach(file => {
       try {
         if (existsSync(file)) unlinkSync(file)
-      } catch {}
+      } catch (cleanupError) {
+        // Cleanup of base64 temp input is best-effort. The OS will reap
+        // /tmp eventually. Do not mask the original conversion error.
+        log(`[image-converter] cleanup of temp file failed: ${cleanupError}`)
+      }
     })
     throw error
   }

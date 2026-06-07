@@ -1,6 +1,7 @@
 import { spawn as bunSpawn } from "bun"
 import { spawn as nodeSpawn, type ChildProcess } from "node:child_process"
 import { Readable } from "node:stream"
+import { log as sharedLog } from "./logger"
 
 export interface SpawnOptions {
   cwd?: string
@@ -61,7 +62,15 @@ function wrapNodeProcess(proc: ChildProcess): SpawnedProcess {
         }
 
         proc.kill(signal)
-      } catch {}
+      } catch (error) {
+        // proc.kill can throw if the process is already dead (ESRCH) or
+        // permission was revoked (EPERM). Both are normal during teardown;
+        // the caller will see the process exit via the `exited` promise.
+        sharedLog("[spawn-with-windows-hide] proc.kill failed", {
+          signal,
+          error: String(error),
+        })
+      }
     },
   }
 }
