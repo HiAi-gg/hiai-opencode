@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] — 2026-06-07
+
+### Changed
+- **Bob agent unified** — removed Claude/GPT model-specific variants:
+  - Deleted `src/agents/bob/claude.ts` and `src/agents/bob/gpt.ts` (125 lines of duplication)
+  - Created unified `src/agents/bob/agent.ts` with model-agnostic factory
+  - Removed `isNonClaude` conditionals from dynamic prompt sections
+  - Restored `buildDelegationWarningSection` in `buildHardRulesSection()`
+  - All 5 mandatory delegation rules present in Bob prompt
+  - Model-specific thinking config handled by OpenCode runtime
+- **Documentation updated** — `AGENTS.md` and `ARCHITECTURE.md` references updated
+
 ## [0.2.3] — 2026-06-07
 
 ### Fixed
