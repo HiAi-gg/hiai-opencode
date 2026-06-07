@@ -52,6 +52,11 @@ const DEFAULT_LSP: Record<string, LspServerConfig> = {
     command: ["pyright-langserver", "--stdio"],
     extensions: [".py"],
   },
+  biome: {
+    enabled: true,
+    command: ["biome", "lsp-proxy", "--stdio"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".json", ".jsonc", ".vue", ".astro", ".svelte", ".css", ".graphql", ".gql", ".html"],
+  },
 }
 
 function findPluginRoot(): string {

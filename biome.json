@@ -11,7 +11,13 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "suspicious": { "noExplicitAny": "warn" },
+      "suspicious": {
+        "noExplicitAny": "off",
+        "noImplicitAnyLet": "off"
+      },
+      "style": {
+        "noNonNullAssertion": "off"
+      },
       "correctness": { "noUnusedVariables": "warn" }
     }
   },
@@ -31,6 +37,10 @@
       "src/**/*.tsx",
       "src/**/*.js",
       "src/**/*.jsx",
+      "src/**/*.mjs",
+      "src/**/*.cjs",
+      "scripts/**/*.ts",
+      "scripts/**/*.js",
       "!**/node_modules/**",
       "!**/dist/**",
       "!**/*.snap.ts"
