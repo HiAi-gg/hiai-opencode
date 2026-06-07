@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] — 2026-06-07
+
+### Fixed
+- **config/ npm leak (BLOCKER)**: Runtime artifacts (`config/.logs/`, `config/.mcp.json`, `config/.opencode/`) no longer ship in npm tarball. `package.json` `files` array now lists only `config/hiai-opencode.schema.json` and `config/opencode.json`. Added `.npmignore` as belt-and-suspenders.
+- **execSync shell injection (MEDIUM)**: Two `execSync` calls with user-derived input converted to `execFileSync` (no shell):
+  - `src/hooks/start-work/git-operations.ts:134` — `git merge` with `targetBranch`
+  - `src/features/boulder-state/storage.ts:621` — `git worktree remove` with `worktreePath`
+- **Stale package-lock.json deleted**: Project uses bun.lock; stale npm lockfile removed.
+
 ## [0.2.3] — 2026-06-06
 
 ### Changes
