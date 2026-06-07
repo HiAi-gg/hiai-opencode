@@ -268,7 +268,7 @@ These decide the high-level config object for each agent:
 
 Examples:
 
-- Bob: `src/agents/bob/claude.ts`, `src/agents/bob/gpt.ts` (model routing via index.ts)
+- Bob: `src/agents/bob/agent.ts` (unified model-agnostic factory, no model-specific variants)
 - Coder: `src/agents/coder/agent.ts`, `src/agents/coder/core.ts` (model routing via index.ts)
 - Strategist: `src/agents/strategist/index.ts` (mode variants via sub-directory files)
 - Manager: `src/agents/manager/agent.ts`, `src/agents/manager/default.ts`, `src/agents/manager/default-prompt-sections.ts`

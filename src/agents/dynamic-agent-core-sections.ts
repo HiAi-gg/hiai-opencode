@@ -162,13 +162,8 @@ ${criticSection}
 </strategist_critic_usage>`
 }
 
-export function buildNonClaudePlannerSection(model: string): string {
-  const isNonClaude = !model.toLowerCase().includes("claude")
-  if (!isNonClaude) {
-    return ""
-  }
-
-  return `### Strategist Dependency (Non-Claude)
+export function buildPlannerSection(): string {
+  return `### Strategist Dependency
 
 Multi-step task? **ALWAYS consult Strategist first.** Do NOT start implementation without a plan.
 
@@ -181,15 +176,13 @@ Strategist returns a structured work breakdown with parallel execution opportuni
 }
 
 export function buildParallelDelegationSection(
-  model: string,
   categories: AvailableCategory[],
 ): string {
-  const isNonClaude = !model.toLowerCase().includes("claude")
   const hasDelegationCategory = categories.some(
     (category) => category.name === "deep" || category.name === "unspecified-high",
   )
 
-  if (!isNonClaude || !hasDelegationCategory) {
+  if (!hasDelegationCategory) {
     return ""
   }
 

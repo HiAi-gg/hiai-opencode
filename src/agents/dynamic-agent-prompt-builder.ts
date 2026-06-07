@@ -15,7 +15,7 @@ export {
   buildDelegationTable,
   buildHiaiIntegrationPrimerSection,
   buildStrategistAndCriticSection,
-  buildNonClaudePlannerSection,
+  buildPlannerSection,
   buildParallelDelegationSection,
 } from "./dynamic-agent-core-sections"
 

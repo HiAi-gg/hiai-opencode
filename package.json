@@ -68,6 +68,7 @@
     "format:check": "biome format .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
+    "ci": "biome ci .",
     "check:docs": "bun run scripts/check-docs.ts",
     "check:bundle-size": "node -e \"const s=require('fs').statSync('dist/index.js').size;console.log('Bundle: '+(s/1024/1024).toFixed(2)+'MB');if(s>3*1024*1024){console.error('FAIL: bundle >3MB');process.exit(1)}else{console.log('OK: bundle <=3MB')}\"",
     "prompts:measure": "bun run scripts/measure-prompts.ts",

@@ -143,7 +143,7 @@ These files create the top-level agent config objects:
 
 Examples:
 
-- Bob: `src/agents/bob/gpt-pro.ts`, `src/agents/bob/gemini.ts`
+- Bob: `src/agents/bob/agent.ts` (unified model-agnostic factory, no model-specific variants)
 - Coder: `src/agents/coder/gpt.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts`
 - Strategist: `src/agents/strategist/gpt.ts`, `src/agents/strategist/gemini.ts`
 - Manager: `src/agents/manager/gpt.ts`, `src/agents/manager/gemini.ts`

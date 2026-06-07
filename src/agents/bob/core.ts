@@ -14,6 +14,7 @@ import {
   buildCategorySkillsDelegationGuide,
   buildStrategistAndCriticSection,
   buildHardRulesSection,
+  buildPlannerSection,
   buildParallelDelegationSection,
   buildAntiDuplicationSection,
 } from "../dynamic-agent-prompt-builder";
@@ -31,7 +32,7 @@ import {
  * config (thinking vs reasoningEffort) lives in the overlay files.
  */
 export function buildDynamicBobPrompt(
-  model: string,
+  _model: string,
   availableAgents: AvailableAgent[],
   availableTools: AvailableTool[] = [],
   availableSkills: AvailableSkill[] = [],
@@ -53,7 +54,8 @@ export function buildDynamicBobPrompt(
   const delegationTable = buildDelegationTable(availableAgents);
   const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
   const hardRules = buildHardRulesSection();
-  const parallelDelegationSection = buildParallelDelegationSection(model, availableCategories);
+  const _plannerSection = buildPlannerSection();
+  const parallelDelegationSection = buildParallelDelegationSection(availableCategories);
   const todoDisciplineSection = buildTodoDisciplineSection(useTaskSystem);
   const todoHookNote = useTaskSystem
     ? "YOUR TASK CREATION WOULD BE TRACKED BY HOOK([SYSTEM REMINDER - TASK CONTINUATION])"

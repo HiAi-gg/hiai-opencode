@@ -15,6 +15,7 @@ import {
 import { safeCreateHook } from "../../shared/safe-create-hook"
 import { createUnstableAgentBabysitter } from "../unstable-agent-babysitter"
 import { createMemPalaceAutoSave } from "../../hooks/mempalace-auto-save"
+import { createSubAgentReceiptHook } from "../../hooks/sub-agent-receipt"
 
 export type ContinuationHooks = {
   stopContinuationGuard: ReturnType<typeof createStopContinuationGuardHook> | null
@@ -23,6 +24,7 @@ export type ContinuationHooks = {
   todoContinuationEnforcer: ReturnType<typeof createTodoContinuationEnforcer> | null
   unstableAgentBabysitter: ReturnType<typeof createUnstableAgentBabysitter> | null
   backgroundNotificationHook: ReturnType<typeof createBackgroundNotificationHook> | null
+  subAgentReceiptHook: ReturnType<typeof createSubAgentReceiptHook> | null
   guardHook: ReturnType<typeof createGuardHook> | null
   mempalaceAutoSave: ReturnType<typeof createMemPalaceAutoSave> | null
 }
@@ -124,6 +126,10 @@ export function createContinuationHooks(args: {
     ? safeHook("background-notification", () => createBackgroundNotificationHook(backgroundManager))
     : null
 
+  const subAgentReceiptHook = isHookEnabled("sub-agent-receipt")
+    ? safeHook("sub-agent-receipt", () => createSubAgentReceiptHook(backgroundManager))
+    : null
+
   const guardHook = isHookEnabled("manager")
     ? safeHook("manager", () =>
         createGuardHook(ctx, {
@@ -149,6 +155,7 @@ export function createContinuationHooks(args: {
     todoContinuationEnforcer,
     unstableAgentBabysitter,
     backgroundNotificationHook,
+    subAgentReceiptHook,
     guardHook,
     mempalaceAutoSave,
   }

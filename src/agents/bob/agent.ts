@@ -1,6 +1,5 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
-import type { AgentMode } from "../types";
-import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard";
+import type { AgentMode, AgentPromptMetadata } from "../types";
 import type {
   AvailableAgent,
   AvailableSkill,
@@ -11,12 +10,25 @@ import { buildDynamicBobPrompt } from "./core";
 
 const MODE: AgentMode = "primary";
 
+export const BOB_PROMPT_METADATA: AgentPromptMetadata = {
+  category: "utility",
+  cost: "EXPENSIVE",
+  promptAlias: "Bob",
+  promptVersion: "2026-04-26",
+  triggers: [],
+};
+
 /**
- * GPT-specific Bob overlay.
- * Uses reasoningEffort instead of thinking config.
- * Includes apply-patch permission for GPT models.
+ * Unified Bob agent factory — model-agnostic.
+ *
+ * Thinking/reasoning configuration is handled by OpenCode's runtime
+ * based on the model ID (Claude → thinking, GPT → reasoningEffort, etc.)
+ * rather than hardcoded in the agent factory.
+ *
+ * GPT apply-patch permission is injected by `maybeCreateBobConfig` in
+ * `builtin-agents/bob-agent.ts` when the resolved model is a GPT variant.
  */
-export function createGptBobAgent(
+export function createBobAgent(
   model: string,
   availableAgents?: AvailableAgent[],
   availableToolNames?: string[],
@@ -52,9 +64,9 @@ export function createGptBobAgent(
       edit: "deny",
       write: "deny",
       call_hiai_agent: "deny",
-      ...getGptApplyPatchPermission(model),
     } as AgentConfig["permission"],
-    reasoningEffort: "medium",
+    // Model-specific thinking/reasoning config is intentionally omitted.
+    // OpenCode runtime applies the appropriate config based on model provider.
   };
 }
-createGptBobAgent.mode = MODE;
+createBobAgent.mode = MODE;

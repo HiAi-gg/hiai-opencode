@@ -44,7 +44,13 @@ export function buildDelegationWarningSection(): string {
 }
 
 export function buildHardRulesSection(): string {
-  return buildHardBlocksSection() + "\n\n" + buildAntiPatternsSection()
+  return (
+    buildHardBlocksSection() +
+    "\n\n" +
+    buildAntiPatternsSection() +
+    "\n\n" +
+    buildDelegationWarningSection()
+  )
 }
 
 export function buildToolCallFormatSection(): string {

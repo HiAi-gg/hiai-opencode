@@ -1,7 +1,6 @@
-// Bob agent — core+overlay architecture
-// Default export is Claude overlay (most common).
-// GPT overlay available via bob/gpt.ts for GPT-specific config.
+// Bob agent — unified model-agnostic factory
+// All model-specific overlays (Claude thinking, GPT reasoning) removed.
+// OpenCode runtime handles model-specific config.
 
-export { createBobAgent, BOB_PROMPT_METADATA } from "./claude";
-export { createGptBobAgent } from "./gpt";
+export { createBobAgent, BOB_PROMPT_METADATA } from "./agent";
 export { buildDynamicBobPrompt } from "./core";

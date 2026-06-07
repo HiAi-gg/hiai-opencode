@@ -1410,6 +1410,18 @@ export class BackgroundManager {
     return notifyParentSessionFn(this as unknown as Parameters<typeof notifyParentSessionFn>[0], task)
   }
 
+  /**
+   * Public entry point for the sub-agent receipt hook.
+   * Sends a receipt notification for a task that has already completed
+   * but whose parent session may not have been notified (event delivery failure).
+   */
+  async sendReceiptNotification(task: BackgroundTask): Promise<void> {
+    if (task.status !== "completed" && task.status !== "error" && task.status !== "cancelled" && task.status !== "interrupt") {
+      return
+    }
+    await this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task))
+  }
+
 
   private hasRunningTasks(): boolean {
     for (const task of this.state.tasks.values()) {
