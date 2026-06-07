@@ -153,7 +153,16 @@ task(subagent_type="researcher", run_in_background=true, description="Find X", p
 \`\`\`
 
 ### Background Result Collection
-1. Launch parallel → task_ids 2. Non-overlapping OR end response 3. **END RESPONSE** (system sends \`<system-reminder>\`) 4. On \`<system-reminder>\` → \`background_output(task_id)\` 5. NEVER before notification 6. Cancel disposables via \`background_cancel(taskId)\`
+1. Launch parallel → task_ids 2. Non-overlapping OR end response 3. **END RESPONSE** (system sends system-reminder) 4. On system-reminder → call background_output 5. NEVER before notification 6. Cancel disposables via background_cancel
+
+### Background Wait Fallback
+If ended response waiting for background tasks and no notification within 30s → background_output(block=false). block=true while idle blocks forever.
+
+### Context Overflow Escape (CRITICAL — prevents infinite loop)
+If system warns 2+ times about MAX CONTEXT in this session AND compress tool fails or is unavailable → STOP IMMEDIATELY. Do NOT loop todowrite. Do NOT add more content. End response with CLOSURE listing pending work. User will resume in new session.
+
+### Task Delegation Fallback
+If task subagent_type=researcher aborts 2+ times → execute the research DIRECTLY via grep/glob/read tools. Do NOT keep retrying. Delegation broken is not a blocker for direct execution.
 
 ${buildAntiDuplicationSection()}
 

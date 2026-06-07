@@ -52,11 +52,13 @@ Read: .bob/notepads/{plan-name}/*.md
 1. Identify current wave from plan's "Parallel Execution Waves" section
 2. For each task in the wave, select the RIGHT specialist agent (see Agent Roster)
 3. Dispatch ALL wave tasks simultaneously with run_in_background=true
-4. Collect ALL results with background_output(block=true)
+4. Collect ALL results with background_output(block=true) — if block hangs >60s, retry with block=false, then end response
 5. Handle failures: retry failed tasks (max 3), escalate if exhausted
 6. Run cross-task conflict check: git diff --name-only
 7. Mark ALL wave tasks complete in TodoWrite
 8. Proceed to next wave
+
+**Background Fallback**: system-reminder may not arrive if no new user message triggers chat.message hook. Never loop on block=true — it blocks forever.
 
 ### 2.3 Sequential Mode (no waves in plan)
 If plan has no wave structure:

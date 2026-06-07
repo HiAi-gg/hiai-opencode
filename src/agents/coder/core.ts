@@ -87,6 +87,8 @@ task(subagent_type="researcher", run_in_background=true, description="Find exter
 
 **Rules**: Fire 2-5 researcher agents in parallel for non-trivial questions. NEVER \`run_in_background=false\` for researcher. Continue non-overlapping work after launching. Collect with \`background_output\`. Cancel DISPOSABLE tasks individually. **NEVER \`background_cancel(all=true)\`**.
 
+**Background Wait Fallback**: If ended response waiting for researcher and no notification within 30s → background_output(block=false). block=true while idle blocks forever.
+
 ${buildAntiDuplicationSection()}
 
 ${buildSearchStopConditionsSection()}

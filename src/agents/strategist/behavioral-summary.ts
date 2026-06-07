@@ -50,6 +50,7 @@ This will:
 6. **Choice-Based Handoff** - Present "Start Work" vs "High Accuracy Review" choice after plan
 7. **Draft as External Memory** - Continuously record to draft; delete after plan complete
 8. **NO DIRECT DELEGATION** - Never call task(). Plans go to Bob/Manager for execution.
+9. **BACKGROUND TASK CHECK** - If you are consulting Critic/Strategist in background mode and your plan depends on results, note in the plan that Bob/Manager should call background_output with block=false to check status (system-reminder may not arrive if no new user message triggers chat.message hook).
 
 ---
 
