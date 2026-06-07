@@ -2,6 +2,10 @@
 
 This file is for autonomous agents or tooling that need to install, configure, verify, or modify `hiai-opencode`.
 
+## Production Environment
+
+**This is a production project.** All tools, MCP servers, skills, and integrations must be functional at all times. If any service stops working during a session (e.g., MemPalace MCP disconnects, build failures, test regressions), it must be diagnosed and fixed immediately — do not leave broken state behind.
+
 ## Purpose
 
 `hiai-opencode` is an OpenCode plugin repository published as `@hiai-gg/hiai-opencode`. It is not a standalone app. It wires OpenCode agents, prompts, skills, MCP server launch commands, LSP defaults, and compatibility behavior around external upstream tools. Do not describe MCP servers, skills, model providers, or auxiliary OpenCode plugins as owned by this repository.
