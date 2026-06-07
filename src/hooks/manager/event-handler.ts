@@ -1,7 +1,7 @@
 import type { PluginInput } from "@opencode-ai/plugin"
 import { log } from "../../shared/logger"
 import { HOOK_NAME } from "./hook-name"
-import { isAbortError } from "./is-abort-error"
+import { isAbortError } from "../../shared/is-abort-error"
 import { handleGuardSessionIdle } from "./idle-event"
 import type { GuardHookOptions, SessionState } from "./types"
 

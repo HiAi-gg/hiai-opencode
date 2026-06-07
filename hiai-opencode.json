@@ -1,7 +1,7 @@
 {
   "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Manager, Critic, Designer, Researcher, Writer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, manager, critic, designer, researcher, writer, vision. Internal-only keys (hidden from normal users): sub, agent-skills. Source defaults: src/config/defaults.ts and src/config/models.ts. MCP defaults per agent: stitch (designer), firecrawl/context7/grep_app (researcher), agent-browser (vision for UI verification, primary user; coder also uses for testing), sequential-thinking (strategist/critic). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=manager/orchestration, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. The subtask2.replace_generic flag controls the bundled subtask2 internal plugin: when true, generic task() responses are replaced with a structured return prompt before the parent agent sees them. Install agent-browser with: npm i -g agent-browser && agent-browser install",
   "$schema": "./config/hiai-opencode.schema.json",
-  "models": {
+    "models": {
     "bob": {
       "model": "kimi-for-coding/k2p6",
       "recommended": "high"
@@ -19,7 +19,7 @@
       "recommended": "middle"
     },
     "critic": {
-      "model": "opencode-go/mimo-v2.5",
+      "model": "xiaomi-token-plan-sgp/mimo-v2.5-pro",
       "recommended": "high"
     },
     "designer": {
