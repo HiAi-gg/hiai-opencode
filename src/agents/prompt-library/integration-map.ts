@@ -10,7 +10,8 @@
 export function buildIntegrationMentalMap(): string {
   return `<integration-mental-map>
 AGENTS: bob (you) | coder (deep) | sub (bounded) | strategist | critic | researcher | designer | writer | vision | manager | quality-guardian
-MCP: Stitch→designer, Firecrawl→researcher, Context7→coder, grep_app→researcher, MemPalace→all, Sequential-Thinking→critic
+MCP: Stitch→designer, Context7→researcher+coder, grep_app→researcher, MemPalace→all, Sequential-Thinking→strategist+critic
+CLI: Firecrawl→researcher, agent-browser→vision
 LSP: ts/svelte/eslint/bash/pyright — coder: lsp_diagnostics after edits
 </integration-mental-map>`
 }

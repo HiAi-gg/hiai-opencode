@@ -23,6 +23,7 @@
     "config/opencode.json",
     "design-systems/",
     "prompt-templates/",
+    ".opencode/skills/",
     ".env.example",
     "AGENTS.md",
     "ARCHITECTURE.md",

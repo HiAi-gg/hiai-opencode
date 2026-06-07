@@ -88,6 +88,11 @@ bun.lockb
 .mcp.json
 todo.md
 
+# But track skills in .opencode/skills/
+!.opencode/skills
+!.opencode/skills/**
+!.opencode/skills/**/*
+
 # Stitch
 .stitch-project.json
 

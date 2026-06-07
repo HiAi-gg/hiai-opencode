@@ -13,6 +13,7 @@ import {
   createWriteExistingFileGuardHook,
   createBashFileReadGuardHook,
   createHashlineReadEnhancerHook,
+  createHashlineEditDiffEnhancerHook,
   createReadImageResizerHook,
   createJsonErrorRecoveryHook,
   createTodoDescriptionOverrideHook,
@@ -43,6 +44,7 @@ export type ToolGuardHooks = {
   todoDescriptionOverride: ReturnType<typeof createTodoDescriptionOverrideHook> | null
   webfetchRedirectGuard: ReturnType<typeof createWebFetchRedirectGuardHook> | null
   fastApply: ReturnType<typeof createFastApplyHook> | null
+  hashlineEditDiffEnhancer: ReturnType<typeof createHashlineEditDiffEnhancerHook> | null
 }
 
 export function createToolGuardHooks(args: {
@@ -139,6 +141,10 @@ export function createToolGuardHooks(args: {
     ? safeHook("fast-apply", () => createFastApplyHook(pluginConfig.fast_apply ?? { enabled: false, ollama_url: "", model: "", timeout: 30000 }))
     : null
 
+  const hashlineEditDiffEnhancer = isHookEnabled("hashline-edit-diff-enhancer")
+    ? safeHook("hashline-edit-diff-enhancer", () => createHashlineEditDiffEnhancerHook({ hashline_edit: { enabled: pluginConfig.hashline_edit ?? false } }))
+    : null
+
   return {
     commentChecker,
     toolOutputTruncator,
@@ -155,5 +161,6 @@ export function createToolGuardHooks(args: {
     todoDescriptionOverride,
     webfetchRedirectGuard,
     fastApply,
+    hashlineEditDiffEnhancer,
   }
 }
