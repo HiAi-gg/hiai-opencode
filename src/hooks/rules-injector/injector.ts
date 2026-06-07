@@ -13,6 +13,7 @@ import { parseRuleFrontmatter } from "./parser";
 import { saveInjectedRules } from "./storage";
 import type { SessionInjectedRulesCache } from "./cache";
 import type { RuleMetadata } from "./types";
+import { logWarn } from "../../shared/logger";
 
 type ToolExecuteOutput = {
   title: string;
@@ -162,7 +163,14 @@ export function createRuleInjectionProcessor(deps: {
         cache.realPaths.add(candidate.realPath);
         cache.contentHashes.add(contentHash);
         dirty = true;
-      } catch {}
+      } catch (error) {
+        // Skip this rule candidate on any error (read/parse/match) — gracefully
+        // continue so one broken rule file does not break injection of others.
+        logWarn("[rules-injector] skipping rule candidate", {
+          path: candidate.path,
+          error: String(error),
+        });
+      }
     }
 
     if (toInject.length === 0) return;

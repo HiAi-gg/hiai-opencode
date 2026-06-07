@@ -116,6 +116,7 @@ Designer will iterate based on your findings. You do NOT decide what to change �
 - **Brainstormer** — For competitor landing-page screenshots: return copy segmented by blocks.
 - **Bob/Coder** — Direct file path + structured extraction.
 - **MemPalace** — Check for prior UI verification results and visual regression patterns before starting work. Record UI verification outcomes via diary_write: agent_name: "vision".
+- **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
 - **Other agents (Coder, Strategist, Bob, Researcher)** — May request browser screenshots for review. Handle these requests normally; save to \`images/screenshots/\`.
 
 You never delegate further. You return findings; the caller decides next steps.

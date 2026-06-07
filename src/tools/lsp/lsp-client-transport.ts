@@ -121,7 +121,14 @@ export class LSPClientTransport {
             this.stderrBuffer.shift()
           }
         }
-      } catch {}
+      } catch (error) {
+        // stderr reader can throw if the underlying stream aborts (process
+        // killed, stream canceled). This is a normal end-of-life for the
+        // reader loop — we've already buffered whatever was readable.
+        log("[LSPClientTransport] stderr reader loop ended", {
+          error: String(error),
+        })
+      }
     }
     read()
   }
@@ -173,7 +180,14 @@ export class LSPClientTransport {
       try {
         this.sendNotification("shutdown", {})
         this.sendNotification("exit")
-      } catch {}
+      } catch (error) {
+        // Best-effort LSP shutdown handshake: server may already be dead,
+        // connection disposed, or shutdown notification not implemented.
+        // We proceed to dispose the connection regardless.
+        log("[LSPClientTransport] shutdown notification failed", {
+          error: String(error),
+        })
+      }
       this.connection.dispose()
       this.connection = null
     }
@@ -200,9 +214,22 @@ export class LSPClientTransport {
             proc.kill("SIGKILL")
             // Wait briefly for SIGKILL to take effect
             await Promise.race([proc.exited, new Promise<void>((resolve) => setTimeout(resolve, 1000))])
-          } catch {}
+          } catch (error) {
+            // Final escalation: SIGKILL on a process that won't die. This is
+            // unusual (kernel, zombie, EPERM) — log and let cleanup continue.
+            log("[LSPClientTransport] SIGKILL wait race failed", {
+              error: String(error),
+            })
+          }
         }
-      } catch {}
+      } catch (error) {
+        // The outer stop path failed entirely (proc.kill threw, exited promise
+        // rejected). The process state is undefined at this point; we still
+        // mark exited and clear diagnostics to prevent leaks.
+        log("[LSPClientTransport] stop() error during process kill", {
+          error: String(error),
+        })
+      }
     }
     this.processExited = true
     this.diagnosticsStore.clear()

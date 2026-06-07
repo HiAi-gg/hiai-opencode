@@ -71,7 +71,16 @@ export async function runAggressiveTruncationStrategy(params: {
           } as never,
           query: { directory: params.directory },
         })
-      } catch {}
+      } catch (error) {
+        // Fire-and-forget retry prompt after truncation. The user already has
+        // a successful truncation result; this is just a continuation nudge.
+        // Failures here are non-fatal — surface to the log so we can spot
+        // session-promptAsync outages, but do not crash the recovery flow.
+        log("[auto-compact] post-truncation promptAsync failed", {
+          sessionID: params.sessionID,
+          error: String(error),
+        })
+      }
     }, 500)
 
     return { handled: true, nextTruncateAttempt }

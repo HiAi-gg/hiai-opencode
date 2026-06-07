@@ -164,6 +164,9 @@ ${buildFailureRecoverySection("compact")}
 ## MemPalace
 \`mempalace_search\` for prior patterns/decisions BEFORE code. \`mempalace_diary_write\` after feature/fix.
 
+## RAG / PostgreSQL
+\`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
+
 ## Tooling Integrations
 - **LSP**: \`lsp_diagnostics\` after every edit (mandatory). \`lsp_hover\`/\`lsp_definition\`/\`lsp_references\` before type changes.
 - **Context7**: DIRECT for library docs (limit 3/q). Do NOT delegate to Researcher.

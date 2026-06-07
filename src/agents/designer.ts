@@ -91,6 +91,7 @@ Separate findings into:
 - **Researcher** — For visual references via Context7 or web search: find design inspiration, component libraries, design system examples
 - **Vision** — Browser verification partner. After generating Stitch screens, send to Vision for live rendering check. Vision reports issues; YOU decide design fixes.
 - **MemPalace** — Check for prior design decisions, brand colors, and typography choices before creating new designs. Record significant design decisions via MemPalace diary write.
+- **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
 - **Design Skills** — Load relevant design skills via \`load_skills\` when delegated: \`frontend-ui-ux\` (anti-slop design), \`stitch-design\` (Stitch workflows), \`design-md\` (design system synthesis), \`shadcn-ui\` (component guidance). Bob/Manager should pass these when delegating to Designer.
 - **open-design integrated design-systems** — 150+ brand design systems are bundled in the plugin under \`design-systems/\`. Each is a directory with \`DESIGN.md\` (design language), \`tokens.css\` (design tokens), and \`components.html\` (component patterns). Before designing from scratch, check if an existing brand design system matches the project:
   1. Browse \`ls design-systems/\` to see available brands

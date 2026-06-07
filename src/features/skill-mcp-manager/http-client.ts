@@ -2,6 +2,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import { registerProcessCleanup, startCleanupTimer } from "./cleanup"
 import { buildHttpRequestInit } from "./oauth-handler"
+import { logWarn } from "../../shared/logger"
 import type { ManagedClient, McpClient, McpTransport, SkillMcpClientConnectionParams } from "./types"
 
 type HttpClientFactory = (
@@ -107,8 +108,25 @@ export async function createHttpClient(params: SkillMcpClientConnectionParams): 
   }
 
   if (state.shutdownGeneration !== shutdownGenAtStart) {
-    try { await client.close() } catch {}
-    try { await transport.close() } catch {}
+    try {
+      await client.close()
+    } catch (error) {
+      // Shutdown raced connection completion; client may already be disposed.
+      logWarn("[skill-mcp] client.close failed after shutdown race", {
+        serverName: info.serverName,
+        error: String(error),
+      })
+    }
+    try {
+      await transport.close()
+    } catch (error) {
+      // Same as above for the transport. We still re-throw the shutdown error
+      // below — the connection is unusable regardless of close success.
+      logWarn("[skill-mcp] transport.close failed after shutdown race", {
+        serverName: info.serverName,
+        error: String(error),
+      })
+    }
     throw new Error(`MCP server "${info.serverName}" connection completed after shutdown`)
   }
 

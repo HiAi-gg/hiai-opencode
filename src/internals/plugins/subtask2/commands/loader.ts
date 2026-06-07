@@ -2,6 +2,7 @@
 
 import { join } from "path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
+import { logWarn } from "../../../../shared/logger";
 
 /**
  * Commands: File loading
@@ -23,7 +24,13 @@ export async function loadCommandFile(
       if (await file.exists()) {
         return { content: await file.text(), path: directPath };
       }
-    } catch {}
+    } catch (error) {
+      // Direct path probe failed (missing dir, EACCES). Move on to glob scan.
+      logWarn("[subtask2:loader] direct path probe failed", {
+        path: directPath,
+        error: String(error),
+      });
+    }
 
     // Search subdirs for name.md
     try {
@@ -33,7 +40,13 @@ export async function loadCommandFile(
         const content = await Bun.file(fullPath).text();
         return { content, path: fullPath };
       }
-    } catch {}
+    } catch (error) {
+      // Glob scan failed (dir doesn't exist, permission). Try the next dir.
+      logWarn("[subtask2:loader] glob scan failed", {
+        dir,
+        error: String(error),
+      });
+    }
   }
   return null;
 }

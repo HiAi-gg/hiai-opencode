@@ -4,6 +4,7 @@ import { forceReconnect } from "./cleanup"
 import { getConnectionType } from "./connection-type"
 import { createHttpClient } from "./http-client"
 import { createStdioClient } from "./stdio-client"
+import { logWarn } from "../../shared/logger"
 import type { McpClient, SkillMcpClientConnectionParams, SkillMcpClientInfo, SkillMcpManagerState } from "./types"
 
 function removeClientIfCurrent(state: SkillMcpManagerState, clientKey: string, client: McpClient): void {
@@ -52,13 +53,30 @@ export async function getOrCreateClient(params: {
     const isStale = state.pendingConnections.has(clientKey) && state.pendingConnections.get(clientKey) !== currentConnectionPromise
     if (isStale) {
       removeClientIfCurrent(state, clientKey, client)
-      try { await client.close() } catch {}
+      try {
+        await client.close()
+      } catch (error) {
+        // A newer connection attempt superseded us. The supersede error below
+        // is the signal the caller needs; close failure is purely a leak signal.
+        logWarn("[skill-mcp] client.close failed on supersede", {
+          serverName: info.serverName,
+          error: String(error),
+        })
+      }
       throw new Error(`Connection for "${info.sessionID}" was superseded by a newer connection attempt.`)
     }
 
     if (state.shutdownGeneration !== shutdownGenAtStart) {
       removeClientIfCurrent(state, clientKey, client)
-      try { await client.close() } catch {}
+      try {
+        await client.close()
+      } catch (error) {
+        // Shutdown raced us; the shutdown error below is the user-facing signal.
+        logWarn("[skill-mcp] client.close failed on shutdown race", {
+          serverName: info.serverName,
+          error: String(error),
+        })
+      }
       throw new Error(`Shutdown occurred during MCP connection for "${info.sessionID}"`)
     }
 

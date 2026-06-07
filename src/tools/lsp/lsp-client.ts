@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url"
 
 import { getLanguageId } from "./config"
 import { LSPClientConnection } from "./lsp-client-connection"
+import { logWarn } from "../../shared/logger"
 import type { Diagnostic } from "./types"
 
 export class LSPClient extends LSPClientConnection {
@@ -103,7 +104,15 @@ export class LSPClient extends LSPClientConnection {
       if (result && typeof result === "object" && "items" in result) {
         return result as { items: Diagnostic[] }
       }
-    } catch {}
+    } catch (error) {
+      // Pull-style diagnostic request failed (server doesn't support it, timed
+      // out, or the LSP connection is broken). Fall back to whatever the
+      // server has already pushed via publishDiagnostics.
+      logWarn("[lsp-client] pull diagnostics request failed, using pushed store", {
+        uri,
+        error: String(error),
+      })
+    }
 
     return { items: this.diagnosticsStore.get(uri) ?? [] }
   }

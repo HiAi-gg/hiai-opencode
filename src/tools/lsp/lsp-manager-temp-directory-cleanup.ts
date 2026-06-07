@@ -1,3 +1,5 @@
+import { logWarn } from "../../shared/logger"
+
 type ManagedClientForTempDirectoryCleanup = {
   refCount: number
   client: {
@@ -23,7 +25,14 @@ export async function cleanupTempDirectoryLspClients(
       clients.delete(key)
       try {
         await managed.client.stop()
-      } catch {}
+      } catch (error) {
+        // Map entry already removed above; stop failure must not stop us from
+        // cleaning the rest of the temp-dir clients in this pass.
+        logWarn("[lsp-cleanup] failed to stop temp-directory LSP client", {
+          key,
+          error: String(error),
+        })
+      }
     }
   }
 }

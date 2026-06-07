@@ -4,6 +4,7 @@ import type { ClaudeCodeMcpServer } from "../claude-code-mcp-loader/types"
 import { createCleanMcpEnvironment } from "./env-cleaner"
 import { registerProcessCleanup, startCleanupTimer } from "./cleanup"
 import { redactSensitiveData } from "./error-redaction"
+import { logWarn } from "../../shared/logger"
 import type { ManagedClient, McpClient, McpTransport, SkillMcpClientConnectionParams } from "./types"
 
 type StdioClientFactory = (
@@ -93,8 +94,24 @@ export async function createStdioClient(params: SkillMcpClientConnectionParams):
   }
 
   if (state.shutdownGeneration !== shutdownGenAtStart) {
-    try { await client.close() } catch {}
-    try { await transport.close() } catch {}
+    try {
+      await client.close()
+    } catch (error) {
+      // Shutdown raced connection completion; client/transport may already
+      // be torn down. The shutdown error below is the real signal.
+      logWarn("[skill-mcp] client.close failed after shutdown race", {
+        serverName: info.serverName,
+        error: String(error),
+      })
+    }
+    try {
+      await transport.close()
+    } catch (error) {
+      logWarn("[skill-mcp] transport.close failed after shutdown race", {
+        serverName: info.serverName,
+        error: String(error),
+      })
+    }
     throw new Error(`MCP server "${info.serverName}" connection completed after shutdown`)
   }
 

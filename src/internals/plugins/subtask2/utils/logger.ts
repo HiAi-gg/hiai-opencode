@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import { log as sharedLog } from "../../../../shared/logger";
 
 const LOG_DIR = path.join(process.cwd(), ".logs");
 const LOG_FILE = path.join(LOG_DIR, "subtask2.log");
@@ -40,7 +41,17 @@ async function flushLogs(): Promise<void> {
 
   try {
     await fs.promises.appendFile(LOG_FILE, toWrite);
-  } catch {}
+  } catch (error) {
+    // Self-eating: subtask2's log file failed to write (disk full, EACCES,
+    // file removed). Surface to the main hiai-opencode log file via sharedLog
+    // so we have a single place to inspect subtask2 log-loss. The buffered
+    // entries are intentionally dropped — they have already been delivered
+    // to the schedule, not the call site.
+    sharedLog("[subtask2] log file write failed, dropping buffered entries", {
+      path: LOG_FILE,
+      error: String(error),
+    });
+  }
 }
 
 function scheduleFlush(): void {

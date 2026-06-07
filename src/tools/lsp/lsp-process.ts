@@ -123,7 +123,12 @@ function wrapNodeProcess(proc: ChildProcess): UnifiedProcess {
         } else {
           proc.kill()
         }
-      } catch {}
+      } catch (error) {
+        // Process may already be dead (ESRCH) or we lack permission (EPERM).
+        // Both are normal during cleanup; surface to the log so we can spot
+        // servers that consistently throw on kill, but do not propagate.
+        log("[LSPProcess] kill failed", { signal, error: String(error) })
+      }
     },
   }
 }

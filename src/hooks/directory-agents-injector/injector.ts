@@ -5,6 +5,7 @@ import { dirname } from "node:path";
 import type { createDynamicTruncator } from "../../shared/dynamic-truncator";
 import { findAgentsMdUp, resolveFilePath } from "./finder";
 import { loadInjectedPaths, saveInjectedPaths } from "./storage";
+import { logWarn } from "../../shared/logger";
 
 type DynamicTruncator = ReturnType<typeof createDynamicTruncator>;
 
@@ -50,7 +51,14 @@ export async function processFilePathForAgentsInjection(input: {
       input.output.output += `\n\n[Directory Context: ${agentsPath}]\n${result}${truncationNotice}`;
       cache.add(agentsDir);
       dirty = true;
-    } catch {}
+    } catch (error) {
+      // Skip this AGENTS.md on any error (read/truncate) — one missing or unreadable
+      // AGENTS.md must not block the remaining candidates in the walk-up chain.
+      logWarn("[directory-agents-injector] skipping AGENTS.md", {
+        path: agentsPath,
+        error: String(error),
+      });
+    }
   }
 
   if (dirty) {

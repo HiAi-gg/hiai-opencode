@@ -20,9 +20,19 @@ function flush(): void {
   buffer = []
   try {
     fs.appendFileSync(logFile, data)
-    try { fs.chmodSync(logFile, 0o600); } catch {}
+    try {
+      fs.chmodSync(logFile, 0o600)
+    } catch (error) {
+      // self-eating: chmod on the log file failed (e.g. file removed, EPERM).
+      // Cannot recurse into the logger here, fall back to console.
+      console.error("[logger] chmodSync failed:", error)
+    }
   } catch (err) {
-    try { process.stderr.write(String(err) + '\n'); } catch {}
+    try {
+      process.stderr.write(String(err) + '\n')
+    } catch {
+      // self-eating: stderr is closed or unwritable. Nothing we can do.
+    }
   }
 }
 
@@ -46,7 +56,12 @@ export function log(message: string, data?: unknown, level: string = "info"): vo
       scheduleFlush()
     }
   } catch (err) {
-    try { process.stderr.write(`[logger] log failed: ${err}\n`); } catch {}
+    try {
+      process.stderr.write(`[logger] log failed: ${err}\n`)
+    } catch (error) {
+      // self-eating: stderr is closed or unwritable. Nothing we can do.
+      console.error("[logger] stderr fallback failed:", error)
+    }
   }
 }
 
@@ -62,7 +77,12 @@ export function logDebug(message: string, data?: unknown): void {
       scheduleFlush()
     }
   } catch (err) {
-    try { process.stderr.write(`[logger] logDebug failed: ${err}\n`); } catch {}
+    try {
+      process.stderr.write(`[logger] logDebug failed: ${err}\n`)
+    } catch (error) {
+      // self-eating: stderr is closed or unwritable. Nothing we can do.
+      console.error("[logger] stderr fallback failed:", error)
+    }
   }
 }
 

@@ -1,6 +1,7 @@
 import { LSPClient } from "./lsp-client";
 import { registerLspManagerProcessCleanup, type LspProcessCleanupHandle } from "./lsp-manager-process-cleanup";
 import { cleanupTempDirectoryLspClients } from "./lsp-manager-temp-directory-cleanup";
+import { logWarn } from "../../shared/logger";
 import type { ResolvedServer } from "./types";
 interface ManagedClient {
   client: LSPClient;
@@ -80,7 +81,15 @@ class LSPServerManager {
         // Stale init can permanently block subsequent calls (e.g., LSP process hang)
         try {
           await managed.client.stop();
-        } catch {}
+        } catch (error) {
+          // Stopping a hung init client failed; we'll still drop the entry from
+          // the map below so the next caller can retry. Surface the failure so
+          // we can spot servers that consistently refuse to die.
+          logWarn("[lsp-server] failed to stop stale init client", {
+            key,
+            error: String(error),
+          });
+        }
         this.clients.delete(key);
         managed = undefined;
       }
@@ -89,11 +98,18 @@ class LSPServerManager {
       if (managed.initPromise) {
         try {
           await managed.initPromise;
-        } catch {
+        } catch (error) {
           // Failed init should not keep the key blocked forever.
           try {
             await managed.client.stop();
-          } catch {}
+          } catch (stopError) {
+            // Init already failed; best-effort stop on a dying client.
+            logWarn("[lsp-server] failed to stop client after init failure", {
+              key,
+              initError: String(error),
+              stopError: String(stopError),
+            });
+          }
           this.clients.delete(key);
           managed = undefined;
         }
@@ -107,7 +123,15 @@ class LSPServerManager {
         }
         try {
           await managed.client.stop();
-        } catch {}
+        } catch (error) {
+          // Client reported dead but stop threw — drop it from the map and
+          // let the caller build a fresh one. Logging lets us spot servers
+          // that throw on stop more than once.
+          logWarn("[lsp-server] failed to stop dead client", {
+            key,
+            error: String(error),
+          });
+        }
         this.clients.delete(key);
       }
     }
@@ -133,7 +157,15 @@ class LSPServerManager {
       this.clients.delete(key);
       try {
         await client.stop();
-      } catch {}
+      } catch (stopError) {
+        // Init already failed; best-effort stop on the new client we never
+        // published. The original error must still propagate to the caller.
+        logWarn("[lsp-server] failed to stop client after init threw", {
+          key,
+          initError: String(error),
+          stopError: String(stopError),
+        });
+      }
       throw error;
     }
     const m = this.clients.get(key);

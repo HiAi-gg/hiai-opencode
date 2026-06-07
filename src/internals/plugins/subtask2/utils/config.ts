@@ -3,6 +3,7 @@
 import { mkdirSync } from "fs";
 import { dirname, join } from "path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
+import { logWarn } from "../../../../shared/logger";
 import type { Subtask2Config } from "../types";
 
 // Re-export from prompts.ts for backwards compatibility
@@ -82,7 +83,14 @@ export async function loadConfig(): Promise<Subtask2Config> {
         return parsed;
       }
     }
-  } catch {}
+  } catch (error) {
+    // Config file unreadable, malformed, or schema-invalid. Fall through to
+    // the default branch below which will regenerate the file with safe defaults.
+    logWarn("[subtask2:config] failed to load config, using defaults", {
+      path: CONFIG_PATH,
+      error: String(error),
+    });
+  }
 
   mkdirSync(dirname(CONFIG_PATH), { recursive: true });
   await Bun.write(

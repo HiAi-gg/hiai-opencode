@@ -32,6 +32,7 @@ Before writing copy, follow this discovery flow:
    - If existing decisions found → Use them as constraints, do NOT re-decide
    - If no decisions found → Proceed with research then writing
 2. **Check MemPalace** for existing brand decisions, tone-of-voice guidelines, and prior copy decisions. Search with \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<brand/tone topic>", limit: 3, wing: "hiai-opencode" }})\`. For project architecture context, use \`skill_mcp({ mcp_name: "agent-skills", tool_name: "skill", arguments: { name: "supabase-postgres" }})\`.
+3. **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
 3. **If existing decisions found**: Use them as constraints. Note what was previously decided.
 4. **If no existing decisions**: Ask the user for brand context OR propose to Manager that a brand decision record should be created in MemPalace.
 5. **Record new decisions**: After copy is approved, recommend Manager records the tone/voice decisions in MemPalace.

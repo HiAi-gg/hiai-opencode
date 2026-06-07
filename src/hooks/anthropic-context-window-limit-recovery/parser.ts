@@ -1,4 +1,5 @@
 import type { ParsedTokenLimitError } from "./types"
+import { logWarn } from "../../shared/logger"
 
 interface AnthropicErrorData {
   type: "error"
@@ -76,7 +77,14 @@ function isTokenLimitError(text: string): boolean {
 export function parseAnthropicTokenLimitError(err: unknown): ParsedTokenLimitError | null {
   try {
     return parseAnthropicTokenLimitErrorUnsafe(err)
-  } catch {
+  } catch (error) {
+    // Top-level safety net: any unexpected throw while introspecting the error
+    // shape must produce a null result (caller treats it as "not a token-limit
+    // error") rather than crashing the recovery hook. Surface the failure so
+    // we can spot misformatted upstream errors.
+    logWarn("[anthropic-context-recovery] failed to parse token limit error", {
+      error: String(error),
+    })
     return null
   }
 }
@@ -131,7 +139,13 @@ function parseAnthropicTokenLimitErrorUnsafe(err: unknown): ParsedTokenLimitErro
       if (isTokenLimitError(jsonStr)) {
         textSources.push(jsonStr)
       }
-    } catch {}
+    } catch (error) {
+      // JSON.stringify can throw on circular references or BigInt. Fall through:
+      // we already have no text sources so the caller will correctly return null.
+      logWarn("[anthropic-context-recovery] failed to JSON.stringify errObj", {
+        error: String(error),
+      })
+    }
   }
 
   const combinedText = textSources.join(" ")
@@ -162,7 +176,13 @@ function parseAnthropicTokenLimitErrorUnsafe(err: unknown): ParsedTokenLimitErro
                 errorType: jsonData.error?.type || "token_limit_exceeded",
               }
             }
-          } catch {}
+          } catch (error) {
+            // Pattern matched text that wasn't valid JSON. Continue to the next
+            // pattern — the outer try/catch will fall back to the bedrock parse.
+            logWarn("[anthropic-context-recovery] JSON parse failed for matched pattern", {
+              error: String(error),
+            })
+          }
         }
       }
 
@@ -174,7 +194,13 @@ function parseAnthropicTokenLimitErrorUnsafe(err: unknown): ParsedTokenLimitErro
           errorType: "bedrock_input_too_long",
         }
       }
-    } catch {}
+    } catch (error) {
+      // JSON.parse on the whole responseBody failed. Fall through to the
+      // text-source loop below which will try to extract tokens from raw text.
+      logWarn("[anthropic-context-recovery] responseBody parse failed", {
+        error: String(error),
+      })
+    }
   }
 
   for (const text of textSources) {

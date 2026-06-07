@@ -29,16 +29,32 @@ const FORWARDED_EVENT_TYPES = new Set([
 ])
 
 /**
- * Background notification hook - handles event routing to BackgroundManager.
+ * Background notification hook - sub-agent task completion receipt.
  *
- * Notifications are now delivered directly via session.prompt({ noReply })
- * from the manager, so this hook only needs to handle event routing.
+ * Receipt flow (single path, dedup at `tryCompleteTask`):
+ *   1. OpenCode emits `session.idle` (or other FORWARDED_EVENT_TYPES)
+ *   2. This hook's `event` handler routes it to `manager.handleEvent(event)`
+ *   3. Manager -> `handleSessionIdleBackgroundEvent` validates output + todos
+ *   4. Manager -> `tryCompleteTask(task, source)` is the canonical completion gate
+ *      - Atomic `task.status = "completed"` makes the call single-shot
+ *      - Subsequent session.idle events for the same task short-circuit
+ *   5. Manager -> `notifyParentSession(task)` enqueues a per-parent promise
+ *   6. Manager -> `ctx.client.session.promptAsync({ path, body })` sends the
+ *      `[ALL BACKGROUND TASKS COMPLETE]` (or per-task) system message to the
+ *      parent session, telling the parent to use `background_output(task_id=)`
  *
- * FIX: Register session.idle as a separate hook so OpenCode can dispatch
- * idle events to us. The eventHandler already routes session.idle through
- * manager.handleEvent, which then triggers notifyParentSession → promptAsync.
- * Without this separate registration, the plugin may not receive session.idle
- * for subagent sessions.
+ * Why no separate `session.idle` handler:
+ *   An earlier revision registered a dedicated `session.idle` hook that
+ *   re-emitted the event to force a notification; it was removed because
+ *   re-entering the same event caused an infinite loop. The generic `event`
+ *   hook with `FORWARDED_EVENT_TYPES` filtering is the correct, loop-free
+ *   entry point and OpenCode does dispatch `session.idle` to it for subagent
+ *   sessions.
+ *
+ * Cleanup:
+ *   - `idleDeferralTimers` in `TaskStateStore` are cleared on task completion
+ *   - `notificationQueueByParent` self-cleans after each promise resolves
+ *   - `pendingByParent` and `completedTaskSummaries` are deleted on full drain
  */
 export function createBackgroundNotificationHook(manager: BackgroundManager) {
   const eventHandler = async ({ event }: EventInput) => {

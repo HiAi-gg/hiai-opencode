@@ -5,6 +5,7 @@ import { dirname } from "node:path";
 import type { createDynamicTruncator } from "../../shared/dynamic-truncator";
 import { findReadmeMdUp, resolveFilePath } from "./finder";
 import { loadInjectedPaths, saveInjectedPaths } from "./storage";
+import { logWarn } from "../../shared/logger";
 
 type DynamicTruncator = ReturnType<typeof createDynamicTruncator>;
 
@@ -50,7 +51,14 @@ export async function processFilePathForReadmeInjection(input: {
       input.output.output += `\n\n[Project README: ${readmePath}]\n${result}${truncationNotice}`;
       cache.add(readmeDir);
       dirty = true;
-    } catch {}
+    } catch (error) {
+      // Skip this README on any error (read/truncate) — one missing or unreadable
+      // README must not block the remaining candidates in the walk-up chain.
+      logWarn("[directory-readme-injector] skipping README", {
+        path: readmePath,
+        error: String(error),
+      });
+    }
   }
 
   if (dirty) {

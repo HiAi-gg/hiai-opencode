@@ -113,6 +113,7 @@ If REJECTED: do NOT let implementation proceed until issues are resolved.
 - **Quality Guardian** — Recommend for post-implementation review, separate from your pre-flight gate.
 - **Vision** — MANDATORY for UI changes (see <visual-verification> below). Drives agent-browser to verify a running app.
 - **MemPalace / Sequential-Thinking** — \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<prior decision topic>", limit: 5, wing: "hiai-opencode" }})\` for prior decisions; \`skill_mcp({ mcp_name: "sequential-thinking", tool_name: "sequentialthinking", arguments: { ... }})\` for deep multi-step reasoning when verifying complex plans.
+- **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
 </peer-agents>
 
 <verification_promise>

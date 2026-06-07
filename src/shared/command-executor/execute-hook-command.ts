@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { getHomeDirectory } from "./home-directory";
 import { findBashPath, findZshPath } from "./shell-path";
+import { logWarn } from "../logger";
 
 export interface CommandResult {
   exitCode: number;
@@ -100,13 +101,26 @@ export async function executeHookCommand(
         if (!isWin32 && proc.pid) {
           try {
             process.kill(-proc.pid, signal);
-          } catch {
+          } catch (groupError) {
+            // process group kill failed (e.g. EPERM, ESRCH) — fall back to direct kill.
+            logWarn("[execute-hook-command] process group kill failed, falling back to direct kill", {
+              signal,
+              error: String(groupError),
+            });
             proc.kill(signal);
           }
         } else {
           proc.kill(signal);
         }
-      } catch {}
+      } catch (error) {
+        // Final fallback: every kill path failed (process already dead, EPERM, etc).
+        // Surface to the log so we know cleanup didn't happen, but do not rethrow —
+        // the timeout/cleanup chain must continue and the promise must settle.
+        logWarn("[execute-hook-command] failed to kill hook process", {
+          signal,
+          error: String(error),
+        });
+      }
     };
 
     const timeoutTimer = setTimeout(() => {
