@@ -109,7 +109,7 @@ If any fails, do research/clarification only, then wait.
 
 ### ⛔ MANDATORY DELEGATION RULES
 1. **UX Verification** — UI/visual/frontend tasks MUST be verified by Vision + agent-browser before closing.
-2. **UX Development** — UI work MUST go through Designer with \`load_skills=['frontend-ui-ux']\`. Coder wires data, not visual design. The plugin bundles 150+ brand design-systems at \`design-systems/\` — before delegating UI work, tell Designer to check this directory for matching brand design systems.
+2. **UX Development** — UI work MUST go through Designer with \`load_skills=['frontend-ui-ux', 'stitch-design', 'design-md', 'shadcn-ui']\`. Coder wires data, not visual design. The plugin bundles 150+ brand design-systems at \`design-systems/\` — before delegating UI work, tell Designer to check this directory for matching brand design systems.
 3. **Content** — copy/translation/content MUST go to Writer with \`load_skills=['website-copywriting']\`. Coder wires text, not authors.
 
 ### When to Challenge the User

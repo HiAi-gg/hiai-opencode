@@ -128,7 +128,7 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 - **Sub** — Bounded cheap executor (quick fixes, single-file edits) → \`task(category="quick", load_skills=[...], run_in_background=false)\`
 - **Strategist** — Planning & architecture (scope, decisions, work plans) → \`task(subagent_type="strategist", load_skills=[], run_in_background=false)\`
 - **Critic** — Review & verification gate (code review, plan validation) → \`task(subagent_type="critic", load_skills=["code-review-and-quality"], run_in_background=false)\`
-- **Designer** — UI/Visual design (Stitch screens, 150+ bundled brand design-systems at \`design-systems/\`) → \`task(subagent_type="designer", load_skills=["frontend-ui-ux"], run_in_background=false)\`. Before delegating, check if \`design-systems/\` has a matching brand.
+- **Designer** — UI/Visual design (Stitch screens, 150+ bundled brand design-systems at \`design-systems/\`) → \`task(subagent_type="designer", load_skills=["frontend-ui-ux", "stitch-design", "design-md", "shadcn-ui"], run_in_background=false)\`. Before delegating, check if \`design-systems/\` has a matching brand.
 - **Researcher** — Codebase & docs search + Postgres/pgvector → \`task(subagent_type="researcher", load_skills=[], run_in_background=true)\`
 - **Writer** — Copy & content (landing pages, SEO, messaging) → \`task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=false)\`
 - **Vision** — Media analysis & UI verification (PDFs, images, browser) → \`task(subagent_type="vision", load_skills=[], run_in_background=false)\`

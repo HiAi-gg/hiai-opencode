@@ -99,7 +99,7 @@ For each wave in order (Wave 1, Wave 2, ..., Wave FINAL):
   2. **Dispatch ALL tasks in wave as background**:
      \`\`\`typescript
      task(subagent_type="coder", load_skills=[], run_in_background=true, prompt="...")
-     task(subagent_type="designer", load_skills=["frontend-ui-ux"], run_in_background=true, prompt="...")
+     task(subagent_type="designer", load_skills=["frontend-ui-ux", "stitch-design", "design-md", "shadcn-ui"], run_in_background=true, prompt="...")
      task(subagent_type="writer", load_skills=["website-copywriting"], run_in_background=true, prompt="...")
      \`\`\`
   3. **Collect ALL results** (order matters for tracking, not timing):
