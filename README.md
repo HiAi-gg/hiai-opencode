@@ -88,14 +88,16 @@ Mode determines prompt append, variant, and reasoning effort. The executor agent
 
 MCP integrations and which agents use them:
 
-| Service | Key env var | Agent(s) | What it's for |
-|---------|------------|----------|---------------|
-| Stitch | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
-| Firecrawl | `FIRECRAWL_API_KEY` | Researcher | CLI skill (not MCP) for web scraping, crawl, extract, search |
-| Context7 | `CONTEXT7_API_KEY` | Researcher, Coder | Library API documentation |
-| grep_app | — | Researcher | GitHub OSS code pattern search |
-| MemPalace | MEMPALACE_PYTHON (optional) | Manager (primary), all agents | Project memory and past decisions |
-| Sequential-Thinking | — | Strategist, Critic | Deep reasoning for planning/review |
+| Service | Type | Key env var | Agent(s) | What it's for |
+|---------|------|------------|----------|---------------|
+| Stitch | **MCP** | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
+| Context7 | **MCP** | `CONTEXT7_API_KEY` (optional) | Researcher, Coder | Library API documentation |
+| grep_app | **MCP** | — | Researcher | GitHub OSS code pattern search |
+| MemPalace | **MCP** | `MEMPALACE_PYTHON` (optional) | Manager (primary), all agents | Project memory and past decisions |
+| Sequential-Thinking | **MCP** | — | Strategist, Critic | Deep reasoning for planning/review |
+| Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | Researcher | Web scraping, crawl, extract, search (NOT an MCP server) |
+
+**Important**: Firecrawl is a CLI skill, not an MCP server. It works through the `firecrawl-cli` skill in `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` to be set in your environment. Do not add it to the `mcp` section of `hiai-opencode.json`.
 
 ## Design System
 
@@ -130,7 +132,8 @@ The Designer agent uses these assets to ground its output in real brand systems 
 - **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
 - **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
 - Skill materialization into OpenCode's `skills/` view
-- MCP wiring for `stitch`, `sequential-thinking`, `mempalace`, `context7`, and `grep_app` (Firecrawl is CLI skill only, not MCP)
+- **MCP wiring** for `stitch`, `sequential-thinking`, `mempalace`, `context7`, and `grep_app`
+- **CLI skills** (not MCP): `firecrawl-cli` for web scraping (requires `FIRECRAWL_API_KEY`)
 - LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
 
 ## Continuation, Ralph-Loop, And Auto-Start
@@ -170,11 +173,34 @@ Usually required:
 
 Optional, depending on which services you want:
 
-- `FIRECRAWL_API_KEY` for Firecrawl (CLI skill, not MCP)
-- `STITCH_AI_API_KEY` for Stitch (MCP)
-- `CONTEXT7_API_KEY` for Context7 (MCP)
-- Python 3.9+ or `uv` for MemPalace (MCP)
+**MCP services** (configured in `hiai-opencode.json`):
+- `STITCH_AI_API_KEY` for Stitch
+- `CONTEXT7_API_KEY` for Context7 (optional, but recommended for rate limits)
+- Python 3.9+ or `uv` for MemPalace
+
+**CLI skills** (not MCP, just set env var):
+- `FIRECRAWL_API_KEY` for Firecrawl web scraping
+
+**Other:**
 - local language servers if you want LSP beyond the npm-bootstrapped helpers
+
+## Quick Install
+
+```bash
+opencode plugin @hiai-gg/hiai-opencode@latest --global
+```
+
+**After installing**, paste this into OpenCode to finish setup automatically:
+
+```text
+Read AGENTS.md and finish hiai-opencode setup for this workspace.
+
+Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
+
+Check which MCP services can run on this machine, update hiai-opencode.json, install only missing user-level or project-local dependencies, and report missing API keys without printing secret values.
+
+Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug config`.
+```
 
 ## Install
 
@@ -190,7 +216,7 @@ Optional Dynamic Context Pruning plugin:
 opencode plugin @tarquinen/opencode-dcp@latest --global
 ```
 
-Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins. Firecrawl is available as a CLI skill at `skills/firecrawl-cli/`, not as an MCP server.
+Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins.
 
 Manual OpenCode config equivalent:
 
@@ -318,13 +344,15 @@ Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp
 
 Keep skill discovery deterministic unless I explicitly ask for external skills. Leave global_opencode, project_claude, global_claude, project_agents, and global_agents disabled by default.
 
-Enable only services that can run on this machine:
+Enable only MCP services that can run on this machine:
 - sequential-thinking: requires node/npx.
 - mempalace: requires uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed. Leave `HIAI_MCP_AUTO_INSTALL` enabled unless the user forbids package installation.
 - stitch: requires STITCH_AI_API_KEY.
 - context7: works without a key but use CONTEXT7_API_KEY if available.
 - grep_app: no key required.
-- firecrawl-cli: CLI skill (not MCP) at `skills/firecrawl-cli/`; requires FIRECRAWL_API_KEY.
+
+CLI skills (NOT MCP, do not add to mcp config):
+- firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var; no mcp config needed.
 
 Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
 
@@ -445,16 +473,18 @@ LSP defaults are defined in:
 
 Model provider keys are handled by OpenCode Connect. Do not add `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` to `hiai-opencode` config for normal model usage.
 
-Important service variables:
+**MCP services** (go in `hiai-opencode.json` mcp section):
+- `STITCH_AI_API_KEY`
+- `CONTEXT7_API_KEY` (optional)
+- `MEMPALACE_PYTHON`
+- `MEMPALACE_PALACE_PATH`
 
-- `STITCH_AI_API_KEY` (MCP)
-- `FIRECRAWL_API_KEY` (CLI skill, not MCP)
-- `CONTEXT7_API_KEY` (MCP)
+**CLI skills** (just set env var, not in mcp config):
+- `FIRECRAWL_API_KEY` — for Firecrawl web scraping (NOT an MCP server)
+
+**Other:**
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
-- `MEMPALACE_PYTHON` (MCP)
-- `MEMPALACE_PALACE_PATH` (MCP)
-
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
