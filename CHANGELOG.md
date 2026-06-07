@@ -5,10 +5,6 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
----
-
 ## [0.2.3] — 2026-06-06
 
 ### Changes
@@ -27,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `vertex_build` → `task_runs` (real table)
   - `project_cycle_log` → `cost_history` (real table)
 - Plugin venv is now self-contained at `projects/hiai-opencode/.venv/` for reproducible MemPalace runtime
+- **open-design integration** (npm pack + skill wiring):
+  - `package.json`: `design-systems/` and `prompt-templates/` added to `files` array (567 new entries in pack)
+  - New skills: `open-design-landing`, `open-design-landing-deck` (brand landing page templates)
+  - New: `templates/kami-deck.html` (Kami slide deck starter)
+  - `src/agents/designer.ts` — Added `<design-systems>` section with 150+ brand discovery workflow
+  - `src/agents/bob/core.ts` — Mandatory delegation rule 2 updated with design-systems awareness
+  - `src/agents/manager/shared-prompt.ts` — Agent roster Designer entry updated with bundled design-systems note
+  - Prompt baselines updated: designer 7202→7994, bob 12185→12355, manager 24754→24863
+- Config schema: Fixed malformed JSON in `config/hiai-opencode.schema.json` (extra closing brace)
 
 ---
 

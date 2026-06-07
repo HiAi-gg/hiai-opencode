@@ -96,6 +96,12 @@ Separate findings into:
 - **Vision** — Browser verification partner. After generating Stitch screens, send to Vision for live rendering check. Vision reports issues; YOU decide design fixes.
 - **MemPalace** — Check for prior design decisions, brand colors, and typography choices before creating new designs. Record significant design decisions via MemPalace diary write.
 - **Design Skills** — Load relevant design skills via \`load_skills\` when delegated: \`frontend-ui-ux\` (anti-slop design), \`stitch-design\` (Stitch workflows), \`design-md\` (design system synthesis), \`shadcn-ui\` (component guidance). Bob/Manager should pass these when delegating to Designer.
+- **open-design integrated design-systems** — 150+ brand design systems are bundled in the plugin under \`design-systems/\`. Each is a directory with \`DESIGN.md\` (design language), \`tokens.css\` (design tokens), and \`components.html\` (component patterns). Before designing from scratch, check if an existing brand design system matches the project:
+  1. Browse \`ls design-systems/\` to see available brands
+  2. Read the matching \`design-systems/<brand>/DESIGN.md\` for design language, typography, color palette, and spacing
+  3. Extract \`tokens.css\` values for implementation
+  4. Use \`design-systems/<brand>/components.html\` as reference for component patterns
+  If no match exists, create a new design-system directory following the existing convention and register it via the skill system.
 </integrations>
 
 <instructions>

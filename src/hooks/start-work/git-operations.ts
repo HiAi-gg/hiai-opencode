@@ -4,7 +4,7 @@
  * Provides git utilities for branch tracking and divergence detection.
  */
 
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 
 /**
  * Get the current git branch name for a directory
@@ -131,7 +131,7 @@ export function canMergeWithoutConflicts(
 
     try {
       // Try merge without committing
-      execSync(`git merge --no-commit --no-ff ${targetBranch}`, {
+      execFileSync("git", ["merge", "--no-commit", "--no-ff", targetBranch], {
         cwd: directory,
         encoding: "utf-8",
         timeout: 10000,

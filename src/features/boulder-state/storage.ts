@@ -6,7 +6,7 @@
 
 import { existsSync, readFileSync, writeFileSync, mkdirSync, readdirSync, renameSync, unlinkSync, copyFileSync } from "node:fs"
 import { join, basename } from "node:path"
-import { execSync } from "node:child_process"
+import { execFileSync, execSync } from "node:child_process"
 import type { BoulderState, PlanProgress, TaskSessionState } from "./types"
 import { BOULDER_DIR, BOULDER_FILE, STRATEGIST_PLANS_DIR, BOULDER_REGISTRY_DIR, LEGACY_BOULDER_FILE, NOTEPAD_DIR } from "./constants"
 
@@ -618,7 +618,7 @@ export function completePlan(directory: string, planName: string, worktreePath?:
     // Step 2: Remove worktree if it exists
     if (worktreePath) {
       // Use git worktree remove --force
-      execSync(`git worktree remove --force "${worktreePath}"`, { cwd: directory })
+      execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: directory })
     }
 
     // Step 3: Delete boulder from registry
