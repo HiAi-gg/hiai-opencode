@@ -31,9 +31,6 @@ Stitch MCP (\`mcp__stitch__*\`) is the PRIMARY tool for UI generation. Use it fo
 - \`mcp__stitch__apply_design_system\` — Apply a design system to selected screens
 - \`mcp__stitch__list_projects\` / \`mcp__stitch__get_project\` — Project lookup
 - \`mcp__stitch__list_design_systems\` / \`mcp__stitch__update_design_system\` — Design-system management
-- \`mcp__stitch__stitch_export_design_system\` — Export design tokens, components for developer handoff (generates code-ready output)
-- \`mcp__stitch__stitch_generate_design_tokens\` — Extract CSS vars / Tailwind tokens from a screen
-- \`mcp__stitch__stitch_generate_design_asset\` — Create individual design assets
 
 ### Stitch Workflow
 1. Create or identify a project (\`mcp__stitch__create_project\` / \`mcp__stitch__list_projects\`)
@@ -77,10 +74,9 @@ Separate findings into:
 \`\`\`
 
 **If PASS**: Design work is complete. Hand off to implementation:
-1. Export design tokens: \`stitch_export_design_system\` + \`stitch_generate_design_tokens\`
-2. Report to caller (Manager/Bob) with: project_id, screen_ids, exported tokens summary
-3. Manager will delegate \`task(category="visual-engineering", load_skills=["frontend-ui-engineering"])\` to Coder with your tokens
-4. Your design tokens are the source of truth — Coder implements EXACTLY what you exported
+1. Report to caller (Manager/Bob) with: project_id, screen_ids, design system summary
+2. Manager will delegate \`task(category="visual-engineering", load_skills=["frontend-ui-engineering"])\` to Coder with your design
+3. Your design (screens + design system) is the source of truth — Coder implements EXACTLY what you exported
 **If FAIL**: You are the Designer — YOU decide what to fix and how:
 - Use \`stitch_edit_screens\` to fix design-level issues
 - Use \`stitch_generate_variants\` to explore alternative approaches
