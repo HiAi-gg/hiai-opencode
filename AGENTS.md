@@ -438,6 +438,50 @@ Common service keys:
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
 - `HIAI_OPENCODE_EXPORT_MCP_MODE`
 
+## MemPalace Memory Management
+
+MemPalace is the project's long-term memory system. All agents MUST use it to store important decisions, findings, and context that should persist across sessions.
+
+### CLI Usage (When MCP Fails)
+
+If the MemPalace MCP server is not accessible, use the CLI directly:
+
+```bash
+# Palace location
+export PALACE_PATH=/mnt/ai_data/projects/hiai-opencode/.opencode/palace
+
+# Add a memory drawer
+python -m mempalace add-drawer --wing hiai-opencode --room decisions --content "Important decision about X"
+
+# Search memories
+python -m mempalace search --query "ralph loop"
+
+# Mine (auto-extract from files)
+python -m mempalace mine --source-file src/config/schema/ralph-loop.ts --wing hiai-opencode --room config
+
+# Check status
+python -m mempalace status
+```
+
+### Agent Memory Rules
+
+1. **After completing significant work**: Use `mempalace_mempalace_add_drawer` to store:
+   - Key architectural decisions
+   - Bug fixes and their root causes
+   - Configuration changes
+   - Important findings from research
+
+2. **Before starting work**: Use `mempalace_mempalace_search` to check for existing context
+
+3. **If MCP is disconnected**: Fall back to CLI commands above
+
+4. **Memory categories**:
+   - `wing: hiai-opencode` — Project-level decisions
+   - `room: decisions` — Architecture and design choices
+   - `room: bugs` — Bug fixes and investigations
+   - `room: config` — Configuration changes
+   - `room: agents` — Agent behavior changes
+
 ## Mental Map
 
 Agent/MCP/LSP integration reference — which agents use which integrations:
