@@ -63,15 +63,34 @@ export type LogicianVerificationEvidence = CriticVerificationEvidence
 
 export const parseLogicianVerificationEvidence = parseCriticVerificationEvidence
 
+/** CLOSURE block pattern for fallback when `<promise>` machine tag is absent. */
+const CLOSURE_BLOCK_PATTERN = /<CLOSURE>\s*([\s\S]*?)\s*<\/CLOSURE>/is
+const CLOSURE_READINESS_PATTERN = /"readiness"\s*:\s*"(accept|done)"/is
+
 export function isCriticVerified(text: string): boolean {
 	const evidence = parseCriticVerificationEvidence(text)
-	if (!evidence) {
-		return false
+
+	if (evidence) {
+		const isVerifiedPromise = evidence.promise === ULTRAWORK_VERIFICATION_PROMISE
+
+		if (isVerificationGateAgent(evidence.agent) && isVerifiedPromise) {
+			return true
+		}
 	}
 
-	const isVerifiedPromise = evidence.promise === ULTRAWORK_VERIFICATION_PROMISE
+	// Fallback: Critic emitted CLOSURE with readiness "accept"/"done"
+	// but forgot the <promise>VERIFIED</promise> machine tag.
+	const agentMatch = text.match(AGENT_LINE_PATTERN)
+	if (!agentMatch) return false
 
-	return isVerificationGateAgent(evidence.agent) && isVerifiedPromise
+	const agent = agentMatch[1]?.trim() ?? ""
+	if (!isVerificationGateAgent(agent)) return false
+
+	const closureMatch = text.match(CLOSURE_BLOCK_PATTERN)
+	if (!closureMatch) return false
+	if (!CLOSURE_READINESS_PATTERN.test(closureMatch[1])) return false
+
+	return true
 }
 
 export const isLogicianVerified = isCriticVerified
