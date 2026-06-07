@@ -148,6 +148,22 @@ export function enqueueNotificationForParent(
   return current
 }
 
+/**
+ * Send a task-completion receipt to the parent session.
+ *
+ * Receipt contract (single path, called from `BackgroundManager.tryCompleteTask`):
+ *   - Caller MUST have atomically transitioned `task.status` to `completed` before
+ *     invoking this function; the dedup gate lives in `tryCompleteTask` (manager.ts)
+ *     so this function fires exactly once per task.
+ *   - Sends `ctx.client.session.promptAsync({ path: { id: parentSessionID }, body })`
+ *     to inject the `<system-reminder>` notification into the parent session.
+ *   - When `task.status` is a failure (error / cancel / interrupt) the parent is
+ *     always notified (`shouldReply = true`); for normal completions the parent
+ *     is only notified when ALL of the parent's tasks are finished (`allComplete`).
+ *   - Aborted-session errors and recoverable prompt errors are swallowed and the
+ *     notification is queued via `queuePendingNotification` for the next
+ *     `chat.message` on the parent session.
+ */
 export async function notifyParentSession(adapter: NotifierAdapter, task: BackgroundTask): Promise<void> {
   const duration = formatDuration(task.startedAt ?? new Date(), task.completedAt)
 
