@@ -110,13 +110,10 @@ Separate findings into:
 `;
 
 export function createDesignerAgent(model: string): AgentConfig {
-  // Designer can write UI files (HTML, CSS, Svelte, TSX, design tokens)
-  // Blocked from task delegation and apply_patch
+  // Designer can write UI files (HTML, CSS, Svelte, TSX, design tokens).
   const restrictions = {
     permission: {
-      task: "deny" as const,
       apply_patch: "deny" as const,
-      // All other tools (write, edit, bash, stitch MCP, etc.) are allowed
     },
   };
 
@@ -127,6 +124,7 @@ export function createDesignerAgent(model: string): AgentConfig {
     temperature: 0.7,
     ...restrictions,
     prompt: DESIGNER_PROMPT,
+    delegate_to: ["coder", "researcher", "vision", "sub", "writer"],
   } as AgentConfig;
 }
 createDesignerAgent.mode = MODE;

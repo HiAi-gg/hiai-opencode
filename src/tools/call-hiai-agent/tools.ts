@@ -9,7 +9,7 @@ import type { CategoriesConfig, AgentOverrides } from "../../config/schema"
 import type { DelegatedModelConfig } from "../../shared/model-resolution-types"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { AGENT_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
-import { getAgentConfigKey, stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
+import { getAgentConfigKey, getAgentDisplayName, stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
 import { resolveCanonicalDelegateAgentKey } from "../delegate-task/sub-agent"
 import { normalizeFallbackModels } from "../../shared/model-resolver"
 import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models"
@@ -159,8 +159,16 @@ export function createCallHiaiAgent(
         return `Error: Invalid agent type "${args.subagent_type}". Available agents: ${callableAgents.join(", ")}. Legacy aliases: oracle→strategist, hephaestus→coder, metis→strategist, momus→critic, sisyphus-junior→sub, multimodal-looker→multimodal, librarian→researcher, explore→researcher.`;
       }
 
+      // Lowercase config key — used for disabled-agents validation, which compares against the
+      // user's `disabled_agents` config (always lowercase). Keep this for validation only.
       const normalizedAgent = canonicalAgentType.toLowerCase();
-      args = { ...args, subagent_type: normalizedAgent };
+
+      // Canonical display name (e.g., "Coder", "Researcher") — required by the OpenCode SDK,
+      // which registers agents with their display names. Passing the lowercase config key here
+      // causes "Agent not found" errors because the SDK has "Coder" (not "coder") registered.
+      // For unknown/custom agents, getAgentDisplayName falls back to the original key.
+      const canonicalAgentName = getAgentDisplayName(canonicalAgentType);
+      args = { ...args, subagent_type: canonicalAgentName };
 
       // Check if agent is disabled
       if (disabledAgents.some((disabled) => stripInvisibleAgentCharacters(disabled).toLowerCase() === normalizedAgent)) {

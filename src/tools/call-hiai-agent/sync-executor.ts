@@ -100,15 +100,18 @@ export async function executeSync(
 
     log(`[call_hiai_agent] Sending prompt to session ${sessionID}`)
     log(`[call_hiai_agent] Prompt text:`, args.prompt.substring(0, 100))
-    const normalizedSubagentType = stripAgentListSortPrefix(args.subagent_type)
+    // args.subagent_type is the canonical display name (e.g., "Coder", "Researcher") that the
+    // OpenCode SDK expects. tools.ts resolves it from the lowercase config key. We only strip
+    // invisible characters here.
+    const agentForSdk = stripAgentListSortPrefix(args.subagent_type)
 
     try {
       await (ctx.client.session as unknown as SessionWithPromptAsync).promptAsync({
         path: { id: sessionID },
         body: {
-          agent: normalizedSubagentType,
+          agent: agentForSdk,
           tools: {
-            ...getAgentToolRestrictions(normalizedSubagentType),
+            ...getAgentToolRestrictions(agentForSdk),
             task: false,
             question: false,
           },
@@ -122,7 +125,7 @@ export async function executeSync(
       const errorMessage = error instanceof Error ? error.message : String(error)
       log(`[call_hiai_agent] Prompt error:`, errorMessage)
       if (errorMessage.includes("agent.name") || errorMessage.includes("undefined")) {
-        return `Error: Agent "${normalizedSubagentType}" not found. Make sure the agent is registered in your opencode.json or provided by a plugin.\n\n<task_metadata>\nsession_id: ${sessionID}\n</task_metadata>`
+        return `Error: Agent "${agentForSdk}" not found. Make sure the agent is registered in your opencode.json or provided by a plugin.\n\n<task_metadata>\nsession_id: ${sessionID}\n</task_metadata>`
       }
       return `Error: Failed to send prompt: ${errorMessage}\n\n<task_metadata>\nsession_id: ${sessionID}\n</task_metadata>`
     }

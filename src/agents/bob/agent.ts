@@ -63,8 +63,20 @@ export function createBobAgent(
       bash: "deny",
       edit: "deny",
       write: "deny",
+      task: "allow",
       call_hiai_agent: "deny",
     } as AgentConfig["permission"],
+    delegate_to: [
+      "coder",
+      "manager",
+      "strategist",
+      "critic",
+      "designer",
+      "researcher",
+      "writer",
+      "vision",
+      "sub",
+    ],
     // Model-specific thinking/reasoning config is intentionally omitted.
     // OpenCode runtime applies the appropriate config based on model provider.
   };

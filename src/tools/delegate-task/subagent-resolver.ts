@@ -28,6 +28,7 @@ import { getAvailableModelsForDelegateTask } from "./available-models"
 import type { FallbackEntry } from "../../shared/model-requirements"
 import { resolveModelForDelegateTask } from "./model-selection"
 import { fuzzyMatchModel } from "../../shared/model-availability"
+import { checkCallerCanDelegateTo } from "../../shared/agent-tool-restrictions"
 
 export async function resolveSubagentExecution(
   args: DelegateTaskArgs,
@@ -87,6 +88,20 @@ Create the work plan directly - that's your job as the planning agent.`,
       agentToUse: "",
       categoryModel: undefined,
       error: `Self-delegation not allowed: agent "${requestedCanonicalAgentKey}" cannot delegate to itself via task. Continue the work directly or use session_id=... to continue an existing subagent session.`,
+    }
+  }
+
+  if (canonicalParentAgent) {
+    const delegationCheck = checkCallerCanDelegateTo(
+      canonicalParentAgent,
+      requestedCanonicalAgentKey
+    )
+    if (!delegationCheck.allowed) {
+      return {
+        agentToUse: "",
+        categoryModel: undefined,
+        error: delegationCheck.reason,
+      }
     }
   }
 

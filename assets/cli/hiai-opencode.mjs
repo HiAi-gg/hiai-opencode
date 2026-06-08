@@ -51,12 +51,14 @@ Usage:
   hiai-opencode mcp-status
   hiai-opencode export-mcp [path]
   hiai-opencode diagnose [path]
+  hiai-opencode task-status <task_id>
 
 Commands:
   doctor       Full install/runtime diagnostic: MCP status + static export freshness + provider/skills/agents/LSP checks + MCP tool probes.
   mcp-status   Check hiai-opencode MCP configuration, keys, and local runtimes.
   export-mcp   Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
   diagnose     Collect full diagnostic bundle to file (local only, no remote sending).
+  task-status  Show status of a background task (requires OpenCode process to be running; task state is in-memory only).
 `)
 }
 
@@ -122,6 +124,29 @@ function candidateOpenCodeConfigPaths() {
   }
 
   return paths
+}
+
+function checkFirecrawlAuth() {
+  const hasKey = !!process.env.FIRECRAWL_API_KEY?.trim()
+  if (!hasKey) {
+    return { level: "warn", detail: "FIRECRAWL_API_KEY not set in environment" }
+  }
+
+  const firecrawlBinary = process.platform === "win32" ? "firecrawl.cmd" : "firecrawl"
+  const result = spawnSync(firecrawlBinary, ["--status"], {
+    encoding: "utf-8",
+    timeout: 10000,
+    shell: process.platform === "win32",
+  })
+
+  if (result.status === 0) {
+    return { level: "ok", detail: `Firecrawl auth OK (${result.stdout.trim()})` }
+  }
+
+  return {
+    level: "warn",
+    detail: `Firecrawl auth check failed: ${result.stderr?.trim() || result.error?.message || "unknown error"}`,
+  }
 }
 
 function checkPgvectorConnectivity() {
@@ -864,6 +889,9 @@ async function mcpStatus(options = {}) {
     const mempalaceHook = checkMemPalaceHookStatus()
     console.log(`${statusIcon(mempalaceHook.level)} MemPalace auto-save hook - ${mempalaceHook.detail}`)
 
+    const firecrawl = checkFirecrawlAuth()
+    console.log(`${statusIcon(firecrawl.level)} Firecrawl auth - ${firecrawl.detail}`)
+
     console.log("")
     console.log("MCP Tool Probes:")
     const probeResults = await probeMcpServers(config)
@@ -892,14 +920,26 @@ async function runDiagnose(outputPath) {
   sections.push("")
 
   sections.push("ENVIRONMENT (keys only, no values):")
-  const envKeys = [
-    "FIRECRAWL_API_KEY", "STITCH_AI_API_KEY", "CONTEXT7_API_KEY",
-    "OPENCODE_RAG_URL",
-    "MEMPALACE_PYTHON", "HIAI_MCP_AUTO_INSTALL",
+  const requiredEnvKeys = [
+    "FIRECRAWL_API_KEY",
+    "STITCH_AI_API_KEY",
+    "MEMPALACE_PYTHON",
+    "HIAI_MCP_AUTO_INSTALL",
   ]
+  const optionalEnvKeys = [
+    "CONTEXT7_API_KEY",
+    "OPENCODE_RAG_URL",
+  ]
+  const envKeys = [...requiredEnvKeys, ...optionalEnvKeys]
+  let missingRequired = 0
   for (const key of envKeys) {
     const hasValue = !!process.env[key]?.trim()
-    sections.push(`  ${key}: ${hasValue ? "(set)" : "(not set)"}`)
+    const isRequired = requiredEnvKeys.includes(key)
+    if (!hasValue && isRequired) missingRequired++
+    sections.push(`  ${key}: ${hasValue ? "(set)" : "(not set)"}${isRequired ? " [REQUIRED]" : ""}`)
+  }
+  if (missingRequired > 0) {
+    sections.push(`  WARNING: ${missingRequired} required key(s) missing`)
   }
   sections.push("")
 
@@ -950,6 +990,24 @@ async function runDiagnose(outputPath) {
   console.log(`Diagnose written to: ${defaultPath}`)
 }
 
+function showTaskStatus(taskId) {
+  if (!taskId) {
+    console.error("Usage: hiai-opencode task-status <task_id>")
+    process.exit(1)
+  }
+
+  console.log(`Task status for: ${taskId}`)
+  console.log("")
+  console.log("Background task state is stored in-memory only.")
+  console.log("To check task status, use the background_output tool inside OpenCode:")
+  console.log(`  background_output(task_id: "${taskId}")`)
+  console.log("")
+  console.log("Or check the OpenCode logs for circuit breaker messages:")
+  console.log(`  grep "${taskId}" ~/.config/opencode/logs/opencode.log`)
+  console.log("")
+  console.log("Note: If the OpenCode process has restarted, all task state is lost.")
+}
+
 async function main() {
   const command = process.argv[2]
   if (!command || command === "-h" || command === "--help") {
@@ -974,6 +1032,11 @@ async function main() {
 
   if (command === "diagnose") {
     await runDiagnose(process.argv[3])
+    return
+  }
+
+  if (command === "task-status") {
+    showTaskStatus(process.argv[3])
     return
   }
 

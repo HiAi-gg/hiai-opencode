@@ -90,6 +90,7 @@ export function createBobJuniorAgentWithOverrides(
     prompt,
     color: override?.color ?? "#20B2AA",
     permission,
+    delegate_to: [],
   }
 
   if (override?.top_p !== undefined) {

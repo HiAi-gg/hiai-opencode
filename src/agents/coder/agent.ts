@@ -91,6 +91,7 @@ export function createCoderAgent(
       call_hiai_agent: "deny",
       ...getGptApplyPatchPermission(model),
     } as AgentConfig["permission"],
+    delegate_to: ["designer", "researcher", "vision", "sub", "writer"],
   };
 
   if (isGptModel(model)) {

@@ -8,6 +8,7 @@ import { resolveMessageContext } from "../../features/hook-message-injector"
 import { getSessionAgent } from "../../features/claude-code-session-state"
 import { getMessageDir } from "./message-dir"
 import { getSessionTools } from "../../shared/session-tools-store"
+import { stripAgentListSortPrefix } from "../../shared/agent-display-names"
 
 export async function executeBackground(
   args: CallHiaiAgentArgs,
@@ -44,10 +45,16 @@ export async function executeBackground(
       resolvedParentAgent: parentAgent,
     })
 
+    // args.subagent_type is the canonical display name (e.g., "Coder", "Researcher") that the
+    // OpenCode SDK expects. tools.ts resolves it from the lowercase config key. Strip invisible
+    // characters defensively at this boundary — the downstream spawner also strips, but doing
+    // it here keeps the contract local to call-hiai-agent.
+    const agentForSdk = stripAgentListSortPrefix(args.subagent_type)
+
     const task = await manager.launch({
       description: args.description,
       prompt: args.prompt,
-      agent: args.subagent_type,
+      agent: agentForSdk,
       parentSessionID: toolContext.sessionID,
       parentMessageID: toolContext.messageID,
       parentAgent,

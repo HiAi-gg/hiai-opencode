@@ -89,6 +89,16 @@ export function createManagerAgent(ctx: OrchestratorContext): AgentConfig {
     temperature: 0.1,
     prompt: buildDynamicOrchestratorPrompt(ctx),
     color: "#10B981",
+    delegate_to: [
+      "coder",
+      "strategist",
+      "critic",
+      "designer",
+      "researcher",
+      "writer",
+      "vision",
+      "sub",
+    ],
   }
 
   return baseConfig as AgentConfig

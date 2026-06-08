@@ -118,6 +118,7 @@ export function createResearcherAgent(model: string): AgentConfig {
     ...restrictions,
     prompt: RESEARCHER_PROMPT,
     thinking: { type: "enabled", budgetTokens: 16000 },
+    delegate_to: ["vision"],
   } as AgentConfig;
 }
 createResearcherAgent.mode = MODE;

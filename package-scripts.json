@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "build": "bun run clean:dist && bun build src/index.ts --outdir dist --target bun --format esm --minify && tsc --emitDeclarationOnly",
+    "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\""
+  }
+}

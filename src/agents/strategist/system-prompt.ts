@@ -12,6 +12,7 @@ export const STRATEGIST_PERMISSION = {
   bash: "deny" as const,        // denied: Strategist is planning-only, no shell execution
   webfetch: "allow" as const,   // allowed: research/web content reading
   question: "allow" as const,   // allowed: user interviews
+  task: "allow" as const,       // allowed: can delegate to researcher/manager/critic/writer per delegate_to
 }
 
 export type StrategistPromptSource = "default"

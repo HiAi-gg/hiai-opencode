@@ -103,6 +103,7 @@ export async function buildStrategistAgentConfig(params: {
     permission: STRATEGIST_PERMISSION,
     description: `${(params.configAgentPlan?.description as string) ?? "Plan agent"} (Strategist - HiaiOpenCode)`,
     color: (params.configAgentPlan?.color as string) ?? "#FF5722",
+    delegate_to: ["researcher", "manager", "critic", "writer"],
     ...(temperatureToUse !== undefined ? { temperature: temperatureToUse } : {}),
     ...(topPToUse !== undefined ? { top_p: topPToUse } : {}),
     ...(maxTokensToUse !== undefined ? { maxTokens: maxTokensToUse } : {}),

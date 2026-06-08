@@ -1,0 +1,62 @@
+# hiai-opencode environment variables
+# Copy this file to .env and fill in your values.
+# All keys are optional unless noted.
+
+# Model Provider Credentials
+#
+# Configure model provider credentials with OpenCode Connect.
+# hiai-opencode only stores model IDs such as:
+# - openrouter/anthropic/claude-3.5-sonnet
+# - openai/gpt-4.1
+# - anthropic/claude-3-5-sonnet-latest
+#
+# Do not put model provider keys here for normal OpenCode usage.
+# Connect model providers in OpenCode itself.
+
+# MCP Service Keys
+
+# Optional - Stitch AI remote MCP service
+# STITCH_AI_API_KEY=your_stitch_api_key_here
+
+# Optional - Firecrawl web scraping MCP
+# FIRECRAWL_API_KEY=your_firecrawl_api_key_here
+
+# Optional - Context7 code search MCP
+# CONTEXT7_API_KEY=your_context7_api_key_here
+
+# Local Model Helpers
+
+# Optional - Ollama local model endpoint
+# OLLAMA_BASE_URL=http://localhost:11434
+
+# Optional - Ollama model ID (e.g. qwen3.5:4b)
+# OLLAMA_MODEL=qwen3.5:4b
+
+# MemPalace MCP
+
+# Optional - Python command for MemPalace MCP (python3, python, or full path)
+# MEMPALACE_PYTHON=python3
+
+# Optional - custom MemPalace data directory
+# MEMPALACE_PALACE_PATH=./.opencode/palace
+
+# Optional - set to 0, false, or no to prevent first-run Python package install
+# HIAI_MCP_AUTO_INSTALL=1
+
+# Static MCP export
+
+# Optional - controls automatic .mcp.json export when the plugin loads.
+# Values: if-missing (default), always (managed files only), force, 0/false/no/off.
+# Optional - log level for hiai-opencode (debug, info, warn, error)
+# HIAI_OPENCODE_LOG_LEVEL=info
+
+# HIAI_OPENCODE_AUTO_EXPORT_MCP=if-missing
+
+# Optional - override static MCP export path.
+# HIAI_OPENCODE_MCP_EXPORT_PATH=./.mcp.json
+
+# Optional - CLI export safety mode.
+# Values: safe (default), force
+# HIAI_OPENCODE_EXPORT_MCP_MODE=safe
+
+

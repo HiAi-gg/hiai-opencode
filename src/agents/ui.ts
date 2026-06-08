@@ -173,6 +173,7 @@ export function createMultimodalLookerAgent(model: string): AgentConfig {
     temperature: 0.1,
     ...restrictions,
     prompt: buildAgentIdentitySection("Vision", "multimodal analysis and UI verification specialist") + "\n\n" + VISION_PROMPT,
+    delegate_to: [],
   }
 }
 createMultimodalLookerAgent.mode = MODE

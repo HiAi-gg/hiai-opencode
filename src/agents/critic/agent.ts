@@ -185,6 +185,7 @@ export function createCriticAgent(model: string): AgentConfig {
     temperature: 0.3,
     prompt: CRITIC_PROMPT,
     thinking: { type: "enabled", budgetTokens: 24000 },
+    delegate_to: ["researcher", "vision", "manager"],
   };
 }
 createCriticAgent.mode = MODE;

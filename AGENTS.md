@@ -664,6 +664,30 @@ The final runtime prompt is assembled from multiple layers beyond `src/agents/`:
 
 Inspect layer 6 first when runtime output diverges from source.
 
+### Background task disappeared / circuit breaker triggered
+
+Background tasks can be silently cancelled by the circuit breaker. Two thresholds:
+
+1. **Consecutive same-tool limit (default: 20)** — If a subagent calls the same tool 20+ times consecutively with identical input, the task is cancelled. This prevents infinite loops.
+2. **Total tool call limit (default: 4000)** — If a subagent makes 4000+ total tool calls, the task is cancelled. This prevents runaway token usage.
+
+When either threshold is hit:
+- Task status becomes `"cancelled"` with `source: "circuit-breaker"`
+- Reason is logged (check logs for `Circuit breaker:`)
+- Parent session receives a notification
+
+To detect: search logs for `"[background-agent] Circuit breaker:"`
+To adjust: set `background_task.circuit_breaker.consecutive_threshold` or `background_task.max_tool_calls` in `hiai-opencode.json`.
+
+### Background task state is in-memory only
+
+BackgroundManager stores all task state in memory (JavaScript Maps). If the OpenCode process restarts or crashes:
+- All running/pending background tasks are lost
+- Task history is lost
+- Descendant counts are lost
+
+This is by design for simplicity. A persistence layer (SQLite/journal) is planned but not yet implemented.
+
 ## Common Pitfalls
 
 ### Installing MCP server packages as OpenCode plugins
@@ -675,6 +699,27 @@ Register only `@hiai-gg/hiai-opencode` as a plugin. MCP wiring is handled throug
 ### Inventing model ID prefixes
 
 When users ask which model to choose, tell them to run `opencode models` and copy the exact `provider/model-id` strings from that output into `hiai-opencode.json`. Do not invent prefixes like `openrouter/minimax/` — the provider prefix must match what OpenCode Connect has authorized.
+
+### Confusing `{env:VAR}` with `${VAR}` placeholders
+
+hiai-opencode uses **two different** environment variable placeholder syntaxes:
+
+1. **`{env:VAR_NAME}`** — Used in `hiai-opencode.json` for hiai-opencode's own config resolver. Unrestricted: works for any env var name including `KEY`, `TOKEN`, `SECRET`.
+2. **`${VAR_NAME}`** — Used by Claude Code and some OpenCode contexts. **Blocks** vars containing `KEY`, `TOKEN`, or `SECRET` for security.
+
+Example in `hiai-opencode.json`:
+```json
+{
+  "mcp": {
+    "stitch": {
+      "enabled": true,
+      "environment": { "STITCH_AI_API_KEY": "{env:STITCH_AI_API_KEY}" }
+    }
+  }
+}
+```
+
+If you use `${STITCH_AI_API_KEY}` here, it will be blocked because the var name contains `KEY`. Always use `{env:...}` format in hiai-opencode config files.
 
 ### Hardcoding API keys in config files
 

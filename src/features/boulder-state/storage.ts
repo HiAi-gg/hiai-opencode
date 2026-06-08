@@ -605,7 +605,9 @@ export function ensureRegistryExists(directory: string): void {
  * Complete a plan: sync notepads from worktree, remove worktree, delete boulder from registry
  * @param directory - Root directory (where registry lives)
  * @param planName - Plan name to complete
- * @param worktreePath - Optional worktree path to clean up
+ * @param worktreePath - Optional worktree path to clean up. When provided, the
+ *   per-worktree registry entry is also deleted, then the worktree-local and root
+ *   registries are kept in sync via the notepad sync step that precedes removal.
  * @returns true on success
  */
 export function completePlan(directory: string, planName: string, worktreePath?: string): boolean {
@@ -621,13 +623,171 @@ export function completePlan(directory: string, planName: string, worktreePath?:
       execFileSync("git", ["worktree", "remove", "--force", worktreePath], { cwd: directory })
     }
 
-    // Step 3: Delete boulder from registry
+    // Step 3: Delete boulder from root registry
     deleteBoulderForPlan(directory, planName)
+
+    // Step 4: Delete boulder from the worktree's own registry (if it had one)
+    if (worktreePath) {
+      deleteBoulderForPlanInWorktree(worktreePath, planName)
+    }
 
     return true
   } catch {
     return false
   }
+}
+
+// =============================================================================
+// Per-Worktree Registry Operations
+// =============================================================================
+
+// The relative path of the registry inside a worktree's .bob/ directory.
+// BOULDER_REGISTRY_DIR is "<.bob>/boulder-registry"; this strips the <.bob>/ prefix
+// so we can join it onto "<worktreePath>/.bob/" without producing a doubled .bob.
+const WORKTREE_REGISTRY_REL_DIR = BOULDER_REGISTRY_DIR.replace(`${BOULDER_DIR}/`, "")
+
+function getWorktreeRegistryDir(worktreePath: string): string {
+  return join(worktreePath, BOULDER_DIR, WORKTREE_REGISTRY_REL_DIR)
+}
+
+/**
+ * Copy a single plan's boulder-registry entry from the root registry into a
+ * worktree's own .bob/boulder-registry/. This gives the worktree an isolated
+ * state file so the agent running inside the worktree can read/write it
+ * without touching the root registry (which is shared with other parallel plans).
+ *
+ * If the worktree has no .bob/ directory yet, it is created. If the plan does
+ * not exist in the root registry, this is a no-op (caller should ensure the
+ * root entry exists first via writeBoulderForPlan).
+ *
+ * @param rootDirectory - Main repo root (where root .bob/boulder-registry lives)
+ * @param worktreePath - Worktree path (where worktree .bob/ should live)
+ * @param planName - Plan name to copy
+ * @returns true on success, false on failure or when the root entry is missing
+ */
+export function copyBoulderEntryToWorktree(
+  rootDirectory: string,
+  worktreePath: string,
+  planName: string,
+): boolean {
+  validatePlanName(planName)
+
+  const sourceState = readBoulderForPlan(rootDirectory, planName)
+  if (!sourceState) {
+    return false
+  }
+
+  const worktreeRegistryDir = getWorktreeRegistryDir(worktreePath)
+  if (!existsSync(worktreeRegistryDir)) {
+    mkdirSync(worktreeRegistryDir, { recursive: true })
+  }
+
+  const targetPath = join(worktreeRegistryDir, `${planName}.json`)
+  const tmpPath = `${targetPath}.tmp`
+
+  try {
+    writeFileSync(tmpPath, JSON.stringify(sourceState, null, 2), "utf-8")
+    renameSync(tmpPath, targetPath)
+    return true
+  } catch {
+    if (existsSync(tmpPath)) {
+      try {
+        unlinkSync(tmpPath)
+      } catch {
+        // Ignore cleanup errors
+      }
+    }
+    return false
+  }
+}
+
+/**
+ * Delete the boulder-registry entry for a plan that lives inside a worktree's
+ * own .bob/boulder-registry/. Use this for worktree-local cleanup, not for
+ * removing the root entry (use deleteBoulderForPlan for that).
+ *
+ * @returns true if the entry was removed or did not exist, false on error
+ */
+export function deleteBoulderForPlanInWorktree(worktreePath: string, planName: string): boolean {
+  validatePlanName(planName)
+  const worktreeRegistryDir = getWorktreeRegistryDir(worktreePath)
+  const planPath = join(worktreeRegistryDir, `${planName}.json`)
+
+  if (!existsSync(planPath)) {
+    return true
+  }
+
+  try {
+    unlinkSync(planPath)
+    return true
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Read a boulder-registry entry that lives inside a worktree's own registry.
+ * Falls back to the root registry if no worktree-local copy exists, so callers
+ * can use this uniformly regardless of where state was written.
+ *
+ * @returns BoulderState | null if neither registry has the entry
+ */
+export function readBoulderForPlanInWorktree(
+  rootDirectory: string,
+  worktreePath: string,
+  planName: string,
+): BoulderState | null {
+  validatePlanName(planName)
+
+  // Prefer the worktree-local copy (it's the source of truth for this session).
+  const worktreeRegistryDir = getWorktreeRegistryDir(worktreePath)
+  const worktreeEntryPath = join(worktreeRegistryDir, `${planName}.json`)
+  if (existsSync(worktreeEntryPath)) {
+    try {
+      const content = readFileSync(worktreeEntryPath, "utf-8")
+      return JSON.parse(content) as BoulderState
+    } catch {
+      // ignore
+    }
+  }
+
+  return readBoulderForPlan(rootDirectory, planName)
+}
+
+/**
+ * Check whether a worktree has any live boulder-registry sessions.
+ * "Live" means the registry contains at least one entry with a non-empty
+ * session_ids array. Used by cleanupStaleWorktrees to avoid removing
+ * worktrees that have a running agent session attached to them.
+ *
+ * @param worktreePath - Worktree directory to inspect
+ * @returns true if the worktree owns at least one live plan
+ */
+export function worktreeHasLiveSession(worktreePath: string): boolean {
+  const worktreeRegistryDir = getWorktreeRegistryDir(worktreePath)
+  if (!existsSync(worktreeRegistryDir)) {
+    return false
+  }
+
+  try {
+    const files = readdirSync(worktreeRegistryDir)
+    for (const file of files) {
+      if (!file.endsWith(".json")) continue
+      try {
+        const content = readFileSync(join(worktreeRegistryDir, file), "utf-8")
+        const state = JSON.parse(content) as BoulderState
+        if (Array.isArray(state.session_ids) && state.session_ids.length > 0) {
+          return true
+        }
+      } catch {
+        // Skip unreadable / corrupted entries
+      }
+    }
+  } catch {
+    // Ignore read errors — treat as no live sessions
+  }
+
+  return false
 }
 
 /**

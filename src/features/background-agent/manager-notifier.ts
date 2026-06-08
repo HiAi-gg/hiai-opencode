@@ -156,8 +156,8 @@ export function enqueueNotificationForParent(
  *   - Caller MUST have atomically transitioned `task.status` to `completed` before
  *     invoking this function; the dedup gate lives in `tryCompleteTask` (manager.ts)
  *     so this function fires exactly once per task.
- *   - Sends `ctx.client.session.promptAsync({ path: { id: parentSessionID }, body })`
- *     to inject the `<system-reminder>` notification into the parent session.
+  *   - Sends `ctx.client.session.prompt({ path: { id: parentSessionID }, body })`
+  *     with a 10-second timeout to inject the `<system-reminder>` notification.
  *   - When `task.status` is a failure (error / cancel / interrupt) the parent is
  *     always notified (`shouldReply = true`); for normal completions the parent
  *     is only notified when ALL of the parent's tasks are finished (`allComplete`).

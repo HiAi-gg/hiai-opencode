@@ -7,7 +7,7 @@ import { buildAgentIdentitySection } from "./prompt-library/identity"
 const MODE: AgentMode = "subagent"
 
 export function createWriterAgent(model: string): AgentConfig {
-  const restrictions = createAgentToolRestrictions(["apply_patch", "task", "call_hiai_agent"])
+  const restrictions = createAgentToolRestrictions(["apply_patch", "call_hiai_agent"])
 
   return {
     description:
@@ -83,6 +83,7 @@ Operating rules:
 
 When called as "writer", treat it as the same role.`,
     thinking: { type: "enabled", budgetTokens: 8000 },
+    delegate_to: ["researcher"],
   } as AgentConfig
 }
 createWriterAgent.mode = MODE

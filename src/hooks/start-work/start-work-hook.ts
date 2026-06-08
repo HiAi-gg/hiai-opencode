@@ -136,7 +136,7 @@ export function createStartWorkHook(ctx: PluginInput) {
           isolationError = "Cannot isolate parallel plans: not a git repository. Complete the other plan first, or initialize git."
         } else {
           // Create or reuse worktree
-          const worktreePath = createWorktreeForPlan(ctx.directory, planName)
+          const worktreePath = createWorktreeForPlan(ctx.directory, planName, input.sessionID)
           if (!worktreePath) {
             isolationError = "Failed to create worktree for plan isolation"
           } else {
