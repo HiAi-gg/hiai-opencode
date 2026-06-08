@@ -90,7 +90,7 @@ export interface NotifierAdapter {
   client: {
     session: {
       messages: (input: { path: { id: string } }) => Promise<unknown>
-      promptAsync: (input: {
+      prompt: (input: {
         path: { id: string }
         body: {
           noReply?: boolean
@@ -363,6 +363,7 @@ export async function notifyParentSession(adapter: NotifierAdapter, task: Backgr
       } else {
         log("[background-agent] Failed to send notification:", {
           taskId: task.id,
+          parentSessionID: task.parentSessionID,
           error: extractErrorMessage(error) ?? String(error),
           stack: error instanceof Error ? error.stack : undefined,
         })

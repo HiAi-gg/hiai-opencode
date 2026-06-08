@@ -1,6 +1,8 @@
 import type { PTYSession } from './types'
 import type { OpencodeClient } from '@opencode-ai/sdk'
 import { NOTIFICATION_LINE_TRUNCATE, NOTIFICATION_TITLE_TRUNCATE } from '../constants'
+import { log } from '../../../../shared'
+import { createPromptTimeoutContext } from '../../../../shared/prompt-timeout-context'
 
 export class NotificationManager {
   private client: OpencodeClient | null = null
@@ -16,15 +18,36 @@ export class NotificationManager {
 
     try {
       const message = this.buildExitNotification(session, exitCode)
-      await this.client.session.promptAsync({
-        path: { id: session.parentSessionId },
-        body: {
-          parts: [{ type: 'text', text: message }],
-          ...(session.parentAgent ? { agent: session.parentAgent } : {}),
-        },
+      const promptFn = (this.client.session as unknown as Record<string, unknown>)?.prompt
+      if (typeof promptFn !== 'function') {
+        log('[pty] prompt() not available on session, cannot send exit notification:', {
+          sessionId: session.id,
+          parentSessionId: session.parentSessionId,
+        })
+        return
+      }
+
+      const { signal, cleanup } = createPromptTimeoutContext({}, 10000)
+      try {
+        await (promptFn as (...args: unknown[]) => Promise<unknown>)({
+          path: { id: session.parentSessionId },
+          body: {
+            parts: [{ type: 'text', text: message }],
+            ...(session.parentAgent ? { agent: session.parentAgent } : {}),
+          },
+          signal,
+        })
+        log('[pty] Sent exit notification:', { sessionId: session.id, exitCode })
+      } finally {
+        cleanup()
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      log('[pty] Failed to send exit notification:', {
+        sessionId: session.id,
+        parentSessionId: session.parentSessionId,
+        error: errorMessage,
       })
-    } catch {
-      // Ignore notification errors
     }
   }
 
