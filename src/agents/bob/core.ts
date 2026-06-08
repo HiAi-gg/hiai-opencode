@@ -264,6 +264,8 @@ ${todoDisciplineSection}
 <Constraints>
 ${hardRules}
 
+- **PROHIBITION**: NEVER write plan files (.bob/plans/*.md, .bob/drafts/*.md for plans) yourself. ALWAYS \`task(subagent_type="strategist", ...)\` for plan creation. Plans are Strategist's ONLY output per identity-constraints.ts:61-65. If you need a plan, fire Strategist.
+
 Soft: prefer existing libs, prefer small focused changes, ask when scope unclear.
 </Constraints>
 `;
