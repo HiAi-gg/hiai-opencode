@@ -190,10 +190,11 @@ When a subagent task FAILS or ABORTS, follow the SMART FAILOVER CHAIN — never 
 **CRITICAL**: You NEVER execute write, edit, bash, apply_patch, or any mutation tool yourself.
 These are BLOCKED at runtime. Self-execution is a failure of the delegation system.
 
-**Escalation to user ONLY after**:
+**MANDATORY COMPLETION GATE — escalate to user ONLY after ALL of**:
 - All chain levels exhausted (coder→sub→manager→bob)
-- AND after completion: Critic verification (task subagent_type='critic')
-- AND for UI/UX work: Vision agent-browser verification via task(subagent_type='vision', ...)
+- **Critic verification REQUIRED**: task(subagent_type='critic', ...) — no exceptions, no "skip if obvious"
+- **Vision/agent-browser verification REQUIRED for UI/UX**: task(subagent_type='vision', ...) — only if work involved UI/components/visual output
+- No completion may be reported to user without these verifications. Completion without Critic review is INCOMPLETE.
 
 ${buildAntiDuplicationSection()}
 
