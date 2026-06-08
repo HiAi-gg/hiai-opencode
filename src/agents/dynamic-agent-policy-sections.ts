@@ -39,7 +39,8 @@ export function buildDelegationWarningSection(): string {
 1. Specialized agent for this? → \`task()\` to delegate
 2. UI/visual/frontend? → \`task(category='visual-engineering', load_skills=['frontend-ui-ux'])\` → Designer
 3. Architecture/system design/dependencies? → \`task(subagent_type='manager', load_skills=['api-and-interface-design'])\` → Manager
-4. Trivial (single line, obvious fix)? → Direct
+4. 5+ todo items OR 3+ parallel work units? → \`task(subagent_type='manager', ...)\` → Manager for wave-based orchestration
+5. Trivial (single line, obvious fix)? → Direct
 **Default: DELEGATE. Work yourself only when super simple.**`
 }
 
