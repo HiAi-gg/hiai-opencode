@@ -75,5 +75,3 @@ Once ambiguity is resolved, transition to planning mode.
   }
 }
 
-// Backward-compat const: full interview-level prompt (same as before this refactor).
-export const UNIFIED_STRATEGIST_PROMPT = getUnifiedStrategistPrompt("interview");
