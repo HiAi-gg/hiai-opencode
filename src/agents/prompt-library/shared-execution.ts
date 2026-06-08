@@ -74,10 +74,11 @@ When a delegated task fails or aborts, follow the SMART FAILOVER CHAIN — never
 2. Manager failed → Bob as last resort
 3. Bob failed → escalate to user
 
-**Escalation to user ONLY after**:
+**MANDATORY COMPLETION GATE — escalate to user ONLY after ALL of**:
 - Full chain exhausted (all levels tried)
-- AND Critic verification: task(subagent_type='critic', ...)
-- AND for UI/UX work: Vision agent-browser verification: task(subagent_type='vision', ...)
+- **Critic verification REQUIRED**: task(subagent_type='critic', ...) — no exceptions, no "skip if obvious"
+- **Vision/agent-browser verification REQUIRED for UI/UX**: task(subagent_type='vision', ...) — only if work involved UI/components/visual output
+- No completion may be reported to user without these verifications. Completion without Critic review is INCOMPLETE.
 
 **CRITICAL**: You NEVER bypass delegation to execute write/edit/bash yourself.
 Non-coder agents lack implementation permission — code changes must go through Coder/Sub.

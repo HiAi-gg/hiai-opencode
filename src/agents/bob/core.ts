@@ -55,7 +55,7 @@ export function buildDynamicBobPrompt(
   const delegationTable = buildDelegationTable(availableAgents);
   const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
   const hardRules = buildHardRulesSection();
-  const _plannerSection = buildPlannerSection();
+  const plannerSection = buildPlannerSection();
   const parallelDelegationSection = buildParallelDelegationSection(availableCategories);
   const todoDisciplineSection = buildTodoDisciplineSection(useTaskSystem);
   const todoHookNote = useTaskSystem
@@ -190,10 +190,11 @@ When a subagent task FAILS or ABORTS, follow the SMART FAILOVER CHAIN — never 
 **CRITICAL**: You NEVER execute write, edit, bash, apply_patch, or any mutation tool yourself.
 These are BLOCKED at runtime. Self-execution is a failure of the delegation system.
 
-**Escalation to user ONLY after**:
+**MANDATORY COMPLETION GATE — escalate to user ONLY after ALL of**:
 - All chain levels exhausted (coder→sub→manager→bob)
-- AND after completion: Critic verification (task subagent_type='critic')
-- AND for UI/UX work: Vision agent-browser verification via task(subagent_type='vision', ...)
+- **Critic verification REQUIRED**: task(subagent_type='critic', ...) — no exceptions, no "skip if obvious"
+- **Vision/agent-browser verification REQUIRED for UI/UX**: task(subagent_type='vision', ...) — only if work involved UI/components/visual output
+- No completion may be reported to user without these verifications. Completion without Critic review is INCOMPLETE.
 
 ${buildAntiDuplicationSection()}
 
@@ -203,14 +204,17 @@ ${buildSearchStopConditionsSection()}
 
 ## Phase 2B - Implementation
 
+${plannerSection}
+
 ### Pre-Implementation:
 0. Find relevant skills IMMEDIATELY and load them.
 1. 2+ steps → Create todo list IMMEDIATELY, no announcements.
-1. **Manager dispatch threshold** — AFTER creating todos, check:
-   - If todo count ≥ 5 OR 3+ independent parallel units → DELEGATE to Manager:
-     \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{plan-name}.md or boulder-registry entry. Wave-based parallel dispatch.")\`
+1. **Manager dispatch threshold — MANDATORY** — AFTER creating todos, check:
+   - If todo count ≥ 5 OR 3+ independent parallel units → **MUST DELEGATE to Manager**. NEVER dispatch Coders directly when threshold is met.
+   - \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{plan-name}.md or boulder-registry entry. Wave-based parallel dispatch.")\`
    - Manager handles wave-based parallel orchestration, agent selection, progress tracking
    - If <5 todos AND <3 parallel units → execute directly via standard delegation (Coder/Sub/Specialists)
+   - **PROHIBITION**: This is a hard rule. Violating it (e.g., by dispatching 2+ Coder subagents for a 5+ task plan) is a delegation system failure.
 2. Mark \`in_progress\` before starting, \`completed\` as done (don't batch).
 
 ${categorySkillsGuide}
@@ -260,6 +264,8 @@ ${todoDisciplineSection}
 
 <Constraints>
 ${hardRules}
+
+- **PROHIBITION**: NEVER write plan files (.bob/plans/*.md, .bob/drafts/*.md for plans) yourself. ALWAYS \`task(subagent_type="strategist", ...)\` for plan creation. Plans are Strategist's ONLY output per identity-constraints.ts:61-65. If you need a plan, fire Strategist.
 
 Soft: prefer existing libs, prefer small focused changes, ask when scope unclear.
 </Constraints>
