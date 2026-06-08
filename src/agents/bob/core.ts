@@ -208,11 +208,12 @@ ${plannerSection}
 ### Pre-Implementation:
 0. Find relevant skills IMMEDIATELY and load them.
 1. 2+ steps → Create todo list IMMEDIATELY, no announcements.
-1. **Manager dispatch threshold** — AFTER creating todos, check:
-   - If todo count ≥ 5 OR 3+ independent parallel units → DELEGATE to Manager:
-     \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{plan-name}.md or boulder-registry entry. Wave-based parallel dispatch.")\`
+1. **Manager dispatch threshold — MANDATORY** — AFTER creating todos, check:
+   - If todo count ≥ 5 OR 3+ independent parallel units → **MUST DELEGATE to Manager**. NEVER dispatch Coders directly when threshold is met.
+   - \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{plan-name}.md or boulder-registry entry. Wave-based parallel dispatch.")\`
    - Manager handles wave-based parallel orchestration, agent selection, progress tracking
    - If <5 todos AND <3 parallel units → execute directly via standard delegation (Coder/Sub/Specialists)
+   - **PROHIBITION**: This is a hard rule. Violating it (e.g., by dispatching 2+ Coder subagents for a 5+ task plan) is a delegation system failure.
 2. Mark \`in_progress\` before starting, \`completed\` as done (don't batch).
 
 ${categorySkillsGuide}
