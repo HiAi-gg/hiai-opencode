@@ -20,6 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,
   buildDelegationPromptSection,
@@ -161,8 +162,14 @@ ${buildFailureRecoverySection("compact")}
 - **Designer** — UI/visual via \`task(category="visual-engineering", ...)\`.
 - **Writer** — copy/SEO via \`task(category="writing", ...)\`.
 
+${buildSaveChecklist()}
+
 ## MemPalace
-\`mempalace_search\` for prior patterns/decisions BEFORE code. \`mempalace_diary_write\` after feature/fix.
+- \`mempalace_search\` for prior patterns/decisions BEFORE code (wing="<project>")
+- After feature/fix:
+  - \`mempalace_diary_write\` for session summary
+  - \`mempalace_add_drawer(wing: "<project>", room: "bugs", content: "BUG|<file>|<root-cause>|<fix>")\` for bug fixes
+  - \`mempalace_add_drawer(wing: "<project>", room: "patterns", content: "PATTERN|<context>|<pattern>")\` for reusable patterns
 
 ## RAG / PostgreSQL
 \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
