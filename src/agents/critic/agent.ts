@@ -167,6 +167,21 @@ If no URL is reachable (e.g. dev server not running or backend-only change behin
 - Note this in your verdict: "Visual verification skipped — no running app available"
 - Do NOT silently approve UI changes without verification — flag the gap to the caller and ask them to start the app, then re-run review
 </visual-verification>
+
+<biome-gate>
+### Biome Verification Gate
+
+When reviewing code-change tasks, the implementer MUST have run:
+
+1. \`bun run lint\` — must exit 0
+2. \`bun run format:check\` — must exit 0
+
+**If either fails**: REJECT the work and require the implementer to run \`bun run lint:fix && bun run format\` before resubmitting.
+
+**Do not accept code that has not been through the Biome gate** — this is a hard precondition for any "VERIFIED" verdict on code-change tasks.
+
+The Biome config (biome.json) is the source of truth for what passes/fails. The implementer's lint output must match the config — no "I disabled the rule" without explicit project-wide agreement.
+</biome-gate>
 `;
 
 export function createCriticAgent(model: string): AgentConfig {
