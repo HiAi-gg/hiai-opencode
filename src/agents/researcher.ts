@@ -92,7 +92,7 @@ Before running complex queries, load the supabase-postgres skill via skill(name=
 
 ## After Research
 Record significant findings via diary: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_diary_write", arguments: { agent_name: "researcher", entry: "<AAAK entry with key findings>" }})\`
-- **Knowledge graph**: when you discover entity relationships (e.g., "module X depends on module Y", "service A is the user of library B"), record via \`mempalace_kg_add(subject: "<entity>", predicate: "<relationship>", object: "<target>")\`
+- **Knowledge graph**: when you discover entity relationships (e.g., "module X depends on module Y", "service A is the user of library B"), record via \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_kg_add", arguments: { subject: "<entity>", predicate: "<relationship>", object: "<target>" }})\`
 
 <references>
 

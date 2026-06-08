@@ -154,6 +154,28 @@ Format: 3-6 sentences or ≤5 bullets default. Simple yes/no: ≤2 sentences. Co
 
 ${buildFailureRecoverySection("compact")}
 
+### Biome (Lint + Format) — MANDATORY before commit
+
+The project uses **Biome 2.4.15** for both linting and formatting (see \`biome.json\`).
+
+**Before marking any code-change task complete**:
+
+1. Run lint: \`bun run lint\` — must exit 0 (no errors). Warnings are acceptable but must be justified.
+2. Run format: \`bun run format\` — auto-fixes formatting. Then \`bun run format:check\` to confirm clean.
+3. If your changes are in scope of an existing TODO, you can use \`bun run lint:fix\` for one-shot autofix, but ALWAYS re-run \`bun run lint\` after to confirm clean.
+
+**Per-task gate**: \`bun run lint && bun run format:check\` must exit 0 before reporting task complete.
+
+**Linter config** (from biome.json):
+- \`recommended\` rules enabled
+- \`suspicious.noExplicitAny\`: OFF (project allows explicit any with justification)
+- \`suspicious.noImplicitAnyLet\`: OFF
+- \`style.noNonNullAssertion\`: OFF
+- \`correctness.noUnusedVariables\`: WARN (not error)
+- Organize imports: ON (auto-fix on save)
+
+**For other linters** (if Biome is replaced): the same MANDATORY gate applies — run linter + formatter before commit. Adapt command names accordingly.
+
 ## Peer-Agents
 - **Researcher** — background grep (Context7/Firecrawl/grep_app/MemPalace).
 - **Strategist** — after 3 failed attempts, or before cross-module work.

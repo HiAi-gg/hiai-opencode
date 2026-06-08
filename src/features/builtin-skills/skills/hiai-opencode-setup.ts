@@ -57,18 +57,29 @@ The MemPalace stores project memory using a single-wing architecture:
 
 **Wing**: \`hiai-opencode\` (shared across all projects — single codebase = shared knowledge)
 
-**Room naming**: \`project-aspect\` format:
-- \`core-architecture\` — system architecture, ports, structure
-- \`core-decisions\` — global architecture decisions
-- \`core-plans\` — active plan index
-- \`hiai-opencode-plans\` — plugin-specific plans
-- \`hiai-opencode-results\` — audit results
-- \`shared-patterns\` — reusable code patterns
+**Room taxonomy (canonical)**: single source of truth at \`src/agents/prompt-library/mempalace-taxonomy.ts\`. Use simple room names (not \`project-aspect\` format):
+- \`decisions\` — architecture/design choices
+- \`bugs\` — bug root causes and fixes
+- \`config\` — env vars, ports, dependencies
+- \`agents\` — agent behavior changes
+- \`architecture\` — system structure, dependencies
+- \`plans\` — active and completed plans
+- \`tasks\` — task completions (from auto-save hook)
+- \`reviews\` — code review outcomes
+- \`designs\` — design decisions
+- \`sessions\` — session handoffs
+- \`errors\` — error/exception records
+- \`patterns\` — reusable code patterns
+- \`constraints\` — project boundaries
+- \`failed-approaches\` — what didn't work
+- \`diary\` — free-form session logs (default)
+
+Use \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "hiai-opencode", room: "<room>", content: "..." }})\` to save.
 
 **Agent MemPalace workflow**:
 1. BEFORE work: \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_search", arguments: { query: "<topic>", limit: 5, wing: "hiai-opencode" }})\`
 2. AFTER work: record via \`mempalace_diary_write\` (with \`agent_name\`) or \`mempalace_add_drawer\` for durable decisions
-3. Filter by room: \`search(room="hiai-opencode-plans")\` for specific project context
+3. Filter by room: \`search(room="plans")\` for specific project context
 
 **Verification**: \`hiai-opencode mcp-status\` should show mempalace as enabled.
 

@@ -6,7 +6,7 @@
  * - hiai-opencode-setup skill: core-architecture, core-decisions, core-plans, etc.
  * - auto-save hook: plans, tasks, reviews, designs, sessions, errors
  *
- * This file reconciles all three into 14 rooms.
+ * This file reconciles all three into 15 rooms (14 structured + 1 diary default).
  *
  * Wing convention:
  * - wing="hiai-opencode" for global/plugin-wide memory
@@ -60,14 +60,14 @@ export type CanonicalRoom = typeof CANONICAL_ROOMS[keyof typeof CANONICAL_ROOMS]
 export function buildSaveChecklist(): string {
   return `### Save to MemPalace when you discover:
 
-- Architecture/design decisions with rationale → \`mempalace_add_drawer(wing: "<project>", room: "decisions", content: "...")\`
-- Bug root causes and fixes → \`mempalace_add_drawer(wing: "<project>", room: "bugs", content: "...")\`
-- Configuration changes, env vars, ports → \`mempalace_add_drawer(wing: "<project>", room: "config", content: "...")\`
-- Agent behavior changes, prompt updates → \`mempalace_add_drawer(wing: "<project>", room: "agents", content: "...")\`
-- System architecture, dependencies → \`mempalace_add_drawer(wing: "<project>", room: "architecture", content: "...")\`
-- Reusable code patterns, conventions → \`mempalace_add_drawer(wing: "<project>", room: "patterns", content: "...")\`
-- Project constraints, limitations → \`mempalace_add_drawer(wing: "<project>", room: "constraints", content: "...")\`
-- Failed approaches (after reverting) → \`mempalace_add_drawer(wing: "<project>", room: "failed-approaches", content: "...")\`
+- Architecture/design decisions with rationale → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "decisions", content: "..." }})\`
+- Bug root causes and fixes → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "bugs", content: "..." }})\`
+- Configuration changes, env vars, ports → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "config", content: "..." }})\`
+- Agent behavior changes, prompt updates → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "agents", content: "..." }})\`
+- System architecture, dependencies → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "architecture", content: "..." }})\`
+- Reusable code patterns, conventions → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "patterns", content: "..." }})\`
+- Project constraints, limitations → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "constraints", content: "..." }})\`
+- Failed approaches (after reverting) → \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", arguments: { wing: "<project>", room: "failed-approaches", content: "..." }})\`
 
 ### Use \`mempalace_diary_write\` for:
 - Session summaries (default)
