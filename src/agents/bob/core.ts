@@ -55,7 +55,7 @@ export function buildDynamicBobPrompt(
   const delegationTable = buildDelegationTable(availableAgents);
   const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
   const hardRules = buildHardRulesSection();
-  const _plannerSection = buildPlannerSection();
+  const plannerSection = buildPlannerSection();
   const parallelDelegationSection = buildParallelDelegationSection(availableCategories);
   const todoDisciplineSection = buildTodoDisciplineSection(useTaskSystem);
   const todoHookNote = useTaskSystem
@@ -202,6 +202,8 @@ ${buildSearchStopConditionsSection()}
 ---
 
 ## Phase 2B - Implementation
+
+${plannerSection}
 
 ### Pre-Implementation:
 0. Find relevant skills IMMEDIATELY and load them.
