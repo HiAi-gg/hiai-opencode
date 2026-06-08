@@ -48,17 +48,45 @@ Subagent has full context preserved (saves 70%+ tokens on follow-ups). After EVE
 export function buildFailureRecoverySection(
   variant: "full" | "compact" = "full",
 ): string {
-  if (variant === "full") {
-    return `### Failure Recovery
-1. Fix root causes (not symptoms). Re-verify after EVERY attempt.
+  const core = variant === "full"
+    ? `1. Fix root causes (not symptoms). Re-verify after EVERY attempt.
 2. If first approach fails → try alternative.
-3. After 3 DIFFERENT approaches fail: STOP edits → REVERT (git checkout / undo) → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.
-Never: leave code broken, shotgun debug, delete failing tests to "pass".`;
-  }
-
-  return `### Failure Recovery
-1. Root causes, re-verify each attempt.
+3. After 3 DIFFERENT approaches fail: STOP edits → REVERT (git checkout / undo) → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.`
+    : `1. Root causes, re-verify each attempt.
 2. Try alternative on first failure.
-3. After 3 fails: STOP → REVERT → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.
-Never: leave broken, shotgun debug, delete tests.`;
+3. After 3 fails: STOP → REVERT → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.`;
+
+  const chain = `
+
+### Subagent Failure Recovery (NEVER self-execute)
+
+When a delegated task fails or aborts, follow the SMART FAILOVER CHAIN — never bypass delegation to execute mutation tools yourself.
+
+**Implementation tasks (coder/sub)**:
+1. Coder failed → retry with Sub (task category='quick', simplified scope)
+2. Sub failed → retry with Coder (task category='deep', fresh prompt, different framing)
+3. Both Coder+Sub failed → delegate to Manager: task(subagent_type='manager', run_in_background=false, ...) — Manager attempts TASK REDISTRIBUTION (reassign, split, reprioritize)
+4. Manager failed redistribution → Bob as LAST RESORT (simplest possible approach)
+5. Bob failed → escalate to user via Question tool
+
+**Other agents (designer, writer, vision, critic, researcher)**:
+1. Failed 2x → delegate to Manager for redistribution
+2. Manager failed → Bob as last resort
+3. Bob failed → escalate to user
+
+**Escalation to user ONLY after**:
+- Full chain exhausted (all levels tried)
+- AND Critic verification: task(subagent_type='critic', ...)
+- AND for UI/UX work: Vision agent-browser verification: task(subagent_type='vision', ...)
+
+**CRITICAL**: You NEVER bypass delegation to execute write/edit/bash yourself.
+Non-coder agents lack implementation permission — code changes must go through Coder/Sub.
+Mutation tools are BLOCKED at runtime for Bob and Strategist (see agent-tool-permission hook).
+`;
+
+  const close = variant === "full"
+    ? `Never: leave code broken, shotgun debug, delete failing tests to "pass".`
+    : `Never: leave broken, shotgun debug, delete tests.`;
+
+  return `### Failure Recovery\n${core}${chain}\n${close}`;
 }
