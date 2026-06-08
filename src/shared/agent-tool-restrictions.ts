@@ -19,6 +19,23 @@ const RESEARCHER_DENYLIST: Record<string, boolean> = {
 }
 
 const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
+  bob: {
+    // Bob is an orchestrator — delegates ALL mutation work to Coder/Sub.
+    // These tools are BLOCKED at runtime (subagent sessions via session.prompt() tools param,
+    // and primary sessions via the agent-tool-permission hook).
+    write: false,
+    edit: false,
+    bash: false,
+    apply_patch: false,
+    ast_grep_replace: false,
+    hashline_edit: false,
+    interactive_bash: false,
+    pty_spawn: false,
+    // Bob MUST delegate research — these are research tools, not orchestration tools.
+    // read is NOT blocked — Bob needs it to read plans, verify results, and synthesize.
+    grep: false,
+    glob: false,
+  },
   researcher: RESEARCHER_DENYLIST,
   critic: {
     write: false,
@@ -30,6 +47,11 @@ const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
     pty_spawn: false,
     interactive_bash: false,
     bash: false,
+    // Strategist must delegate research to Researcher — no self-research via these tools.
+    // read is NOT blocked — Strategist needs it to read plans and synthesize research results.
+    grep: false,
+    glob: false,
+    webfetch: false,
   },
   multimodal: {
     read: true,

@@ -12,6 +12,8 @@ export const ALLOWED_PATH_PREFIX = ".bob"
 // ALL mutation-capable tools blocked for Strategist (planning-only agent)
 // Strategist can ONLY write to .bob/*.md files via Write/Edit (with path check)
 // ALL other file/system mutation tools are blocked unconditionally
+// Research tools (glob, grep, webfetch) are also blocked — Strategist must delegate research to Researcher
+// read is NOT blocked — Strategist needs it to read plans and synthesize research results
 export const BLOCKED_TOOLS = [
   "Write", "Edit", "write", "edit",
   "bash", "Bash",                        // shell commands (mutation risk)
@@ -19,6 +21,7 @@ export const BLOCKED_TOOLS = [
   "ast_grep_replace",                     // AST-based code replacement
   "hashline_edit",                        // hashline editing
   "interactive_bash",                     // interactive terminal
+  "glob", "grep", "webfetch",            // research tools — delegate to Researcher
 ]
 
 export const UNCONDITIONAL_BLOCKED_TOOLS = [
@@ -27,6 +30,7 @@ export const UNCONDITIONAL_BLOCKED_TOOLS = [
   "ast_grep_replace",
   "hashline_edit",
   "interactive_bash",
+  "glob", "grep", "webfetch",            // research tools — always delegate, no exceptions
 ]
 
 export const BLOCKED_EXECUTION_SKILLS = [
@@ -90,6 +94,8 @@ Do not start execution from Strategist.
 - Do not run shell or interactive terminal tools
 - Do not invoke execution skills
 - Do not delegate to execution categories or executor agents
+- Do not use glob, grep, or webfetch for self-research
+  → Delegate ALL research to researcher agents: task(subagent_type="researcher", load_skills=[], run_in_background=true, ...)
 - Finish the plan, present the summary, and hand off via \`/start-work\`
 `
 

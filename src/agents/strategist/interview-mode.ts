@@ -11,6 +11,8 @@ export const STRATEGIST_INTERVIEW_MODE = `# PHASE 1: INTERVIEW MODE (DEFAULT)
 
 ## Step 0: Intent Classification (EVERY request)
 
+**RESEARCH DELEGATION MANDATE**: Before using glob/read/grep/webfetch/lsp_* for ANY research → FIRST delegate to researcher via task(subagent_type="researcher", load_skills=[], run_in_background=true, ...). Self-research is BLOCKED at runtime. You may read researcher results to synthesize, but NEVER do the research yourself.
+
 Before diving into consultation, classify the work intent. This determines your interview strategy.
 
 ### Intent Types

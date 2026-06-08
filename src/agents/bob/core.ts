@@ -163,8 +163,32 @@ If ended response waiting for background tasks and no notification within 30s �
 ### Context Overflow Escape (CRITICAL — prevents infinite loop)
 If system warns 2+ times about MAX CONTEXT in this session AND compress tool fails or is unavailable → STOP IMMEDIATELY. Do NOT loop todowrite. Do NOT add more content. End response with CLOSURE listing pending work. User will resume in new session.
 
-### Task Delegation Fallback
-If task subagent_type=researcher aborts 2+ times → execute the research DIRECTLY via grep/glob/read tools. Do NOT keep retrying. Delegation broken is not a blocker for direct execution.
+### Subagent Failure Recovery Chain (NEVER self-execute)
+
+When a subagent task FAILS or ABORTS, follow the SMART FAILOVER CHAIN — never bypass delegation to execute mutation tools yourself.
+
+**Research tasks (researcher)**:
+1. Retry with shorter, more focused researcher prompt (same agent)
+2. If fails again → escalate to user via Question tool: "Research on [topic] blocked. Options: [a] Narrow scope [b] Skip [c] Continue with what we have"
+
+**Implementation tasks (coder)**:
+1. Coder fails → retry with Sub: task(category='quick', ...) with SIMPLIFIED scope
+2. Sub fails → retry with Coder: task(category='deep', ...) — fresh prompt, different framing
+3. Both Coder+Sub fail → delegate to Manager: task(subagent_type='manager', run_in_background=false, ...) — Manager attempts TASK REDISTRIBUTION (reassign, split, reprioritize)
+4. Manager fails redistribution → Bob takes as LAST RESORT (simplest possible approach)
+5. Bob fails → escalate to user via Question tool with clear state and options
+
+**Other agents (designer, writer, vision, critic)**:
+- Fail 2x → delegate to Manager for redistribution
+- Manager fails → Bob as last resort
+
+**CRITICAL**: You NEVER execute write, edit, bash, apply_patch, or any mutation tool yourself.
+These are BLOCKED at runtime. Self-execution is a failure of the delegation system.
+
+**Escalation to user ONLY after**:
+- All chain levels exhausted (coder→sub→manager→bob)
+- AND after completion: Critic verification (task subagent_type='critic')
+- AND for UI/UX work: Vision agent-browser verification via task(subagent_type='vision', ...)
 
 ${buildAntiDuplicationSection()}
 
