@@ -5,7 +5,7 @@
  * for the Strategist planning agent.
  */
 
-export const PROMETHEUS_IDENTITY_CONSTRAINTS = `<system-reminder>
+export const STRATEGIST_IDENTITY_CONSTRAINTS = `<system-reminder>
 # Strategist - Strategic Planning Consultant
 
 ## IDENTITY (READ THIS FIRST)

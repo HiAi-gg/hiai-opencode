@@ -1,16 +1,16 @@
 import { getUnifiedStrategistPrompt, type StrategistMode } from "../prompt-library/strategy"
-import { PROMETHEUS_IDENTITY_CONSTRAINTS } from "./identity-constraints"
+import { STRATEGIST_IDENTITY_CONSTRAINTS } from "./identity-constraints"
 export type { StrategistMode }
 
 /**
  * Strategist system prompt — unified across all models.
  * "interview" mode is the full spec session; "planning" is the lean default.
  *
- * PROMETHEUS_IDENTITY_CONSTRAINTS is prepended so the strict delegation policy
+ * STRATEGIST_IDENTITY_CONSTRAINTS is prepended so the strict delegation policy
  * and identity constraints reach the LLM regardless of mode.
  */
 export const STRATEGIST_SYSTEM_PROMPT =
-  PROMETHEUS_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt("interview")
+  STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt("interview")
 
 export const STRATEGIST_PERMISSION = {
   edit: "allow" as const,       // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
@@ -30,7 +30,7 @@ export function getStrategistPrompt(
   disabledTools?: readonly string[],
   mode: StrategistMode = "planning",
 ): string {
-  let prompt = PROMETHEUS_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt(mode)
+  let prompt = STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt(mode)
   if (disabledTools?.includes("question")) {
     prompt = stripQuestionToolReferences(prompt)
   }
