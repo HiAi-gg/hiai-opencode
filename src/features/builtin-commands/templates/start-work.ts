@@ -2,6 +2,10 @@ export const START_WORK_TEMPLATE = `You are starting an orchestration work sessi
 
 **Orchestrator agent**: Bob is the primary orchestrator. For complex/waved plans, Bob dispatches Manager as a subagent for parallel wave coordination. For simple plans, Bob executes directly without dispatching Manager.
 
+**Complexity threshold for Manager dispatch**:
+- If the plan has ≥5 todo items OR ≥3 waves → dispatch to Manager for wave-based parallel orchestration
+- Otherwise → execute directly via standard delegation
+
 ## ARGUMENTS
 
 - \`/start-work [plan-name] [--worktree <path>]\`
