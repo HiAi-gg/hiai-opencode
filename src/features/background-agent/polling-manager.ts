@@ -173,9 +173,11 @@ export class TaskPollingManager {
             adapter.notifyParentSession(task),
           )
           .catch((err) => {
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            const errorStack = err instanceof Error ? err.stack : undefined;
             log(
               "[background-agent] Error in notifyParentSession for stale-pruned task:",
-              { taskId: task.id, error: err },
+              { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID },
             );
           });
       },
@@ -250,9 +252,11 @@ export class TaskPollingManager {
         adapter.notifyParentSession(task),
       )
       .catch((err) => {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const errorStack = err instanceof Error ? err.stack : undefined;
         log(
           "[background-agent] Error in notifyParentSession for crashed task:",
-          { taskId: task.id, error: err },
+          { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID },
         );
       });
   }
@@ -314,6 +318,10 @@ export class TaskPollingManager {
           }
 
           if (sessionStatus && isTerminalSessionStatus(sessionStatus.type)) {
+            log(
+              "[background-agent] Calling tryCompleteTask from polling-manager (terminal):",
+              { taskId: task.id, sessionStatus: sessionStatus.type },
+            );
             await this.adapter.tryCompleteTask(
               task,
               `polling (terminal session status: ${sessionStatus.type})`,
@@ -380,6 +388,10 @@ export class TaskPollingManager {
             continue;
           }
 
+          log(
+            "[background-agent] Calling tryCompleteTask from polling-manager (idle/gone):",
+            { taskId: task.id, source: completionSource },
+          );
           await this.adapter.tryCompleteTask(task, completionSource);
         } catch (error) {
           log("[background-agent] Poll error for task:", {

@@ -681,6 +681,7 @@ export class BackgroundManager {
 
   handleEvent(event: BackgroundEvent): void {
     const props = event.properties
+    log("[background-agent] handleEvent called:", { type: event.type, propertiesKeys: props ? Object.keys(props) : [] })
 
     if (event.type === "message.updated") {
       const info = props?.info
@@ -772,13 +773,16 @@ export class BackgroundManager {
            if (circuitBreaker.enabled) {
              const loopDetection = detectRepetitiveToolUse(task.progress.toolCallWindow)
              if (loopDetection.triggered) {
-               log("[background-agent] Circuit breaker: consecutive tool usage detected", {
-                 taskId: task.id,
-                 agent: task.agent,
-                 sessionID,
-                 toolName: loopDetection.toolName,
-                 repeatedCount: loopDetection.repeatedCount,
-               })
+              log("[background-agent] Circuit breaker: consecutive same-tool usage detected", {
+                  taskId: task.id,
+                  agent: task.agent,
+                  sessionID,
+                  toolName: loopDetection.toolName,
+                  repeatedCount: loopDetection.repeatedCount,
+                  threshold: circuitBreaker.consecutiveThreshold,
+                  totalToolCalls: task.progress.toolCalls,
+                  reason: "20+ consecutive same-tool calls",
+                })
                void this.cancelTask(task.id, {
                  source: "circuit-breaker",
                  reason: `Subagent called ${loopDetection.toolName} ${loopDetection.repeatedCount} consecutive times (threshold: ${circuitBreaker.consecutiveThreshold}). This usually indicates an infinite loop. The task was automatically cancelled to prevent excessive token usage.`,
@@ -790,12 +794,13 @@ export class BackgroundManager {
 
         const maxToolCalls = circuitBreaker.maxToolCalls
         if (task.progress.toolCalls >= maxToolCalls) {
-          log("[background-agent] Circuit breaker: tool call limit reached", {
+          log("[background-agent] Circuit breaker: total tool call limit reached", {
             taskId: task.id,
-            toolCalls: task.progress.toolCalls,
-            maxToolCalls,
             agent: task.agent,
             sessionID,
+            toolCalls: task.progress.toolCalls,
+            maxToolCalls,
+            reason: "4000+ total tool calls",
           })
           void this.cancelTask(task.id, {
             source: "circuit-breaker",
@@ -894,6 +899,13 @@ export class BackgroundManager {
         parentSessionsToClear.add(task.parentSessionID)
 
         if (task.status === "running" || task.status === "pending") {
+          log("[background-agent] WARNING: Cancelling task because session was deleted:", {
+            taskId: task.id,
+            agent: task.agent,
+            sessionID: task.sessionID,
+            status: task.status,
+            toolCalls: task.progress?.toolCalls ?? 0,
+          })
           void this.cancelTask(task.id, {
             source: "session.deleted",
             reason: "Session deleted",
@@ -1007,7 +1019,9 @@ export class BackgroundManager {
 
     this.markForNotification(task)
     this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task)).catch(err => {
-      log("[background-agent] Error in notifyParentSession for errored task:", { taskId: task.id, error: err })
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
+      log("[background-agent] Error in notifyParentSession for errored task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
     })
   }
 
@@ -1293,7 +1307,9 @@ export class BackgroundManager {
       await this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task))
       log(`[background-agent] Task cancelled via ${source}:`, task.id)
     } catch (err) {
-      log("[background-agent] Error in notifyParentSession for cancelled task:", { taskId: task.id, error: err })
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
+      log("[background-agent] Error in notifyParentSession for cancelled task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
     }
 
     return true
@@ -1357,6 +1373,8 @@ export class BackgroundManager {
    * Returns true if task was successfully completed, false if already completed by another path.
    */
   private async tryCompleteTask(task: BackgroundTask, source: string): Promise<boolean> {
+    log("[background-agent] tryCompleteTask START:", { taskId: task.id, status: task.status, source, parentSessionID: task.parentSessionID })
+    
     // Guard: Check if task is still running (could have been completed by another path)
     if (task.status !== "running") {
       log("[background-agent] Task already completed, skipping:", { taskId: task.id, status: task.status, source })
@@ -1399,7 +1417,14 @@ export class BackgroundManager {
       await this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task))
       log(`[background-agent] Task completed via ${source}:`, task.id)
     } catch (err) {
-      log("[background-agent] Error in notifyParentSession:", { taskId: task.id, error: err })
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
+      log("[background-agent] Error in notifyParentSession:", { 
+        taskId: task.id, 
+        error: errorMessage,
+        stack: errorStack,
+        parentSessionID: task.parentSessionID,
+      })
       // Concurrency already released, notification failed but task is complete
     }
 
@@ -1478,7 +1503,9 @@ export class BackgroundManager {
         this.cleanupPendingByParent(task)
         this.markForNotification(task)
         this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task)).catch(err => {
-          log("[background-agent] Error in notifyParentSession for stale-pruned task:", { taskId: task.id, error: err })
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          const errorStack = err instanceof Error ? err.stack : undefined
+          log("[background-agent] Error in notifyParentSession for stale-pruned task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
         })
       },
     })
@@ -1536,7 +1563,9 @@ export class BackgroundManager {
 
     this.markForNotification(task)
     this.enqueueNotificationForParent(task.parentSessionID, () => this.notifyParentSession(task)).catch(err => {
-      log("[background-agent] Error in notifyParentSession for crashed task:", { taskId: task.id, error: err })
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
+      log("[background-agent] Error in notifyParentSession for crashed task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
     })
   }
 
@@ -1627,6 +1656,7 @@ export class BackgroundManager {
           continue
         }
 
+        log("[background-agent] Calling tryCompleteTask from polling:", { taskId: task.id, source: completionSource })
         await this.tryCompleteTask(task, completionSource)
       } catch (error) {
         log("[background-agent] Poll error for task:", { taskId: task.id, error })

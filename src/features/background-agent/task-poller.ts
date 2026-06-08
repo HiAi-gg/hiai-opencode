@@ -177,7 +177,9 @@ export async function checkAndInterruptStaleTasks(args: {
       try {
         await notifyParentSession(task)
       } catch (err) {
-        log("[background-agent] Error in notifyParentSession for stale task:", { taskId: task.id, error: err })
+        const errorMessage = err instanceof Error ? err.message : String(err)
+        const errorStack = err instanceof Error ? err.stack : undefined
+        log("[background-agent] Error in notifyParentSession for stale task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
       }
       continue
     }
@@ -215,7 +217,9 @@ export async function checkAndInterruptStaleTasks(args: {
     try {
       await notifyParentSession(task)
     } catch (err) {
-      log("[background-agent] Error in notifyParentSession for stale task:", { taskId: task.id, error: err })
+      const errorMessage = err instanceof Error ? err.message : String(err)
+      const errorStack = err instanceof Error ? err.stack : undefined
+      log("[background-agent] Error in notifyParentSession for stale task:", { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID })
     }
   }
 

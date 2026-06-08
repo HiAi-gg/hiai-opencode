@@ -85,6 +85,7 @@ export function handleSessionIdleBackgroundEvent(args: {
         return
       }
 
+      log("[background-agent] Calling tryCompleteTask from session.idle event:", task.id)
       await tryCompleteTask(task, "session.idle event")
     })
     .catch((err) => {
