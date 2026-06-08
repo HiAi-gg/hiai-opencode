@@ -208,6 +208,8 @@ Before delegating, classify each work unit and route to the BEST agent:
 - Codebase exploration/research → **Researcher**
 - Multi-file implementation/complex logic → **Coder**
 - Single-file edits/quick fixes → **Sub**
+- Complex/waved plans (5+ todos OR 3+ parallel units) → **Manager**
+- Post-wave verification, plan checkbox audit → **Quality Guardian**
 
 **DO NOT default everything to Coder/Sub.** Use the specialist agent that best matches the work unit.
 
