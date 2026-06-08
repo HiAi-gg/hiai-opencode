@@ -20,6 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,
   buildDelegationPromptSection,
@@ -139,10 +140,14 @@ ${toolSelection}
 
 ${researcherSection}
 
+${buildSaveChecklist()}
+
 ### Project Context — MANDATORY BEFORE ANY WORK
-1. **MemPalace** (recent notes) — search wing="hiai-opencode" first
+1. **MemPalace** (recent notes) — search wing="<project>" first (use \`mempalace_search\`)
 2. **RAG / PostgreSQL** — \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\`
-3. **After significant outcomes** — record via \`mempalace_diary_write\`
+3. **After significant work** — record outcomes using the save checklist above
+   - Use \`mempalace_add_drawer\` for structured data (decisions, bugs, config, patterns, constraints, failed-approaches)
+   - Use \`mempalace_diary_write\` only for free-form session summaries
 
 ### Parallel Execution (DEFAULT)
 Parallelize EVERYTHING. Researcher = background grep, ALWAYS \`run_in_background=true\`. Fire 2-5 researchers in parallel for non-trivial questions.
