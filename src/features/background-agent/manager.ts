@@ -129,6 +129,12 @@ export class BackgroundManager {
   private cachedCircuitBreakerSettings?: CircuitBreakerSettings
   private readonly executor: TaskExecutor
 
+  get tasks(): Map<string, BackgroundTask> { return this.state.tasks }
+  get completedTaskSummaries(): Map<string, BackgroundTaskNotificationTask[]> { return this.state.completedTaskSummaries }
+  get pendingByParent(): Map<string, Set<string>> { return this.state.pendingByParent }
+  get pendingNotifications(): Map<string, string[]> { return this.state.pendingNotifications }
+  get notificationQueueByParent(): Map<string, Promise<void>> { return this.state.notificationQueueByParent }
+
   constructor(
     ctx: PluginInput,
     config?: BackgroundTaskConfig,
@@ -1155,7 +1161,7 @@ export class BackgroundManager {
     }
   }
 
-  private clearNotificationsForTask(taskId: string): void {
+  clearNotificationsForTask(taskId: string): void {
     for (const [sessionID, tasks] of this.state.notifications.entries()) {
       const filtered = tasks.filter((t) => t.id !== taskId)
       if (filtered.length === 0) {
@@ -1170,7 +1176,7 @@ export class BackgroundManager {
    * Remove task from pending tracking for its parent session.
    * Cleans up the parent entry if no pending tasks remain.
    */
-  private cleanupPendingByParent(task: BackgroundTask): void {
+  cleanupPendingByParent(task: BackgroundTask): void {
     if (!task.parentSessionID) return
     const pending = this.state.pendingByParent.get(task.parentSessionID)
     if (pending) {
@@ -1188,7 +1194,7 @@ export class BackgroundManager {
     this.state.completedTaskSummaries.delete(parentSessionID)
   }
 
-  private scheduleTaskRemoval(taskId: string, rescheduleCount = 0): void {
+  scheduleTaskRemoval(taskId: string, rescheduleCount = 0): void {
     const existingTimer = this.state.completionTimers.get(taskId)
     if (existingTimer) {
       clearTimeout(existingTimer)
