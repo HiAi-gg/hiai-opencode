@@ -296,16 +296,17 @@ export async function notifyParentSession(adapter: NotifierAdapter, task: Backgr
     const variant = promptContext?.model?.variant
 
     const session = adapter.client.session
-    const promptFn = (session as unknown as Record<string, unknown>)?.prompt
+    const rawPrompt = (session as unknown as Record<string, unknown>)?.prompt
+    const hasPrompt = typeof rawPrompt === "function"
 
     log("[background-agent] About to send notification for task:", {
       taskId: task.id,
       parentSessionID: task.parentSessionID,
-      hasPrompt: typeof promptFn === "function",
+      hasPrompt,
     })
 
     try {
-      if (typeof promptFn === "function") {
+      if (hasPrompt) {
         const promptBody = {
           path: { id: task.parentSessionID },
           body: {
@@ -326,10 +327,11 @@ export async function notifyParentSession(adapter: NotifierAdapter, task: Backgr
 
         const { signal, cleanup } = createPromptTimeoutContext({}, 10000)
         try {
-          await (promptFn as (...args: unknown[]) => Promise<unknown>)({
+          const prompt = adapter.client.session.prompt.bind(adapter.client.session)
+          await prompt({
             ...promptBody,
             signal,
-          })
+          } as Parameters<typeof adapter.client.session.prompt>[0])
           log("[background-agent] Notification prompt() succeeded for task:", {
             taskId: task.id,
             allComplete,

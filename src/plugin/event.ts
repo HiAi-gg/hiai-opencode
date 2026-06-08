@@ -195,7 +195,8 @@ export function createEventHandler(args: {
       });
       return;
     }
-    await pluginContext.client.session.prompt(promptBody).catch((error) => {
+    const prompt = pluginContext.client.session.prompt.bind(pluginContext.client.session);
+    await prompt(promptBody).catch((error) => {
       log("[event] model-fallback prompt failed", { sessionID, source, error });
     });
   };

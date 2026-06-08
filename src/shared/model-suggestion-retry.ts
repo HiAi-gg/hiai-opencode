@@ -124,7 +124,8 @@ export async function promptSyncWithModelSuggestionRetry(
   try {
     const timeoutContext = createPromptTimeoutContext(args, timeoutMs)
     try {
-      await client.session.prompt({
+      const prompt = client.session.prompt.bind(client.session)
+      await prompt({
         ...args,
         signal: timeoutContext.signal,
       } as Parameters<typeof client.session.prompt>[0])
@@ -163,7 +164,8 @@ export async function promptSyncWithModelSuggestionRetry(
 
     const timeoutContext = createPromptTimeoutContext(retryArgs, timeoutMs)
     try {
-      await client.session.prompt({
+      const prompt = client.session.prompt.bind(client.session)
+      await prompt({
         ...retryArgs,
         signal: timeoutContext.signal,
       } as Parameters<typeof client.session.prompt>[0])
