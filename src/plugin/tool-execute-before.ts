@@ -101,6 +101,7 @@ export function createToolExecuteBeforeHandler(args: {
     await hooks.fastApply?.["tool.execute.before"]?.(input, output)
     await hooks.webfetchRedirectGuard?.["tool.execute.before"]?.(input, output)
     await hooks.strategistMdOnly?.["tool.execute.before"]?.(input, output)
+    await hooks.agentToolPermission?.["tool.execute.before"]?.(input, output)
     await hooks.bobJuniorNotepad?.["tool.execute.before"]?.(input, output)
     await hooks.guardHook?.["tool.execute.before"]?.(input, output)
 

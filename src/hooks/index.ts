@@ -28,6 +28,7 @@ export { createRalphLoopHook, type RalphLoopHook } from "./ralph-loop";
 export { createAutoSlashCommandHook } from "./auto-slash-command";
 export { createEditErrorRecoveryHook } from "./edit-error-recovery";
 export { createStrategistMdOnlyHook } from "./strategist-md-only";
+export { createAgentToolPermissionHook } from "./agent-tool-permission";
 export { createBobJuniorNotepadHook } from "./sub-notepad";
 export { createTaskResumeInfoHook } from "./task-resume-info";
 export { createStartWorkHook } from "./start-work";

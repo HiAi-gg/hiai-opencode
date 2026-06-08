@@ -18,6 +18,7 @@ import {
   createTaskResumeInfoHook,
   createStartWorkHook,
   createStrategistMdOnlyHook,
+  createAgentToolPermissionHook,
   createBobJuniorNotepadHook,
   createQuestionLabelTruncatorHook,
   createPreemptiveCompactionHook,
@@ -51,6 +52,7 @@ export type SessionHooks = {
   delegateTaskRetry: ReturnType<typeof createDelegateTaskRetryHook> | null
   startWork: ReturnType<typeof createStartWorkHook> | null
   strategistMdOnly: ReturnType<typeof createStrategistMdOnlyHook> | null
+  agentToolPermission: ReturnType<typeof createAgentToolPermissionHook> | null
   bobJuniorNotepad: ReturnType<typeof createBobJuniorNotepadHook> | null
   questionLabelTruncator: ReturnType<typeof createQuestionLabelTruncatorHook> | null
   taskResumeInfo: ReturnType<typeof createTaskResumeInfoHook> | null
@@ -212,6 +214,10 @@ export function createSessionHooks(args: {
     ? safeHook("strategist-md-only", () => createStrategistMdOnlyHook(ctx))
     : null
 
+  const agentToolPermission = isHookEnabled("agent-tool-permission")
+    ? safeHook("agent-tool-permission", () => createAgentToolPermissionHook(ctx))
+    : null
+
   const bobJuniorNotepad = isHookEnabled("sub-notepad")
     ? safeHook("sub-notepad", () => createBobJuniorNotepadHook(ctx))
     : null
@@ -260,6 +266,7 @@ export function createSessionHooks(args: {
     delegateTaskRetry,
     startWork,
     strategistMdOnly,
+    agentToolPermission,
     bobJuniorNotepad,
     questionLabelTruncator,
     taskResumeInfo,
