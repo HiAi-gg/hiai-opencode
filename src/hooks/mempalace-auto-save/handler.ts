@@ -55,7 +55,7 @@ export function createMemPalaceAutoSaveHandler(args: {
     room: string
     content: string
     agent_name?: string
-    topic?: string
+    source_file?: string
     entry?: string
   }): Promise<void> => {
     try {
@@ -73,11 +73,13 @@ export function createMemPalaceAutoSaveHandler(args: {
       await skillMcpManager.callTool(
         info,
         context,
-        "mempalace_diary_write",
+        "mempalace_add_drawer",
         {
-          agent_name: params.agent_name ?? "system",
-          entry: params.entry ?? params.content,
-          topic: params.topic ?? "general",
+          wing: params.wing,
+          room: params.room,
+          content: params.entry ?? params.content,
+          source_file: params.source_file,
+          added_by: params.agent_name ?? "system",
         }
       )
       log(`[${HOOK_NAME}] MemPalace save success`)
@@ -102,7 +104,6 @@ export function createMemPalaceAutoSaveHandler(args: {
           content: `Plan started: ${sessionInfo?.title ?? sessionID}`,
           agent_name: "strategist",
           entry: `PLAN|${sessionID}|started|${sessionInfo?.title ?? sessionID}`,
-          topic: "plan-started",
         })
         state.workStartedSaved = true
         markSaved(sessionID)
@@ -140,7 +141,6 @@ export function createMemPalaceAutoSaveHandler(args: {
                 content: `Completed: ${content}`,
                 agent_name,
                 entry: `TODO|${todo.id}|done|${content}`,
-                topic: room.slice(0, -1),
               })
             }
           }
@@ -162,7 +162,6 @@ export function createMemPalaceAutoSaveHandler(args: {
           content: `Session ended: ${sessionInfo?.title ?? sessionID}`,
           agent_name: "system",
           entry: `SESSION|${sessionID}|handoff|${sessionInfo?.title ?? sessionID}`,
-          topic: "session",
         })
         markSaved(sessionID)
         sessionStates.delete(sessionID)
@@ -180,7 +179,6 @@ export function createMemPalaceAutoSaveHandler(args: {
             content: `Review/design cycle completed: ${sessionInfo?.title ?? sessionID}`,
             agent_name: "critic",
             entry: `REVIEW|${sessionID}|complete|${sessionInfo?.title ?? sessionID}`,
-            topic: "review-complete",
           })
           state.reviewSaved = true
         }
@@ -191,7 +189,6 @@ export function createMemPalaceAutoSaveHandler(args: {
             content: `Design handoff completed: ${sessionInfo?.title ?? sessionID}`,
             agent_name: "designer",
             entry: `DESIGN|${sessionID}|complete|${sessionInfo?.title ?? sessionID}`,
-            topic: "design-complete",
           })
           state.designSaved = true
         }
@@ -209,7 +206,6 @@ export function createMemPalaceAutoSaveHandler(args: {
           content: `Session error: ${errorDesc}`,
           agent_name: "system",
           entry: `ERROR|${errorDesc}`,
-          topic: "errors",
         })
         markSaved(sessionID)
       }
