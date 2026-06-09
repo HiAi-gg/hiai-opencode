@@ -16,10 +16,10 @@ import {
   discoverProjectClaudeSkills,
   discoverUserClaudeSkills,
 } from "../features/opencode-skill-loader";
-import { 
-  loadProjectAgents, 
-  loadUserAgents, 
-  loadOpencodeGlobalAgents, 
+import {
+  loadProjectAgents,
+  loadUserAgents,
+  loadOpencodeGlobalAgents,
   loadOpencodeProjectAgents,
   loadAgentDefinitions,
   readOpencodeConfigAgents,
@@ -54,33 +54,35 @@ const CANONICAL_VISIBLE_AGENT_NAMES = [
 ] as const;
 
 const RUNTIME_AGENT_DESCRIPTIONS: Partial<Record<string, string>> = {
-  "Bob":
-    "Primary orchestrator for end-to-end task execution, delegation, and high-level workflow control. (Bob - HiaiOpenCode)",
-  "Coder":
+  Bob: "Primary orchestrator for end-to-end task execution, delegation, and high-level workflow control. (Bob - HiaiOpenCode)",
+  Coder:
     "High-depth executor for multi-file implementation, substantial refactors, and technical delivery. (Coder - HiaiOpenCode)",
-  "Strategist":
+  Strategist:
     "Planning and architecture agent for decomposition, sequencing, and decision framing before execution. (Strategist - HiaiOpenCode)",
-  "Manager":
+  Manager:
     "Orchestrator that delegates work, tracks TODO lists, and manages session continuity. Does NOT do error verification - that's Critic's job. (Manager - HiaiOpenCode)",
-  "Critic":
+  Critic:
     "High-accuracy review gate for implementation quality, correctness, and plan validation. (Critic - HiaiOpenCode)",
-  "Designer":
+  Designer:
     "Creative visual problem-solver for high-touch UI, interaction, and brand-level interface direction. (Designer - HiaiOpenCode)",
-  "Researcher":
+  Researcher:
     "Specialized in codebase exploration and external documentation research. (Researcher - HiaiOpenCode)",
-  "Writer":
+  Writer:
     "Content and copy specialist for website text, SEO, positioning, and product messaging. Formerly 'Brainstormer'. (Writer - HiaiOpenCode)",
-  "Vision":
+  Vision:
     "Multimodal analysis agent for images, PDFs, diagrams, and other media that require interpretation beyond plain text. Also drives agent-browser for live UI verification. (Vision - HiaiOpenCode)",
   "Agent Skills":
     "System agent for skill registry, discovery, and capability orchestration. Not for direct user-facing work. (Agent Skills - HiaiOpenCode)",
-  "Sub":
-    "Compatibility wrapper for bounded low-risk execution now folded into Coder's execution contour. (Sub - HiaiOpenCode)",
+  Sub: "Compatibility wrapper for bounded low-risk execution now folded into Coder's execution contour. (Sub - HiaiOpenCode)",
   "Quality Guardian":
     "Compatibility wrapper for review functions now folded into Critic. (Quality Guardian - HiaiOpenCode)",
 };
 
-function forceVisiblePrimaryAgent(agent: unknown, name: string, forceMode?: "primary" | "all"): unknown {
+function forceVisiblePrimaryAgent(
+  agent: unknown,
+  name: string,
+  forceMode?: "primary" | "all",
+): unknown {
   if (typeof agent !== "object" || agent === null) {
     return agent;
   }
@@ -91,9 +93,15 @@ function forceVisiblePrimaryAgent(agent: unknown, name: string, forceMode?: "pri
     name: name.charAt(0).toUpperCase() + name.slice(1),
     hidden: false,
     mode: forceMode ?? "all",
-    ...(typeof base.description === "string" && base.description.trim().length > 0
+    ...(typeof base.description === "string" &&
+    base.description.trim().length > 0
       ? {}
-      : { description: RUNTIME_AGENT_DESCRIPTIONS[name.charAt(0).toUpperCase() + name.slice(1)] }),
+      : {
+          description:
+            RUNTIME_AGENT_DESCRIPTIONS[
+              name.charAt(0).toUpperCase() + name.slice(1)
+            ],
+        }),
   };
 }
 
@@ -112,7 +120,9 @@ function forceHiddenCompatibilityAgent(agent: unknown, name: string): unknown {
   };
 }
 
-function getConfiguredDefaultAgent(config: Record<string, unknown>): string | undefined {
+function getConfiguredDefaultAgent(
+  config: Record<string, unknown>,
+): string | undefined {
   const defaultAgent = config.default_agent;
   if (typeof defaultAgent !== "string") return undefined;
   const trimmedDefaultAgent = defaultAgent.trim();
@@ -125,11 +135,13 @@ export async function applyAgentConfig(params: {
   ctx: { directory: string; client?: any };
   pluginComponents: PluginComponents;
 }): Promise<Record<string, unknown>> {
-  const migratedDisabledAgents = (params.pluginConfig.disabled_agents ?? []).map(
-    (agent) => {
-      return AGENT_NAME_MAP[agent.toLowerCase()] ?? AGENT_NAME_MAP[agent] ?? agent;
-    },
-  ) as typeof params.pluginConfig.disabled_agents;
+  const migratedDisabledAgents = (
+    params.pluginConfig.disabled_agents ?? []
+  ).map((agent) => {
+    return (
+      AGENT_NAME_MAP[agent.toLowerCase()] ?? AGENT_NAME_MAP[agent] ?? agent
+    );
+  }) as typeof params.pluginConfig.disabled_agents;
 
   const discovery = resolveSkillDiscoveryConfig(params.pluginConfig);
   const [
@@ -145,9 +157,9 @@ export async function applyAgentConfig(params: {
     discoverManagedPluginSkills(),
     discovery.config_sources
       ? discoverConfigSourceSkills({
-        config: params.pluginConfig.skills,
-        configDir: params.ctx.directory,
-      })
+          config: params.pluginConfig.skills,
+          configDir: params.ctx.directory,
+        })
       : Promise.resolve([]),
     discovery.global_claude ? discoverUserClaudeSkills() : Promise.resolve([]),
     discovery.project_claude
@@ -156,9 +168,15 @@ export async function applyAgentConfig(params: {
     discovery.project_agents
       ? discoverProjectAgentsSkills(params.ctx.directory)
       : Promise.resolve([]),
-    discovery.global_opencode ? discoverOpencodeGlobalSkills() : Promise.resolve([]),
-    discovery.project_opencode ? discoverOpencodeProjectSkills(params.ctx.directory) : Promise.resolve([]),
-    discovery.global_agents ? discoverGlobalAgentsSkills() : Promise.resolve([]),
+    discovery.global_opencode
+      ? discoverOpencodeGlobalSkills()
+      : Promise.resolve([]),
+    discovery.project_opencode
+      ? discoverOpencodeProjectSkills(params.ctx.directory)
+      : Promise.resolve([]),
+    discovery.global_agents
+      ? discoverGlobalAgentsSkills()
+      : Promise.resolve([]),
   ]);
 
   const allDiscoveredSkills = [
@@ -171,24 +189,33 @@ export async function applyAgentConfig(params: {
     ...discoveredUserSkills,
     ...discoveredGlobalAgentsSkills,
   ];
-  const deduplicatedDiscoveredSkills = deduplicateSkillsByName(allDiscoveredSkills);
+  const deduplicatedDiscoveredSkills =
+    deduplicateSkillsByName(allDiscoveredSkills);
 
   const browserProvider =
     params.pluginConfig.browser_automation_engine?.provider ?? "agent-browser";
   const currentModel = params.config.model as string | undefined;
-  const disabledSkills = new Set<string>(params.pluginConfig.disabled_skills ?? []);
+  const disabledSkills = new Set<string>(
+    params.pluginConfig.disabled_skills ?? [],
+  );
   const useTaskSystem = isTaskSystemEnabled(params.pluginConfig);
-  const disableOmoEnv = params.pluginConfig.experimental?.disable_omo_env ?? false;
+  const disableOmoEnv =
+    params.pluginConfig.experimental?.disable_omo_env ?? false;
 
   const includeClaudeAgents = params.pluginConfig.claude_code?.agents ?? true;
   const userAgents = includeClaudeAgents ? loadUserAgents() : {};
-  const projectAgents = includeClaudeAgents ? loadProjectAgents(params.ctx.directory) : {};
+  const projectAgents = includeClaudeAgents
+    ? loadProjectAgents(params.ctx.directory)
+    : {};
   const opencodeGlobalAgents = loadOpencodeGlobalAgents();
   const opencodeProjectAgents = loadOpencodeProjectAgents(params.ctx.directory);
   const rawPluginAgents = params.pluginComponents.agents;
 
   const agentDefinitionAgents = params.pluginConfig.agent_definitions
-    ? loadAgentDefinitions(params.pluginConfig.agent_definitions, "definition-file")
+    ? loadAgentDefinitions(
+        params.pluginConfig.agent_definitions,
+        "definition-file",
+      )
     : {};
   const opencodeConfigAgents = readOpencodeConfigAgents(params.ctx.directory);
 
@@ -209,31 +236,31 @@ export async function applyAgentConfig(params: {
     ...Object.entries(projectAgents),
     ...Object.entries(opencodeGlobalAgents),
     ...Object.entries(opencodeProjectAgents),
-    ...Object.entries(pluginAgents).filter(([, config]) => config !== undefined),
+    ...Object.entries(pluginAgents).filter(
+      ([, config]) => config !== undefined,
+    ),
     ...Object.entries(agentDefinitionAgents),
     ...Object.entries(opencodeConfigAgents),
   ]
     .filter(([, config]) => config != null)
     .map(([name, config]) => ({
       name,
-      description: typeof (config as Record<string, unknown>)?.description === "string"
-        ? ((config as Record<string, unknown>).description as string)
-        : "",
+      description:
+        typeof (config as Record<string, unknown>)?.description === "string"
+          ? ((config as Record<string, unknown>).description as string)
+          : "",
     }));
 
-  log(
-    "[agent-config-handler] Agent sources loaded",
-    {
-      user: Object.keys(userAgents).length,
-      project: Object.keys(projectAgents).length,
-      opencodeGlobal: Object.keys(opencodeGlobalAgents).length,
-      opencodeProject: Object.keys(opencodeProjectAgents).length,
-      plugin: Object.keys(pluginAgents).length,
-      agentDefinitions: Object.keys(agentDefinitionAgents).length,
-      opencodeConfig: Object.keys(opencodeConfigAgents).length,
-      config: Object.keys(configAgent ?? {}).length,
-    }
-  );
+  log("[agent-config-handler] Agent sources loaded", {
+    user: Object.keys(userAgents).length,
+    project: Object.keys(projectAgents).length,
+    opencodeGlobal: Object.keys(opencodeGlobalAgents).length,
+    opencodeProject: Object.keys(opencodeProjectAgents).length,
+    plugin: Object.keys(pluginAgents).length,
+    agentDefinitions: Object.keys(agentDefinitionAgents).length,
+    opencodeConfig: Object.keys(opencodeConfigAgents).length,
+    config: Object.keys(configAgent ?? {}).length,
+  });
 
   const builtinAgents = await createBuiltinAgents(
     migratedDisabledAgents,
@@ -252,12 +279,14 @@ export async function applyAgentConfig(params: {
   );
 
   const disabledAgentNames = new Set(
-    (migratedDisabledAgents ?? []).map(a => a.toLowerCase())
+    (migratedDisabledAgents ?? []).map((a) => a.toLowerCase()),
   );
 
   const filterDisabledAgents = (agents: Record<string, unknown>) =>
     Object.fromEntries(
-      Object.entries(agents).filter(([name]) => !disabledAgentNames.has(name.toLowerCase()))
+      Object.entries(agents).filter(
+        ([name]) => !disabledAgentNames.has(name.toLowerCase()),
+      ),
     );
 
   const isBobEnabled = params.pluginConfig.bob_agent?.disabled !== true;
@@ -278,7 +307,7 @@ export async function applyAgentConfig(params: {
 
     // Assembly order: Bob -> Coder -> Strategist -> Manager
     const agentConfig: Record<string, unknown> = {
-      "bob": builtinAgents.bob,
+      bob: builtinAgents.bob,
     };
 
     if (builtinAgents.coder) {
@@ -325,7 +354,9 @@ export async function applyAgentConfig(params: {
         ...migratedBuildConfig,
         description: `${(configAgent?.build?.description as string) ?? "Build agent"} (OpenCode default)`,
       };
-      agentConfig["OpenCode-Builder"] = override ? { ...base, ...override } : base;
+      agentConfig["OpenCode-Builder"] = override
+        ? { ...base, ...override }
+        : base;
     }
 
     const filteredConfigAgents = configAgent
@@ -339,7 +370,9 @@ export async function applyAgentConfig(params: {
             })
             .map(([key, value]) => {
               if (!value) return [key, value];
-              const migrated = migrateAgentConfig(value as Record<string, unknown>);
+              const migrated = migrateAgentConfig(
+                value as Record<string, unknown>,
+              );
               if (!migrated.mode) migrated.mode = "subagent";
               return [key, migrated];
             }),
@@ -387,7 +420,12 @@ export async function applyAgentConfig(params: {
       ...agentConfig,
       ...Object.fromEntries(
         Object.entries(builtinAgents).filter(
-          ([key]) => key !== "bob" && key !== "coder" && key !== "manager" && key !== "strategist" && key !== "sub",
+          ([key]) =>
+            key !== "bob" &&
+            key !== "coder" &&
+            key !== "manager" &&
+            key !== "strategist" &&
+            key !== "sub",
         ),
       ),
       // Precedence: later entries override earlier (project > global > user > plugin)
@@ -439,11 +477,13 @@ export async function applyAgentConfig(params: {
           Object.entries(configAgent)
             .filter(([key]) => key !== "plan")
             .map(([key, value]) => {
-            if (!value) return [key, value];
-            const migrated = migrateAgentConfig(value as Record<string, unknown>);
-            if (!migrated.mode) migrated.mode = "subagent";
-            return [key, migrated];
-          }),
+              if (!value) return [key, value];
+              const migrated = migrateAgentConfig(
+                value as Record<string, unknown>,
+              );
+              if (!migrated.mode) migrated.mode = "subagent";
+              return [key, migrated];
+            }),
         )
       : {};
 
@@ -480,7 +520,11 @@ export async function applyAgentConfig(params: {
       }
     }
 
-    for (const hiddenName of ["agent-skills", "quality-guardian", "sub"] as const) {
+    for (const hiddenName of [
+      "agent-skills",
+      "quality-guardian",
+      "sub",
+    ] as const) {
       if (hiddenName in normalizedAgents) {
         normalizedAgents[hiddenName] = forceHiddenCompatibilityAgent(
           normalizedAgents[hiddenName],
@@ -505,6 +549,8 @@ export async function applyAgentConfig(params: {
   for (const name of Object.keys(agentResult)) {
     registerAgentName(name);
   }
-  log("[config-handler] agents loaded", { agentKeys: Object.keys(agentResult) });
+  log("[config-handler] agents loaded", {
+    agentKeys: Object.keys(agentResult),
+  });
   return agentResult;
 }
