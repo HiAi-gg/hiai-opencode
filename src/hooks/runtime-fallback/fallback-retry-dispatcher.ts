@@ -1,16 +1,16 @@
-import type { AutoRetryHelpers } from "./auto-retry"
-import type { HookDeps, FallbackState } from "./types"
-import { HOOK_NAME } from "./constants"
-import { log } from "../../shared/logger"
-import { prepareFallback } from "./fallback-state"
+import type { AutoRetryHelpers } from "./auto-retry";
+import type { HookDeps, FallbackState } from "./types";
+import { HOOK_NAME } from "./constants";
+import { log } from "../../shared/logger";
+import { prepareFallback } from "./fallback-state";
 
 type DispatchFallbackRetryOptions = {
-  sessionID: string
-  state: FallbackState
-  fallbackModels: string[]
-  resolvedAgent?: string
-  source: string
-}
+  sessionID: string;
+  state: FallbackState;
+  fallbackModels: string[];
+  resolvedAgent?: string;
+  source: string;
+};
 
 export async function dispatchFallbackRetry(
   deps: HookDeps,
@@ -22,7 +22,7 @@ export async function dispatchFallbackRetry(
     options.state,
     options.fallbackModels,
     deps.config,
-  )
+  );
 
   if (result.success && deps.config.notify_on_fallback) {
     await deps.ctx.client.tui
@@ -34,7 +34,9 @@ export async function dispatchFallbackRetry(
           duration: 5000,
         },
       })
-      .catch(() => { /* intentionally ignored — toast is non-critical */ })
+      .catch(() => {
+        /* intentionally ignored — toast is non-critical */
+      });
   }
 
   if (result.success && result.newModel) {
@@ -43,13 +45,13 @@ export async function dispatchFallbackRetry(
       result.newModel,
       options.resolvedAgent,
       options.source,
-    )
-    return
+    );
+    return;
   }
 
   log(`[${HOOK_NAME}] Fallback preparation failed`, {
     sessionID: options.sessionID,
     source: options.source,
     error: result.error,
-  })
+  });
 }

@@ -28,10 +28,10 @@
  * permission and is not affected by this matrix.
  */
 
-export type PermissionValue = "ask" | "allow" | "deny"
+export type PermissionValue = "ask" | "allow" | "deny";
 
 export interface PermissionFormat {
-  permission: Record<string, PermissionValue>
+  permission: Record<string, PermissionValue>;
 }
 
 /**
@@ -48,7 +48,7 @@ export type DelegatableAgentKey =
   | "researcher"
   | "writer"
   | "vision"
-  | "sub"
+  | "sub";
 
 /**
  * The delegation allowlist, keyed by the calling agent's canonical config key.
@@ -92,7 +92,7 @@ export const AGENT_DELEGATION_MATRIX: Partial<
   researcher: ["vision"],
   vision: [],
   sub: [],
-}
+};
 
 /**
  * Returns the delegate_to list for an agent.
@@ -104,11 +104,11 @@ export const AGENT_DELEGATION_MATRIX: Partial<
  * - Returns the agent's allowlist otherwise.
  */
 export function getAgentDelegateTargets(
-  agentName: string
+  agentName: string,
 ): readonly DelegatableAgentKey[] | undefined {
-  const key = agentName.trim().toLowerCase()
-  if (!key) return undefined
-  return AGENT_DELEGATION_MATRIX[key as DelegatableAgentKey]
+  const key = agentName.trim().toLowerCase();
+  if (!key) return undefined;
+  return AGENT_DELEGATION_MATRIX[key as DelegatableAgentKey];
 }
 
 /**
@@ -126,17 +126,17 @@ export function getAgentDelegateTargets(
  */
 export function canAgentDelegateTo(
   callerAgent: string,
-  targetAgent: string
+  targetAgent: string,
 ): boolean {
-  const allowed = getAgentDelegateTargets(callerAgent)
+  const allowed = getAgentDelegateTargets(callerAgent);
   if (allowed === undefined) {
-    return true
+    return true;
   }
   if (allowed.length === 0) {
-    return false
+    return false;
   }
-  const targetKey = targetAgent.trim().toLowerCase()
-  return allowed.some((candidate) => candidate === targetKey)
+  const targetKey = targetAgent.trim().toLowerCase();
+  return allowed.some((candidate) => candidate === targetKey);
 }
 
 /**
@@ -145,26 +145,24 @@ export function canAgentDelegateTo(
  * in the matrix (backward compat) and the literal "no agents" when the
  * allowlist is empty.
  */
-export function formatAgentDelegateTargets(
-  callerAgent: string
-): string {
-  const allowed = getAgentDelegateTargets(callerAgent)
-  if (allowed === undefined) return "all agents"
-  if (allowed.length === 0) return "no agents"
-  return allowed.join(", ")
+export function formatAgentDelegateTargets(callerAgent: string): string {
+  const allowed = getAgentDelegateTargets(callerAgent);
+  if (allowed === undefined) return "all agents";
+  if (allowed.length === 0) return "no agents";
+  return allowed.join(", ");
 }
 
 /**
  * Creates tool restrictions that deny specified tools.
  */
 export function createAgentToolRestrictions(
-  denyTools: string[]
+  denyTools: string[],
 ): PermissionFormat {
   return {
     permission: Object.fromEntries(
-      denyTools.map((tool) => [tool, "deny" as const])
+      denyTools.map((tool) => [tool, "deny" as const]),
     ),
-  }
+  };
 }
 
 /**
@@ -172,16 +170,14 @@ export function createAgentToolRestrictions(
  * All other tools are denied by default using `*: deny` pattern.
  */
 export function createAgentToolAllowlist(
-  allowTools: string[]
+  allowTools: string[],
 ): PermissionFormat {
   return {
     permission: {
       "*": "deny" as const,
-      ...Object.fromEntries(
-        allowTools.map((tool) => [tool, "allow" as const])
-      ),
+      ...Object.fromEntries(allowTools.map((tool) => [tool, "allow" as const])),
     },
-  }
+  };
 }
 
 /**
@@ -189,14 +185,14 @@ export function createAgentToolAllowlist(
  * For migrating user configs from older versions.
  */
 export function migrateToolsToPermission(
-  tools: Record<string, boolean>
+  tools: Record<string, boolean>,
 ): Record<string, PermissionValue> {
   return Object.fromEntries(
     Object.entries(tools).map(([key, value]) => [
       key,
       value ? ("allow" as const) : ("deny" as const),
-    ])
-  )
+    ]),
+  );
 }
 
 /**
@@ -204,28 +200,28 @@ export function migrateToolsToPermission(
  * If config has `tools`, converts to `permission`.
  */
 export function migrateAgentConfig(
-  config: Record<string, unknown>
+  config: Record<string, unknown>,
 ): Record<string, unknown> {
-  const result = { ...config }
+  const result = { ...config };
 
   if (result.tools && typeof result.tools === "object") {
     const existingPermission =
-      (result.permission as Record<string, PermissionValue>) || {}
+      (result.permission as Record<string, PermissionValue>) || {};
     const migratedPermission = migrateToolsToPermission(
-      result.tools as Record<string, boolean>
-    )
-    result.permission = { ...migratedPermission, ...existingPermission }
-    delete result.tools
+      result.tools as Record<string, boolean>,
+    );
+    result.permission = { ...migratedPermission, ...existingPermission };
+    delete result.tools;
   }
 
   if (result.permission && typeof result.permission === "object") {
-    const perm = { ...(result.permission as Record<string, PermissionValue>) }
+    const perm = { ...(result.permission as Record<string, PermissionValue>) };
     if ("delegate_task" in perm && !("task" in perm)) {
-      perm["task"] = perm["delegate_task"]
-      delete perm["delegate_task"]
-      result.permission = perm
+      perm.task = perm.delegate_task;
+      delete perm.delegate_task;
+      result.permission = perm;
     }
   }
 
-  return result
+  return result;
 }

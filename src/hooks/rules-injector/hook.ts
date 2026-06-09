@@ -47,7 +47,7 @@ export function createRulesInjectorHook(
 
   const toolExecuteAfter = async (
     input: ToolExecuteInput,
-    output: ToolExecuteOutput
+    output: ToolExecuteOutput,
   ) => {
     const toolName = input.tool.toLowerCase();
 
@@ -61,7 +61,7 @@ export function createRulesInjectorHook(
 
   const toolExecuteBefore = async (
     input: ToolExecuteInput,
-    output: ToolExecuteBeforeOutput
+    output: ToolExecuteBeforeOutput,
   ): Promise<void> => {
     void input;
     void output;

@@ -1,10 +1,10 @@
-import { pathToFileURL } from "node:url"
+import { pathToFileURL } from "node:url";
 
-import { LSPClientTransport } from "./lsp-client-transport"
+import { LSPClientTransport } from "./lsp-client-transport";
 
 export class LSPClientConnection extends LSPClientTransport {
   async initialize(): Promise<void> {
-    const rootUri = pathToFileURL(this.root).href
+    const rootUri = pathToFileURL(this.root).href;
     await this.sendRequest("initialize", {
       processId: process.pid,
       rootUri,
@@ -56,11 +56,11 @@ export class LSPClientConnection extends LSPClientTransport {
         },
       },
       initializationOptions: this.server.initialization,
-    })
-    this.sendNotification("initialized")
+    });
+    this.sendNotification("initialized");
     this.sendNotification("workspace/didChangeConfiguration", {
       settings: { json: { validate: { enable: true } } },
-    })
-    await new Promise((r) => setTimeout(r, 300))
+    });
+    await new Promise((r) => setTimeout(r, 300));
   }
 }

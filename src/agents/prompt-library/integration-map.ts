@@ -13,5 +13,5 @@ AGENTS: bob (you) | coder (deep) | sub (bounded) | strategist | critic | researc
 MCP: Stitch→designer, Context7→researcher+coder, grep_app→researcher, MemPalace→all, Sequential-Thinking→strategist+critic
 CLI: Firecrawl→researcher, agent-browser→vision
 LSP: ts/svelte/eslint/bash/pyright — coder: lsp_diagnostics after edits
-</integration-mental-map>`
+</integration-mental-map>`;
 }

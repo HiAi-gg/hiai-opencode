@@ -15,7 +15,7 @@ export function parseAutoWorkflowOutput(text: string): AutoWorkflowResult {
     /<subtask2\s+auto\s*=\s*["']?true["']?\s*>([\s\S]*?)<\/subtask2>/i;
   const match = text.match(regex);
 
-  if (!match || !match[1]) {
+  if (!match?.[1]) {
     return { found: false };
   }
 

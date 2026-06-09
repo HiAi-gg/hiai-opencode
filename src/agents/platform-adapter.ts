@@ -11,7 +11,8 @@ export interface AgentDefinition {
 
 export const platformAgents: Record<string, AgentDefinition> = {
   "ledger-creator": {
-    description: "Creates and updates continuity ledgers for session state preservation",
+    description:
+      "Creates and updates continuity ledgers for session state preservation",
     mode: "subagent",
     temperature: 0.2,
     tools: { edit: false, task: false },
@@ -90,7 +91,8 @@ Updated: {ISO timestamp}
   },
 
   bootstrapper: {
-    description: "Analyzes a request and creates exploration branches with scopes for brainstorming",
+    description:
+      "Analyzes a request and creates exploration branches with scopes for brainstorming",
     mode: "subagent",
     temperature: 0.5,
     prompt: `<purpose>
@@ -124,7 +126,8 @@ Return ONLY a JSON object. No markdown, no explanation.
   },
 
   "project-initializer": {
-    description: "Rapidly analyze any project and generate ARCHITECTURE.md and CODE_STYLE.md",
+    description:
+      "Rapidly analyze any project and generate ARCHITECTURE.md and CODE_STYLE.md",
     mode: "subagent",
     temperature: 0.3,
     maxTokens: 32000,

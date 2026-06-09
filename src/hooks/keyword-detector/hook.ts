@@ -1,107 +1,133 @@
-import type { PluginInput } from "@opencode-ai/plugin"
-import { detectKeywordsWithType, extractPromptText } from "./detector"
-import { isPlannerAgent, isNonOmoAgent } from "./constants"
-import { log } from "../../shared"
+import type { PluginInput } from "@opencode-ai/plugin";
+import { detectKeywordsWithType, extractPromptText } from "./detector";
+import { isPlannerAgent, isNonOmoAgent } from "./constants";
+import { log } from "../../shared";
 import {
   isSystemDirective,
   removeSystemReminders,
-} from "../../shared/system-directive"
+} from "../../shared/system-directive";
 import {
   getMainSessionID,
   getSessionAgent,
   subagentSessions,
-} from "../../features/claude-code-session-state"
-import type { ContextCollector } from "../../features/context-injector"
-import type { RalphLoopHook } from "../ralph-loop"
+} from "../../features/claude-code-session-state";
+import type { ContextCollector } from "../../features/context-injector";
+import type { RalphLoopHook } from "../ralph-loop";
 
 export function createKeywordDetectorHook(
   ctx: PluginInput,
   _collector?: ContextCollector,
-  _ralphLoop?: Pick<RalphLoopHook, "startLoop">
+  _ralphLoop?: Pick<RalphLoopHook, "startLoop">,
 ) {
-  function getRuntimeVariant(input: { variant?: string }, message: Record<string, unknown>): string | undefined {
-    if (typeof message["variant"] === "string") {
-      return message["variant"]
+  function getRuntimeVariant(
+    input: { variant?: string },
+    message: Record<string, unknown>,
+  ): string | undefined {
+    if (typeof message.variant === "string") {
+      return message.variant;
     }
 
-    return typeof input.variant === "string" ? input.variant : undefined
+    return typeof input.variant === "string" ? input.variant : undefined;
   }
 
   return {
     "chat.message": async (
       input: {
-        sessionID: string
-        agent?: string
-        model?: { providerID: string; modelID: string }
-        messageID?: string
-        variant?: string
+        sessionID: string;
+        agent?: string;
+        model?: { providerID: string; modelID: string };
+        messageID?: string;
+        variant?: string;
       },
       output: {
-        message: Record<string, unknown>
-        parts: Array<{ type: string; text?: string; [key: string]: unknown }>
-      }
+        message: Record<string, unknown>;
+        parts: Array<{ type: string; text?: string; [key: string]: unknown }>;
+      },
     ): Promise<void> => {
-      const promptText = extractPromptText(output.parts)
+      const promptText = extractPromptText(output.parts);
 
       if (isSystemDirective(promptText)) {
-        log(`[keyword-detector] Skipping system directive message`, { sessionID: input.sessionID })
-        return
+        log(`[keyword-detector] Skipping system directive message`, {
+          sessionID: input.sessionID,
+        });
+        return;
       }
 
-      const currentAgent = getSessionAgent(input.sessionID) ?? input.agent
+      const currentAgent = getSessionAgent(input.sessionID) ?? input.agent;
 
       // Skip all keyword injection for non-OMO agents (e.g., OpenCode-Builder, Plan)
       if (isNonOmoAgent(currentAgent)) {
-        log(`[keyword-detector] Skipping keyword injection for non-OMO agent`, { sessionID: input.sessionID, agent: currentAgent })
-        return
+        log(`[keyword-detector] Skipping keyword injection for non-OMO agent`, {
+          sessionID: input.sessionID,
+          agent: currentAgent,
+        });
+        return;
       }
 
       // Remove system-reminder content to prevent automated system messages from triggering mode keywords
-      const cleanText = removeSystemReminders(promptText)
-      const modelID = input.model?.modelID
-      let detectedKeywords = detectKeywordsWithType(cleanText, currentAgent, modelID)
+      const cleanText = removeSystemReminders(promptText);
+      const modelID = input.model?.modelID;
+      let detectedKeywords = detectKeywordsWithType(
+        cleanText,
+        currentAgent,
+        modelID,
+      );
 
       if (isPlannerAgent(currentAgent)) {
-        const preFilterCount = detectedKeywords.length
-        detectedKeywords = detectedKeywords.filter((k) => k.type !== "ultrawork")
+        const preFilterCount = detectedKeywords.length;
+        detectedKeywords = detectedKeywords.filter(
+          (k) => k.type !== "ultrawork",
+        );
         if (preFilterCount > detectedKeywords.length) {
-          log(`[keyword-detector] Filtered ultrawork keywords for planner agent`, { sessionID: input.sessionID, agent: currentAgent })
+          log(
+            `[keyword-detector] Filtered ultrawork keywords for planner agent`,
+            { sessionID: input.sessionID, agent: currentAgent },
+          );
         }
       }
 
       if (detectedKeywords.length === 0) {
-        return
+        return;
       }
 
-      const isBackgroundTaskSession = subagentSessions.has(input.sessionID)
+      const isBackgroundTaskSession = subagentSessions.has(input.sessionID);
       if (isBackgroundTaskSession) {
-        log(`[keyword-detector] Skipping keyword injection for background task session`, { sessionID: input.sessionID })
-        return
+        log(
+          `[keyword-detector] Skipping keyword injection for background task session`,
+          { sessionID: input.sessionID },
+        );
+        return;
       }
 
-      const mainSessionID = getMainSessionID()
-      const isNonMainSession = mainSessionID && input.sessionID !== mainSessionID
+      const mainSessionID = getMainSessionID();
+      const isNonMainSession =
+        mainSessionID && input.sessionID !== mainSessionID;
 
       if (isNonMainSession) {
-        detectedKeywords = detectedKeywords.filter((k) => k.type === "ultrawork")
+        detectedKeywords = detectedKeywords.filter(
+          (k) => k.type === "ultrawork",
+        );
         if (detectedKeywords.length === 0) {
-          log(`[keyword-detector] Skipping non-ultrawork keywords in non-main session`, {
-            sessionID: input.sessionID,
-            mainSessionID,
-          })
-          return
+          log(
+            `[keyword-detector] Skipping non-ultrawork keywords in non-main session`,
+            {
+              sessionID: input.sessionID,
+              mainSessionID,
+            },
+          );
+          return;
         }
       }
 
-      const hasUltrawork = detectedKeywords.some((k) => k.type === "ultrawork")
+      const hasUltrawork = detectedKeywords.some((k) => k.type === "ultrawork");
       if (hasUltrawork) {
-        const runtimeVariant = getRuntimeVariant(input, output.message)
-        const isRuntimeMax = runtimeVariant === "max"
+        const runtimeVariant = getRuntimeVariant(input, output.message);
+        const isRuntimeMax = runtimeVariant === "max";
 
         log(`[keyword-detector] Ultrawork mode activated`, {
           sessionID: input.sessionID,
           runtimeVariant,
-        })
+        });
 
         ctx.client.tui
           .showToast({
@@ -118,26 +144,30 @@ export function createKeywordDetectorHook(
             log(`[keyword-detector] Failed to show toast`, {
               error: err,
               sessionID: input.sessionID,
-            })
-          )
-
+            }),
+          );
       }
 
-      const textPartIndex = output.parts.findIndex((p) => p.type === "text" && p.text !== undefined)
+      const textPartIndex = output.parts.findIndex(
+        (p) => p.type === "text" && p.text !== undefined,
+      );
       if (textPartIndex === -1) {
-        log(`[keyword-detector] No text part found, skipping injection`, { sessionID: input.sessionID })
-        return
+        log(`[keyword-detector] No text part found, skipping injection`, {
+          sessionID: input.sessionID,
+        });
+        return;
       }
 
-      const allMessages = detectedKeywords.map((k) => k.message).join("\n\n")
-      const originalText = output.parts[textPartIndex].text ?? ""
+      const allMessages = detectedKeywords.map((k) => k.message).join("\n\n");
+      const originalText = output.parts[textPartIndex].text ?? "";
 
-      output.parts[textPartIndex].text = `${allMessages}\n\n---\n\n${originalText}`
+      output.parts[textPartIndex].text =
+        `${allMessages}\n\n---\n\n${originalText}`;
 
       log(`[keyword-detector] Detected ${detectedKeywords.length} keywords`, {
         sessionID: input.sessionID,
         types: detectedKeywords.map((k) => k.type),
-      })
+      });
     },
-  }
+  };
 }

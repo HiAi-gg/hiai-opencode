@@ -226,4 +226,4 @@ POTENTIAL ACTIONS:
 - See related commits: git log --ancestry-path abc1234..HEAD
 - Cherry-pick to another branch: git cherry-pick abc1234
 \`\`\`
-</history_results>`
+</history_results>`;

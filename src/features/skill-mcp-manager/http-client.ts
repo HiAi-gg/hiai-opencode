@@ -1,133 +1,153 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js"
-import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
-import { registerProcessCleanup, startCleanupTimer } from "./cleanup"
-import { buildHttpRequestInit } from "./oauth-handler"
-import { logWarn } from "../../shared/logger"
-import type { ManagedClient, McpClient, McpTransport, SkillMcpClientConnectionParams } from "./types"
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import { registerProcessCleanup, startCleanupTimer } from "./cleanup";
+import { buildHttpRequestInit } from "./oauth-handler";
+import { logWarn } from "../../shared/logger";
+import type {
+  ManagedClient,
+  McpClient,
+  McpTransport,
+  SkillMcpClientConnectionParams,
+} from "./types";
 
 type HttpClientFactory = (
   clientInfo: { name: string; version: string },
-  options: { capabilities: Record<string, never> }
-) => McpClient
+  options: { capabilities: Record<string, never> },
+) => McpClient;
 
 type HttpTransportFactory = (
   url: URL,
-  options?: { requestInit?: RequestInit }
-) => McpTransport
+  options?: { requestInit?: RequestInit },
+) => McpTransport;
 
 interface HttpClientDependencies {
-  createClient: HttpClientFactory
-  createTransport: HttpTransportFactory
+  createClient: HttpClientFactory;
+  createTransport: HttpTransportFactory;
 }
 
 const defaultHttpClientDependencies: HttpClientDependencies = {
   createClient: (clientInfo, options) => new Client(clientInfo, options),
-  createTransport: (url, options) => new StreamableHTTPClientTransport(url, options),
-}
+  createTransport: (url, options) =>
+    new StreamableHTTPClientTransport(url, options),
+};
 
-let httpClientDependencies: HttpClientDependencies = defaultHttpClientDependencies
+let httpClientDependencies: HttpClientDependencies =
+  defaultHttpClientDependencies;
 
 export function setHttpClientDependenciesForTesting(
-  dependencies?: Partial<HttpClientDependencies>
+  dependencies?: Partial<HttpClientDependencies>,
 ): void {
   httpClientDependencies = dependencies
     ? {
         ...defaultHttpClientDependencies,
         ...dependencies,
       }
-    : defaultHttpClientDependencies
+    : defaultHttpClientDependencies;
 }
 
 function redactUrl(urlStr: string): string {
   try {
-    const u = new URL(urlStr)
+    const u = new URL(urlStr);
     for (const key of u.searchParams.keys()) {
       if (
         key.toLowerCase().includes("key") ||
         key.toLowerCase().includes("token") ||
         key.toLowerCase().includes("secret")
       ) {
-        u.searchParams.set(key, "***REDACTED***")
+        u.searchParams.set(key, "***REDACTED***");
       }
     }
-    return u.toString()
+    return u.toString();
   } catch {
-    return urlStr
+    return urlStr;
   }
 }
 
-export async function createHttpClient(params: SkillMcpClientConnectionParams): Promise<McpClient> {
-  const { state, clientKey, info, config } = params
-  const shutdownGenAtStart = state.shutdownGeneration
+export async function createHttpClient(
+  params: SkillMcpClientConnectionParams,
+): Promise<McpClient> {
+  const { state, clientKey, info, config } = params;
+  const shutdownGenAtStart = state.shutdownGeneration;
 
   if (!config.url) {
-    throw new Error(`MCP server "${info.serverName}" is configured for HTTP but missing 'url' field.`)
+    throw new Error(
+      `MCP server "${info.serverName}" is configured for HTTP but missing 'url' field.`,
+    );
   }
 
-  let url: URL
+  let url: URL;
   try {
-    url = new URL(config.url)
+    url = new URL(config.url);
   } catch {
     throw new Error(
       `MCP server "${info.serverName}" has invalid URL: ${redactUrl(config.url)}\n\n` +
-      `Expected a valid URL like: https://mcp.example.com/mcp`
-    )
+        `Expected a valid URL like: https://mcp.example.com/mcp`,
+    );
   }
 
-  registerProcessCleanup(state)
+  registerProcessCleanup(state);
 
-  const requestInit = await buildHttpRequestInit(config, state.authProviders, state.createOAuthProvider)
+  const requestInit = await buildHttpRequestInit(
+    config,
+    state.authProviders,
+    state.createOAuthProvider,
+  );
   const transport: McpTransport = httpClientDependencies.createTransport(url, {
     requestInit,
-  })
+  });
 
   const client: McpClient = httpClientDependencies.createClient(
-    { name: `skill-mcp-${info.skillName}-${info.serverName}`, version: "1.0.0" },
-    { capabilities: {} }
-  )
+    {
+      name: `skill-mcp-${info.skillName}-${info.serverName}`,
+      version: "1.0.0",
+    },
+    { capabilities: {} },
+  );
 
   try {
-    await client.connect(transport)
+    await client.connect(transport);
   } catch (error) {
     try {
-      await transport.close()
+      await transport.close();
     } catch {
       // Transport may already be closed
     }
 
-    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorMessage = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to connect to MCP server "${info.serverName}".\n\n` +
-      `URL: ${redactUrl(config.url)}\n` +
-      `Reason: ${errorMessage}\n\n` +
-      `Hints:\n` +
-      `  - Verify the URL is correct and the server is running\n` +
-      `  - Check if authentication headers are required\n` +
-      `  - Ensure the server supports MCP over HTTP`
-    )
+        `URL: ${redactUrl(config.url)}\n` +
+        `Reason: ${errorMessage}\n\n` +
+        `Hints:\n` +
+        `  - Verify the URL is correct and the server is running\n` +
+        `  - Check if authentication headers are required\n` +
+        `  - Ensure the server supports MCP over HTTP`,
+    );
   }
 
   if (state.shutdownGeneration !== shutdownGenAtStart) {
     try {
-      await client.close()
+      await client.close();
     } catch (error) {
       // Shutdown raced connection completion; client may already be disposed.
       logWarn("[skill-mcp] client.close failed after shutdown race", {
         serverName: info.serverName,
         error: String(error),
-      })
+      });
     }
     try {
-      await transport.close()
+      await transport.close();
     } catch (error) {
       // Same as above for the transport. We still re-throw the shutdown error
       // below — the connection is unusable regardless of close success.
       logWarn("[skill-mcp] transport.close failed after shutdown race", {
         serverName: info.serverName,
         error: String(error),
-      })
+      });
     }
-    throw new Error(`MCP server "${info.serverName}" connection completed after shutdown`)
+    throw new Error(
+      `MCP server "${info.serverName}" connection completed after shutdown`,
+    );
   }
 
   const managedClient = {
@@ -136,9 +156,9 @@ export async function createHttpClient(params: SkillMcpClientConnectionParams): 
     skillName: info.skillName,
     lastUsedAt: Date.now(),
     connectionType: "http",
-  } satisfies ManagedClient
+  } satisfies ManagedClient;
 
-  state.clients.set(clientKey, managedClient)
-  startCleanupTimer(state)
-  return client
+  state.clients.set(clientKey, managedClient);
+  startCleanupTimer(state);
+  return client;
 }

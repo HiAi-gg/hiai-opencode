@@ -17,7 +17,7 @@ export async function executeAutoWorkflow(
   userArguments: string,
   sessionID: string,
   agent?: string,
-  model?: { providerID: string; modelID: string }
+  model?: { providerID: string; modelID: string },
 ): Promise<void> {
   const client = getClient();
 
@@ -26,7 +26,7 @@ export async function executeAutoWorkflow(
   const prompt = autoPrompt + userArguments;
 
   log(
-    `executeAutoWorkflow: starting auto workflow with args="${userArguments.substring(0, 50)}..."`
+    `executeAutoWorkflow: starting auto workflow with args="${userArguments.substring(0, 50)}..."`,
   );
 
   // Register parent session for later reference

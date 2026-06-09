@@ -17,22 +17,22 @@ const SENSITIVE_PATTERNS: RegExp[] = [
   /gh[pousr]_[a-zA-Z0-9]{20,}/gi, // GitHub tokens
   /glpat-[a-zA-Z0-9_-]{20,}/gi, // GitLab tokens
   /[A-Za-z0-9_]{20,}-[A-Za-z0-9_]{10,}-[A-Za-z0-9_]{10,}/g, // Common JWT-like patterns
-]
+];
 
-const REDACTION_MARKER = "[REDACTED]"
+const REDACTION_MARKER = "[REDACTED]";
 
 /**
  * Redacts sensitive tokens from a string.
  * Used for error messages that may contain command-line arguments or environment info.
  */
 export function redactSensitiveData(input: string): string {
-  let result = input
+  let result = input;
 
   for (const pattern of SENSITIVE_PATTERNS) {
-    result = result.replace(pattern, REDACTION_MARKER)
+    result = result.replace(pattern, REDACTION_MARKER);
   }
 
-  return result
+  return result;
 }
 
 /**
@@ -40,8 +40,10 @@ export function redactSensitiveData(input: string): string {
  * Preserves the stack trace but redacts the message.
  */
 export function redactErrorSensitiveData(error: Error): Error {
-  const redactedMessage = redactSensitiveData(error.message)
-  const redactedError = new Error(redactedMessage)
-  redactedError.stack = error.stack ? redactSensitiveData(error.stack) : undefined
-  return redactedError
+  const redactedMessage = redactSensitiveData(error.message);
+  const redactedError = new Error(redactedMessage);
+  redactedError.stack = error.stack
+    ? redactSensitiveData(error.stack)
+    : undefined;
+  return redactedError;
 }

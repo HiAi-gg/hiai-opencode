@@ -76,7 +76,7 @@ export const AGENT_NAME_MAP: Record<string, string> = {
   multimodal: "vision",
   vision: "vision",
   "multimodal-looker": "vision",
-}
+};
 
 export const BUILTIN_AGENT_NAMES = new Set([
   "bob",
@@ -88,21 +88,23 @@ export const BUILTIN_AGENT_NAMES = new Set([
   "vision",
   "manager",
   "writer",
-])
+]);
 
-export function migrateAgentNames(
-  agents: Record<string, unknown>
-): { migrated: Record<string, unknown>; changed: boolean } {
-  const migrated: Record<string, unknown> = {}
-  let changed = false
+export function migrateAgentNames(agents: Record<string, unknown>): {
+  migrated: Record<string, unknown>;
+  changed: boolean;
+} {
+  const migrated: Record<string, unknown> = {};
+  let changed = false;
 
   for (const [key, value] of Object.entries(agents)) {
-    const newKey = AGENT_NAME_MAP[key.toLowerCase()] ?? AGENT_NAME_MAP[key] ?? key
+    const newKey =
+      AGENT_NAME_MAP[key.toLowerCase()] ?? AGENT_NAME_MAP[key] ?? key;
     if (newKey !== key) {
-      changed = true
+      changed = true;
     }
-    migrated[newKey] = value
+    migrated[newKey] = value;
   }
 
-  return { migrated, changed }
+  return { migrated, changed };
 }

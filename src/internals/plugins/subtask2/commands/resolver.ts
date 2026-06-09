@@ -7,7 +7,7 @@ import type { CommandConfig } from "../types";
 // Normalize command name - try multiple variations to find a match
 export function getConfig(
   configs: Record<string, CommandConfig>,
-  cmd: string
+  cmd: string,
 ): CommandConfig | undefined {
   // Direct match
   if (configs[cmd]) return configs[cmd];

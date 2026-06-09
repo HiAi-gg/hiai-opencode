@@ -31,7 +31,7 @@ type RuleToInject = {
 type DynamicTruncator = {
   truncate: (
     sessionID: string,
-    content: string
+    content: string,
   ) => Promise<{ result: string; truncated: boolean }>;
 };
 
@@ -46,7 +46,7 @@ const parsedRuleCache = new Map<string, ParsedRuleEntry>();
 
 function resolveFilePath(
   workspaceDirectory: string,
-  path: string
+  path: string,
 ): string | null {
   if (!path) return null;
   if (path.startsWith("/")) return path;
@@ -70,7 +70,7 @@ export function createRuleInjectionProcessor(deps: {
   processFilePathForInjection: (
     filePath: string,
     sessionID: string,
-    output: ToolExecuteOutput
+    output: ToolExecuteOutput,
   ) => Promise<void>;
 } {
   const {
@@ -84,16 +84,24 @@ export function createRuleInjectionProcessor(deps: {
     shouldApplyRule: shouldApplyRuleImpl = shouldApplyRule,
     isDuplicateByRealPath: isDuplicateByRealPathImpl = isDuplicateByRealPath,
     createContentHash: createContentHashImpl = createContentHash,
-    isDuplicateByContentHash: isDuplicateByContentHashImpl = isDuplicateByContentHash,
+    isDuplicateByContentHash:
+      isDuplicateByContentHashImpl = isDuplicateByContentHash,
     saveInjectedRules: saveInjectedRulesImpl = saveInjectedRules,
   } = deps;
 
-  function getParsedRule(filePath: string, realPath: string): { metadata: RuleMetadata; body: string } {
+  function getParsedRule(
+    filePath: string,
+    realPath: string,
+  ): { metadata: RuleMetadata; body: string } {
     try {
       const stat = statRuleSync(filePath);
       const cached = parsedRuleCache.get(realPath);
 
-      if (cached && cached.mtimeMs === stat.mtimeMs && cached.size === stat.size) {
+      if (
+        cached &&
+        cached.mtimeMs === stat.mtimeMs &&
+        cached.size === stat.size
+      ) {
         return { metadata: cached.metadata, body: cached.body };
       }
 
@@ -115,7 +123,7 @@ export function createRuleInjectionProcessor(deps: {
   async function processFilePathForInjection(
     filePath: string,
     sessionID: string,
-    output: ToolExecuteOutput
+    output: ToolExecuteOutput,
   ): Promise<void> {
     const resolved = resolveFilePath(workspaceDirectory, filePath);
     if (!resolved) return;
@@ -124,30 +132,41 @@ export function createRuleInjectionProcessor(deps: {
     const cache = getSessionCache(sessionID);
     const home = getHomeDir();
 
-    const ruleFileCandidates = findRuleFiles(projectRoot, home, resolved, ruleFinderOptions);
+    const ruleFileCandidates = findRuleFiles(
+      projectRoot,
+      home,
+      resolved,
+      ruleFinderOptions,
+    );
     const toInject: RuleToInject[] = [];
     let dirty = false;
 
     for (const candidate of ruleFileCandidates) {
-      if (isDuplicateByRealPathImpl(candidate.realPath, cache.realPaths)) continue;
+      if (isDuplicateByRealPathImpl(candidate.realPath, cache.realPaths))
+        continue;
 
       try {
         const { metadata, body } = getParsedRule(
           candidate.path,
-          candidate.realPath
+          candidate.realPath,
         );
 
         let matchReason: string;
         if (candidate.isSingleFile) {
           matchReason = "copilot-instructions (always apply)";
         } else {
-          const matchResult = shouldApplyRuleImpl(metadata, resolved, projectRoot);
+          const matchResult = shouldApplyRuleImpl(
+            metadata,
+            resolved,
+            projectRoot,
+          );
           if (!matchResult.applies) continue;
           matchReason = matchResult.reason ?? "matched";
         }
 
         const contentHash = createContentHashImpl(body);
-        if (isDuplicateByContentHashImpl(contentHash, cache.contentHashes)) continue;
+        if (isDuplicateByContentHashImpl(contentHash, cache.contentHashes))
+          continue;
 
         const relativePath = projectRoot
           ? relative(projectRoot, candidate.path)
@@ -180,7 +199,7 @@ export function createRuleInjectionProcessor(deps: {
     for (const rule of toInject) {
       const { result, truncated } = await truncator.truncate(
         sessionID,
-        rule.content
+        rule.content,
       );
       const truncationNotice = truncated
         ? `\n\n[Note: Content was truncated to save context window space. For full context, please read the file directly: ${rule.relativePath}]`

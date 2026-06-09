@@ -1,18 +1,18 @@
-import type { TmuxPaneInfo } from "./types"
+import type { TmuxPaneInfo } from "./types";
 
-const MANDATORY_PANE_FIELD_COUNT = 8
+const MANDATORY_PANE_FIELD_COUNT = 8;
 
 type ParsedPaneState = {
-  windowWidth: number
-  windowHeight: number
-  panes: TmuxPaneInfo[]
-}
+  windowWidth: number;
+  windowHeight: number;
+  panes: TmuxPaneInfo[];
+};
 
 type ParsedPaneLine = {
-  pane: TmuxPaneInfo
-  windowWidth: number
-  windowHeight: number
-}
+  pane: TmuxPaneInfo;
+  windowWidth: number;
+  windowHeight: number;
+};
 
 type MandatoryPaneFields = [
   paneId: string,
@@ -23,46 +23,58 @@ type MandatoryPaneFields = [
   activeString: string,
   windowWidthString: string,
   windowHeightString: string,
-]
+];
 
 export function parsePaneStateOutput(stdout: string): ParsedPaneState | null {
   const lines = stdout
     .split("\n")
     .map((line) => line.replace(/\r$/, ""))
-    .filter((line) => line.length > 0)
+    .filter((line) => line.length > 0);
 
-  if (lines.length === 0) return null
+  if (lines.length === 0) return null;
 
   const parsedPaneLines = lines
     .map(parsePaneLine)
-    .filter((parsedPaneLine): parsedPaneLine is ParsedPaneLine => parsedPaneLine !== null)
+    .filter(
+      (parsedPaneLine): parsedPaneLine is ParsedPaneLine =>
+        parsedPaneLine !== null,
+    );
 
-  if (parsedPaneLines.length === 0) return null
+  if (parsedPaneLines.length === 0) return null;
 
-  const latestPaneLine = parsedPaneLines[parsedPaneLines.length - 1]
-  if (!latestPaneLine) return null
+  const latestPaneLine = parsedPaneLines[parsedPaneLines.length - 1];
+  if (!latestPaneLine) return null;
 
   return {
     windowWidth: latestPaneLine.windowWidth,
     windowHeight: latestPaneLine.windowHeight,
     panes: parsedPaneLines.map(({ pane }) => pane),
-  }
+  };
 }
 
 function parsePaneLine(line: string): ParsedPaneLine | null {
-  const fields = line.split("\t")
-  const mandatoryFields = getMandatoryPaneFields(fields)
-  if (!mandatoryFields) return null
+  const fields = line.split("\t");
+  const mandatoryFields = getMandatoryPaneFields(fields);
+  if (!mandatoryFields) return null;
 
-  const [paneId, widthString, heightString, leftString, topString, activeString, windowWidthString, windowHeightString] = mandatoryFields
+  const [
+    paneId,
+    widthString,
+    heightString,
+    leftString,
+    topString,
+    activeString,
+    windowWidthString,
+    windowHeightString,
+  ] = mandatoryFields;
 
-  const width = parseInteger(widthString)
-  const height = parseInteger(heightString)
-  const left = parseInteger(leftString)
-  const top = parseInteger(topString)
-  const isActive = parseActiveValue(activeString)
-  const windowWidth = parseInteger(windowWidthString)
-  const windowHeight = parseInteger(windowHeightString)
+  const width = parseInteger(widthString);
+  const height = parseInteger(heightString);
+  const left = parseInteger(leftString);
+  const top = parseInteger(topString);
+  const isActive = parseActiveValue(activeString);
+  const windowWidth = parseInteger(windowWidthString);
+  const windowHeight = parseInteger(windowHeightString);
 
   if (
     width === null ||
@@ -73,7 +85,7 @@ function parsePaneLine(line: string): ParsedPaneLine | null {
     windowWidth === null ||
     windowHeight === null
   ) {
-    return null
+    return null;
   }
 
   return {
@@ -88,13 +100,22 @@ function parsePaneLine(line: string): ParsedPaneLine | null {
     },
     windowWidth,
     windowHeight,
-  }
+  };
 }
 
 function getMandatoryPaneFields(fields: string[]): MandatoryPaneFields | null {
-  if (fields.length < MANDATORY_PANE_FIELD_COUNT) return null
+  if (fields.length < MANDATORY_PANE_FIELD_COUNT) return null;
 
-  const [paneId, widthString, heightString, leftString, topString, activeString, windowWidthString, windowHeightString] = fields
+  const [
+    paneId,
+    widthString,
+    heightString,
+    leftString,
+    topString,
+    activeString,
+    windowWidthString,
+    windowHeightString,
+  ] = fields;
 
   if (
     paneId === undefined ||
@@ -106,7 +127,7 @@ function getMandatoryPaneFields(fields: string[]): MandatoryPaneFields | null {
     windowWidthString === undefined ||
     windowHeightString === undefined
   ) {
-    return null
+    return null;
   }
 
   return [
@@ -118,18 +139,18 @@ function getMandatoryPaneFields(fields: string[]): MandatoryPaneFields | null {
     activeString,
     windowWidthString,
     windowHeightString,
-  ]
+  ];
 }
 
 function parseInteger(value: string): number | null {
-  if (!/^\d+$/.test(value)) return null
+  if (!/^\d+$/.test(value)) return null;
 
-  const parsedValue = Number.parseInt(value, 10)
-  return Number.isNaN(parsedValue) ? null : parsedValue
+  const parsedValue = Number.parseInt(value, 10);
+  return Number.isNaN(parsedValue) ? null : parsedValue;
 }
 
 function parseActiveValue(value: string): boolean | null {
-  if (value === "1") return true
-  if (value === "0") return false
-  return null
+  if (value === "1") return true;
+  if (value === "0") return false;
+  return null;
 }

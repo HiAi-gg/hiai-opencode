@@ -1,19 +1,23 @@
-import { createSystemDirective, SystemDirectiveTypes } from "../../shared/system-directive"
-import { getAgentDisplayName } from "../../shared/agent-display-names"
+import {
+  createSystemDirective,
+  SystemDirectiveTypes,
+} from "../../shared/system-directive";
 
-export const HOOK_NAME = "critic-plans-only"
-export const CRITIC_AGENT = "critic"
-export const ALLOWED_EXTENSIONS = [".md"]
-export const ALLOWED_PATH_PREFIX = ".bob/plans"
+export const HOOK_NAME = "critic-plans-only";
+export const CRITIC_AGENT = "critic";
+export const ALLOWED_EXTENSIONS = [".md"];
+export const ALLOWED_PATH_PREFIX = ".bob/plans";
 
 export const BLOCKED_TOOLS = [
-  "Write", "write",
-  "bash", "Bash",
+  "Write",
+  "write",
+  "bash",
+  "Bash",
   "apply_patch",
   "ast_grep_replace",
   "hashline_edit",
   "interactive_bash",
-]
+];
 
 export const CRITIC_EDIT_PERMISSION_REMINDER = `
 
@@ -36,4 +40,4 @@ You have been granted the \`edit\` tool for a SINGLE purpose: marking plan check
 **VIOLATION**: editing any non-plan file will be BLOCKED by the runtime guard.
 
 ---
-`
+`;

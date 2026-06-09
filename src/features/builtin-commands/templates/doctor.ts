@@ -40,4 +40,4 @@ Rules:
 - Do not ask for model provider env vars such as OPENROUTER_API_KEY or OPENAI_API_KEY; normal model auth belongs to OpenCode Connect.
 - If \`opencode mcp list\` is empty but doctor/mcp-status sees servers, explain the runtime-vs-static config distinction and run \`hiai-opencode export-mcp .opencode/.mcp.json\` if the user wants static visibility.
 - Do not run package installs unless the user explicitly asks.
-`
+`;

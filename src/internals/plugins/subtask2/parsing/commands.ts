@@ -38,7 +38,7 @@ export function parseCommandWithOverrides(input: string): ParsedCommand {
   }
 
   // Match: /command {overrides} or /command
-  const match = trimmed.match(/^\/([a-zA-Z0-9_\-\/]+)(.*)$/s);
+  const match = trimmed.match(/^\/([a-zA-Z0-9_\-/]+)(.*)$/s);
 
   if (!match) {
     // Fallback: just split on first space
@@ -110,7 +110,7 @@ export function parseInlineSubtask(input: string): ParsedInlineSubtask | null {
  * Parse a leading override block from arguments ("{...} rest")
  */
 export function parseOverridesFromArgs(
-  input: string
+  input: string,
 ): ParsedArgsWithOverrides | null {
   const trimmed = input.trimStart();
   if (!trimmed.startsWith("{")) return null;
@@ -124,7 +124,7 @@ export function parseOverridesFromArgs(
 }
 
 function extractOverrideBlock(
-  input: string
+  input: string,
 ): { overrideStr: string; rest: string } | null {
   if (!input.startsWith("{")) return null;
 

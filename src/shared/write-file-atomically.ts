@@ -1,31 +1,38 @@
-import { closeSync, fsyncSync, openSync, renameSync, unlinkSync, writeFileSync } from "node:fs"
+import {
+  closeSync,
+  fsyncSync,
+  openSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 
 export function writeFileAtomically(filePath: string, content: string): void {
-	const tempPath = `${filePath}.tmp`
-	writeFileSync(tempPath, content, "utf-8")
+  const tempPath = `${filePath}.tmp`;
+  writeFileSync(tempPath, content, "utf-8");
 
   if (process.platform !== "win32") {
-    const tempFileDescriptor = openSync(tempPath, "r")
+    const tempFileDescriptor = openSync(tempPath, "r");
     try {
-      fsyncSync(tempFileDescriptor)
+      fsyncSync(tempFileDescriptor);
     } finally {
-      closeSync(tempFileDescriptor)
+      closeSync(tempFileDescriptor);
     }
   }
 
   try {
-    renameSync(tempPath, filePath)
+    renameSync(tempPath, filePath);
   } catch (error) {
-    const isWindows = process.platform === "win32"
+    const isWindows = process.platform === "win32";
     const isPermissionError =
       error instanceof Error &&
-      (error.message.includes("EPERM") || error.message.includes("EACCES"))
+      (error.message.includes("EPERM") || error.message.includes("EACCES"));
 
     if (isWindows && isPermissionError) {
-      unlinkSync(filePath)
-      renameSync(tempPath, filePath)
+      unlinkSync(filePath);
+      renameSync(tempPath, filePath);
     } else {
-      throw error
+      throw error;
     }
   }
 }

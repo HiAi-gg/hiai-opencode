@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { log as sharedLog } from "../../../../shared/logger";
 
 const LOG_DIR = path.join(process.cwd(), ".logs");
@@ -66,7 +66,9 @@ export function log(...args: unknown[]) {
 
   const timestamp = formatTimestamp();
   const message = args
-    .map(a => (typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)))
+    .map((a) =>
+      typeof a === "object" ? JSON.stringify(a, null, 2) : String(a),
+    )
     .join(" ");
   logBuffer.push(`[${timestamp}] ${message}\n`);
   scheduleFlush();

@@ -1,4 +1,4 @@
-import { TODOWRITE_DESCRIPTION } from "./description"
+import { TODOWRITE_DESCRIPTION } from "./description";
 
 export function createTodoDescriptionOverrideHook() {
   return {
@@ -7,8 +7,8 @@ export function createTodoDescriptionOverrideHook() {
       output: { description: string; parameters: unknown },
     ) => {
       if (input.toolID === "todowrite") {
-        output.description = TODOWRITE_DESCRIPTION
+        output.description = TODOWRITE_DESCRIPTION;
       }
     },
-  }
+  };
 }

@@ -458,7 +458,7 @@ IF style == SHORT:
 
 If ANY check fails -> REWRITE message.
 \`\`\`
-\</execution>
+</execution>
 
 ---
 
@@ -506,4 +506,4 @@ NEXT STEPS:
   - git push [--force-with-lease]
   - Create PR if ready
 \`\`\`
-</verification>`
+</verification>`;

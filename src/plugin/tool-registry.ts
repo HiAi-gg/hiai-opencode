@@ -1,17 +1,15 @@
-import type { ToolDefinition } from "@opencode-ai/plugin"
-import type { SkillLoadOptions } from "../tools/skill/types"
+import type { ToolDefinition } from "@opencode-ai/plugin";
+import type { SkillLoadOptions } from "../tools/skill/types";
 
-import type {
-  AvailableCategory,
-} from "../agents/dynamic-agent-prompt-builder"
-import type { HiaiOpenCodeConfig } from "../config"
-import type { McpServerConfig } from "../config/types"
-import { isInteractiveBashEnabled } from "../create-runtime-tmux-config"
-import type { PluginContext, ToolsRecord } from "./types"
+import type { AvailableCategory } from "../agents/dynamic-agent-prompt-builder";
+import type { HiaiOpenCodeConfig } from "../config";
+import type { McpServerConfig } from "../config/types";
+import { isInteractiveBashEnabled } from "../create-runtime-tmux-config";
+import type { PluginContext, ToolsRecord } from "./types";
 
 interface NamedTool {
-  name: string
-  tool: ToolDefinition
+  name: string;
+  tool: ToolDefinition;
 }
 
 import {
@@ -35,37 +33,37 @@ import {
   createHashlineEditTool,
   createAgentBrowserTool,
   createAgentBrowserIntegrationTool,
-} from "../tools"
-import { getMainSessionID } from "../features/claude-code-session-state"
-import { filterDisabledTools } from "../shared/disabled-tools"
-import { isTaskSystemEnabled, log } from "../shared"
+} from "../tools";
+import { getMainSessionID } from "../features/claude-code-session-state";
+import { filterDisabledTools } from "../shared/disabled-tools";
+import { isTaskSystemEnabled, log } from "../shared";
 
-import type { Managers } from "../create-managers"
-import type { SkillContext } from "./skill-context"
-import { normalizeToolArgSchemas } from "./normalize-tool-arg-schemas"
+import type { Managers } from "../create-managers";
+import type { SkillContext } from "./skill-context";
+import { normalizeToolArgSchemas } from "./normalize-tool-arg-schemas";
 
 type ToolRegistryFactories = {
-  builtinTools: typeof builtinTools
-  createBackgroundTools: typeof createBackgroundTools
-  createCallHiaiAgent: typeof createCallHiaiAgent
-  createLookAt: typeof createLookAt
-  createSkillMcpTool: typeof createSkillMcpTool
-  createSkillTool: typeof createSkillTool
-  createGrepTools: typeof createGrepTools
-  createGlobTools: typeof createGlobTools
-  createAstGrepTools: typeof createAstGrepTools
-  createSessionManagerTools: typeof createSessionManagerTools
-  createDelegateTask: typeof createDelegateTask
-  discoverCommandsSync: typeof discoverCommandsSync
-  interactive_bash: typeof interactive_bash
-  createTaskCreateTool: typeof createTaskCreateTool
-  createTaskGetTool: typeof createTaskGetTool
-  createTaskList: typeof createTaskList
-  createTaskUpdateTool: typeof createTaskUpdateTool
-  createHashlineEditTool: typeof createHashlineEditTool
-  createAgentBrowserTool: typeof createAgentBrowserTool
-  createAgentBrowserIntegrationTool: typeof createAgentBrowserIntegrationTool
-}
+  builtinTools: typeof builtinTools;
+  createBackgroundTools: typeof createBackgroundTools;
+  createCallHiaiAgent: typeof createCallHiaiAgent;
+  createLookAt: typeof createLookAt;
+  createSkillMcpTool: typeof createSkillMcpTool;
+  createSkillTool: typeof createSkillTool;
+  createGrepTools: typeof createGrepTools;
+  createGlobTools: typeof createGlobTools;
+  createAstGrepTools: typeof createAstGrepTools;
+  createSessionManagerTools: typeof createSessionManagerTools;
+  createDelegateTask: typeof createDelegateTask;
+  discoverCommandsSync: typeof discoverCommandsSync;
+  interactive_bash: typeof interactive_bash;
+  createTaskCreateTool: typeof createTaskCreateTool;
+  createTaskGetTool: typeof createTaskGetTool;
+  createTaskList: typeof createTaskList;
+  createTaskUpdateTool: typeof createTaskUpdateTool;
+  createHashlineEditTool: typeof createHashlineEditTool;
+  createAgentBrowserTool: typeof createAgentBrowserTool;
+  createAgentBrowserIntegrationTool: typeof createAgentBrowserIntegrationTool;
+};
 
 const defaultToolRegistryFactories: ToolRegistryFactories = {
   builtinTools,
@@ -88,12 +86,12 @@ const defaultToolRegistryFactories: ToolRegistryFactories = {
   createHashlineEditTool,
   createAgentBrowserTool,
   createAgentBrowserIntegrationTool,
-}
+};
 
 export type ToolRegistryResult = {
-  filteredTools: ToolsRecord
-  taskSystemEnabled: boolean
-}
+  filteredTools: ToolsRecord;
+  taskSystemEnabled: boolean;
+};
 
 const LOW_PRIORITY_TOOL_ORDER = [
   "session_list",
@@ -123,44 +121,57 @@ const LOW_PRIORITY_TOOL_ORDER = [
   "lsp_goto_definition",
   "lsp_symbols",
   "lsp_diagnostics",
-] as const
+] as const;
 
-export function trimToolsToCap(filteredTools: ToolsRecord, maxTools: number): void {
-  const toolNames = Object.keys(filteredTools)
-  if (toolNames.length <= maxTools) return
+export function trimToolsToCap(
+  filteredTools: ToolsRecord,
+  maxTools: number,
+): void {
+  const toolNames = Object.keys(filteredTools);
+  if (toolNames.length <= maxTools) return;
 
   const removableToolNames = [
-    ...LOW_PRIORITY_TOOL_ORDER.filter((toolName) => toolNames.includes(toolName)),
+    ...LOW_PRIORITY_TOOL_ORDER.filter((toolName) =>
+      toolNames.includes(toolName),
+    ),
     ...toolNames
-      .filter((toolName) => !LOW_PRIORITY_TOOL_ORDER.includes(toolName as (typeof LOW_PRIORITY_TOOL_ORDER)[number]))
+      .filter(
+        (toolName) =>
+          !LOW_PRIORITY_TOOL_ORDER.includes(
+            toolName as (typeof LOW_PRIORITY_TOOL_ORDER)[number],
+          ),
+      )
       .sort(),
-  ]
+  ];
 
-  let currentCount = toolNames.length
-  let removed = 0
+  let currentCount = toolNames.length;
+  let removed = 0;
 
   for (const toolName of removableToolNames) {
-    if (currentCount <= maxTools) break
-    if (!filteredTools[toolName]) continue
-    delete filteredTools[toolName]
-    currentCount -= 1
-    removed += 1
+    if (currentCount <= maxTools) break;
+    if (!filteredTools[toolName]) continue;
+    delete filteredTools[toolName];
+    currentCount -= 1;
+    removed += 1;
   }
 
   log(
     `[tool-registry] Trimmed ${removed} tools to satisfy max_tools=${maxTools}. Final plugin tool count=${currentCount}.`,
-  )
+  );
 }
 
 export function createToolRegistry(args: {
-  ctx: PluginContext
-  pluginConfig: HiaiOpenCodeConfig
-  managers: Pick<Managers, "backgroundManager" | "tmuxSessionManager" | "skillMcpManager">
-  skillContext: SkillContext
-  availableCategories: AvailableCategory[]
-  builtinMcp?: Record<string, McpServerConfig>
-  interactiveBashEnabled?: boolean
-  toolFactories?: Partial<ToolRegistryFactories>
+  ctx: PluginContext;
+  pluginConfig: HiaiOpenCodeConfig;
+  managers: Pick<
+    Managers,
+    "backgroundManager" | "tmuxSessionManager" | "skillMcpManager"
+  >;
+  skillContext: SkillContext;
+  availableCategories: AvailableCategory[];
+  builtinMcp?: Record<string, McpServerConfig>;
+  interactiveBashEnabled?: boolean;
+  toolFactories?: Partial<ToolRegistryFactories>;
 }): ToolRegistryResult {
   const {
     ctx,
@@ -171,24 +182,27 @@ export function createToolRegistry(args: {
     builtinMcp,
     interactiveBashEnabled = isInteractiveBashEnabled(),
     toolFactories,
-  } = args
+  } = args;
   const factories: ToolRegistryFactories = {
     ...defaultToolRegistryFactories,
     ...toolFactories,
-  }
-  const backgroundTools = factories.createBackgroundTools(managers.backgroundManager, ctx.client)
+  };
+  const backgroundTools = factories.createBackgroundTools(
+    managers.backgroundManager,
+    ctx.client,
+  );
   const callHiaiAgent = factories.createCallHiaiAgent(
     ctx,
     managers.backgroundManager,
     pluginConfig.disabled_agents ?? [],
     pluginConfig.agents,
     pluginConfig.categories,
-  )
+  );
 
   const isMultimodalLookerEnabled = !(pluginConfig.disabled_agents ?? []).some(
     (agent) => agent.toLowerCase() === "vision",
-  )
-  const lookAt = isMultimodalLookerEnabled ? factories.createLookAt(ctx) : null
+  );
+  const lookAt = isMultimodalLookerEnabled ? factories.createLookAt(ctx) : null;
 
   const delegateTask = factories.createDelegateTask({
     manager: managers.backgroundManager,
@@ -197,7 +211,7 @@ export function createToolRegistry(args: {
     userCategories: pluginConfig.categories,
     agentOverrides: pluginConfig.agents,
     gitMasterConfig: pluginConfig.git_master,
-    bobJuniorModel: pluginConfig.agents?.["sub"]?.model,
+    bobJuniorModel: pluginConfig.agents?.sub?.model,
     browserProvider: skillContext.browserProvider,
     disabledSkills: skillContext.disabledSkills,
     availableCategories,
@@ -209,7 +223,7 @@ export function createToolRegistry(args: {
         sessionID: event.sessionID,
         parentID: event.parentID,
         title: event.title,
-      })
+      });
       await managers.tmuxSessionManager.onSessionCreated({
         type: "session.created",
         properties: {
@@ -219,24 +233,23 @@ export function createToolRegistry(args: {
             title: event.title,
           },
         },
-      })
-
+      });
     },
-  })
+  });
 
-  const getSessionIDForMcp = (): string | undefined => getMainSessionID()
+  const getSessionIDForMcp = (): string | undefined => getMainSessionID();
 
   const skillMcpTool = factories.createSkillMcpTool({
     manager: managers.skillMcpManager,
     getLoadedSkills: () => skillContext.mergedSkills,
     getSessionID: getSessionIDForMcp,
     builtinMcp,
-  })
+  });
 
   const commands = factories.discoverCommandsSync(ctx.directory, {
     pluginsEnabled: pluginConfig.claude_code?.plugins ?? true,
     enabledPluginsOverride: pluginConfig.claude_code?.plugins_override,
-  })
+  });
   const skillTool = factories.createSkillTool({
     commands,
     skills: skillContext.mergedSkills,
@@ -244,10 +257,13 @@ export function createToolRegistry(args: {
     getSessionID: getSessionIDForMcp,
     gitMasterConfig: pluginConfig.git_master,
     browserProvider: skillContext.browserProvider,
-    nativeSkills: "skills" in ctx ? (ctx as { skills: SkillLoadOptions["nativeSkills"] }).skills : undefined,
-  })
+    nativeSkills:
+      "skills" in ctx
+        ? (ctx as { skills: SkillLoadOptions["nativeSkills"] }).skills
+        : undefined,
+  });
 
-  const taskSystemEnabled = isTaskSystemEnabled(pluginConfig)
+  const taskSystemEnabled = isTaskSystemEnabled(pluginConfig);
   const taskToolsRecord: Record<string, ToolDefinition> = taskSystemEnabled
     ? {
         task_create: factories.createTaskCreateTool(pluginConfig, ctx),
@@ -255,25 +271,28 @@ export function createToolRegistry(args: {
         task_list: factories.createTaskList(pluginConfig),
         task_update: factories.createTaskUpdateTool(pluginConfig, ctx),
       }
-    : {}
+    : {};
 
-  const hashlineEnabled = pluginConfig.hashline_edit ?? false
+  const hashlineEnabled = pluginConfig.hashline_edit ?? false;
   const hashlineToolsRecord: Record<string, ToolDefinition> = hashlineEnabled
     ? { edit: factories.createHashlineEditTool(ctx) }
-    : {}
+    : {};
 
-  const agentBrowserIntegrationTools: NamedTool[] = factories.createAgentBrowserIntegrationTool()
-  const agentBrowserTools: NamedTool[] = Array.from(factories.createAgentBrowserTool(ctx)).map((t) => ({
+  const agentBrowserIntegrationTools: NamedTool[] =
+    factories.createAgentBrowserIntegrationTool();
+  const agentBrowserTools: NamedTool[] = Array.from(
+    factories.createAgentBrowserTool(ctx),
+  ).map((t) => ({
     name: (t as { name?: string }).name ?? "unknown",
     tool: t,
-  }))
+  }));
 
-  const agentBrowserToolEntries: Record<string, ToolDefinition> = {}
+  const agentBrowserToolEntries: Record<string, ToolDefinition> = {};
   for (const { name, tool: t } of agentBrowserIntegrationTools) {
-    agentBrowserToolEntries[name] = t
+    agentBrowserToolEntries[name] = t;
   }
   for (const { name, tool: t } of agentBrowserTools) {
-    agentBrowserToolEntries[name] = t
+    agentBrowserToolEntries[name] = t;
   }
 
   const allTools: Record<string, ToolDefinition> = {
@@ -288,25 +307,30 @@ export function createToolRegistry(args: {
     task: delegateTask,
     skill_mcp: skillMcpTool,
     skill: skillTool,
-    ...(interactiveBashEnabled ? { interactive_bash: factories.interactive_bash } : {}),
+    ...(interactiveBashEnabled
+      ? { interactive_bash: factories.interactive_bash }
+      : {}),
     ...taskToolsRecord,
     ...hashlineToolsRecord,
     ...agentBrowserToolEntries,
-  }
+  };
 
   for (const toolDefinition of Object.values(allTools)) {
-    normalizeToolArgSchemas(toolDefinition)
+    normalizeToolArgSchemas(toolDefinition);
   }
 
-  const filteredTools: ToolsRecord = filterDisabledTools(allTools, pluginConfig.disabled_tools)
+  const filteredTools: ToolsRecord = filterDisabledTools(
+    allTools,
+    pluginConfig.disabled_tools,
+  );
 
-  const maxTools = pluginConfig.experimental?.max_tools
+  const maxTools = pluginConfig.experimental?.max_tools;
   if (maxTools) {
-    trimToolsToCap(filteredTools, maxTools)
+    trimToolsToCap(filteredTools, maxTools);
   }
 
   return {
     filteredTools,
     taskSystemEnabled,
-  }
+  };
 }

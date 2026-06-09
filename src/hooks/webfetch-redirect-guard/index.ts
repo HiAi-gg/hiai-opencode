@@ -1,1 +1,1 @@
-export { createWebFetchRedirectGuardHook } from "./hook"
+export { createWebFetchRedirectGuardHook } from "./hook";

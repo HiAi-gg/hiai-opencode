@@ -1,9 +1,11 @@
-export { McpNameSchema, type McpName, type AnyMcpName } from "./types"
+export { McpNameSchema, type McpName, type AnyMcpName } from "./types";
 
 import type { McpServerConfig } from "../config/types.js";
 import { resolveEnvVars } from "../config/loader.js";
 
-export function buildMcpConfig(mcp: Record<string, McpServerConfig>): Record<string, unknown> {
+export function buildMcpConfig(
+  mcp: Record<string, McpServerConfig>,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [name, server] of Object.entries(mcp)) {
@@ -44,7 +46,9 @@ export function buildMcpConfig(mcp: Record<string, McpServerConfig>): Record<str
   return result;
 }
 
-export function buildMcpPermissions(mcp: Record<string, McpServerConfig>): Record<string, string> {
+export function buildMcpPermissions(
+  mcp: Record<string, McpServerConfig>,
+): Record<string, string> {
   const perms: Record<string, string> = {};
   for (const name of Object.keys(mcp)) {
     perms[`${name}_*`] = "allow";

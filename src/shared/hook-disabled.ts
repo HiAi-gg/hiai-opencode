@@ -1,22 +1,25 @@
-import type { ClaudeHookEvent, PluginConfig } from "../hooks/claude-code-hooks/types"
+import type {
+  ClaudeHookEvent,
+  PluginConfig,
+} from "../hooks/claude-code-hooks/types";
 
 export function isHookDisabled(
   config: PluginConfig,
-  hookType: ClaudeHookEvent
+  hookType: ClaudeHookEvent,
 ): boolean {
-  const { disabledHooks } = config
+  const { disabledHooks } = config;
 
   if (disabledHooks === undefined) {
-    return false
+    return false;
   }
 
   if (disabledHooks === true) {
-    return true
+    return true;
   }
 
   if (Array.isArray(disabledHooks)) {
-    return disabledHooks.includes(hookType)
+    return disabledHooks.includes(hookType);
   }
 
-  return false
+  return false;
 }

@@ -10,4 +10,4 @@ After running this command:
 - You can manually continue work when ready
 - The stop state is per-session and clears when the session ends
 
-Use this when you need to pause automated continuation and take manual control.`
+Use this when you need to pause automated continuation and take manual control.`;

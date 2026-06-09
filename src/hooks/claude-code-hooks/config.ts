@@ -1,147 +1,150 @@
-import { join } from "path"
-import { existsSync } from "fs"
-import { getClaudeConfigDir } from "../../shared"
-import type { ClaudeHooksConfig, HookMatcher, HookAction } from "./types"
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+import { getClaudeConfigDir } from "../../shared";
+import type { ClaudeHooksConfig, HookMatcher, HookAction } from "./types";
 
-const CONFIG_CACHE_TTL_MS = 30_000
+const CONFIG_CACHE_TTL_MS = 30_000;
 
 interface ClaudeHooksConfigCacheEntry {
-  value: ClaudeHooksConfig | null
-  cachedAt: number
+  value: ClaudeHooksConfig | null;
+  cachedAt: number;
 }
 
-const configCache = new Map<string, ClaudeHooksConfigCacheEntry>()
+const configCache = new Map<string, ClaudeHooksConfigCacheEntry>();
 
 interface RawHookMatcher {
-  matcher?: string
-  pattern?: string
-  hooks: HookAction[]
+  matcher?: string;
+  pattern?: string;
+  hooks: HookAction[];
 }
 
 interface RawClaudeHooksConfig {
-  PreToolUse?: RawHookMatcher[]
-  PostToolUse?: RawHookMatcher[]
-  UserPromptSubmit?: RawHookMatcher[]
-  Stop?: RawHookMatcher[]
-  PreCompact?: RawHookMatcher[]
+  PreToolUse?: RawHookMatcher[];
+  PostToolUse?: RawHookMatcher[];
+  UserPromptSubmit?: RawHookMatcher[];
+  Stop?: RawHookMatcher[];
+  PreCompact?: RawHookMatcher[];
 }
 
 function normalizeHookMatcher(raw: RawHookMatcher): HookMatcher {
   return {
     matcher: raw.matcher ?? raw.pattern ?? "*",
     hooks: Array.isArray(raw.hooks) ? raw.hooks : [],
-  }
+  };
 }
 
 function normalizeHooksConfig(raw: RawClaudeHooksConfig): ClaudeHooksConfig {
-  const result: ClaudeHooksConfig = {}
+  const result: ClaudeHooksConfig = {};
   const eventTypes: (keyof RawClaudeHooksConfig)[] = [
     "PreToolUse",
     "PostToolUse",
     "UserPromptSubmit",
     "Stop",
     "PreCompact",
-  ]
+  ];
 
   for (const eventType of eventTypes) {
     if (raw[eventType]) {
-      result[eventType] = raw[eventType].map(normalizeHookMatcher)
+      result[eventType] = raw[eventType].map(normalizeHookMatcher);
     }
   }
 
-  return result
+  return result;
 }
 
 export function getClaudeSettingsPaths(customPath?: string): string[] {
-  const claudeConfigDir = getClaudeConfigDir()
+  const claudeConfigDir = getClaudeConfigDir();
   const paths = [
     join(claudeConfigDir, "settings.json"),
     join(process.cwd(), ".claude", "settings.json"),
     join(process.cwd(), ".claude", "settings.local.json"),
-  ]
+  ];
 
   if (customPath && existsSync(customPath)) {
-    paths.unshift(customPath)
+    paths.unshift(customPath);
   }
 
   // Deduplicate paths to prevent loading the same file multiple times
   // (e.g., when cwd is the home directory)
-  return [...new Set(paths)]
+  return [...new Set(paths)];
 }
 
 function getCacheKey(customSettingsPath?: string): string {
-  return `${process.cwd()}::${customSettingsPath ?? ""}`
+  return `${process.cwd()}::${customSettingsPath ?? ""}`;
 }
 
-function getCachedConfig(cacheKey: string): ClaudeHooksConfig | null | undefined {
-  const cachedEntry = configCache.get(cacheKey)
+function getCachedConfig(
+  cacheKey: string,
+): ClaudeHooksConfig | null | undefined {
+  const cachedEntry = configCache.get(cacheKey);
   if (!cachedEntry) {
-    return undefined
+    return undefined;
   }
 
   if (Date.now() - cachedEntry.cachedAt >= CONFIG_CACHE_TTL_MS) {
-    configCache.delete(cacheKey)
-    return undefined
+    configCache.delete(cacheKey);
+    return undefined;
   }
 
-  return cachedEntry.value
+  return cachedEntry.value;
 }
 
 export function clearClaudeHooksConfigCache(): void {
-  configCache.clear()
+  configCache.clear();
 }
 
 function mergeHooksConfig(
   base: ClaudeHooksConfig,
-  override: ClaudeHooksConfig
+  override: ClaudeHooksConfig,
 ): ClaudeHooksConfig {
-  const result: ClaudeHooksConfig = { ...base }
+  const result: ClaudeHooksConfig = { ...base };
   const eventTypes: (keyof ClaudeHooksConfig)[] = [
     "PreToolUse",
     "PostToolUse",
     "UserPromptSubmit",
     "Stop",
     "PreCompact",
-  ]
+  ];
   for (const eventType of eventTypes) {
     if (override[eventType]) {
-      result[eventType] = [...(base[eventType] || []), ...override[eventType]]
+      result[eventType] = [...(base[eventType] || []), ...override[eventType]];
     }
   }
-  return result
+  return result;
 }
 
 export async function loadClaudeHooksConfig(
-  customSettingsPath?: string
+  customSettingsPath?: string,
 ): Promise<ClaudeHooksConfig | null> {
-  const cacheKey = getCacheKey(customSettingsPath)
-  const cachedConfig = getCachedConfig(cacheKey)
+  const cacheKey = getCacheKey(customSettingsPath);
+  const cachedConfig = getCachedConfig(cacheKey);
   if (cachedConfig !== undefined) {
-    return cachedConfig
+    return cachedConfig;
   }
 
-  const paths = getClaudeSettingsPaths(customSettingsPath)
-  let mergedConfig: ClaudeHooksConfig = {}
+  const paths = getClaudeSettingsPaths(customSettingsPath);
+  let mergedConfig: ClaudeHooksConfig = {};
 
   for (const settingsPath of paths) {
     if (existsSync(settingsPath)) {
       try {
-        const content = await Bun.file(settingsPath).text()
-        const settings = JSON.parse(content) as { hooks?: RawClaudeHooksConfig }
+        const content = await Bun.file(settingsPath).text();
+        const settings = JSON.parse(content) as {
+          hooks?: RawClaudeHooksConfig;
+        };
         if (settings.hooks) {
-          const normalizedHooks = normalizeHooksConfig(settings.hooks)
-          mergedConfig = mergeHooksConfig(mergedConfig, normalizedHooks)
+          const normalizedHooks = normalizeHooksConfig(settings.hooks);
+          mergedConfig = mergeHooksConfig(mergedConfig, normalizedHooks);
         }
-      } catch {
-        continue
-      }
+      } catch {}
     }
   }
 
-  const resolvedConfig = Object.keys(mergedConfig).length > 0 ? mergedConfig : null
+  const resolvedConfig =
+    Object.keys(mergedConfig).length > 0 ? mergedConfig : null;
   configCache.set(cacheKey, {
     value: resolvedConfig,
     cachedAt: Date.now(),
-  })
-  return resolvedConfig
+  });
+  return resolvedConfig;
 }

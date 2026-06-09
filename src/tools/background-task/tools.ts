@@ -4,8 +4,8 @@ export type {
   BackgroundOutputManager,
   BackgroundOutputMessage,
   BackgroundOutputMessagesResult,
-} from "./clients"
+} from "./clients";
 
-export { createBackgroundTask } from "./create-background-task"
-export { createBackgroundOutput } from "./create-background-output"
-export { createBackgroundCancel } from "./create-background-cancel"
+export { createBackgroundTask } from "./create-background-task";
+export { createBackgroundOutput } from "./create-background-output";
+export { createBackgroundCancel } from "./create-background-cancel";

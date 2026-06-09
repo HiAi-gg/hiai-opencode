@@ -4,5 +4,5 @@
  * Uses path segment matching (not substring) to avoid false positives like "not-bob/file.txt"
  */
 export function isBobPath(filePath: string): boolean {
-  return /\.bob[/\\]/.test(filePath)
+  return /\.bob[/\\]/.test(filePath);
 }

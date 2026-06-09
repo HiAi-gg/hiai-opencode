@@ -176,11 +176,22 @@ export async function syncAllTasksToTodos(
     );
 
     for (const existing of currentTodos) {
-      const isInNewTodos = newTodos.some((newTodo) => todosMatch(existing, newTodo));
-      const isRemovedById = existing.id ? tasksToRemove.has(existing.id) : false;
-      const isRemovedByContent = !existing.id && removedTaskSubjects.has(existing.content);
-      const isReplacedByTask = !existing.id && allTaskSubjects.has(existing.content);
-      if (!isInNewTodos && !isRemovedById && !isRemovedByContent && !isReplacedByTask) {
+      const isInNewTodos = newTodos.some((newTodo) =>
+        todosMatch(existing, newTodo),
+      );
+      const isRemovedById = existing.id
+        ? tasksToRemove.has(existing.id)
+        : false;
+      const isRemovedByContent =
+        !existing.id && removedTaskSubjects.has(existing.content);
+      const isReplacedByTask =
+        !existing.id && allTaskSubjects.has(existing.content);
+      if (
+        !isInNewTodos &&
+        !isRemovedById &&
+        !isRemovedByContent &&
+        !isReplacedByTask
+      ) {
         finalTodos.push(existing);
       }
     }

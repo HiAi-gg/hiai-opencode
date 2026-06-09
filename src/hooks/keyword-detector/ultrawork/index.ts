@@ -49,7 +49,6 @@ export function getUltraworkMessage(
       return getGptUltraworkMessage();
     case "gemini":
       return getGeminiUltraworkMessage();
-    case "default":
     default:
       return getDefaultUltraworkMessage();
   }

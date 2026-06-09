@@ -1,36 +1,36 @@
-import { HIAI_INTERNAL_INITIATOR_MARKER } from "../shared"
-import type { PluginContext } from "./types"
+import { HIAI_INTERNAL_INITIATOR_MARKER } from "../shared";
+import type { PluginContext } from "./types";
 
 type ChatHeadersInput = {
-  sessionID: string
-  provider: { id: string }
+  sessionID: string;
+  provider: { id: string };
   message: {
-    id?: string
-    role?: string
-  }
-}
+    id?: string;
+    role?: string;
+  };
+};
 
 type ChatHeadersOutput = {
-  headers: Record<string, string>
-}
+  headers: Record<string, string>;
+};
 
-const INTERNAL_MARKER_CACHE_LIMIT = 1000
-const internalMarkerCache = new Map<string, boolean>()
+const INTERNAL_MARKER_CACHE_LIMIT = 1000;
+const internalMarkerCache = new Map<string, boolean>();
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+  return typeof value === "object" && value !== null;
 }
 
 function buildChatHeadersInput(raw: unknown): ChatHeadersInput | null {
-  if (!isRecord(raw)) return null
+  if (!isRecord(raw)) return null;
 
-  const sessionID = raw.sessionID
-  const provider = raw.provider
-  const message = raw.message
+  const sessionID = raw.sessionID;
+  const provider = raw.provider;
+  const message = raw.message;
 
-  if (typeof sessionID !== "string") return null
-  if (!isRecord(provider) || typeof provider.id !== "string") return null
-  if (!isRecord(message)) return null
+  if (typeof sessionID !== "string") return null;
+  if (!isRecord(provider) || typeof provider.id !== "string") return null;
+  if (!isRecord(message)) return null;
 
   return {
     sessionID,
@@ -39,19 +39,22 @@ function buildChatHeadersInput(raw: unknown): ChatHeadersInput | null {
       id: typeof message.id === "string" ? message.id : undefined,
       role: typeof message.role === "string" ? message.role : undefined,
     },
-  }
+  };
 }
 
 function isChatHeadersOutput(raw: unknown): raw is ChatHeadersOutput {
-  if (!isRecord(raw)) return false
+  if (!isRecord(raw)) return false;
   if (!isRecord(raw.headers)) {
-    raw.headers = {}
+    raw.headers = {};
   }
-  return isRecord(raw.headers)
+  return isRecord(raw.headers);
 }
 
 function isCopilotProvider(providerID: string): boolean {
-  return providerID === "github-copilot" || providerID === "github-copilot-enterprise"
+  return (
+    providerID === "github-copilot" ||
+    providerID === "github-copilot-enterprise"
+  );
 }
 
 async function hasInternalMarker(
@@ -59,83 +62,96 @@ async function hasInternalMarker(
   sessionID: string,
   messageID: string,
 ): Promise<boolean> {
-  const cacheKey = `${sessionID}:${messageID}`
-  const cached = internalMarkerCache.get(cacheKey)
+  const cacheKey = `${sessionID}:${messageID}`;
+  const cached = internalMarkerCache.get(cacheKey);
   if (cached !== undefined) {
-    return cached
+    return cached;
   }
 
   try {
     const response = await client.session.message({
       path: { id: sessionID, messageID },
-    })
+    });
 
-    const data = response.data
+    const data = response.data;
     if (!isRecord(data) || !Array.isArray(data.parts)) {
-      internalMarkerCache.set(cacheKey, false)
+      internalMarkerCache.set(cacheKey, false);
       if (internalMarkerCache.size > INTERNAL_MARKER_CACHE_LIMIT) {
-        internalMarkerCache.clear()
+        internalMarkerCache.clear();
       }
-      return false
+      return false;
     }
 
     const hasMarker = data.parts.some((part) => {
-      if (!isRecord(part) || part.type !== "text" || typeof part.text !== "string") {
-        return false
+      if (
+        !isRecord(part) ||
+        part.type !== "text" ||
+        typeof part.text !== "string"
+      ) {
+        return false;
       }
 
-      return part.text.includes(HIAI_INTERNAL_INITIATOR_MARKER)
-    })
+      return part.text.includes(HIAI_INTERNAL_INITIATOR_MARKER);
+    });
 
-    internalMarkerCache.set(cacheKey, hasMarker)
+    internalMarkerCache.set(cacheKey, hasMarker);
     if (internalMarkerCache.size > INTERNAL_MARKER_CACHE_LIMIT) {
-      internalMarkerCache.clear()
+      internalMarkerCache.clear();
     }
 
-    return hasMarker
+    return hasMarker;
   } catch {
-    internalMarkerCache.set(cacheKey, false)
+    internalMarkerCache.set(cacheKey, false);
     if (internalMarkerCache.size > INTERNAL_MARKER_CACHE_LIMIT) {
-      internalMarkerCache.clear()
+      internalMarkerCache.clear();
     }
-    return false
+    return false;
   }
 }
 
-async function isHiaiInternalMessage(input: ChatHeadersInput, client: PluginContext["client"]): Promise<boolean> {
+async function isHiaiInternalMessage(
+  input: ChatHeadersInput,
+  client: PluginContext["client"],
+): Promise<boolean> {
   if (input.message.role !== "user") {
-    return false
+    return false;
   }
 
   if (!input.message.id) {
-    return false
+    return false;
   }
 
-  return hasInternalMarker(client, input.sessionID, input.message.id)
+  return hasInternalMarker(client, input.sessionID, input.message.id);
 }
 
-export function createChatHeadersHandler(args: { ctx: PluginContext }): (input: unknown, output: unknown) => Promise<void> {
-  const { ctx } = args
+export function createChatHeadersHandler(args: {
+  ctx: PluginContext;
+}): (input: unknown, output: unknown) => Promise<void> {
+  const { ctx } = args;
 
   return async (input, output): Promise<void> => {
-    const normalizedInput = buildChatHeadersInput(input)
-    if (!normalizedInput) return
-    if (!isChatHeadersOutput(output)) return
+    const normalizedInput = buildChatHeadersInput(input);
+    if (!normalizedInput) return;
+    if (!isChatHeadersOutput(output)) return;
 
-    if (!isCopilotProvider(normalizedInput.provider.id)) return
+    if (!isCopilotProvider(normalizedInput.provider.id)) return;
 
     // Do not override x-initiator when @ai-sdk/github-copilot is active.
     // OpenCode's copilot fetch wrapper already sets x-initiator based on
     // the actual request body content. Overriding it here causes a mismatch
     // that the Copilot API rejects with "invalid initiator".
-    const model = isRecord(input) && isRecord((input as Record<string, unknown>).model)
-      ? (input as Record<string, unknown>).model as Record<string, unknown>
-      : undefined
-    const api = model && isRecord(model.api) ? model.api as Record<string, unknown> : undefined
-    if (api?.npm === "@ai-sdk/github-copilot") return
+    const model =
+      isRecord(input) && isRecord((input as Record<string, unknown>).model)
+        ? ((input as Record<string, unknown>).model as Record<string, unknown>)
+        : undefined;
+    const api =
+      model && isRecord(model.api)
+        ? (model.api as Record<string, unknown>)
+        : undefined;
+    if (api?.npm === "@ai-sdk/github-copilot") return;
 
-    if (!(await isHiaiInternalMessage(normalizedInput, ctx.client))) return
+    if (!(await isHiaiInternalMessage(normalizedInput, ctx.client))) return;
 
-    output.headers["x-initiator"] = "agent"
-  }
+    output.headers["x-initiator"] = "agent";
+  };
 }

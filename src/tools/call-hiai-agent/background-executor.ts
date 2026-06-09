@@ -1,23 +1,26 @@
-import type { CallHiaiAgentArgs } from "./types"
-import type { BackgroundManager } from "../../features/background-agent"
-import type { PluginInput } from "@opencode-ai/plugin"
-import { log } from "../../shared"
-import type { DelegatedModelConfig } from "../../shared/model-resolution-types"
-import type { FallbackEntry } from "../../shared/model-requirements"
-import { resolveMessageContext } from "../../features/hook-message-injector"
-import { getSessionAgent } from "../../features/claude-code-session-state"
-import { getMessageDir } from "./message-dir"
-import { getSessionTools } from "../../shared/session-tools-store"
-import { stripAgentListSortPrefix } from "../../shared/agent-display-names"
+import type { CallHiaiAgentArgs } from "./types";
+import type { BackgroundManager } from "../../features/background-agent";
+import type { PluginInput } from "@opencode-ai/plugin";
+import { log } from "../../shared";
+import type { DelegatedModelConfig } from "../../shared/model-resolution-types";
+import type { FallbackEntry } from "../../shared/model-requirements";
+import { resolveMessageContext } from "../../features/hook-message-injector";
+import { getSessionAgent } from "../../features/claude-code-session-state";
+import { getMessageDir } from "./message-dir";
+import { getSessionTools } from "../../shared/session-tools-store";
+import { stripAgentListSortPrefix } from "../../shared/agent-display-names";
 
 export async function executeBackground(
   args: CallHiaiAgentArgs,
   toolContext: {
-    sessionID: string
-    messageID: string
-    agent: string
-    abort: AbortSignal
-    metadata?: (input: { title?: string; metadata?: Record<string, unknown> }) => void
+    sessionID: string;
+    messageID: string;
+    agent: string;
+    abort: AbortSignal;
+    metadata?: (input: {
+      title?: string;
+      metadata?: Record<string, unknown>;
+    }) => void;
   },
   manager: BackgroundManager,
   client: PluginInput["client"],
@@ -25,16 +28,20 @@ export async function executeBackground(
   model?: DelegatedModelConfig,
 ): Promise<string> {
   try {
-    const messageDir = getMessageDir(toolContext.sessionID)
+    const messageDir = getMessageDir(toolContext.sessionID);
     const { prevMessage, firstMessageAgent } = await resolveMessageContext(
       toolContext.sessionID,
       client,
-      messageDir
-    )
+      messageDir,
+    );
 
-    const sessionAgent = getSessionAgent(toolContext.sessionID)
-    const parentAgent = toolContext.agent ?? sessionAgent ?? firstMessageAgent ?? prevMessage?.agent
-    
+    const sessionAgent = getSessionAgent(toolContext.sessionID);
+    const parentAgent =
+      toolContext.agent ??
+      sessionAgent ??
+      firstMessageAgent ??
+      prevMessage?.agent;
+
     log("[call_hiai_agent] parentAgent resolution", {
       sessionID: toolContext.sessionID,
       messageDir,
@@ -43,13 +50,13 @@ export async function executeBackground(
       firstMessageAgent,
       prevMessageAgent: prevMessage?.agent,
       resolvedParentAgent: parentAgent,
-    })
+    });
 
     // args.subagent_type is the canonical display name (e.g., "Coder", "Researcher") that the
     // OpenCode SDK expects. tools.ts resolves it from the lowercase config key. Strip invisible
     // characters defensively at this boundary — the downstream spawner also strips, but doing
     // it here keeps the contract local to call-hiai-agent.
-    const agentForSdk = stripAgentListSortPrefix(args.subagent_type)
+    const agentForSdk = stripAgentListSortPrefix(args.subagent_type);
 
     const task = await manager.launch({
       description: args.description,
@@ -61,31 +68,37 @@ export async function executeBackground(
       parentTools: getSessionTools(toolContext.sessionID),
       model,
       fallbackChain,
-    })
+    });
 
-    const WAIT_FOR_SESSION_INTERVAL_MS = 50
-    const WAIT_FOR_SESSION_TIMEOUT_MS = 30000
-    const waitStart = Date.now()
-    let sessionId = task.sessionID
+    const WAIT_FOR_SESSION_INTERVAL_MS = 50;
+    const WAIT_FOR_SESSION_TIMEOUT_MS = 30000;
+    const waitStart = Date.now();
+    let sessionId = task.sessionID;
     while (!sessionId && Date.now() - waitStart < WAIT_FOR_SESSION_TIMEOUT_MS) {
-      const updated = manager.getTask(task.id)
-      if (updated?.status === "error" || updated?.status === "cancelled" || updated?.status === "interrupt") {
-        return `Task failed to start (status: ${updated.status}).\n\nTask ID: ${task.id}`
+      const updated = manager.getTask(task.id);
+      if (
+        updated?.status === "error" ||
+        updated?.status === "cancelled" ||
+        updated?.status === "interrupt"
+      ) {
+        return `Task failed to start (status: ${updated.status}).\n\nTask ID: ${task.id}`;
       }
-      sessionId = updated?.sessionID
+      sessionId = updated?.sessionID;
       if (sessionId) {
-        break
+        break;
       }
       if (toolContext.abort?.aborted) {
-        break
+        break;
       }
-      await new Promise(resolve => setTimeout(resolve, WAIT_FOR_SESSION_INTERVAL_MS))
+      await new Promise((resolve) =>
+        setTimeout(resolve, WAIT_FOR_SESSION_INTERVAL_MS),
+      );
     }
 
     await toolContext.metadata?.({
       title: args.description,
       metadata: { sessionId: sessionId ?? "pending" },
-    })
+    });
 
     return `Background agent task launched successfully.
 
@@ -97,9 +110,9 @@ Status: ${task.status}
 
 System notifies on completion. Use \`background_output\` with task_id="${task.id}" to check.
 
-Do NOT call background_output now. Wait for <system-reminder> notification first.`
+Do NOT call background_output now. Wait for <system-reminder> notification first.`;
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error)
-    return `Failed to launch background agent task: ${message}`
+    const message = error instanceof Error ? error.message : String(error);
+    return `Failed to launch background agent task: ${message}`;
   }
 }

@@ -4,65 +4,67 @@ export type RecoveryErrorType =
   | "thinking_disabled_violation"
   | "assistant_prefill_unsupported"
   | "unavailable_tool"
-  | null
+  | null;
 
 function getErrorMessage(error: unknown): string {
-  if (!error) return ""
-  if (typeof error === "string") return error.toLowerCase()
+  if (!error) return "";
+  if (typeof error === "string") return error.toLowerCase();
 
-  const errorObj = error as Record<string, unknown>
+  const errorObj = error as Record<string, unknown>;
   const paths = [
     errorObj.data,
     errorObj.error,
     errorObj,
     (errorObj.data as Record<string, unknown>)?.error,
-  ]
+  ];
 
   for (const obj of paths) {
     if (obj && typeof obj === "object") {
-      const msg = (obj as Record<string, unknown>).message
+      const msg = (obj as Record<string, unknown>).message;
       if (typeof msg === "string" && msg.length > 0) {
-        return msg.toLowerCase()
+        return msg.toLowerCase();
       }
     }
   }
 
   try {
-    return JSON.stringify(error).toLowerCase()
+    return JSON.stringify(error).toLowerCase();
   } catch {
-    return ""
+    return "";
   }
 }
 
 export function extractMessageIndex(error: unknown): number | null {
   try {
-    const message = getErrorMessage(error)
-    const match = message.match(/messages\.(\d+)/)
-    return match ? parseInt(match[1], 10) : null
+    const message = getErrorMessage(error);
+    const match = message.match(/messages\.(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
   } catch {
-    return null
+    return null;
   }
 }
 
 export function extractUnavailableToolName(error: unknown): string | null {
   try {
-    const message = getErrorMessage(error)
-    const match = message.match(/(?:unavailable tool|no such tool)[:\s'"]+([^'".\s]+)/)
-    return match ? match[1] : null
+    const message = getErrorMessage(error);
+    const match = message.match(
+      /(?:unavailable tool|no such tool)[:\s'"]+([^'".\s]+)/,
+    );
+    return match ? match[1] : null;
   } catch {
-    return null
+    return null;
   }
 }
 
 export function detectErrorType(error: unknown): RecoveryErrorType {
   try {
-    const message = getErrorMessage(error)
+    const message = getErrorMessage(error);
 
     if (
       message.includes("assistant message prefill") ||
       message.includes("conversation must end with a user message")
     ) {
-      return "assistant_prefill_unsupported"
+      return "assistant_prefill_unsupported";
     }
 
     if (
@@ -74,15 +76,18 @@ export function detectErrorType(error: unknown): RecoveryErrorType {
         message.includes("cannot be thinking") ||
         (message.includes("expected") && message.includes("found")))
     ) {
-      return "thinking_block_order"
+      return "thinking_block_order";
     }
 
-    if (message.includes("thinking is disabled") && message.includes("cannot contain")) {
-      return "thinking_disabled_violation"
+    if (
+      message.includes("thinking is disabled") &&
+      message.includes("cannot contain")
+    ) {
+      return "thinking_disabled_violation";
     }
 
     if (message.includes("tool_use") && message.includes("tool_result")) {
-      return "tool_result_missing"
+      return "tool_result_missing";
     }
 
     if (
@@ -92,11 +97,11 @@ export function detectErrorType(error: unknown): RecoveryErrorType {
       message.includes("nosuchtoolerror") ||
       message.includes("no such tool")
     ) {
-      return "unavailable_tool"
+      return "unavailable_tool";
     }
 
-    return null
+    return null;
   } catch {
-    return null
+    return null;
   }
 }

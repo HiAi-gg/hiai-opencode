@@ -1,20 +1,20 @@
-import type { BackgroundManager } from "../../features/background-agent"
+import type { BackgroundManager } from "../../features/background-agent";
 
 interface Event {
-  type: string
-  properties?: Record<string, unknown>
+  type: string;
+  properties?: Record<string, unknown>;
 }
 
 interface EventInput {
-  event: Event
+  event: Event;
 }
 
 interface ChatMessageInput {
-  sessionID: string
+  sessionID: string;
 }
 
 interface ChatMessageOutput {
-  parts: Array<{ type: string; text?: string; [key: string]: unknown }>
+  parts: Array<{ type: string; text?: string; [key: string]: unknown }>;
 }
 
 const FORWARDED_EVENT_TYPES = new Set([
@@ -26,7 +26,7 @@ const FORWARDED_EVENT_TYPES = new Set([
   "session.error",
   "session.deleted",
   "session.status",
-])
+]);
 
 /**
  * Background notification hook - sub-agent task completion receipt.
@@ -58,19 +58,19 @@ const FORWARDED_EVENT_TYPES = new Set([
  */
 export function createBackgroundNotificationHook(manager: BackgroundManager) {
   const eventHandler = async ({ event }: EventInput) => {
-    if (!FORWARDED_EVENT_TYPES.has(event.type)) return
-    manager.handleEvent(event)
-  }
+    if (!FORWARDED_EVENT_TYPES.has(event.type)) return;
+    manager.handleEvent(event);
+  };
 
   const chatMessageHandler = async (
     input: ChatMessageInput,
     output: ChatMessageOutput,
   ): Promise<void> => {
-    manager.injectPendingNotificationsIntoChatMessage(output, input.sessionID)
-  }
+    manager.injectPendingNotificationsIntoChatMessage(output, input.sessionID);
+  };
 
   return {
     "chat.message": chatMessageHandler,
     event: eventHandler,
-  }
+  };
 }

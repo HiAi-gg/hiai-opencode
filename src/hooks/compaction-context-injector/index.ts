@@ -1,1 +1,1 @@
-export { createCompactionContextInjector } from "./hook"
+export { createCompactionContextInjector } from "./hook";

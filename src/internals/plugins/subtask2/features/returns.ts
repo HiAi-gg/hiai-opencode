@@ -16,7 +16,6 @@ import {
   setLastReturnType,
   setPendingPromptReturn,
 } from "../core/state";
-import { getConfig } from "../commands/resolver";
 import { log } from "../utils/logger";
 import {
   parseCommandWithOverrides,
@@ -34,7 +33,7 @@ import { startLoop } from "../loop";
 export async function executeReturn(
   item: string,
   sessionID: string,
-  loopOverride?: LoopConfig
+  loopOverride?: LoopConfig,
 ) {
   // SPECIAL: Auto workflow parse marker - parse and execute the generated workflow
   if (item === "__subtask2_auto_parse__") {
@@ -53,13 +52,13 @@ export async function executeReturn(
 
     if (!result.found || !result.command) {
       log(
-        `executeReturn: auto workflow parse failed - no valid <subtask2 auto> tag found`
+        `executeReturn: auto workflow parse failed - no valid <subtask2 auto> tag found`,
       );
       return;
     }
 
     log(
-      `executeReturn: parsed auto workflow: "${result.command.substring(0, 80)}..."`
+      `executeReturn: parsed auto workflow: "${result.command.substring(0, 80)}..."`,
     );
 
     // Execute the parsed command as if user invoked it
@@ -106,17 +105,17 @@ export async function executeReturn(
           prompt,
           parsed.overrides.model,
           parsed.overrides.agent,
-          parsed.overrides.return
+          parsed.overrides.return,
         );
         log(
-          `executeReturn: started inline subtask loop for ${sessionID}: max=${loopConfig.max}, until="${loopConfig.until}"`
+          `executeReturn: started inline subtask loop for ${sessionID}: max=${loopConfig.max}, until="${loopConfig.until}"`,
         );
       }
 
       // Handle inline subtask returns - push onto stack (if not also looping)
       if (parsed.overrides.loop && parsed.overrides.return?.length) {
         log(
-          `executeReturn: inline subtask has loop + return, deferring ${parsed.overrides.return.length} returns until loop completes`
+          `executeReturn: inline subtask has loop + return, deferring ${parsed.overrides.return.length} returns until loop completes`,
         );
       } else if (
         parsed.overrides.return &&
@@ -125,15 +124,15 @@ export async function executeReturn(
         // No loop, safe to push returns onto stack
         pushReturnStack(sessionID, [...parsed.overrides.return]);
         log(
-          `executeReturn: pushed ${parsed.overrides.return.length} inline returns onto stack`
+          `executeReturn: pushed ${parsed.overrides.return.length} inline returns onto stack`,
         );
       }
 
       log(
         `executeReturn: inline subtask with prompt "${prompt.substring(
           0,
-          50
-        )}..." (agent=${parsed.overrides.agent || "build"})`
+          50,
+        )}..." (agent=${parsed.overrides.agent || "build"})`,
       );
       // Register parent session for $TURN resolution (race-safe: keyed by prompt)
       registerPendingParentForPrompt(prompt, sessionID);
@@ -143,10 +142,10 @@ export async function executeReturn(
         registerPendingResultCaptureByPrompt(
           prompt,
           sessionID,
-          parsed.overrides.as
+          parsed.overrides.as,
         );
         log(
-          `executeReturn: registered result capture as "${parsed.overrides.as}"`
+          `executeReturn: registered result capture as "${parsed.overrides.as}"`,
         );
       }
 
@@ -158,7 +157,7 @@ export async function executeReturn(
         // Use promptAsync with subtask part to run as subtask
         // Use start of prompt as description for better UX
         const description =
-          prompt.length > 50 ? prompt.substring(0, 47) + "..." : prompt;
+          prompt.length > 50 ? `${prompt.substring(0, 47)}...` : prompt;
         const result = await client.session.promptAsync({
           path: { id: sessionID },
           body: {
@@ -187,21 +186,22 @@ export async function executeReturn(
     const configs = getConfigs();
     const allKeys = Object.keys(configs);
     const pathKey =
-      allKeys.find(k => k.includes("/") && k.endsWith("/" + parsed.command)) ||
-      parsed.command;
+      allKeys.find(
+        (k) => k.includes("/") && k.endsWith(`/${parsed.command}`),
+      ) || parsed.command;
 
     // Store model override if present (will be consumed by command.execute.before)
     if (parsed.overrides.model) {
       setPendingModelOverride(sessionID, parsed.overrides.model);
       log(
-        `executeReturn: stored model override for ${sessionID}: ${parsed.overrides.model}`
+        `executeReturn: stored model override for ${sessionID}: ${parsed.overrides.model}`,
       );
     }
 
     if (parsed.overrides.agent) {
       setPendingAgentOverride(sessionID, parsed.overrides.agent);
       log(
-        `executeReturn: stored agent override for ${sessionID}: ${parsed.overrides.agent}`
+        `executeReturn: stored agent override for ${sessionID}: ${parsed.overrides.agent}`,
       );
     }
 
@@ -210,7 +210,7 @@ export async function executeReturn(
     if (parsed.overrides.as) {
       registerPendingMainSessionCapture(sessionID, parsed.overrides.as);
       log(
-        `executeReturn: registered main session capture as "${parsed.overrides.as}"`
+        `executeReturn: registered main session capture as "${parsed.overrides.as}"`,
       );
     }
 
@@ -223,10 +223,10 @@ export async function executeReturn(
         pathKey,
         args,
         parsed.overrides.model,
-        parsed.overrides.agent
+        parsed.overrides.agent,
       );
       log(
-        `executeReturn: started retry loop for ${sessionID}: max=${loopConfig.max}, until="${loopConfig.until}"`
+        `executeReturn: started retry loop for ${sessionID}: max=${loopConfig.max}, until="${loopConfig.until}"`,
       );
     }
 
@@ -239,7 +239,7 @@ export async function executeReturn(
     }
 
     log(
-      `executeReturn: /${parsed.command} -> ${pathKey} args="${args}" (parent=${sessionID})`
+      `executeReturn: /${parsed.command} -> ${pathKey} args="${args}" (parent=${sessionID})`,
     );
     setSessionMainCommand(sessionID, pathKey);
     // Note: parent session registration happens in command-hooks.ts after prompt modifications

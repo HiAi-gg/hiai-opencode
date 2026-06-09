@@ -1,16 +1,18 @@
-import type { AvailableCategory } from "../agents/dynamic-agent-prompt-builder"
-import type { HiaiOpenCodeConfig } from "../config"
-import { CATEGORY_DESCRIPTIONS } from "../tools/delegate-task/constants"
-import { mergeCategories } from "../shared/merge-categories"
+import type { AvailableCategory } from "../agents/dynamic-agent-prompt-builder";
+import type { HiaiOpenCodeConfig } from "../config";
+import { CATEGORY_DESCRIPTIONS } from "../tools/delegate-task/constants";
+import { mergeCategories } from "../shared/merge-categories";
 
 export function createAvailableCategories(
   pluginConfig: HiaiOpenCodeConfig,
 ): AvailableCategory[] {
-  const categories = mergeCategories(pluginConfig.categories)
+  const categories = mergeCategories(pluginConfig.categories);
 
   return Object.entries(categories).map(([name, categoryConfig]) => {
     const model =
-      typeof categoryConfig.model === "string" ? categoryConfig.model : undefined
+      typeof categoryConfig.model === "string"
+        ? categoryConfig.model
+        : undefined;
 
     return {
       name,
@@ -19,6 +21,6 @@ export function createAvailableCategories(
         CATEGORY_DESCRIPTIONS[name] ??
         "General tasks",
       model,
-    }
-  })
+    };
+  });
 }

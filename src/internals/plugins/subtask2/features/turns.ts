@@ -20,7 +20,7 @@ import {
 export async function fetchSessionMessages(
   sessionID: string,
   lastN?: number,
-  specificIndices?: number[]
+  specificIndices?: number[],
 ): Promise<string> {
   const client = getClient();
   if (!client) {
@@ -37,7 +37,7 @@ export async function fetchSessionMessages(
     log(
       `fetchSessionMessages: got ${
         messages?.length ?? 0
-      } messages from ${sessionID}`
+      } messages from ${sessionID}`,
     );
 
     if (!messages?.length) {
@@ -54,7 +54,7 @@ export async function fetchSessionMessages(
         textParts: m.parts
           ?.filter((p: any) => p.type === "text")
           .map((p: any) => p.text?.substring(0, 30)),
-      }))
+      })),
     );
 
     // Filter out trailing empty messages (from current command being initiated)
@@ -66,7 +66,7 @@ export async function fetchSessionMessages(
           (p.type === "text" && p.text?.trim()) ||
           (p.type === "tool" &&
             p.state?.status === "completed" &&
-            p.state?.output)
+            p.state?.output),
       );
       if (!hasContent) {
         effectiveMessages = effectiveMessages.slice(0, -1);
@@ -75,7 +75,7 @@ export async function fetchSessionMessages(
       }
     }
     log(
-      `After filtering empty trailing messages: ${effectiveMessages.length} (was ${messages.length})`
+      `After filtering empty trailing messages: ${effectiveMessages.length} (was ${messages.length})`,
     );
 
     // Select messages based on mode
@@ -83,12 +83,12 @@ export async function fetchSessionMessages(
     if (specificIndices && specificIndices.length > 0) {
       // Specific indices mode: $TURN[:2:5:8] - indices are 1-based from end
       selectedMessages = specificIndices
-        .map(idx => effectiveMessages[effectiveMessages.length - idx])
+        .map((idx) => effectiveMessages[effectiveMessages.length - idx])
         .filter(Boolean);
       log(
         `Using specific indices [${specificIndices.join(",")}] -> ${
           selectedMessages.length
-        } messages`
+        } messages`,
       );
     } else if (lastN) {
       // Last N mode: $TURN[5]
@@ -155,7 +155,7 @@ export async function fetchSessionMessages(
  */
 export async function resolveTurnReferences(
   text: string,
-  sessionID: string
+  sessionID: string,
 ): Promise<string> {
   if (!hasTurnReferences(text)) {
     return text;
@@ -175,7 +175,7 @@ export async function resolveTurnReferences(
       const content = await fetchSessionMessages(
         sessionID,
         undefined,
-        ref.indices
+        ref.indices,
       );
       replacements.set(ref.match, content);
       log(`Resolved ${ref.match}: ${content.length} chars`);

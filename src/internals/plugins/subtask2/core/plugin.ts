@@ -26,7 +26,7 @@ export const createPlugin = (async (ctx: PluginInput) => {
   setClient(ctx.client);
 
   const allKeys = Object.keys(configs);
-  const uniqueCmds = allKeys.filter(k => !k.includes("/"));
+  const uniqueCmds = allKeys.filter((k) => !k.includes("/"));
   log(`Plugin initialized: ${uniqueCmds.length} commands`, uniqueCmds);
 
   return {

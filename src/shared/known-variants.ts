@@ -13,4 +13,4 @@ export const KNOWN_VARIANTS = new Set([
   "none",
   "auto",
   "thinking",
-])
+]);

@@ -1,4 +1,4 @@
-import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
+import type { BuiltinCategoryDefinition } from "./builtin-category-definition";
 
 const WRITING_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on WRITING / PROSE tasks.
@@ -28,13 +28,14 @@ ANTI-AI-SLOP RULES (NON-NEGOTIABLE):
 - NEVER start consecutive sentences with the same word.
 - No filler openings: skip "In today's world...", "As we all know...", "It goes without saying..."
 - Write like a human, not a corporate template.
-</Category_Context>`
+</Category_Context>`;
 
 export const KIMI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "writing",
     config: {},
-    description: "Documentation and prose tasks with bounded scope. Uses coder execution contour.",
+    description:
+      "Documentation and prose tasks with bounded scope. Uses coder execution contour.",
     promptAppend: WRITING_CATEGORY_PROMPT_APPEND,
   },
-]
+];

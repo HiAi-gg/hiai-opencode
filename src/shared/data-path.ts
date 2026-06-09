@@ -1,18 +1,21 @@
-import * as path from "node:path"
-import * as os from "node:os"
-import { accessSync, constants, mkdirSync } from "node:fs"
+import * as path from "node:path";
+import * as os from "node:os";
+import { accessSync, constants, mkdirSync } from "node:fs";
 
-import { CACHE_DIR_NAME } from "./plugin-identity"
+import { CACHE_DIR_NAME } from "./plugin-identity";
 
-function resolveWritableDirectory(preferredDir: string, fallbackSuffix: string): string {
+function resolveWritableDirectory(
+  preferredDir: string,
+  fallbackSuffix: string,
+): string {
   try {
-    mkdirSync(preferredDir, { recursive: true })
-    accessSync(preferredDir, constants.W_OK)
-    return preferredDir
+    mkdirSync(preferredDir, { recursive: true });
+    accessSync(preferredDir, constants.W_OK);
+    return preferredDir;
   } catch {
-    const fallbackDir = path.join(os.tmpdir(), fallbackSuffix)
-    mkdirSync(fallbackDir, { recursive: true })
-    return fallbackDir
+    const fallbackDir = path.join(os.tmpdir(), fallbackSuffix);
+    mkdirSync(fallbackDir, { recursive: true });
+    return fallbackDir;
   }
 }
 
@@ -25,8 +28,9 @@ function resolveWritableDirectory(preferredDir: string, fallbackSuffix: string):
  * including Windows, so we match that behavior exactly.
  */
 export function getDataDir(): string {
-  const preferredDir = process.env.XDG_DATA_HOME ?? path.join(os.homedir(), ".local", "share")
-  return resolveWritableDirectory(preferredDir, "opencode-data")
+  const preferredDir =
+    process.env.XDG_DATA_HOME ?? path.join(os.homedir(), ".local", "share");
+  return resolveWritableDirectory(preferredDir, "opencode-data");
 }
 
 /**
@@ -34,7 +38,7 @@ export function getDataDir(): string {
  * All platforms: ~/.local/share/opencode/storage
  */
 export function getOpenCodeStorageDir(): string {
-  return path.join(getDataDir(), "opencode", "storage")
+  return path.join(getDataDir(), "opencode", "storage");
 }
 
 /**
@@ -43,8 +47,9 @@ export function getOpenCodeStorageDir(): string {
  * - All platforms: XDG_CACHE_HOME or ~/.cache
  */
 export function getCacheDir(): string {
-  const preferredDir = process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache")
-  return resolveWritableDirectory(preferredDir, "opencode-cache")
+  const preferredDir =
+    process.env.XDG_CACHE_HOME ?? path.join(os.homedir(), ".cache");
+  return resolveWritableDirectory(preferredDir, "opencode-cache");
 }
 
 /**
@@ -52,7 +57,7 @@ export function getCacheDir(): string {
  * All platforms: ~/.cache/hiai-opencode
  */
 export function getHiaiOpenCodeCacheDir(): string {
-  return path.join(getCacheDir(), CACHE_DIR_NAME)
+  return path.join(getCacheDir(), CACHE_DIR_NAME);
 }
 
 /**
@@ -60,5 +65,5 @@ export function getHiaiOpenCodeCacheDir(): string {
  * All platforms: ~/.cache/opencode
  */
 export function getOpenCodeCacheDir(): string {
-  return path.join(getCacheDir(), "opencode")
+  return path.join(getCacheDir(), "opencode");
 }

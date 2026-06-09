@@ -36,7 +36,11 @@ export function extractErrorMessage(error: unknown): string {
     ];
 
     for (const candidate of candidates) {
-      if (isRecord(candidate) && typeof candidate.message === "string" && candidate.message.length > 0) {
+      if (
+        isRecord(candidate) &&
+        typeof candidate.message === "string" &&
+        candidate.message.length > 0
+      ) {
         return candidate.message;
       }
     }
@@ -49,10 +53,15 @@ export function extractErrorMessage(error: unknown): string {
   }
 }
 
-export function extractProviderModelFromErrorMessage(message: string): { providerID?: string; modelID?: string } {
+export function extractProviderModelFromErrorMessage(message: string): {
+  providerID?: string;
+  modelID?: string;
+} {
   const lower = message.toLowerCase();
 
-  const providerModel = lower.match(/model\s+not\s+found:\s*([a-z0-9_-]+)\s*\/\s*([a-z0-9._-]+)/i);
+  const providerModel = lower.match(
+    /model\s+not\s+found:\s*([a-z0-9_-]+)\s*\/\s*([a-z0-9._-]+)/i,
+  );
   if (providerModel) {
     return {
       providerID: providerModel[1],
@@ -60,7 +69,9 @@ export function extractProviderModelFromErrorMessage(message: string): { provide
     };
   }
 
-  const modelOnly = lower.match(/unknown\s+provider\s+for\s+model\s+([a-z0-9._-]+)/i);
+  const modelOnly = lower.match(
+    /unknown\s+provider\s+for\s+model\s+([a-z0-9._-]+)/i,
+  );
   if (modelOnly) {
     return {
       modelID: modelOnly[1],
@@ -77,10 +88,17 @@ export function applyUserConfiguredFallbackChain(
   pluginConfig: HiaiOpenCodeConfig,
 ): void {
   const agentKey = getAgentConfigKey(agentName);
-  const rawFallbackModels = getRawFallbackModels(sessionID, agentKey, pluginConfig);
+  const rawFallbackModels = getRawFallbackModels(
+    sessionID,
+    agentKey,
+    pluginConfig,
+  );
   if (!rawFallbackModels || rawFallbackModels.length === 0) return;
 
-  const fallbackChain = buildFallbackChainFromModels(rawFallbackModels, currentProviderID);
+  const fallbackChain = buildFallbackChainFromModels(
+    rawFallbackModels,
+    currentProviderID,
+  );
 
   if (fallbackChain && fallbackChain.length > 0) {
     setSessionFallbackChain(sessionID, fallbackChain);

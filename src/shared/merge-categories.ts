@@ -1,5 +1,5 @@
-import type { CategoriesConfig, CategoryConfig } from "../config/schema"
-import { DEFAULT_CATEGORIES } from "../tools/delegate-task/constants"
+import type { CategoriesConfig, CategoryConfig } from "../config/schema";
+import { DEFAULT_CATEGORIES } from "../tools/delegate-task/constants";
 
 /**
  * Merge default and user categories, filtering out disabled ones.
@@ -10,9 +10,9 @@ export function mergeCategories(
 ): Record<string, CategoryConfig> {
   const merged = userCategories
     ? { ...DEFAULT_CATEGORIES, ...userCategories }
-    : { ...DEFAULT_CATEGORIES }
+    : { ...DEFAULT_CATEGORIES };
 
   return Object.fromEntries(
     Object.entries(merged).filter(([, config]) => !config.disable),
-  )
+  );
 }

@@ -32,7 +32,10 @@ export async function processFilePathForAgentsInjection(input: {
 
   const dir = dirname(resolved);
   const cache = getSessionCache(input.sessionCaches, input.sessionID);
-  const agentsPaths = findAgentsMdUp({ startDir: dir, rootDir: input.ctx.directory });
+  const agentsPaths = findAgentsMdUp({
+    startDir: dir,
+    rootDir: input.ctx.directory,
+  });
 
   let dirty = false;
   for (const agentsPath of agentsPaths) {

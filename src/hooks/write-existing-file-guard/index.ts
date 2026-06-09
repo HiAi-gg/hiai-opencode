@@ -1,1 +1,1 @@
-export { createWriteExistingFileGuardHook } from "./hook"
+export { createWriteExistingFileGuardHook } from "./hook";

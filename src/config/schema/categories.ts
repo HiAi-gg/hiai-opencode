@@ -1,5 +1,5 @@
-import { z } from "zod"
-import { FallbackModelsSchema } from "./fallback-models"
+import { z } from "zod";
+import { FallbackModelsSchema } from "./fallback-models";
 
 export const CategoryConfigSchema = z.object({
   /** Human-readable description of the category's purpose. Shown in task prompt. */
@@ -16,7 +16,9 @@ export const CategoryConfigSchema = z.object({
       budgetTokens: z.number().optional(),
     })
     .optional(),
-  reasoningEffort: z.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
+  reasoningEffort: z
+    .enum(["none", "minimal", "low", "medium", "high", "xhigh"])
+    .optional(),
   textVerbosity: z.enum(["low", "medium", "high"]).optional(),
   tools: z.record(z.string(), z.boolean()).optional(),
   prompt_append: z.string().optional(),
@@ -25,7 +27,7 @@ export const CategoryConfigSchema = z.object({
   is_unstable_agent: z.boolean().optional(),
   /** Disable this category. Disabled categories are excluded from task delegation. */
   disable: z.boolean().optional(),
-})
+});
 
 export const BuiltinCategoryNameSchema = z.enum([
   "visual-engineering",
@@ -36,10 +38,13 @@ export const BuiltinCategoryNameSchema = z.enum([
   "unspecified-low",
   "unspecified-high",
   "writing",
-])
+]);
 
-export const CategoriesConfigSchema = z.record(z.string(), CategoryConfigSchema)
+export const CategoriesConfigSchema = z.record(
+  z.string(),
+  CategoryConfigSchema,
+);
 
-export type CategoryConfig = z.infer<typeof CategoryConfigSchema>
-export type CategoriesConfig = z.infer<typeof CategoriesConfigSchema>
-export type BuiltinCategoryName = z.infer<typeof BuiltinCategoryNameSchema>
+export type CategoryConfig = z.infer<typeof CategoryConfigSchema>;
+export type CategoriesConfig = z.infer<typeof CategoriesConfigSchema>;
+export type BuiltinCategoryName = z.infer<typeof BuiltinCategoryNameSchema>;

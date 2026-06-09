@@ -6,12 +6,15 @@ Registry: .bob/boulder-registry/{planName}.json
 
 Active plan registry stays in the root project .bob/boulder-registry/.
 The worktree is only the execution directory referenced by worktree_path.
-`
+`;
 
-export function createWorktreeActiveBlock(worktreePath: string, planName?: string): string {
+export function createWorktreeActiveBlock(
+  worktreePath: string,
+  planName?: string,
+): string {
   const registryPath = planName
     ? `.bob/boulder-registry/${planName}.json`
-    : `.bob/boulder-registry/<plan-name>.json`
+    : `.bob/boulder-registry/<plan-name>.json`;
 
   return `
 ## Worktree Active
@@ -25,5 +28,5 @@ export function createWorktreeActiveBlock(worktreePath: string, planName?: strin
 - NEVER operate on the main repository directory - always use the worktree path above
 - Plan registry remains in the root project at \`${registryPath}\`; the worktree only supplies \`worktree_path\`
 - On completion, state syncs back to root and worktree is removed via \`git worktree remove\`
-`
+`;
 }

@@ -1,29 +1,29 @@
 /**
  * Claude Code Plugin Types
- * 
+ *
  * Type definitions for Claude Code plugin system compatibility.
  * Based on https://code.claude.com/docs/en/plugins-reference
  */
 
-export type PluginScope = "user" | "project" | "local" | "managed"
+export type PluginScope = "user" | "project" | "local" | "managed";
 
 /**
  * Plugin installation entry in installed_plugins.json
  */
 export interface PluginInstallation {
-  scope: PluginScope
-  installPath: string
-  version: string
-  installedAt: string
-  lastUpdated: string
-  gitCommitSha?: string
-  isLocal?: boolean
+  scope: PluginScope;
+  installPath: string;
+  version: string;
+  installedAt: string;
+  lastUpdated: string;
+  gitCommitSha?: string;
+  isLocal?: boolean;
   /**
    * Claude Code records this on project/local-scoped installations.
    * Absolute path (or `~`-prefixed) of the project the plugin was installed for.
    * Used to filter project/local plugins that do not belong to the current cwd.
    */
-  projectPath?: string
+  projectPath?: string;
 }
 
 /**
@@ -31,8 +31,8 @@ export interface PluginInstallation {
  * plugins stored as direct objects
  */
 export interface InstalledPluginsDatabaseV1 {
-  version: 1
-  plugins: Record<string, PluginInstallation>
+  version: 1;
+  plugins: Record<string, PluginInstallation>;
 }
 
 /**
@@ -40,8 +40,8 @@ export interface InstalledPluginsDatabaseV1 {
  * plugins stored as arrays keyed by plugin identifier
  */
 export interface InstalledPluginsDatabaseV2 {
-  version: 2
-  plugins: Record<string, PluginInstallation[]>
+  version: 2;
+  plugins: Record<string, PluginInstallation[]>;
 }
 
 /**
@@ -50,18 +50,18 @@ export interface InstalledPluginsDatabaseV2 {
  * used to construct the plugin key as "name@marketplace".
  */
 export interface InstalledPluginEntryV3 {
-  name: string
-  marketplace: string
-  scope: PluginScope
-  version: string
-  installPath: string
-  lastUpdated: string
-  gitCommitSha?: string
+  name: string;
+  marketplace: string;
+  scope: PluginScope;
+  version: string;
+  installPath: string;
+  lastUpdated: string;
+  gitCommitSha?: string;
   /**
    * Claude Code records this on project/local-scoped installations.
    * Absolute path (or `~`-prefixed) of the project the plugin was installed for.
    */
-  projectPath?: string
+  projectPath?: string;
 }
 
 /**
@@ -76,15 +76,15 @@ export interface InstalledPluginEntryV3 {
 export type InstalledPluginsDatabase =
   | InstalledPluginsDatabaseV1
   | InstalledPluginsDatabaseV2
-  | InstalledPluginEntryV3[]
+  | InstalledPluginEntryV3[];
 
 /**
  * Plugin author information
  */
 export interface PluginAuthor {
-  name?: string
-  email?: string
-  url?: string
+  name?: string;
+  email?: string;
+  url?: string;
 }
 
 /**
@@ -92,23 +92,23 @@ export interface PluginAuthor {
  * Located at <plugin_root>/.claude-plugin/plugin.json
  */
 export interface PluginManifest {
-  name: string
-  version?: string
-  description?: string
-  author?: PluginAuthor
-  homepage?: string
-  repository?: string
-  license?: string
-  keywords?: string[]
-  
+  name: string;
+  version?: string;
+  description?: string;
+  author?: PluginAuthor;
+  homepage?: string;
+  repository?: string;
+  license?: string;
+  keywords?: string[];
+
   // Component paths (can be string or array)
-  commands?: string | string[]
-  agents?: string | string[]
-  skills?: string | string[]
-  hooks?: string | HooksConfig
-  mcpServers?: string | McpServersConfig
-  lspServers?: string | LspServersConfig
-  outputStyles?: string | string[]
+  commands?: string | string[];
+  agents?: string | string[];
+  skills?: string | string[];
+  hooks?: string | HooksConfig;
+  mcpServers?: string | McpServersConfig;
+  lspServers?: string | LspServersConfig;
+  outputStyles?: string | string[];
 }
 
 /**
@@ -118,114 +118,120 @@ export type HookEntry =
   | { type: "command"; command?: string }
   | { type: "prompt"; prompt?: string }
   | { type: "agent"; agent?: string }
-  | { type: "http"; url: string; headers?: Record<string, string>; allowedEnvVars?: string[]; timeout?: number }
+  | {
+      type: "http";
+      url: string;
+      headers?: Record<string, string>;
+      allowedEnvVars?: string[];
+      timeout?: number;
+    };
 
 export interface HookMatcher {
-  matcher?: string
-  hooks: HookEntry[]
+  matcher?: string;
+  hooks: HookEntry[];
 }
 
 export interface HooksConfig {
   hooks?: {
-    PreToolUse?: HookMatcher[]
-    PostToolUse?: HookMatcher[]
-    PostToolUseFailure?: HookMatcher[]
-    PermissionRequest?: HookMatcher[]
-    UserPromptSubmit?: HookMatcher[]
-    Notification?: HookMatcher[]
-    Stop?: HookMatcher[]
-    SubagentStart?: HookMatcher[]
-    SubagentStop?: HookMatcher[]
-    SessionStart?: HookMatcher[]
-    SessionEnd?: HookMatcher[]
-    PreCompact?: HookMatcher[]
-  }
+    PreToolUse?: HookMatcher[];
+    PostToolUse?: HookMatcher[];
+    PostToolUseFailure?: HookMatcher[];
+    PermissionRequest?: HookMatcher[];
+    UserPromptSubmit?: HookMatcher[];
+    Notification?: HookMatcher[];
+    Stop?: HookMatcher[];
+    SubagentStart?: HookMatcher[];
+    SubagentStop?: HookMatcher[];
+    SessionStart?: HookMatcher[];
+    SessionEnd?: HookMatcher[];
+    PreCompact?: HookMatcher[];
+  };
 }
 
 /**
  * MCP servers configuration in plugin
  */
 export interface PluginMcpServer {
-  command?: string
-  args?: string[]
-  env?: Record<string, string>
-  cwd?: string
-  url?: string
-  type?: "stdio" | "http" | "sse"
-  disabled?: boolean
+  command?: string;
+  args?: string[];
+  env?: Record<string, string>;
+  cwd?: string;
+  url?: string;
+  type?: "stdio" | "http" | "sse";
+  disabled?: boolean;
 }
 
 export interface McpServersConfig {
-  mcpServers?: Record<string, PluginMcpServer>
+  mcpServers?: Record<string, PluginMcpServer>;
 }
 
 /**
  * LSP server configuration
  */
 export interface LspServerConfig {
-  command: string
-  args?: string[]
-  extensionToLanguage: Record<string, string>
-  transport?: "stdio" | "socket"
-  env?: Record<string, string>
-  initializationOptions?: Record<string, unknown>
-  settings?: Record<string, unknown>
-  workspaceFolder?: string
-  startupTimeout?: number
-  shutdownTimeout?: number
-  restartOnCrash?: boolean
-  maxRestarts?: number
+  command: string;
+  args?: string[];
+  extensionToLanguage: Record<string, string>;
+  transport?: "stdio" | "socket";
+  env?: Record<string, string>;
+  initializationOptions?: Record<string, unknown>;
+  settings?: Record<string, unknown>;
+  workspaceFolder?: string;
+  startupTimeout?: number;
+  shutdownTimeout?: number;
+  restartOnCrash?: boolean;
+  maxRestarts?: number;
   loggingConfig?: {
-    args?: string[]
-    env?: Record<string, string>
-  }
+    args?: string[];
+    env?: Record<string, string>;
+  };
 }
 
 export interface LspServersConfig {
-  [language: string]: LspServerConfig
+  [language: string]: LspServerConfig;
 }
 
 /**
  * Loaded plugin with all resolved components
  */
 export interface LoadedPlugin {
-  name: string
-  version: string
-  scope: PluginScope
-  installPath: string
-  manifest?: PluginManifest
-  pluginKey: string
-  
+  name: string;
+  version: string;
+  scope: PluginScope;
+  installPath: string;
+  manifest?: PluginManifest;
+  pluginKey: string;
+
   // Resolved paths for components
-  commandsDir?: string
-  agentsDir?: string
-  skillsDir?: string
-  hooksPath?: string
-  mcpPath?: string
-  lspPath?: string
+  commandsDir?: string;
+  agentsDir?: string;
+  skillsDir?: string;
+  hooksPath?: string;
+  mcpPath?: string;
+  lspPath?: string;
 }
 
 /**
  * Plugin load result with all components
  */
 export interface PluginLoadResult {
-  plugins: LoadedPlugin[]
-  errors: PluginLoadError[]
+  plugins: LoadedPlugin[];
+  errors: PluginLoadError[];
 }
 
 export interface PluginLoadError {
-  pluginKey: string
-  installPath: string
-  error: string
+  pluginKey: string;
+  installPath: string;
+  error: string;
 }
 
 /**
  * Claude settings from ~/.claude/settings.json
  */
 export interface ClaudeSettings {
-  enabledPlugins?: Record<string, boolean>
+  enabledPlugins?: Record<string, boolean>;
   // Other settings we don't use
-  [key: string]: unknown
+  [key: string]: unknown;
 }
 
 /**
@@ -236,20 +242,20 @@ export interface PluginLoaderOptions {
    * Override the plugins home directory for testing.
    * If not provided, uses CLAUDE_PLUGINS_HOME env var or ~/.claude/plugins
    */
-  pluginsHomeOverride?: string
+  pluginsHomeOverride?: string;
 
   /**
    * Override plugin manifest loading for testing.
    * Return null to force plugin name derivation from the plugin key.
    */
-  loadPluginManifestOverride?: (installPath: string) => PluginManifest | null
+  loadPluginManifestOverride?: (installPath: string) => PluginManifest | null;
 
   /**
    * Override enabled plugins from hiai-opencode config.
    * Key format: "pluginName@marketplace" (e.g., "shell-scripting@claude-code-workflows")
    * Value: true = enabled, false = disabled
-   * 
+   *
    * This takes precedence over ~/.claude/settings.json enabledPlugins
    */
-  enabledPluginsOverride?: Record<string, boolean>
+  enabledPluginsOverride?: Record<string, boolean>;
 }

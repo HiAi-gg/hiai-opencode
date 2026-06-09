@@ -35,7 +35,7 @@ The \`landing_pages\` table has at minimum:
 
 **Examples**:
 - Read: \`scripts/db-content-update.sh "SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'"\`
-- Update: \`scripts/db-content-update.sh "UPDATE landing_pages SET content = '{\"hero\":\"new text\"}'::jsonb WHERE slug = 'home' RETURNING slug, content"\`
+- Update: \`scripts/db-content-update.sh "UPDATE landing_pages SET content = '{"hero":"new text"}'::jsonb WHERE slug = 'home' RETURNING slug, content"\`
 - Insert: \`scripts/db-content-update.sh "INSERT INTO landing_pages (slug, content) VALUES ('new-page', '{}'::jsonb) RETURNING *"\`
 
 **NEVER**:
@@ -44,4 +44,4 @@ The \`landing_pages\` table has at minimum:
 - Use the codebase's schema-change workflow for content edits
 - Skip returning the result — always show what the query returned
 
-This rule applies to landing_pages and any other table that holds textual content (not schema/data-model changes — those still go through migrations).`
+This rule applies to landing_pages and any other table that holds textual content (not schema/data-model changes — those still go through migrations).`;

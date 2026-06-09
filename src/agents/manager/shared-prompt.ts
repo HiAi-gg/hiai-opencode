@@ -1,14 +1,14 @@
-import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
-import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules"
+import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder";
+import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules";
 
 export interface ManagerPromptSections {
-  intro: string
-  routingGate: string
-  workflow: string
-  parallelExecution: string
-  verificationRules: string  // Note: Manager doesn't use verification - Critic handles it
-  boundaries: string
-  criticalRules: string
+  intro: string;
+  routingGate: string;
+  workflow: string;
+  parallelExecution: string;
+  verificationRules: string; // Note: Manager doesn't use verification - Critic handles it
+  boundaries: string;
+  criticalRules: string;
 }
 
 const MANAGER_DELEGATION_SYSTEM = `<delegation_system>
@@ -93,7 +93,7 @@ Every \`task()\` prompt MUST include ALL 6 sections:
 \`\`\`
 
 **If your prompt is under 30 lines, it's TOO SHORT.**
-</delegation_system>`
+</delegation_system>`;
 
 const MANAGER_AUTO_CONTINUE = `<auto_continue>
 ## AUTO-CONTINUE POLICY (STRICT)
@@ -167,7 +167,7 @@ Manager orchestrates these agents. Know WHO they are, WHAT they do, WHEN to call
 - Browser-based UI verification → **Vision** (subagent_type="vision", background=false, skills=["agent-browser"])
 - Git commit / branch / rebase → **Sub** (category="quick", background=false, skills=["git-master"])
 - Post-wave verification, plan checkboxes → **Quality Guardian** (subagent_type="quality-guardian", sequential, skills=[])
-</agent-roster></peer-agents>`
+</agent-roster></peer-agents>`;
 
 const MANAGER_AGENT_ROUTING_ENFORCEMENT = `<agent_routing_enforcement>
 ## ⚠️ CRITICAL: Use Specialist Agents — NOT Everything to Coder/Sub
@@ -203,7 +203,7 @@ Re-read the task descriptions. Look for:
 - "screenshot", "image", "verify UI" → Vision
 - "plan", "architecture", "scope" → Strategist
 - "review", "quality", "verify code" → Critic
-</agent_routing_enforcement>`
+</agent_routing_enforcement>`;
 
 const MANAGER_NOTEPAD_PROTOCOL = `<notepad_protocol>
 ## Notepad System
@@ -227,7 +227,7 @@ const MANAGER_NOTEPAD_PROTOCOL = `<notepad_protocol>
 **Path convention**:
 - Plan: \`.bob/plans/{name}.md\` (you may EDIT to mark checkboxes)
 - Notepad: \`.bob/notepads/{name}/\` (READ/APPEND)
-</notepad_protocol>`
+</notepad_protocol>`;
 
 const MANAGER_POST_DELEGATION_RULE = `<post_delegation_rule>
 ## POST-DELEGATION RULE
@@ -243,13 +243,13 @@ After EVERY delegation completion, you MUST:
 4. **Delegate verification to Critic**: Don't verify output yourself - after updating the plan, send relevant output to Critic for QA if needed.
 
 This ensures accurate progress tracking. Skip this and you lose visibility into what remains.
-</post_delegation_rule>`
+</post_delegation_rule>`;
 
 export function buildManagerPrompt(sections: ManagerPromptSections): string {
   // Manager doesn't have verification rules - Critic handles QA
-  const verificationSection = sections.verificationRules 
-    ? `\n${sections.verificationRules}\n` 
-    : ""
+  const verificationSection = sections.verificationRules
+    ? `\n${sections.verificationRules}\n`
+    : "";
 
   return `${sections.intro}
 
@@ -277,5 +277,5 @@ ${POSTGRES_CONTENT_RULES}
 ${MANAGER_POST_DELEGATION_RULE}
 
 ${MANAGER_AGENT_ROUTING_ENFORCEMENT}
-`
+`;
 }

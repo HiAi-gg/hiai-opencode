@@ -1,15 +1,15 @@
-import type { Todo } from "./types"
+import type { Todo } from "./types";
 
 export type AutoLoopDecision =
   | { kind: "skip"; reason: string }
-  | { kind: "start"; openTodos: number; goal: string }
+  | { kind: "start"; openTodos: number; goal: string };
 
 export type AutoLoopInputs = {
-  threshold: number | undefined
-  todos: Todo[]
-  alreadyStarted: boolean
-  hasStartCallback: boolean
-}
+  threshold: number | undefined;
+  todos: Todo[];
+  alreadyStarted: boolean;
+  hasStartCallback: boolean;
+};
 
 /**
  * Pure decision: should the enforcer auto-start ralph-loop right now?
@@ -18,18 +18,23 @@ export type AutoLoopInputs = {
  * and updating session state.
  */
 export function decideAutoLoop(input: AutoLoopInputs): AutoLoopDecision {
-  if (!input.hasStartCallback) return { kind: "skip", reason: "no-start-callback" }
-  if (!input.threshold || input.threshold < 1) return { kind: "skip", reason: "disabled" }
-  if (input.alreadyStarted) return { kind: "skip", reason: "already-started" }
+  if (!input.hasStartCallback)
+    return { kind: "skip", reason: "no-start-callback" };
+  if (!input.threshold || input.threshold < 1)
+    return { kind: "skip", reason: "disabled" };
+  if (input.alreadyStarted) return { kind: "skip", reason: "already-started" };
 
   const open = input.todos.filter(
     (todo) => todo.status !== "completed" && todo.status !== "cancelled",
-  ).length
+  ).length;
   if (open < input.threshold) {
-    return { kind: "skip", reason: `below-threshold (${open}<${input.threshold})` }
+    return {
+      kind: "skip",
+      reason: `below-threshold (${open}<${input.threshold})`,
+    };
   }
 
-  return { kind: "start", openTodos: open, goal: buildAutoLoopGoal(open) }
+  return { kind: "start", openTodos: open, goal: buildAutoLoopGoal(open) };
 }
 
 export function buildAutoLoopGoal(openTodos: number): string {
@@ -45,5 +50,5 @@ export function buildAutoLoopGoal(openTodos: number): string {
     ``,
     `Verify each todo before marking it done (build, tests, manual QA where applicable).`,
     `Emit <promise>DONE</promise> when ALL todos are completed and verified.`,
-  ].join("\n")
+  ].join("\n");
 }

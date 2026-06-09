@@ -1,8 +1,9 @@
+import { setPendingModelFallback } from "../../hooks/model-fallback/hook";
 import {
-  clearPendingModelFallback,
-  setPendingModelFallback,
-} from "../../hooks/model-fallback/hook";
-import { getMainSessionID, getSessionAgent, updateSessionAgent } from "../../features/claude-code-session-state";
+  getMainSessionID,
+  getSessionAgent,
+  updateSessionAgent,
+} from "../../features/claude-code-session-state";
 import { log } from "../../shared/logger";
 import { shouldRetryError } from "../../shared/model-error-classifier";
 import { setSessionModel } from "../../shared/session-model-state";
@@ -11,7 +12,6 @@ import type { EventInput, EventHandlerDeps } from "./types";
 import {
   extractErrorName,
   extractErrorMessage,
-  extractProviderModelFromErrorMessage,
   normalizeFallbackModelID,
   applyUserConfiguredFallbackChain,
   isCompactionAgent,
@@ -40,7 +40,12 @@ export async function handleMessageUpdated(
     }
   }
 
-  if (sessionID && role === "assistant" && !deps.isRuntimeFallbackEnabled && deps.isModelFallbackEnabled) {
+  if (
+    sessionID &&
+    role === "assistant" &&
+    !deps.isRuntimeFallbackEnabled &&
+    deps.isModelFallbackEnabled
+  ) {
     try {
       const assistantMessageID = info?.id as string | undefined;
       const assistantError = info?.error;
@@ -55,7 +60,10 @@ export async function handleMessageUpdated(
         if (shouldRetryError(errorInfo)) {
           let agentName = agent ?? getSessionAgent(sessionID);
           if (!agentName && sessionID === getMainSessionID()) {
-            if (errorMessage.includes("claude-opus") || errorMessage.includes("opus")) {
+            if (
+              errorMessage.includes("claude-opus") ||
+              errorMessage.includes("opus")
+            ) {
               agentName = "bob";
             } else if (errorMessage.includes("gpt-5")) {
               agentName = "coder";
@@ -69,25 +77,45 @@ export async function handleMessageUpdated(
               sessionID,
               info?.providerID as string | undefined,
             );
-            const rawModel = (info?.modelID as string | undefined) ?? "claude-opus-4-6";
+            const rawModel =
+              (info?.modelID as string | undefined) ?? "claude-opus-4-6";
             const currentModel = normalizeFallbackModelID(rawModel);
-            applyUserConfiguredFallbackChain(sessionID, agentName, currentProvider, deps.pluginConfig);
+            applyUserConfiguredFallbackChain(
+              sessionID,
+              agentName,
+              currentProvider,
+              deps.pluginConfig,
+            );
 
-            const setFallback = setPendingModelFallback(sessionID, agentName, currentProvider, currentModel);
+            const setFallback = setPendingModelFallback(
+              sessionID,
+              agentName,
+              currentProvider,
+              currentModel,
+            );
 
             if (
               setFallback &&
               deps.shouldAutoRetrySession(sessionID) &&
               !deps.hooks.stopContinuationGuard?.isStopped(sessionID)
             ) {
-              deps.lastHandledModelErrorMessageID.set(sessionID, assistantMessageID);
-              await deps.autoContinueAfterFallback(sessionID, "message.updated");
+              deps.lastHandledModelErrorMessageID.set(
+                sessionID,
+                assistantMessageID,
+              );
+              await deps.autoContinueAfterFallback(
+                sessionID,
+                "message.updated",
+              );
             }
           }
         }
       }
     } catch (err) {
-      log("[event] model-fallback error in message.updated:", { sessionID, error: err });
+      log("[event] model-fallback error in message.updated:", {
+        sessionID,
+        error: err,
+      });
     }
   }
 }

@@ -1,13 +1,16 @@
-import { createSystemDirective, SystemDirectiveTypes } from "../../shared/system-directive"
-import { getAgentDisplayName } from "../../shared/agent-display-names"
+import {
+  createSystemDirective,
+  SystemDirectiveTypes,
+} from "../../shared/system-directive";
+import { getAgentDisplayName } from "../../shared/agent-display-names";
 
-export const HOOK_NAME = "strategist-md-only"
+export const HOOK_NAME = "strategist-md-only";
 
-export const STRATEGIST_AGENT = "strategist"
+export const STRATEGIST_AGENT = "strategist";
 
-export const ALLOWED_EXTENSIONS = [".md"]
+export const ALLOWED_EXTENSIONS = [".md"];
 
-export const ALLOWED_PATH_PREFIX = ".bob"
+export const ALLOWED_PATH_PREFIX = ".bob";
 
 // ALL mutation-capable tools blocked for Strategist (planning-only agent)
 // Strategist can ONLY write to .bob/*.md files via Write/Edit (with path check)
@@ -15,36 +18,45 @@ export const ALLOWED_PATH_PREFIX = ".bob"
 // Research tools (glob, grep, webfetch) are also blocked — Strategist must delegate research to Researcher
 // read is NOT blocked — Strategist needs it to read plans and synthesize research results
 export const BLOCKED_TOOLS = [
-  "Write", "Edit", "write", "edit",
-  "bash", "Bash",                        // shell commands (mutation risk)
-  "apply_patch",                          // patch application
-  "ast_grep_replace",                     // AST-based code replacement
-  "hashline_edit",                        // hashline editing
-  "interactive_bash",                     // interactive terminal
-  "glob", "grep", "webfetch",            // research tools — delegate to Researcher
-]
+  "Write",
+  "Edit",
+  "write",
+  "edit",
+  "bash",
+  "Bash", // shell commands (mutation risk)
+  "apply_patch", // patch application
+  "ast_grep_replace", // AST-based code replacement
+  "hashline_edit", // hashline editing
+  "interactive_bash", // interactive terminal
+  "glob",
+  "grep",
+  "webfetch", // research tools — delegate to Researcher
+];
 
 export const UNCONDITIONAL_BLOCKED_TOOLS = [
-  "bash", "Bash",
+  "bash",
+  "Bash",
   "apply_patch",
   "ast_grep_replace",
   "hashline_edit",
   "interactive_bash",
-  "glob", "grep", "webfetch",            // research tools — always delegate, no exceptions
-]
+  "glob",
+  "grep",
+  "webfetch", // research tools — always delegate, no exceptions
+];
 
 export const BLOCKED_EXECUTION_SKILLS = [
   "executing-plans",
   "incremental-implementation",
   "verification-before-completion",
   "git-master",
-]
+];
 
 export const BLOCKED_EXECUTION_COMMANDS = [
   "start-work",
   "ralph-loop",
   "ulw-loop",
-]
+];
 
 export const ALLOWED_PLANNING_SUBAGENTS = [
   "researcher",
@@ -53,7 +65,7 @@ export const ALLOWED_PLANNING_SUBAGENTS = [
   "designer",
   "brainstormer",
   "vision",
-]
+];
 
 export const BLOCKED_EXECUTION_CATEGORIES = [
   "quick",
@@ -63,7 +75,7 @@ export const BLOCKED_EXECUTION_CATEGORIES = [
   "visual-engineering",
   "ultrabrain",
   "artistry",
-]
+];
 
 export const PLANNING_CONSULT_WARNING = `
 
@@ -84,7 +96,7 @@ Return your findings and recommendations. The actual implementation will be hand
 
 ---
 
-`
+`;
 
 export const STRATEGIST_EXECUTION_BLOCK_MESSAGE = `${createSystemDirective(SystemDirectiveTypes.STRATEGIST_READ_ONLY)}
 
@@ -97,7 +109,7 @@ Do not start execution from Strategist.
 - Do not use glob, grep, or webfetch for self-research
   → Delegate ALL research to researcher agents: task(subagent_type="researcher", load_skills=[], run_in_background=true, ...)
 - Finish the plan, present the summary, and hand off via \`/start-work\`
-`
+`;
 
 export const STRATEGIST_WORKFLOW_REMINDER = `
 
@@ -142,4 +154,4 @@ If you skipped steps, STOP NOW. Go back and complete them.
 
 ---
 
-`
+`;

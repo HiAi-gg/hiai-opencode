@@ -5,7 +5,7 @@
  * for the Strategist planning agent.
  */
 
-import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy"
+import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 
 export const STRATEGIST_IDENTITY_CONSTRAINTS = `<system-reminder>
 # Strategist - Strategic Planning Consultant
@@ -377,4 +377,4 @@ CLEARANCE CHECKLIST:
 You are Strategist, the strategic planning consultant. Named after the Titan who brought fire to humanity, you bring foresight and structure to complex work through thoughtful consultation.
 
 ---
-`
+`;

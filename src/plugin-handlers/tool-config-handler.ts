@@ -1,5 +1,8 @@
 import type { HiaiOpenCodeConfig } from "../config";
-import { getAgentDisplayName, getAgentListDisplayName } from "../shared/agent-display-names";
+import {
+  getAgentDisplayName,
+  getAgentListDisplayName,
+} from "../shared/agent-display-names";
 import { isTaskSystemEnabled } from "../shared";
 
 type AgentWithPermission = { permission?: Record<string, unknown> };
@@ -15,10 +18,13 @@ function getConfigQuestionPermission(): string | null {
   }
 }
 
-function agentByKey(agentResult: Record<string, unknown>, key: string): AgentWithPermission | undefined {
-  return (agentResult[getAgentListDisplayName(key)] ?? agentResult[getAgentDisplayName(key)] ?? agentResult[key]) as
-    | AgentWithPermission
-    | undefined;
+function agentByKey(
+  agentResult: Record<string, unknown>,
+  key: string,
+): AgentWithPermission | undefined {
+  return (agentResult[getAgentListDisplayName(key)] ??
+    agentResult[getAgentDisplayName(key)] ??
+    agentResult[key]) as AgentWithPermission | undefined;
 }
 
 function applyPermissionToAgentKeys(args: {
@@ -49,12 +55,14 @@ export function applyToolConfig(params: {
   pluginConfig: HiaiOpenCodeConfig;
   agentResult: Record<string, unknown>;
 }): void {
-  const taskSystemEnabled = isTaskSystemEnabled(params.pluginConfig)
+  const taskSystemEnabled = isTaskSystemEnabled(params.pluginConfig);
   const denyTodoTools = taskSystemEnabled
     ? { todowrite: "deny", todoread: "deny" }
-    : {}
+    : {};
 
-  const existingPermission = params.config.permission as Record<string, unknown> | undefined;
+  const existingPermission = params.config.permission as
+    | Record<string, unknown>
+    | undefined;
   const skillDeniedByHost = existingPermission?.skill === "deny";
 
   params.config.tools = {
@@ -65,22 +73,21 @@ export function applyToolConfig(params: {
     LspCodeActionResolve: false,
     "task_*": false,
     teammate: false,
-    ...(taskSystemEnabled
-      ? { todowrite: false, todoread: false }
-      : {}),
-    ...(skillDeniedByHost
-      ? { skill: false, skill_mcp: false }
-      : {}),
+    ...(taskSystemEnabled ? { todowrite: false, todoread: false } : {}),
+    ...(skillDeniedByHost ? { skill: false, skill_mcp: false } : {}),
   };
 
   const isCliRunMode = process.env.OPENCODE_CLI_RUN_MODE === "true";
   const configQuestionPermission = getConfigQuestionPermission();
-  const isQuestionDisabledByPlugin = params.pluginConfig.disabled_tools?.includes("question") ?? false;
-  const questionPermission =
-    isQuestionDisabledByPlugin ? "deny" :
-    configQuestionPermission === "deny" ? "deny" :
-    isCliRunMode ? "deny" :
-    "allow";
+  const isQuestionDisabledByPlugin =
+    params.pluginConfig.disabled_tools?.includes("question") ?? false;
+  const questionPermission = isQuestionDisabledByPlugin
+    ? "deny"
+    : configQuestionPermission === "deny"
+      ? "deny"
+      : isCliRunMode
+        ? "deny"
+        : "allow";
 
   applyPermissionToAgentKeys({
     agentResult: params.agentResult,
@@ -94,7 +101,11 @@ export function applyToolConfig(params: {
     agentResult: params.agentResult,
     keys: MULTIMODAL_AGENT_KEYS,
     apply: (agent) => {
-      agent.permission = { ...agent.permission, task: "deny", look_at: "allow" };
+      agent.permission = {
+        ...agent.permission,
+        task: "deny",
+        look_at: "allow",
+      };
     },
   });
 
@@ -139,7 +150,7 @@ export function applyToolConfig(params: {
     },
   });
 
-applyPermissionToAgentKeys({
+  applyPermissionToAgentKeys({
     agentResult: params.agentResult,
     keys: ["coder"],
     apply: (agent) => {

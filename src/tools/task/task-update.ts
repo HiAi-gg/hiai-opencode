@@ -1,6 +1,6 @@
 import type { PluginInput } from "@opencode-ai/plugin";
 import { tool, type ToolDefinition } from "@opencode-ai/plugin/tool";
-import { join } from "path";
+import { join } from "node:path";
 import type { HiaiOpenCodeConfig } from "../../config/schema";
 import { TaskObjectSchema, TaskUpdateInputSchema } from "./types";
 import {
@@ -22,8 +22,8 @@ export function createTaskUpdateTool(
   config: Partial<HiaiOpenCodeConfig>,
   ctx?: PluginInput,
 ): ToolDefinition {
-   return tool({
-     description: `Update an existing task with new values.
+  return tool({
+    description: `Update an existing task with new values.
 
 Supports updating: subject, description, status, activeForm, owner, metadata.
 For blocks/blockedBy: use addBlocks/addBlockedBy to append (additive, not replacement).
@@ -33,7 +33,7 @@ Syncs to OpenCode Todo API after update.
 **IMPORTANT - Dependency Management:**
 Use \`addBlockedBy\` to declare dependencies on other tasks.
 Properly managed dependencies enable maximum parallel execution.`,
-     args: {
+    args: {
       id: tool.schema.string().describe("Task ID (required)"),
       subject: tool.schema.string().optional().describe("Task subject"),
       description: tool.schema.string().optional().describe("Task description"),

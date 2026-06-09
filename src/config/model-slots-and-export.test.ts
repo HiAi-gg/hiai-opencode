@@ -1,9 +1,12 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "bun:test";
 
-import { applyModelSlots } from "./defaults"
-import type { HiaiOpencodeConfig } from "./types"
-import { buildStaticMcpJson, MCP_EXPORT_MARKER } from "../shared/mcp-static-export"
-import { buildHiaiIntegrationPrimerSection } from "../agents/dynamic-agent-core-sections"
+import { applyModelSlots } from "./defaults";
+import type { HiaiOpencodeConfig } from "./types";
+import {
+  buildStaticMcpJson,
+  MCP_EXPORT_MARKER,
+} from "../shared/mcp-static-export";
+import { buildHiaiIntegrationPrimerSection } from "../agents/dynamic-agent-core-sections";
 
 const baseConfig: HiaiOpencodeConfig = {
   models: {
@@ -21,25 +24,27 @@ const baseConfig: HiaiOpencodeConfig = {
   mcp: {
     mempalace: { enabled: true, pythonPath: "/opt/venv/bin/python" },
   },
-}
+};
 
 test("model slots derive canonical agents and categories", () => {
-  const resolved = applyModelSlots(baseConfig)
-  expect(resolved.agents?.bob?.model).toBe("openrouter/test/bob")
-  expect(resolved.agents?.coder?.model).toBe("openrouter/test/coder")
-  expect(resolved.agents?.sub?.model).toBe("openrouter/test/sub")
-  expect(resolved.categories?.artistry?.variant).toBe("high")
-  expect(resolved.categories?.ultrabrain?.variant).toBe("xhigh")
-  expect(resolved.categories?.deep?.variant).toBe("medium")
-  expect(resolved.categories?.quick).toBeDefined()
-  expect(resolved.categories?.writing).toBeDefined()
-  expect(resolved.categories?.git).toBeDefined()
-})
+  const resolved = applyModelSlots(baseConfig);
+  expect(resolved.agents?.bob?.model).toBe("openrouter/test/bob");
+  expect(resolved.agents?.coder?.model).toBe("openrouter/test/coder");
+  expect(resolved.agents?.sub?.model).toBe("openrouter/test/sub");
+  expect(resolved.categories?.artistry?.variant).toBe("high");
+  expect(resolved.categories?.ultrabrain?.variant).toBe("xhigh");
+  expect(resolved.categories?.deep?.variant).toBe("medium");
+  expect(resolved.categories?.quick).toBeDefined();
+  expect(resolved.categories?.writing).toBeDefined();
+  expect(resolved.categories?.git).toBeDefined();
+});
 
 test("compact MCP mempalace pythonPath is materialized into environment", () => {
-  const resolved = applyModelSlots(baseConfig)
-  expect(resolved.mcp?.mempalace?.environment?.MEMPALACE_PYTHON).toBe("/opt/venv/bin/python")
-})
+  const resolved = applyModelSlots(baseConfig);
+  expect(resolved.mcp?.mempalace?.environment?.MEMPALACE_PYTHON).toBe(
+    "/opt/venv/bin/python",
+  );
+});
 
 test("static MCP export includes marker metadata and servers", () => {
   const resolved = applyModelSlots({
@@ -47,16 +52,18 @@ test("static MCP export includes marker metadata and servers", () => {
     mcp: {
       mempalace: { enabled: true, pythonPath: "/opt/venv/bin/python" },
     },
-  })
-  const exported = buildStaticMcpJson(resolved)
+  });
+  const exported = buildStaticMcpJson(resolved);
 
-  expect(exported._meta?.generatedBy).toBe(MCP_EXPORT_MARKER)
-  expect(exported._meta?.version).toBe(1)
-  expect(exported.mcpServers.mempalace).toBeDefined()
-  expect(exported.mcpServers.grep_app).toBeDefined()
-})
+  expect(exported._meta?.generatedBy).toBe(MCP_EXPORT_MARKER);
+  expect(exported._meta?.version).toBe(1);
+  expect(exported.mcpServers.mempalace).toBeDefined();
+  expect(exported.mcpServers.grep_app).toBeDefined();
+});
 
 test("integration primer does not request model provider API keys", () => {
-  const primer = buildHiaiIntegrationPrimerSection()
-  expect(primer).toContain("Do not ask for `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`")
-})
+  const primer = buildHiaiIntegrationPrimerSection();
+  expect(primer).toContain(
+    "Do not ask for `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY`",
+  );
+});

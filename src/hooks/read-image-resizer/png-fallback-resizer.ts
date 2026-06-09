@@ -1,47 +1,54 @@
-import { inflateSync, deflateSync } from "node:zlib"
+import { inflateSync, deflateSync } from "node:zlib";
 
-import type { ImageDimensions, ResizeResult } from "./types"
-import { extractBase64Data } from "../../tools/look-at/mime-type-inference"
-import { log } from "../../shared"
+import type { ImageDimensions, ResizeResult } from "./types";
+import { extractBase64Data } from "../../tools/look-at/mime-type-inference";
+import { log } from "../../shared";
 
 interface PngChunk {
-  type: string
-  data: Buffer
-  crc: Buffer
+  type: string;
+  data: Buffer;
+  crc: Buffer;
 }
 
-const PNG_SIGNATURE = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+const PNG_SIGNATURE = Buffer.from([
+  0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+]);
 
 function readPngChunks(buffer: Buffer): PngChunk[] {
-  const chunks: PngChunk[] = []
-  let offset = 8
+  const chunks: PngChunk[] = [];
+  let offset = 8;
 
   while (offset < buffer.length) {
     if (offset + 8 > buffer.length) {
-      break
+      break;
     }
 
-    const length = buffer.readUInt32BE(offset)
-    const type = buffer.toString("ascii", offset + 4, offset + 8)
-    const dataStart = offset + 8
-    const dataEnd = dataStart + length
+    const length = buffer.readUInt32BE(offset);
+    const type = buffer.toString("ascii", offset + 4, offset + 8);
+    const dataStart = offset + 8;
+    const dataEnd = dataStart + length;
 
     if (dataEnd + 4 > buffer.length) {
-      break
+      break;
     }
 
-    const data = buffer.subarray(dataStart, dataEnd)
-    const crc = buffer.subarray(dataEnd, dataEnd + 4)
-    chunks.push({ type, data, crc })
-    offset = dataEnd + 4
+    const data = buffer.subarray(dataStart, dataEnd);
+    const crc = buffer.subarray(dataEnd, dataEnd + 4);
+    chunks.push({ type, data, crc });
+    offset = dataEnd + 4;
   }
 
-  return chunks
+  return chunks;
 }
 
-function parseIhdr(data: Buffer): { width: number; height: number; bitDepth: number; colorType: number } | null {
+function parseIhdr(data: Buffer): {
+  width: number;
+  height: number;
+  bitDepth: number;
+  colorType: number;
+} | null {
   if (data.length < 13) {
-    return null
+    return null;
   }
 
   return {
@@ -49,7 +56,7 @@ function parseIhdr(data: Buffer): { width: number; height: number; bitDepth: num
     height: data.readUInt32BE(4),
     bitDepth: data[8],
     colorType: data[9],
-  }
+  };
 }
 
 function getBytesPerPixel(colorType: number, bitDepth: number): number | null {
@@ -58,31 +65,31 @@ function getBytesPerPixel(colorType: number, bitDepth: number): number | null {
     2: 3, // RGB
     4: 2, // grayscale + alpha
     6: 4, // RGBA
-  }
+  };
 
-  const channelCount = channels[colorType]
+  const channelCount = channels[colorType];
   if (channelCount === undefined) {
-    return null
+    return null;
   }
 
-  return channelCount * (bitDepth / 8)
+  return channelCount * (bitDepth / 8);
 }
 
 function paethPredictor(a: number, b: number, c: number): number {
-  const p = a + b - c
-  const pa = Math.abs(p - a)
-  const pb = Math.abs(p - b)
-  const pc = Math.abs(p - c)
+  const p = a + b - c;
+  const pa = Math.abs(p - a);
+  const pb = Math.abs(p - b);
+  const pc = Math.abs(p - c);
 
   if (pa <= pb && pa <= pc) {
-    return a
+    return a;
   }
 
   if (pb <= pc) {
-    return b
+    return b;
   }
 
-  return c
+  return c;
 }
 
 function unfilterRow(
@@ -91,36 +98,37 @@ function unfilterRow(
   previousRow: Buffer | null,
   bytesPerPixel: number,
 ): Buffer {
-  const result = Buffer.alloc(currentRow.length)
+  const result = Buffer.alloc(currentRow.length);
 
   for (let i = 0; i < currentRow.length; i++) {
-    const raw = currentRow[i]
-    const a = i >= bytesPerPixel ? result[i - bytesPerPixel] : 0
-    const b = previousRow ? previousRow[i] : 0
-    const c = i >= bytesPerPixel && previousRow ? previousRow[i - bytesPerPixel] : 0
+    const raw = currentRow[i];
+    const a = i >= bytesPerPixel ? result[i - bytesPerPixel] : 0;
+    const b = previousRow ? previousRow[i] : 0;
+    const c =
+      i >= bytesPerPixel && previousRow ? previousRow[i - bytesPerPixel] : 0;
 
     switch (filterType) {
       case 0:
-        result[i] = raw
-        break
+        result[i] = raw;
+        break;
       case 1:
-        result[i] = (raw + a) & 0xff
-        break
+        result[i] = (raw + a) & 0xff;
+        break;
       case 2:
-        result[i] = (raw + b) & 0xff
-        break
+        result[i] = (raw + b) & 0xff;
+        break;
       case 3:
-        result[i] = (raw + Math.floor((a + b) / 2)) & 0xff
-        break
+        result[i] = (raw + Math.floor((a + b) / 2)) & 0xff;
+        break;
       case 4:
-        result[i] = (raw + paethPredictor(a, b, c)) & 0xff
-        break
+        result[i] = (raw + paethPredictor(a, b, c)) & 0xff;
+        break;
       default:
-        result[i] = raw
+        result[i] = raw;
     }
   }
 
-  return result
+  return result;
 }
 
 function decodePngPixels(
@@ -130,30 +138,38 @@ function decodePngPixels(
   bytesPerPixel: number,
 ): Buffer | null {
   try {
-    const decompressed = inflateSync(idatData)
-    const rowBytes = width * bytesPerPixel
-    const expectedLength = height * (rowBytes + 1)
+    const decompressed = inflateSync(idatData);
+    const rowBytes = width * bytesPerPixel;
+    const expectedLength = height * (rowBytes + 1);
 
     if (decompressed.length < expectedLength) {
-      return null
+      return null;
     }
 
-    const pixels = Buffer.alloc(width * height * bytesPerPixel)
-    let previousRow: Buffer | null = null
+    const pixels = Buffer.alloc(width * height * bytesPerPixel);
+    let previousRow: Buffer | null = null;
 
     for (let y = 0; y < height; y++) {
-      const rowStart = y * (rowBytes + 1)
-      const filterType = decompressed[rowStart]
-      const filteredRow = decompressed.subarray(rowStart + 1, rowStart + 1 + rowBytes)
-      const unfilteredRow = unfilterRow(filterType, filteredRow, previousRow, bytesPerPixel)
+      const rowStart = y * (rowBytes + 1);
+      const filterType = decompressed[rowStart];
+      const filteredRow = decompressed.subarray(
+        rowStart + 1,
+        rowStart + 1 + rowBytes,
+      );
+      const unfilteredRow = unfilterRow(
+        filterType,
+        filteredRow,
+        previousRow,
+        bytesPerPixel,
+      );
 
-      unfilteredRow.copy(pixels, y * rowBytes)
-      previousRow = unfilteredRow
+      unfilteredRow.copy(pixels, y * rowBytes);
+      previousRow = unfilteredRow;
     }
 
-    return pixels
+    return pixels;
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -165,23 +181,29 @@ function nearestNeighborResize(
   dstHeight: number,
   bytesPerPixel: number,
 ): Buffer {
-  const destPixels = Buffer.alloc(dstWidth * dstHeight * bytesPerPixel)
+  const destPixels = Buffer.alloc(dstWidth * dstHeight * bytesPerPixel);
 
   for (let dstY = 0; dstY < dstHeight; dstY++) {
-    const srcY = Math.min(Math.floor((dstY * srcHeight) / dstHeight), srcHeight - 1)
+    const srcY = Math.min(
+      Math.floor((dstY * srcHeight) / dstHeight),
+      srcHeight - 1,
+    );
 
     for (let dstX = 0; dstX < dstWidth; dstX++) {
-      const srcX = Math.min(Math.floor((dstX * srcWidth) / dstWidth), srcWidth - 1)
-      const srcOffset = (srcY * srcWidth + srcX) * bytesPerPixel
-      const dstOffset = (dstY * dstWidth + dstX) * bytesPerPixel
+      const srcX = Math.min(
+        Math.floor((dstX * srcWidth) / dstWidth),
+        srcWidth - 1,
+      );
+      const srcOffset = (srcY * srcWidth + srcX) * bytesPerPixel;
+      const dstOffset = (dstY * dstWidth + dstX) * bytesPerPixel;
 
       for (let b = 0; b < bytesPerPixel; b++) {
-        destPixels[dstOffset + b] = sourcePixels[srcOffset + b]
+        destPixels[dstOffset + b] = sourcePixels[srcOffset + b];
       }
     }
   }
 
-  return destPixels
+  return destPixels;
 }
 
 function encodePng(
@@ -192,76 +214,76 @@ function encodePng(
   colorType: number,
   bytesPerPixel: number,
 ): Buffer {
-  const rowBytes = width * bytesPerPixel
-  const filteredData = Buffer.alloc(height * (rowBytes + 1))
+  const rowBytes = width * bytesPerPixel;
+  const filteredData = Buffer.alloc(height * (rowBytes + 1));
 
   for (let y = 0; y < height; y++) {
-    const rowOffset = y * (rowBytes + 1)
-    filteredData[rowOffset] = 0
-    pixels.copy(filteredData, rowOffset + 1, y * rowBytes, (y + 1) * rowBytes)
+    const rowOffset = y * (rowBytes + 1);
+    filteredData[rowOffset] = 0;
+    pixels.copy(filteredData, rowOffset + 1, y * rowBytes, (y + 1) * rowBytes);
   }
 
-  const compressedData = deflateSync(filteredData)
+  const compressedData = deflateSync(filteredData);
 
-  const ihdrData = Buffer.alloc(13)
-  ihdrData.writeUInt32BE(width, 0)
-  ihdrData.writeUInt32BE(height, 4)
-  ihdrData[8] = bitDepth
-  ihdrData[9] = colorType
-  ihdrData[10] = 0
-  ihdrData[11] = 0
-  ihdrData[12] = 0
+  const ihdrData = Buffer.alloc(13);
+  ihdrData.writeUInt32BE(width, 0);
+  ihdrData.writeUInt32BE(height, 4);
+  ihdrData[8] = bitDepth;
+  ihdrData[9] = colorType;
+  ihdrData[10] = 0;
+  ihdrData[11] = 0;
+  ihdrData[12] = 0;
 
-  const ihdrChunk = createChunk("IHDR", ihdrData)
-  const idatChunk = createChunk("IDAT", compressedData)
-  const iendChunk = createChunk("IEND", Buffer.alloc(0))
+  const ihdrChunk = createChunk("IHDR", ihdrData);
+  const idatChunk = createChunk("IDAT", compressedData);
+  const iendChunk = createChunk("IEND", Buffer.alloc(0));
 
-  return Buffer.concat([PNG_SIGNATURE, ihdrChunk, idatChunk, iendChunk])
+  return Buffer.concat([PNG_SIGNATURE, ihdrChunk, idatChunk, iendChunk]);
 }
 
 function createChunk(type: string, data: Buffer): Buffer {
-  const typeBuffer = Buffer.from(type, "ascii")
-  const lengthBuffer = Buffer.alloc(4)
-  lengthBuffer.writeUInt32BE(data.length, 0)
+  const typeBuffer = Buffer.from(type, "ascii");
+  const lengthBuffer = Buffer.alloc(4);
+  lengthBuffer.writeUInt32BE(data.length, 0);
 
-  const crcInput = Buffer.concat([typeBuffer, data])
-  const crc = crc32(crcInput)
-  const crcBuffer = Buffer.alloc(4)
-  crcBuffer.writeUInt32BE(crc >>> 0, 0)
+  const crcInput = Buffer.concat([typeBuffer, data]);
+  const crc = crc32(crcInput);
+  const crcBuffer = Buffer.alloc(4);
+  crcBuffer.writeUInt32BE(crc >>> 0, 0);
 
-  return Buffer.concat([lengthBuffer, typeBuffer, data, crcBuffer])
+  return Buffer.concat([lengthBuffer, typeBuffer, data, crcBuffer]);
 }
 
-const CRC_TABLE = buildCrcTable()
+const CRC_TABLE = buildCrcTable();
 
 function buildCrcTable(): Uint32Array {
-  const table = new Uint32Array(256)
+  const table = new Uint32Array(256);
 
   for (let n = 0; n < 256; n++) {
-    let c = n
+    let c = n;
 
     for (let k = 0; k < 8; k++) {
       if (c & 1) {
-        c = 0xedb88320 ^ (c >>> 1)
+        c = 0xedb88320 ^ (c >>> 1);
       } else {
-        c = c >>> 1
+        c = c >>> 1;
       }
     }
 
-    table[n] = c
+    table[n] = c;
   }
 
-  return table
+  return table;
 }
 
 function crc32(data: Buffer): number {
-  let crc = 0xffffffff
+  let crc = 0xffffffff;
 
   for (let i = 0; i < data.length; i++) {
-    crc = CRC_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8)
+    crc = CRC_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
   }
 
-  return (crc ^ 0xffffffff) >>> 0
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 export function resizeImageFallback(
@@ -270,61 +292,66 @@ export function resizeImageFallback(
   target: ImageDimensions,
 ): ResizeResult | null {
   if (mimeType.toLowerCase() !== "image/png") {
-    return null
+    return null;
   }
 
   try {
-    const rawBase64 = extractBase64Data(base64DataUrl)
+    const rawBase64 = extractBase64Data(base64DataUrl);
     if (!rawBase64) {
-      return null
+      return null;
     }
 
-    const inputBuffer = Buffer.from(rawBase64, "base64")
+    const inputBuffer = Buffer.from(rawBase64, "base64");
     if (inputBuffer.length < 8) {
-      return null
+      return null;
     }
 
-    const signature = inputBuffer.subarray(0, 8)
+    const signature = inputBuffer.subarray(0, 8);
     if (!signature.equals(PNG_SIGNATURE)) {
-      return null
+      return null;
     }
 
-    const chunks = readPngChunks(inputBuffer)
-    const ihdrChunk = chunks.find((c) => c.type === "IHDR")
+    const chunks = readPngChunks(inputBuffer);
+    const ihdrChunk = chunks.find((c) => c.type === "IHDR");
     if (!ihdrChunk) {
-      return null
+      return null;
     }
 
-    const ihdr = parseIhdr(ihdrChunk.data)
+    const ihdr = parseIhdr(ihdrChunk.data);
     if (!ihdr) {
-      return null
+      return null;
     }
 
-    const bytesPerPixel = getBytesPerPixel(ihdr.colorType, ihdr.bitDepth)
+    const bytesPerPixel = getBytesPerPixel(ihdr.colorType, ihdr.bitDepth);
     if (!bytesPerPixel) {
       log("[png-fallback-resizer] unsupported color type or bit depth", {
         colorType: ihdr.colorType,
         bitDepth: ihdr.bitDepth,
-      })
-      return null
+      });
+      return null;
     }
 
     if (ihdr.bitDepth !== 8) {
       log("[png-fallback-resizer] only 8-bit depth supported for fallback", {
         bitDepth: ihdr.bitDepth,
-      })
-      return null
+      });
+      return null;
     }
 
-    const idatChunks = chunks.filter((c) => c.type === "IDAT")
+    const idatChunks = chunks.filter((c) => c.type === "IDAT");
     if (idatChunks.length === 0) {
-      return null
+      return null;
     }
 
-    const idatData = Buffer.concat(idatChunks.map((c) => c.data))
-    const sourcePixels = decodePngPixels(idatData, ihdr.width, ihdr.height, bytesPerPixel)
+    const idatData = Buffer.concat(idatChunks.map((c) => c.data));
+    const sourcePixels = decodePngPixels(
+      idatData,
+      ihdr.width,
+      ihdr.height,
+      bytesPerPixel,
+    );
     if (!sourcePixels) {
-      return null
+      return null;
     }
 
     const resizedPixels = nearestNeighborResize(
@@ -334,7 +361,7 @@ export function resizeImageFallback(
       target.width,
       target.height,
       bytesPerPixel,
-    )
+    );
 
     const outputBuffer = encodePng(
       resizedPixels,
@@ -343,17 +370,17 @@ export function resizeImageFallback(
       ihdr.bitDepth,
       ihdr.colorType,
       bytesPerPixel,
-    )
+    );
 
     return {
       resizedDataUrl: `data:image/png;base64,${outputBuffer.toString("base64")}`,
       original: { width: ihdr.width, height: ihdr.height },
       resized: { width: target.width, height: target.height },
-    }
+    };
   } catch (error) {
     log("[png-fallback-resizer] resize failed", {
       error: error instanceof Error ? error.message : String(error),
-    })
-    return null
+    });
+    return null;
   }
 }

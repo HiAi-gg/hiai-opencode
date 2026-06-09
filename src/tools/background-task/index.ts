@@ -2,7 +2,7 @@ export {
   createBackgroundTask,
   createBackgroundOutput,
   createBackgroundCancel,
-} from "./tools"
+} from "./tools";
 
-export type * from "./types"
-export * from "./constants"
+export type * from "./types";
+export * from "./constants";

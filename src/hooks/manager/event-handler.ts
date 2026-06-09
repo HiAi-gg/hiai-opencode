@@ -1,104 +1,110 @@
-import type { PluginInput } from "@opencode-ai/plugin"
-import { log } from "../../shared/logger"
-import { HOOK_NAME } from "./hook-name"
-import { isAbortError } from "../../shared/is-abort-error"
-import { handleGuardSessionIdle } from "./idle-event"
-import type { GuardHookOptions, SessionState } from "./types"
+import type { PluginInput } from "@opencode-ai/plugin";
+import { log } from "../../shared/logger";
+import { HOOK_NAME } from "./hook-name";
+import { isAbortError } from "../../shared/is-abort-error";
+import { handleGuardSessionIdle } from "./idle-event";
+import type { GuardHookOptions, SessionState } from "./types";
 
 export function createGuardEventHandler(input: {
-  ctx: PluginInput
-  options?: GuardHookOptions
-  sessions: Map<string, SessionState>
-  getState: (sessionID: string) => SessionState
+  ctx: PluginInput;
+  options?: GuardHookOptions;
+  sessions: Map<string, SessionState>;
+  getState: (sessionID: string) => SessionState;
 }): (arg: { event: { type: string; properties?: unknown } }) => Promise<void> {
-  const { ctx, options, sessions, getState } = input
+  const { ctx, options, sessions, getState } = input;
 
   return async ({ event }): Promise<void> => {
-    const props = event.properties as Record<string, unknown> | undefined
+    const props = event.properties as Record<string, unknown> | undefined;
 
     if (event.type === "session.error") {
-      const sessionID = props?.sessionID as string | undefined
-      if (!sessionID) return
+      const sessionID = props?.sessionID as string | undefined;
+      if (!sessionID) return;
 
-      const state = getState(sessionID)
-      const isAbort = isAbortError(props?.error)
-      state.lastEventWasAbortError = isAbort
+      const state = getState(sessionID);
+      const isAbort = isAbortError(props?.error);
+      state.lastEventWasAbortError = isAbort;
 
-      log(`[${HOOK_NAME}] session.error`, { sessionID, isAbort })
-      return
+      log(`[${HOOK_NAME}] session.error`, { sessionID, isAbort });
+      return;
     }
 
     if (event.type === "session.idle") {
-      const sessionID = props?.sessionID as string | undefined
-      if (!sessionID) return
-      await handleGuardSessionIdle({ ctx, options, getState, sessionID })
-      return
+      const sessionID = props?.sessionID as string | undefined;
+      if (!sessionID) return;
+      await handleGuardSessionIdle({ ctx, options, getState, sessionID });
+      return;
     }
 
     if (event.type === "message.updated") {
-      const info = props?.info as Record<string, unknown> | undefined
-      const sessionID = info?.sessionID as string | undefined
-      const role = info?.role as string | undefined
-      if (!sessionID) return
+      const info = props?.info as Record<string, unknown> | undefined;
+      const sessionID = info?.sessionID as string | undefined;
+      const role = info?.role as string | undefined;
+      if (!sessionID) return;
 
-      const state = sessions.get(sessionID)
+      const state = sessions.get(sessionID);
       if (state) {
-        state.lastEventWasAbortError = false
+        state.lastEventWasAbortError = false;
         if (role === "user") {
-          state.waitingForFinalWaveApproval = false
+          state.waitingForFinalWaveApproval = false;
         }
       }
-      return
+      return;
     }
 
     if (event.type === "message.part.updated") {
-      const info = props?.info as Record<string, unknown> | undefined
-      const sessionID = info?.sessionID as string | undefined
-      const role = info?.role as string | undefined
+      const info = props?.info as Record<string, unknown> | undefined;
+      const sessionID = info?.sessionID as string | undefined;
+      const role = info?.role as string | undefined;
 
       if (sessionID && role === "assistant") {
-        const state = sessions.get(sessionID)
+        const state = sessions.get(sessionID);
         if (state) {
-          state.lastEventWasAbortError = false
+          state.lastEventWasAbortError = false;
         }
       }
-      return
+      return;
     }
 
-    if (event.type === "tool.execute.before" || event.type === "tool.execute.after") {
-      const sessionID = props?.sessionID as string | undefined
+    if (
+      event.type === "tool.execute.before" ||
+      event.type === "tool.execute.after"
+    ) {
+      const sessionID = props?.sessionID as string | undefined;
       if (sessionID) {
-        const state = sessions.get(sessionID)
+        const state = sessions.get(sessionID);
         if (state) {
-          state.lastEventWasAbortError = false
+          state.lastEventWasAbortError = false;
         }
       }
-      return
+      return;
     }
 
     if (event.type === "session.deleted") {
-      const sessionInfo = props?.info as { id?: string } | undefined
+      const sessionInfo = props?.info as { id?: string } | undefined;
       if (sessionInfo?.id) {
-        const deletedState = sessions.get(sessionInfo.id)
+        const deletedState = sessions.get(sessionInfo.id);
         if (deletedState?.pendingRetryTimer) {
-          clearTimeout(deletedState.pendingRetryTimer)
+          clearTimeout(deletedState.pendingRetryTimer);
         }
-        sessions.delete(sessionInfo.id)
-        log(`[${HOOK_NAME}] Session deleted: cleaned up`, { sessionID: sessionInfo.id })
+        sessions.delete(sessionInfo.id);
+        log(`[${HOOK_NAME}] Session deleted: cleaned up`, {
+          sessionID: sessionInfo.id,
+        });
       }
-      return
+      return;
     }
 
     if (event.type === "session.compacted") {
-      const sessionID = (props?.sessionID ?? (props?.info as { id?: string } | undefined)?.id) as string | undefined
+      const sessionID = (props?.sessionID ??
+        (props?.info as { id?: string } | undefined)?.id) as string | undefined;
       if (sessionID) {
-        const compactedState = sessions.get(sessionID)
+        const compactedState = sessions.get(sessionID);
         if (compactedState?.pendingRetryTimer) {
-          clearTimeout(compactedState.pendingRetryTimer)
+          clearTimeout(compactedState.pendingRetryTimer);
         }
-        sessions.delete(sessionID)
-        log(`[${HOOK_NAME}] Session compacted: cleaned up`, { sessionID })
+        sessions.delete(sessionID);
+        log(`[${HOOK_NAME}] Session compacted: cleaned up`, { sessionID });
       }
     }
-  }
+  };
 }

@@ -31,7 +31,7 @@ export const S2_INLINE_INSTRUCTION = `<system>The user has queued a tool for exe
 export function loopEvaluationPrompt(
   condition: string,
   iteration: number,
-  max: number
+  max: number,
 ): string {
   return `<instructions subtask2=loop-evaluation>
 The user chose to loop the subtask that was just executed.
@@ -103,7 +103,7 @@ export async function getAutoWorkflowPrompt(): Promise<string> {
   const readmeContent = await loadReadmeContent();
   return AUTO_WORKFLOW_PROMPT_TEMPLATE.replace(
     README_PLACEHOLDER,
-    readmeContent
+    readmeContent,
   );
 }
 
@@ -113,5 +113,5 @@ export async function getAutoWorkflowPrompt(): Promise<string> {
  */
 export const AUTO_WORKFLOW_PROMPT = AUTO_WORKFLOW_PROMPT_TEMPLATE.replace(
   README_PLACEHOLDER,
-  "[Use getAutoWorkflowPrompt() to get full documentation]"
+  "[Use getAutoWorkflowPrompt() to get full documentation]",
 );

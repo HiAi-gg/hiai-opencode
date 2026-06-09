@@ -1,52 +1,62 @@
-import type { DelegateTaskArgs, ToolContextWithMetadata, DelegatedModelConfig } from "./types"
-import type { ExecutorContext, ParentContext } from "./executor-types"
-import type { FallbackEntry } from "../../shared/model-requirements"
-import { getTimingConfig } from "./timing"
-import { buildTaskPrompt } from "./prompt-builder"
-import { storeToolMetadata } from "../../features/tool-metadata-store"
-import { resolveCallID } from "./resolve-call-id"
-import { formatDetailedError } from "./error-formatting"
-import { getSessionTools } from "../../shared/session-tools-store"
-import { SessionCategoryRegistry } from "../../shared/session-category-registry"
-import { QUESTION_DENIED_SESSION_PERMISSION } from "../../shared/question-denied-session-permission"
-import { setSessionFallbackChain } from "../../hooks/model-fallback/hook"
-import { stripAgentListSortPrefix } from "../../shared/agent-display-names"
+import type {
+  DelegateTaskArgs,
+  ToolContextWithMetadata,
+  DelegatedModelConfig,
+} from "./types";
+import type { ExecutorContext, ParentContext } from "./executor-types";
+import type { FallbackEntry } from "../../shared/model-requirements";
+import { getTimingConfig } from "./timing";
+import { buildTaskPrompt } from "./prompt-builder";
+import { storeToolMetadata } from "../../features/tool-metadata-store";
+import { resolveCallID } from "./resolve-call-id";
+import { formatDetailedError } from "./error-formatting";
+import { getSessionTools } from "../../shared/session-tools-store";
+import { SessionCategoryRegistry } from "../../shared/session-category-registry";
+import { QUESTION_DENIED_SESSION_PERMISSION } from "../../shared/question-denied-session-permission";
+import { setSessionFallbackChain } from "../../hooks/model-fallback/hook";
+import { stripAgentListSortPrefix } from "../../shared/agent-display-names";
 
 function continueSessionSetup(args: {
-  taskID: string
-  manager: ExecutorContext["manager"]
-  timing: ReturnType<typeof getTimingConfig>
-  fallbackChain?: FallbackEntry[]
-  category?: string
+  taskID: string;
+  manager: ExecutorContext["manager"];
+  timing: ReturnType<typeof getTimingConfig>;
+  fallbackChain?: FallbackEntry[];
+  category?: string;
 }): void {
   if (!args.fallbackChain && !args.category) {
-    return
+    return;
   }
 
   void (async () => {
-    const waitStart = Date.now()
+    const waitStart = Date.now();
     while (Date.now() - waitStart < args.timing.WAIT_FOR_SESSION_TIMEOUT_MS) {
-      await new Promise(resolve => setTimeout(resolve, args.timing.WAIT_FOR_SESSION_INTERVAL_MS))
-      const updated = args.manager.getTask(args.taskID)
+      await new Promise((resolve) =>
+        setTimeout(resolve, args.timing.WAIT_FOR_SESSION_INTERVAL_MS),
+      );
+      const updated = args.manager.getTask(args.taskID);
       if (!updated) {
-        return
+        return;
       }
-      if (updated.status === "error" || updated.status === "cancelled" || updated.status === "interrupt") {
-        return
+      if (
+        updated.status === "error" ||
+        updated.status === "cancelled" ||
+        updated.status === "interrupt"
+      ) {
+        return;
       }
 
-      const sessionId = updated.sessionID
+      const sessionId = updated.sessionID;
       if (!sessionId) {
-        continue
+        continue;
       }
 
-      setSessionFallbackChain(sessionId, args.fallbackChain)
+      setSessionFallbackChain(sessionId, args.fallbackChain);
       if (args.category) {
-        SessionCategoryRegistry.register(sessionId, args.category)
+        SessionCategoryRegistry.register(sessionId, args.category);
       }
-      return
+      return;
     }
-  })()
+  })();
 }
 
 export async function executeBackgroundTask(
@@ -59,12 +69,16 @@ export async function executeBackgroundTask(
   systemContent: string | undefined,
   fallbackChain?: FallbackEntry[],
 ): Promise<string> {
-  const { manager } = executorCtx
+  const { manager } = executorCtx;
 
   try {
-    const tddEnabled = executorCtx.bobAgentConfig?.tdd
-    const normalizedAgent = stripAgentListSortPrefix(agentToUse)
-    const effectivePrompt = buildTaskPrompt(args.prompt, normalizedAgent, tddEnabled)
+    const tddEnabled = executorCtx.bobAgentConfig?.tdd;
+    const normalizedAgent = stripAgentListSortPrefix(agentToUse);
+    const effectivePrompt = buildTaskPrompt(
+      args.prompt,
+      normalizedAgent,
+      tddEnabled,
+    );
     const task = await manager.launch({
       description: args.description,
       prompt: effectivePrompt,
@@ -80,23 +94,30 @@ export async function executeBackgroundTask(
       skillContent: systemContent,
       category: args.category,
       sessionPermission: QUESTION_DENIED_SESSION_PERMISSION,
-    })
+    });
 
     // OpenCode TUI's `Task` tool UI calculates toolcalls by looking up
     // `props.metadata.sessionId` and then counting tool parts in that session.
     // BackgroundManager.launch() returns immediately (pending) before the session exists,
     // so we must wait briefly for the session to be created to set metadata correctly.
-    const timing = getTimingConfig()
-    const waitStart = Date.now()
-    let sessionId = task.sessionID
-    while (!sessionId && Date.now() - waitStart < timing.WAIT_FOR_SESSION_TIMEOUT_MS) {
-      const updated = manager.getTask(task.id)
-      if (updated?.status === "error" || updated?.status === "cancelled" || updated?.status === "interrupt") {
-        return `Task failed to start (status: ${updated.status}).\n\nTask ID: ${task.id}`
+    const timing = getTimingConfig();
+    const waitStart = Date.now();
+    let sessionId = task.sessionID;
+    while (
+      !sessionId &&
+      Date.now() - waitStart < timing.WAIT_FOR_SESSION_TIMEOUT_MS
+    ) {
+      const updated = manager.getTask(task.id);
+      if (
+        updated?.status === "error" ||
+        updated?.status === "cancelled" ||
+        updated?.status === "interrupt"
+      ) {
+        return `Task failed to start (status: ${updated.status}).\n\nTask ID: ${task.id}`;
       }
-      sessionId = updated?.sessionID
+      sessionId = updated?.sessionID;
       if (sessionId) {
-        break
+        break;
       }
       if (ctx.abort?.aborted) {
         continueSessionSetup({
@@ -105,17 +126,19 @@ export async function executeBackgroundTask(
           timing,
           fallbackChain,
           category: args.category,
-        })
-        break
+        });
+        break;
       }
-      await new Promise(resolve => setTimeout(resolve, timing.WAIT_FOR_SESSION_INTERVAL_MS))
+      await new Promise((resolve) =>
+        setTimeout(resolve, timing.WAIT_FOR_SESSION_INTERVAL_MS),
+      );
     }
 
     if (sessionId) {
-      setSessionFallbackChain(sessionId, fallbackChain)
+      setSessionFallbackChain(sessionId, fallbackChain);
     }
     if (args.category && sessionId) {
-      SessionCategoryRegistry.register(sessionId, args.category)
+      SessionCategoryRegistry.register(sessionId, args.category);
     }
 
     const metadata = {
@@ -127,22 +150,29 @@ export async function executeBackgroundTask(
       run_in_background: args.run_in_background,
       command: args.command,
       ...(sessionId ? { sessionId } : {}),
-      ...(categoryModel ? { model: { providerID: categoryModel.providerID, modelID: categoryModel.modelID } } : {}),
-    }
+      ...(categoryModel
+        ? {
+            model: {
+              providerID: categoryModel.providerID,
+              modelID: categoryModel.modelID,
+            },
+          }
+        : {}),
+    };
 
     const unstableMeta = {
       title: args.description,
       metadata,
-    }
-    await ctx.metadata?.(unstableMeta)
-    const callID = resolveCallID(ctx)
+    };
+    await ctx.metadata?.(unstableMeta);
+    const callID = resolveCallID(ctx);
     if (callID) {
-      storeToolMetadata(ctx.sessionID, callID, unstableMeta)
+      storeToolMetadata(ctx.sessionID, callID, unstableMeta);
     }
 
     const taskMetadataBlock = sessionId
       ? `\n\n<task_metadata>\nsession_id: ${sessionId}\ntask_id: ${task.id}\nbackground_task_id: ${task.id}\n</task_metadata>`
-      : ""
+      : "";
 
     return `Background task launched.
 
@@ -153,13 +183,13 @@ Status: ${task.status}
 
 System notifies on completion. Use \`background_output\` with task_id="${task.id}" to check.
 
-Do NOT call background_output now. Wait for <system-reminder> notification first.${taskMetadataBlock}`
+Do NOT call background_output now. Wait for <system-reminder> notification first.${taskMetadataBlock}`;
   } catch (error) {
     return formatDetailedError(error, {
       operation: "Launch background task",
       args,
       agent: stripAgentListSortPrefix(agentToUse),
       category: args.category,
-    })
+    });
   }
 }

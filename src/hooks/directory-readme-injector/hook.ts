@@ -17,8 +17,14 @@ interface ToolExecuteOutput {
 }
 
 interface DirectoryReadmeInjectorHook {
-  "tool.execute.before"?: (input: ToolExecuteInput, output: { args: unknown }) => Promise<void>;
-  "tool.execute.after": (input: ToolExecuteInput, output: ToolExecuteOutput) => Promise<void>;
+  "tool.execute.before"?: (
+    input: ToolExecuteInput,
+    output: { args: unknown },
+  ) => Promise<void>;
+  "tool.execute.after": (
+    input: ToolExecuteInput,
+    output: ToolExecuteOutput,
+  ) => Promise<void>;
   event: (input: EventInput) => Promise<void>;
 }
 
@@ -36,7 +42,10 @@ export function createDirectoryReadmeInjectorHook(
   const sessionCaches = new Map<string, Set<string>>();
   const truncator = createDynamicTruncator(ctx, modelCacheState);
 
-  const toolExecuteAfter = async (input: ToolExecuteInput, output: ToolExecuteOutput) => {
+  const toolExecuteAfter = async (
+    input: ToolExecuteInput,
+    output: ToolExecuteOutput,
+  ) => {
     const toolName = input.tool.toLowerCase();
 
     if (toolName === "read") {

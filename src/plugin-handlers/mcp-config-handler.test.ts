@@ -1,6 +1,6 @@
-import { expect, test } from "bun:test"
+import { expect, test } from "bun:test";
 
-import { applyMcpConfig } from "./mcp-config-handler"
+import { applyMcpConfig } from "./mcp-config-handler";
 
 const emptyPluginComponents = {
   commands: {},
@@ -10,10 +10,10 @@ const emptyPluginComponents = {
   hooksConfigs: [],
   plugins: [],
   errors: [],
-}
+};
 
 test("context7 auth fallback from hiai-opencode config is used when env placeholder is empty", async () => {
-  const config: Record<string, unknown> = {}
+  const config: Record<string, unknown> = {};
 
   await applyMcpConfig({
     config,
@@ -32,13 +32,15 @@ test("context7 auth fallback from hiai-opencode config is used when env placehol
       },
     } as any,
     pluginComponents: emptyPluginComponents,
-  })
+  });
 
-  expect((config.mcp as any).context7.headers).toEqual({ "X-API-KEY": "ctx-test-key" })
-})
+  expect((config.mcp as any).context7.headers).toEqual({
+    "X-API-KEY": "ctx-test-key",
+  });
+});
 
 test("firecrawl env is correctly resolved when FIRECRAWL_API_KEY is set", async () => {
-  const config: Record<string, unknown> = {}
+  const config: Record<string, unknown> = {};
 
   await applyMcpConfig({
     config,
@@ -57,11 +59,11 @@ test("firecrawl env is correctly resolved when FIRECRAWL_API_KEY is set", async 
       },
     } as any,
     pluginComponents: emptyPluginComponents,
-  })
+  });
 
   // Verify the environment is set (value comes from process.env.FIRECRAWL_API_KEY when present)
-  const env = (config.mcp as any).firecrawl.environment
-  expect(env).toBeDefined()
-  expect(typeof env.FIRECRAWL_API_KEY).toBe("string")
-  expect(env.FIRECRAWL_API_KEY.length).toBeGreaterThan(0)
-})
+  const env = (config.mcp as any).firecrawl.environment;
+  expect(env).toBeDefined();
+  expect(typeof env.FIRECRAWL_API_KEY).toBe("string");
+  expect(env.FIRECRAWL_API_KEY.length).toBeGreaterThan(0);
+});

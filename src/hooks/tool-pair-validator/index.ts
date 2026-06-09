@@ -1,1 +1,1 @@
-export { createToolPairValidatorHook } from "./hook"
+export { createToolPairValidatorHook } from "./hook";

@@ -1,7 +1,7 @@
 export type VisionCapableModel = {
-  providerID: string
-  modelID: string
-}
+  providerID: string;
+  modelID: string;
+};
 
 export interface ModelCacheState {
   modelContextLimitsCache: Map<string, number>;

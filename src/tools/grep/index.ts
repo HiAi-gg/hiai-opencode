@@ -1,1 +1,1 @@
-export { createGrepTools } from "./tools"
+export { createGrepTools } from "./tools";

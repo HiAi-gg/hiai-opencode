@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const ClaudeCodeConfigSchema = z.object({
   mcp: z.boolean().optional(),
@@ -8,6 +8,6 @@ export const ClaudeCodeConfigSchema = z.object({
   hooks: z.boolean().optional(),
   plugins: z.boolean().optional(),
   plugins_override: z.record(z.string(), z.boolean()).optional(),
-})
+});
 
-export type ClaudeCodeConfig = z.infer<typeof ClaudeCodeConfigSchema>
+export type ClaudeCodeConfig = z.infer<typeof ClaudeCodeConfigSchema>;

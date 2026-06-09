@@ -1,9 +1,22 @@
-import type { CommandDefinition } from "../claude-code-command-loader"
+import type { CommandDefinition } from "../claude-code-command-loader";
 
-export type BuiltinCommandName = "init-deep" | "loop" | "cancel-loop" | "ralph-loop" | "cancel-ralph" | "ulw-loop" | "refactor" | "start-work" | "stop-continuation" | "handoff" | "remove-ai-slops" | "mcp-status" | "doctor"
+export type BuiltinCommandName =
+  | "init-deep"
+  | "loop"
+  | "cancel-loop"
+  | "ralph-loop"
+  | "cancel-ralph"
+  | "ulw-loop"
+  | "refactor"
+  | "start-work"
+  | "stop-continuation"
+  | "handoff"
+  | "remove-ai-slops"
+  | "mcp-status"
+  | "doctor";
 
 export interface BuiltinCommandConfig {
-  disabled_commands?: BuiltinCommandName[]
+  disabled_commands?: BuiltinCommandName[];
 }
 
-export type BuiltinCommands = Record<string, CommandDefinition>
+export type BuiltinCommands = Record<string, CommandDefinition>;

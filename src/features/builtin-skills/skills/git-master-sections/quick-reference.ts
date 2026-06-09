@@ -83,4 +83,4 @@ STOP AND VERIFY - Do not proceed until ALL boxes checked:
 ### History Search Mode
 - \`-S\` when \`-G\` is appropriate -> Wrong results
 - Blame without \`-C\` on moved code -> Wrong attribution
-- Bisect without proper good/bad boundaries -> Wasted time`
+- Bisect without proper good/bad boundaries -> Wasted time`;

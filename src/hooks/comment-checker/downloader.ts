@@ -1,7 +1,7 @@
-import { existsSync, appendFileSync } from "fs"
-import { join } from "path"
-import { homedir, tmpdir } from "os"
-import { createRequire } from "module"
+import { existsSync, appendFileSync } from "node:fs";
+import { join } from "node:path";
+import { homedir, tmpdir } from "node:os";
+import { createRequire } from "node:module";
 import {
   cleanupArchive,
   downloadArchive,
@@ -10,26 +10,29 @@ import {
   extractTarGz,
   extractZipArchive,
   getCachedBinaryPath as getCachedBinaryPathShared,
-} from "../../shared/binary-downloader"
-import { log } from "../../shared/logger"
-import { CACHE_DIR_NAME, PUBLISHED_PACKAGE_NAME } from "../../shared/plugin-identity"
+} from "../../shared/binary-downloader";
+import { log } from "../../shared/logger";
+import {
+  CACHE_DIR_NAME,
+  PUBLISHED_PACKAGE_NAME,
+} from "../../shared/plugin-identity";
 
-const DEBUG = process.env.COMMENT_CHECKER_DEBUG === "1"
-const DEBUG_FILE = join(tmpdir(), "comment-checker-debug.log")
+const DEBUG = process.env.COMMENT_CHECKER_DEBUG === "1";
+const DEBUG_FILE = join(tmpdir(), "comment-checker-debug.log");
 
 function debugLog(...args: unknown[]) {
   if (DEBUG) {
-    const msg = `[${new Date().toISOString()}] [comment-checker:downloader] ${args.map(a => typeof a === 'object' ? JSON.stringify(a, null, 2) : String(a)).join(' ')}\n`
-    appendFileSync(DEBUG_FILE, msg)
+    const msg = `[${new Date().toISOString()}] [comment-checker:downloader] ${args.map((a) => (typeof a === "object" ? JSON.stringify(a, null, 2) : String(a))).join(" ")}\n`;
+    appendFileSync(DEBUG_FILE, msg);
   }
 }
 
-const REPO = "code-yeongyu/go-claude-code-comment-checker"
+const REPO = "code-yeongyu/go-claude-code-comment-checker";
 
 interface PlatformInfo {
-  os: string
-  arch: string
-  ext: "tar.gz" | "zip"
+  os: string;
+  arch: string;
+  ext: "tar.gz" | "zip";
 }
 
 const PLATFORM_MAP: Record<string, PlatformInfo> = {
@@ -38,7 +41,7 @@ const PLATFORM_MAP: Record<string, PlatformInfo> = {
   "linux-arm64": { os: "linux", arch: "arm64", ext: "tar.gz" },
   "linux-x64": { os: "linux", arch: "amd64", ext: "tar.gz" },
   "win32-x64": { os: "windows", arch: "amd64", ext: "zip" },
-}
+};
 
 /**
  * Get the cache directory for hiai-opencode binaries.
@@ -47,28 +50,30 @@ const PLATFORM_MAP: Record<string, PlatformInfo> = {
  */
 export function getCacheDir(): string {
   if (process.platform === "win32") {
-    const localAppData = process.env.LOCALAPPDATA || process.env.APPDATA
-    const base = localAppData || join(homedir(), "AppData", "Local")
-    return join(base, CACHE_DIR_NAME, "bin")
+    const localAppData = process.env.LOCALAPPDATA || process.env.APPDATA;
+    const base = localAppData || join(homedir(), "AppData", "Local");
+    return join(base, CACHE_DIR_NAME, "bin");
   }
 
-  const xdgCache = process.env.XDG_CACHE_HOME
-  const base = xdgCache || join(homedir(), ".cache")
-  return join(base, CACHE_DIR_NAME, "bin")
+  const xdgCache = process.env.XDG_CACHE_HOME;
+  const base = xdgCache || join(homedir(), ".cache");
+  return join(base, CACHE_DIR_NAME, "bin");
 }
 
 /**
  * Get the binary name based on platform.
  */
 export function getBinaryName(): string {
-  return process.platform === "win32" ? "comment-checker.exe" : "comment-checker"
+  return process.platform === "win32"
+    ? "comment-checker.exe"
+    : "comment-checker";
 }
 
 /**
  * Get the cached binary path if it exists.
  */
 export function getCachedBinaryPath(): string | null {
-  return getCachedBinaryPathShared(getCacheDir(), getBinaryName())
+  return getCachedBinaryPathShared(getCacheDir(), getBinaryName());
 }
 
 /**
@@ -76,12 +81,12 @@ export function getCachedBinaryPath(): string | null {
  */
 function getPackageVersion(): string {
   try {
-    const require = createRequire(import.meta.url)
-    const pkg = require("@code-yeongyu/comment-checker/package.json")
-    return pkg.version
+    const require = createRequire(import.meta.url);
+    const pkg = require("@code-yeongyu/comment-checker/package.json");
+    return pkg.version;
   } catch {
     // Fallback to hardcoded version if package not found
-    return "0.4.1"
+    return "0.4.1";
   }
 }
 
@@ -90,65 +95,66 @@ function getPackageVersion(): string {
  * Returns the path to the downloaded binary, or null on failure.
  */
 export async function downloadCommentChecker(): Promise<string | null> {
-  const platformKey = `${process.platform}-${process.arch}`
-  const platformInfo = PLATFORM_MAP[platformKey]
-  
+  const platformKey = `${process.platform}-${process.arch}`;
+  const platformInfo = PLATFORM_MAP[platformKey];
+
   if (!platformInfo) {
-    debugLog(`Unsupported platform: ${platformKey}`)
-    return null
+    debugLog(`Unsupported platform: ${platformKey}`);
+    return null;
   }
-  
-  const cacheDir = getCacheDir()
-  const binaryName = getBinaryName()
-  const binaryPath = join(cacheDir, binaryName)
-  
+
+  const cacheDir = getCacheDir();
+  const binaryName = getBinaryName();
+  const binaryPath = join(cacheDir, binaryName);
+
   // Already exists in cache
   if (existsSync(binaryPath)) {
-    debugLog("Binary already cached at:", binaryPath)
-    return binaryPath
+    debugLog("Binary already cached at:", binaryPath);
+    return binaryPath;
   }
-  
-  const version = getPackageVersion()
-  const { os, arch, ext } = platformInfo
-  const assetName = `comment-checker_v${version}_${os}_${arch}.${ext}`
-  const downloadUrl = `https://github.com/${REPO}/releases/download/v${version}/${assetName}`
-  
-  debugLog(`Downloading from: ${downloadUrl}`)
-  log(`[${PUBLISHED_PACKAGE_NAME}] Downloading comment-checker binary...`)
-  
+
+  const version = getPackageVersion();
+  const { os, arch, ext } = platformInfo;
+  const assetName = `comment-checker_v${version}_${os}_${arch}.${ext}`;
+  const downloadUrl = `https://github.com/${REPO}/releases/download/v${version}/${assetName}`;
+
+  debugLog(`Downloading from: ${downloadUrl}`);
+  log(`[${PUBLISHED_PACKAGE_NAME}] Downloading comment-checker binary...`);
+
   try {
     // Ensure cache directory exists
-    ensureCacheDir(cacheDir)
-    
-    const archivePath = join(cacheDir, assetName)
-    await downloadArchive(downloadUrl, archivePath)
-    
-    debugLog(`Downloaded archive to: ${archivePath}`)
-    
+    ensureCacheDir(cacheDir);
+
+    const archivePath = join(cacheDir, assetName);
+    await downloadArchive(downloadUrl, archivePath);
+
+    debugLog(`Downloaded archive to: ${archivePath}`);
+
     // Extract based on file type
     if (ext === "tar.gz") {
-      debugLog("Extracting tar.gz:", archivePath, "to", cacheDir)
-      await extractTarGz(archivePath, cacheDir)
+      debugLog("Extracting tar.gz:", archivePath, "to", cacheDir);
+      await extractTarGz(archivePath, cacheDir);
     } else {
-      await extractZipArchive(archivePath, cacheDir)
+      await extractZipArchive(archivePath, cacheDir);
     }
-    
+
     // Clean up archive
-    cleanupArchive(archivePath)
-    
+    cleanupArchive(archivePath);
+
     // Set execute permission on Unix
-    ensureExecutable(binaryPath)
-    
-    debugLog(`Successfully downloaded binary to: ${binaryPath}`)
-    log(`[${PUBLISHED_PACKAGE_NAME}] comment-checker binary ready.`)
-    
-    return binaryPath
-    
+    ensureExecutable(binaryPath);
+
+    debugLog(`Successfully downloaded binary to: ${binaryPath}`);
+    log(`[${PUBLISHED_PACKAGE_NAME}] comment-checker binary ready.`);
+
+    return binaryPath;
   } catch (err) {
-    debugLog(`Failed to download: ${err}`)
-    log(`[${PUBLISHED_PACKAGE_NAME}] Failed to download comment-checker: ${err instanceof Error ? err.message : err}`)
-    log(`[${PUBLISHED_PACKAGE_NAME}] Comment checking disabled.`)
-    return null
+    debugLog(`Failed to download: ${err}`);
+    log(
+      `[${PUBLISHED_PACKAGE_NAME}] Failed to download comment-checker: ${err instanceof Error ? err.message : err}`,
+    );
+    log(`[${PUBLISHED_PACKAGE_NAME}] Comment checking disabled.`);
+    return null;
   }
 }
 
@@ -159,12 +165,12 @@ export async function downloadCommentChecker(): Promise<string | null> {
  */
 export async function ensureCommentCheckerBinary(): Promise<string | null> {
   // Check cache first
-  const cachedPath = getCachedBinaryPath()
+  const cachedPath = getCachedBinaryPath();
   if (cachedPath) {
-    debugLog("Using cached binary:", cachedPath)
-    return cachedPath
+    debugLog("Using cached binary:", cachedPath);
+    return cachedPath;
   }
-  
+
   // Download if not cached
-  return downloadCommentChecker()
+  return downloadCommentChecker();
 }

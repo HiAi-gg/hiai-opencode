@@ -1,4 +1,4 @@
-import type { SkillScope } from "../types"
+import type { SkillScope } from "../types";
 
 export const SCOPE_PRIORITY: Record<SkillScope, number> = {
   builtin: 1,
@@ -7,4 +7,4 @@ export const SCOPE_PRIORITY: Record<SkillScope, number> = {
   opencode: 4,
   project: 5,
   "opencode-project": 6,
-}
+};

@@ -125,7 +125,7 @@ Each TODO item MUST include:
 - Orchestrator (Bob) executes tasks in parallel waves
 - Independent tasks run simultaneously via background agents
 - Proper dependency tracking prevents race conditions
-- Category + skills ensure optimal model routing per task`
+- Category + skills ensure optimal model routing per task`;
 
 export function getPlannerUltraworkMessage(): string {
   return `<ultrawork-mode>
@@ -136,5 +136,5 @@ ${ULTRAWORK_PLANNER_SECTION}
 
 </ultrawork-mode>
 
-`
+`;
 }

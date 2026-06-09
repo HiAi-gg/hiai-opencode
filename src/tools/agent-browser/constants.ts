@@ -41,17 +41,20 @@ Trigger Phrases:
 export type AgentBrowserDescription = typeof AGENT_BROWSER_DESCRIPTION;
 
 // AGENT_BROWSER_INSTALL_EXAMPLES — examples showing the install workflow
-export const AGENT_BROWSER_INSTALL_EXAMPLES: Array<{ tool: string; args: Record<string, unknown> }> = [
+export const AGENT_BROWSER_INSTALL_EXAMPLES: Array<{
+  tool: string;
+  args: Record<string, unknown>;
+}> = [
   {
-    tool: 'agent_browser_install',
+    tool: "agent_browser_install",
     args: {},
   },
   {
-    tool: 'agent_browser_navigate',
-    args: { url: 'https://example.com' },
+    tool: "agent_browser_navigate",
+    args: { url: "https://example.com" },
   },
   {
-    tool: 'agent_browser_snapshot',
+    tool: "agent_browser_snapshot",
     args: { json: true, compact: true },
   },
 ];
@@ -59,72 +62,75 @@ export const AGENT_BROWSER_INSTALL_EXAMPLES: Array<{ tool: string; args: Record<
 export type AgentBrowserInstallExamples = typeof AGENT_BROWSER_INSTALL_EXAMPLES;
 
 // AGENT_BROWSER_EXAMPLES — 6+ example objects showing common patterns
-export const AGENT_BROWSER_EXAMPLES: Array<{ tool: string; args: Record<string, unknown> }> = [
+export const AGENT_BROWSER_EXAMPLES: Array<{
+  tool: string;
+  args: Record<string, unknown>;
+}> = [
   // Example 1: Navigate + snapshot + click workflow
   {
-    tool: 'agent_browser_navigate',
-    args: { url: 'https://example.com' },
+    tool: "agent_browser_navigate",
+    args: { url: "https://example.com" },
   },
   {
-    tool: 'agent_browser_snapshot',
+    tool: "agent_browser_snapshot",
     args: { interactive: true, json: true },
   },
   {
-    tool: 'agent_browser_click',
-    args: { target: '@e2' },
+    tool: "agent_browser_click",
+    args: { target: "@e2" },
   },
   // Example 2: Form fill workflow
   {
-    tool: 'agent_browser_fill',
-    args: { target: '@e5', text: 'hello@example.com' },
+    tool: "agent_browser_fill",
+    args: { target: "@e5", text: "hello@example.com" },
   },
   {
-    tool: 'agent_browser_fill',
-    args: { target: '@e7', text: 'password123' },
+    tool: "agent_browser_fill",
+    args: { target: "@e7", text: "password123" },
   },
   {
-    tool: 'agent_browser_press',
-    args: { key: 'Enter' },
+    tool: "agent_browser_press",
+    args: { key: "Enter" },
   },
   // Example 3: Screenshot
   {
-    tool: 'agent_browser_screenshot',
-    args: { filename: 'page.png', fullPage: true },
+    tool: "agent_browser_screenshot",
+    args: { filename: "page.png", fullPage: true },
   },
   // Example 4: Eval
   {
-    tool: 'agent_browser_eval',
+    tool: "agent_browser_eval",
     args: { code: "document.title" },
   },
   {
-    tool: 'agent_browser_console',
+    tool: "agent_browser_console",
     args: { json: true, clear: false },
   },
   // Example 5: Batch workflow
   {
-    tool: 'agent_browser_batch',
+    tool: "agent_browser_batch",
     args: {
       commands: [
-        'open https://example.com',
-        'click @e2',
+        "open https://example.com",
+        "click @e2",
         'fill @e5 "text"',
-        'screenshot --filename result.png',
+        "screenshot --filename result.png",
       ],
       bail: true,
     },
   },
   // Example 6: Wait + verify
   {
-    tool: 'agent_browser_wait',
-    args: { condition: '--load networkidle' },
+    tool: "agent_browser_wait",
+    args: { condition: "--load networkidle" },
   },
   {
-    tool: 'agent_browser_snapshot',
+    tool: "agent_browser_snapshot",
     args: { json: true },
   },
   {
-    tool: 'agent_browser_screenshot',
-    args: { filename: 'after-load.png' },
+    tool: "agent_browser_screenshot",
+    args: { filename: "after-load.png" },
   },
 ];
 

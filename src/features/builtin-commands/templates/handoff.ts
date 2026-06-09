@@ -174,4 +174,4 @@ The new session will have all context needed to continue seamlessly.
 # EXECUTE NOW
 
 Begin by gathering programmatic context, then synthesize the handoff summary.
-`
+`;

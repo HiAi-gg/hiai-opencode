@@ -136,4 +136,4 @@ at \`.opencode/worktrees/<plan-name>/\` for complete filesystem isolation.
 - Manual worktree: \`--worktree <path>\` overrides the default location
 - Registry: \`.bob/boulder-registry/{plan-name}.json\` tracks each plan independently
 - Stop-continuation: only affects the calling session's plan, not other active plans
-`
+`;

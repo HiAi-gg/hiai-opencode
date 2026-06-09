@@ -1,4 +1,4 @@
-export type CommandScope = "user" | "project" | "opencode" | "opencode-project"
+export type CommandScope = "user" | "project" | "opencode" | "opencode-project";
 
 /**
  * Handoff definition for command workflows.
@@ -7,42 +7,42 @@ export type CommandScope = "user" | "project" | "opencode" | "opencode-project"
  */
 export interface HandoffDefinition {
   /** Human-readable label for the handoff action */
-  label: string
+  label: string;
   /** Target agent/command identifier (e.g., "speckit.tasks") */
-  agent: string
+  agent: string;
   /** Pre-filled prompt text for the handoff */
-  prompt: string
+  prompt: string;
   /** If true, automatically executes after command completion; if false, shows as suggestion */
-  send?: boolean
+  send?: boolean;
 }
 
 export interface CommandDefinition {
-  name: string
-  description?: string
-  template: string
-  agent?: string
-  model?: string
-  subtask?: boolean
-  argumentHint?: string
+  name: string;
+  description?: string;
+  template: string;
+  agent?: string;
+  model?: string;
+  subtask?: boolean;
+  argumentHint?: string;
   /** If true, command is hidden from / autocomplete but still works when typed manually */
-  hidden?: boolean
+  hidden?: boolean;
   /** Handoff definitions for workflow transitions */
-  handoffs?: HandoffDefinition[]
+  handoffs?: HandoffDefinition[];
 }
 
 export interface CommandFrontmatter {
-  description?: string
-  "argument-hint"?: string
-  agent?: string
-  model?: string
-  subtask?: boolean
+  description?: string;
+  "argument-hint"?: string;
+  agent?: string;
+  model?: string;
+  subtask?: boolean;
   /** Handoff definitions for workflow transitions */
-  handoffs?: HandoffDefinition[]
+  handoffs?: HandoffDefinition[];
 }
 
 export interface LoadedCommand {
-  name: string
-  path: string
-  definition: CommandDefinition
-  scope: CommandScope
+  name: string;
+  path: string;
+  definition: CommandDefinition;
+  scope: CommandScope;
 }

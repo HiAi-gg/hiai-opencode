@@ -21,7 +21,7 @@ export function hasResultReferences(text: string): boolean {
  */
 export function resolveResultReferences(
   text: string,
-  sessionID: string
+  sessionID: string,
 ): string {
   // Reset lastIndex since we're reusing the regex
   RESULT_PATTERN.lastIndex = 0;
@@ -34,11 +34,11 @@ export function resolveResultReferences(
   // Reset again after test()
   RESULT_PATTERN.lastIndex = 0;
 
-  return text.replace(RESULT_PATTERN, (match, name) => {
+  return text.replace(RESULT_PATTERN, (_match, name) => {
     const result = results?.get(name);
     if (result) {
       log(
-        `resolveResultReferences: resolved $RESULT[${name}] (${result.length} chars)`
+        `resolveResultReferences: resolved $RESULT[${name}] (${result.length} chars)`,
       );
       return result;
     }

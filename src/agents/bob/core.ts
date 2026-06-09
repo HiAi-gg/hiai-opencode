@@ -54,10 +54,12 @@ export function buildDynamicBobPrompt(
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
+  const strategistCriticSection =
+    buildStrategistAndCriticSection(availableAgents);
   const hardRules = buildHardRulesSection();
   const plannerSection = buildPlannerSection();
-  const parallelDelegationSection = buildParallelDelegationSection(availableCategories);
+  const parallelDelegationSection =
+    buildParallelDelegationSection(availableCategories);
   const todoDisciplineSection = buildTodoDisciplineSection(useTaskSystem);
   const todoHookNote = useTaskSystem
     ? "YOUR TASK CREATION WOULD BE TRACKED BY HOOK([SYSTEM REMINDER - TASK CONTINUATION])"
@@ -80,7 +82,7 @@ ${todoHookNote}
 
 ${keyTriggers}
 
-${buildIntentGate('router')}
+${buildIntentGate("router")}
 
 ### Step 1: Classify Request Type
 

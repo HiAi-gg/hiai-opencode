@@ -1,36 +1,40 @@
-import type { HiaiOpenCodeConfig } from "../../config"
-import type { PluginContext } from "../types"
-import type { RalphLoopHook } from "../../hooks/ralph-loop"
+import type { HiaiOpenCodeConfig } from "../../config";
+import type { PluginContext } from "../types";
+import type { RalphLoopHook } from "../../hooks/ralph-loop";
 
 import {
   createClaudeCodeHooksHook,
   createKeywordDetectorHook,
   createThinkingBlockValidatorHook,
   createToolPairValidatorHook,
-} from "../../hooks"
+} from "../../hooks";
 import {
   contextCollector,
   createContextInjectorMessagesTransformHook,
-} from "../../features/context-injector"
-import { safeCreateHook } from "../../shared/safe-create-hook"
+} from "../../features/context-injector";
+import { safeCreateHook } from "../../shared/safe-create-hook";
 
 export type TransformHooks = {
-  claudeCodeHooks: ReturnType<typeof createClaudeCodeHooksHook> | null
-  keywordDetector: ReturnType<typeof createKeywordDetectorHook> | null
-  contextInjectorMessagesTransform: ReturnType<typeof createContextInjectorMessagesTransformHook>
-  thinkingBlockValidator: ReturnType<typeof createThinkingBlockValidatorHook> | null
-  toolPairValidator: ReturnType<typeof createToolPairValidatorHook> | null
-}
+  claudeCodeHooks: ReturnType<typeof createClaudeCodeHooksHook> | null;
+  keywordDetector: ReturnType<typeof createKeywordDetectorHook> | null;
+  contextInjectorMessagesTransform: ReturnType<
+    typeof createContextInjectorMessagesTransformHook
+  >;
+  thinkingBlockValidator: ReturnType<
+    typeof createThinkingBlockValidatorHook
+  > | null;
+  toolPairValidator: ReturnType<typeof createToolPairValidatorHook> | null;
+};
 
 export function createTransformHooks(args: {
-  ctx: PluginContext
-  pluginConfig: HiaiOpenCodeConfig
-  isHookEnabled: (hookName: string) => boolean
-  safeHookEnabled?: boolean
-  ralphLoop?: RalphLoopHook | null
+  ctx: PluginContext;
+  pluginConfig: HiaiOpenCodeConfig;
+  isHookEnabled: (hookName: string) => boolean;
+  safeHookEnabled?: boolean;
+  ralphLoop?: RalphLoopHook | null;
 }): TransformHooks {
-  const { ctx, pluginConfig, isHookEnabled, ralphLoop } = args
-  const safeHookEnabled = args.safeHookEnabled ?? true
+  const { ctx, pluginConfig, isHookEnabled, ralphLoop } = args;
+  const safeHookEnabled = args.safeHookEnabled ?? true;
 
   const claudeCodeHooks = isHookEnabled("claude-code-hooks")
     ? safeCreateHook(
@@ -39,25 +43,31 @@ export function createTransformHooks(args: {
           createClaudeCodeHooksHook(
             ctx,
             {
-              disabledHooks: (pluginConfig.claude_code?.hooks ?? true) ? undefined : true,
+              disabledHooks:
+                (pluginConfig.claude_code?.hooks ?? true) ? undefined : true,
               keywordDetectorDisabled: !isHookEnabled("keyword-detector"),
             },
             contextCollector,
           ),
         { enabled: safeHookEnabled },
       )
-    : null
+    : null;
 
   const keywordDetector = isHookEnabled("keyword-detector")
     ? safeCreateHook(
         "keyword-detector",
-        () => createKeywordDetectorHook(ctx, contextCollector, ralphLoop ?? undefined),
+        () =>
+          createKeywordDetectorHook(
+            ctx,
+            contextCollector,
+            ralphLoop ?? undefined,
+          ),
         { enabled: safeHookEnabled },
       )
-    : null
+    : null;
 
   const contextInjectorMessagesTransform =
-    createContextInjectorMessagesTransformHook(contextCollector)
+    createContextInjectorMessagesTransformHook(contextCollector);
 
   const thinkingBlockValidator = isHookEnabled("thinking-block-validator")
     ? safeCreateHook(
@@ -65,7 +75,7 @@ export function createTransformHooks(args: {
         () => createThinkingBlockValidatorHook(),
         { enabled: safeHookEnabled },
       )
-    : null
+    : null;
 
   const toolPairValidator = isHookEnabled("tool-pair-validator")
     ? safeCreateHook(
@@ -73,7 +83,7 @@ export function createTransformHooks(args: {
         () => createToolPairValidatorHook(),
         { enabled: safeHookEnabled },
       )
-    : null
+    : null;
 
   return {
     claudeCodeHooks,
@@ -81,5 +91,5 @@ export function createTransformHooks(args: {
     contextInjectorMessagesTransform,
     thinkingBlockValidator,
     toolPairValidator,
-  }
+  };
 }

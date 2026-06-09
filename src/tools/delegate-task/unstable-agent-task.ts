@@ -1,15 +1,23 @@
-import type { DelegateTaskArgs, ToolContextWithMetadata, DelegatedModelConfig } from "./types"
-import type { ExecutorContext, ParentContext, SessionMessage } from "./executor-types"
-import { DEFAULT_SYNC_POLL_TIMEOUT_MS, getTimingConfig } from "./timing"
-import { buildTaskPrompt } from "./prompt-builder"
-import { cancelUnstableAgentTask } from "./cancel-unstable-agent-task"
-import { storeToolMetadata } from "../../features/tool-metadata-store"
-import { resolveCallID } from "./resolve-call-id"
-import { formatDuration } from "./time-formatter"
-import { formatDetailedError } from "./error-formatting"
-import { getSessionTools } from "../../shared/session-tools-store"
-import { normalizeSDKResponse } from "../../shared"
-import { QUESTION_DENIED_SESSION_PERMISSION } from "../../shared/question-denied-session-permission"
+import type {
+  DelegateTaskArgs,
+  ToolContextWithMetadata,
+  DelegatedModelConfig,
+} from "./types";
+import type {
+  ExecutorContext,
+  ParentContext,
+  SessionMessage,
+} from "./executor-types";
+import { DEFAULT_SYNC_POLL_TIMEOUT_MS, getTimingConfig } from "./timing";
+import { buildTaskPrompt } from "./prompt-builder";
+import { cancelUnstableAgentTask } from "./cancel-unstable-agent-task";
+import { storeToolMetadata } from "../../features/tool-metadata-store";
+import { resolveCallID } from "./resolve-call-id";
+import { formatDuration } from "./time-formatter";
+import { formatDetailedError } from "./error-formatting";
+import { getSessionTools } from "../../shared/session-tools-store";
+import { normalizeSDKResponse } from "../../shared";
+import { QUESTION_DENIED_SESSION_PERMISSION } from "../../shared/question-denied-session-permission";
 
 export async function executeUnstableAgentTask(
   args: DelegateTaskArgs,
@@ -19,15 +27,19 @@ export async function executeUnstableAgentTask(
   agentToUse: string,
   categoryModel: DelegatedModelConfig | undefined,
   systemContent: string | undefined,
-  actualModel: string | undefined
+  actualModel: string | undefined,
 ): Promise<string> {
-  const { manager, client, syncPollTimeoutMs, bobAgentConfig } = executorCtx
-  let cleanupReason: string | undefined
-  let launchedTaskID: string | undefined
+  const { manager, client, syncPollTimeoutMs, bobAgentConfig } = executorCtx;
+  let cleanupReason: string | undefined;
+  let launchedTaskID: string | undefined;
 
   try {
-    const tddEnabled = bobAgentConfig?.tdd
-    const effectivePrompt = buildTaskPrompt(args.prompt, agentToUse, tddEnabled)
+    const tddEnabled = bobAgentConfig?.tdd;
+    const effectivePrompt = buildTaskPrompt(
+      args.prompt,
+      agentToUse,
+      tddEnabled,
+    );
     const task = await manager.launch({
       description: args.description,
       prompt: effectivePrompt,
@@ -42,29 +54,41 @@ export async function executeUnstableAgentTask(
       skillContent: systemContent,
       category: args.category,
       sessionPermission: QUESTION_DENIED_SESSION_PERMISSION,
-    })
-    launchedTaskID = task.id
+    });
+    launchedTaskID = task.id;
 
-    const timing = getTimingConfig()
-    const waitStart = Date.now()
-    let sessionID = task.sessionID
-    while (!sessionID && Date.now() - waitStart < timing.WAIT_FOR_SESSION_TIMEOUT_MS) {
+    const timing = getTimingConfig();
+    const waitStart = Date.now();
+    let sessionID = task.sessionID;
+    while (
+      !sessionID &&
+      Date.now() - waitStart < timing.WAIT_FOR_SESSION_TIMEOUT_MS
+    ) {
       if (ctx.abort?.aborted) {
-        cleanupReason = "Parent aborted while waiting for unstable task session start"
-        return `Task aborted while waiting for session to start.\n\nTask ID: ${task.id}`
+        cleanupReason =
+          "Parent aborted while waiting for unstable task session start";
+        return `Task aborted while waiting for session to start.\n\nTask ID: ${task.id}`;
       }
-      await new Promise(resolve => setTimeout(resolve, timing.WAIT_FOR_SESSION_INTERVAL_MS))
-      const updated = manager.getTask(task.id)
-      sessionID = updated?.sessionID
+      await new Promise((resolve) =>
+        setTimeout(resolve, timing.WAIT_FOR_SESSION_INTERVAL_MS),
+      );
+      const updated = manager.getTask(task.id);
+      sessionID = updated?.sessionID;
     }
     if (!sessionID) {
-      cleanupReason = "Unstable task session start timed out before session became available"
-      return formatDetailedError(new Error(`Task failed to start within timeout (30s). Task ID: ${task.id}, Status: ${task.status}`), {
-        operation: "Launch monitored background task",
-        args,
-        agent: agentToUse,
-        category: args.category,
-      })
+      cleanupReason =
+        "Unstable task session start timed out before session became available";
+      return formatDetailedError(
+        new Error(
+          `Task failed to start within timeout (30s). Task ID: ${task.id}, Status: ${task.status}`,
+        ),
+        {
+          operation: "Launch monitored background task",
+          args,
+          agent: agentToUse,
+          category: args.category,
+        },
+      );
     }
 
     const bgTaskMeta = {
@@ -78,69 +102,93 @@ export async function executeUnstableAgentTask(
         run_in_background: args.run_in_background,
         sessionId: sessionID,
         command: args.command,
-        model: categoryModel ? { providerID: categoryModel.providerID, modelID: categoryModel.modelID } : undefined,
+        model: categoryModel
+          ? {
+              providerID: categoryModel.providerID,
+              modelID: categoryModel.modelID,
+            }
+          : undefined,
       },
-    }
-    await ctx.metadata?.(bgTaskMeta)
-    const callID = resolveCallID(ctx)
+    };
+    await ctx.metadata?.(bgTaskMeta);
+    const callID = resolveCallID(ctx);
     if (callID) {
-      storeToolMetadata(ctx.sessionID, callID, bgTaskMeta)
+      storeToolMetadata(ctx.sessionID, callID, bgTaskMeta);
     }
 
-    const startTime = new Date()
-    const timingCfg = getTimingConfig()
-    const pollStart = Date.now()
-    let lastMsgCount = 0
-    let stablePolls = 0
-    let terminalStatus: { status: string; error?: string } | undefined
-    let completedDuringMonitoring = false
+    const startTime = new Date();
+    const timingCfg = getTimingConfig();
+    const pollStart = Date.now();
+    let lastMsgCount = 0;
+    let stablePolls = 0;
+    let terminalStatus: { status: string; error?: string } | undefined;
+    let completedDuringMonitoring = false;
 
-    while (Date.now() - pollStart < (syncPollTimeoutMs ?? DEFAULT_SYNC_POLL_TIMEOUT_MS)) {
+    while (
+      Date.now() - pollStart <
+      (syncPollTimeoutMs ?? DEFAULT_SYNC_POLL_TIMEOUT_MS)
+    ) {
       if (ctx.abort?.aborted) {
-        cleanupReason = "Parent aborted while monitoring unstable background task"
-        return `Task aborted (was running in background mode).\n\nSession ID: ${sessionID}`
+        cleanupReason =
+          "Parent aborted while monitoring unstable background task";
+        return `Task aborted (was running in background mode).\n\nSession ID: ${sessionID}`;
       }
 
-      await new Promise(resolve => setTimeout(resolve, timingCfg.POLL_INTERVAL_MS))
+      await new Promise((resolve) =>
+        setTimeout(resolve, timingCfg.POLL_INTERVAL_MS),
+      );
 
-      const currentTask = manager.getTask(task.id)
-      if (currentTask && (currentTask.status === "interrupt" || currentTask.status === "error" || currentTask.status === "cancelled")) {
-        terminalStatus = { status: currentTask.status, error: currentTask.error }
-        break
+      const currentTask = manager.getTask(task.id);
+      if (
+        currentTask &&
+        (currentTask.status === "interrupt" ||
+          currentTask.status === "error" ||
+          currentTask.status === "cancelled")
+      ) {
+        terminalStatus = {
+          status: currentTask.status,
+          error: currentTask.error,
+        };
+        break;
       }
 
-      const statusResult = await client.session.status()
-      const allStatuses = normalizeSDKResponse(statusResult, {} as Record<string, { type: string }>)
-      const sessionStatus = allStatuses[sessionID]
+      const statusResult = await client.session.status();
+      const allStatuses = normalizeSDKResponse(
+        statusResult,
+        {} as Record<string, { type: string }>,
+      );
+      const sessionStatus = allStatuses[sessionID];
 
       if (sessionStatus && sessionStatus.type !== "idle") {
-        stablePolls = 0
-        lastMsgCount = 0
-        continue
+        stablePolls = 0;
+        lastMsgCount = 0;
+        continue;
       }
 
-      if (Date.now() - pollStart < timingCfg.MIN_STABILITY_TIME_MS) continue
+      if (Date.now() - pollStart < timingCfg.MIN_STABILITY_TIME_MS) continue;
 
-      const messagesCheck = await client.session.messages({ path: { id: sessionID } })
+      const messagesCheck = await client.session.messages({
+        path: { id: sessionID },
+      });
       const msgs = normalizeSDKResponse(messagesCheck, [] as Array<unknown>, {
         preferResponseOnMissingData: true,
-      })
-      const currentMsgCount = msgs.length
+      });
+      const currentMsgCount = msgs.length;
 
       if (currentMsgCount === lastMsgCount) {
-        stablePolls++
+        stablePolls++;
         if (stablePolls >= timingCfg.STABILITY_POLLS_REQUIRED) {
-          completedDuringMonitoring = true
-          break
+          completedDuringMonitoring = true;
+          break;
         }
       } else {
-        stablePolls = 0
-        lastMsgCount = currentMsgCount
+        stablePolls = 0;
+        lastMsgCount = currentMsgCount;
       }
     }
 
     if (terminalStatus) {
-      const duration = formatDuration(startTime)
+      const duration = formatDuration(startTime);
       return `SUPERVISED TASK FAILED (${terminalStatus.status})
 
 Task was interrupted/failed while running in monitored background mode.
@@ -154,13 +202,14 @@ The task session may contain partial results.
 
 <task_metadata>
 session_id: ${sessionID}
-</task_metadata>`
+</task_metadata>`;
     }
 
     if (!completedDuringMonitoring) {
-      cleanupReason = "Monitored unstable background task exceeded timeout budget"
-      const duration = formatDuration(startTime)
-      const timeoutBudgetMs = syncPollTimeoutMs ?? DEFAULT_SYNC_POLL_TIMEOUT_MS
+      cleanupReason =
+        "Monitored unstable background task exceeded timeout budget";
+      const duration = formatDuration(startTime);
+      const timeoutBudgetMs = syncPollTimeoutMs ?? DEFAULT_SYNC_POLL_TIMEOUT_MS;
       return `SUPERVISED TASK TIMED OUT
 
 Task did not reach a stable completion signal within the monitored timeout budget.
@@ -174,33 +223,46 @@ The task session may still contain partial results.
 
 <task_metadata>
 session_id: ${sessionID}
-</task_metadata>`
+</task_metadata>`;
     }
 
-    const messagesResult = await client.session.messages({ path: { id: sessionID } })
-    const messages = normalizeSDKResponse(messagesResult, [] as SessionMessage[], {
-      preferResponseOnMissingData: true,
-    })
+    const messagesResult = await client.session.messages({
+      path: { id: sessionID },
+    });
+    const messages = normalizeSDKResponse(
+      messagesResult,
+      [] as SessionMessage[],
+      {
+        preferResponseOnMissingData: true,
+      },
+    );
 
     const assistantMessages = messages
       .filter((m) => m.info?.role === "assistant")
-      .sort((a, b) => (b.info?.time?.created ?? 0) - (a.info?.time?.created ?? 0))
-    const lastMessage = assistantMessages[0]
+      .sort(
+        (a, b) => (b.info?.time?.created ?? 0) - (a.info?.time?.created ?? 0),
+      );
+    const lastMessage = assistantMessages[0];
 
     if (!lastMessage) {
-      return `No assistant response found (task ran in background mode).\n\nSession ID: ${sessionID}`
+      return `No assistant response found (task ran in background mode).\n\nSession ID: ${sessionID}`;
     }
 
-    let textContent = ""
+    let textContent = "";
     for (const msg of assistantMessages) {
-      const textParts = msg.parts?.filter((p) => p.type === "text" || p.type === "reasoning") ?? []
-      const content = textParts.map((p) => p.text ?? "").filter(Boolean).join("\n")
+      const textParts =
+        msg.parts?.filter((p) => p.type === "text" || p.type === "reasoning") ??
+        [];
+      const content = textParts
+        .map((p) => p.text ?? "")
+        .filter(Boolean)
+        .join("\n");
       if (content) {
-        textContent = content
-        break
+        textContent = content;
+        break;
       }
     }
-    const duration = formatDuration(startTime)
+    const duration = formatDuration(startTime);
 
     return `SUPERVISED TASK COMPLETED SUCCESSFULLY
 
@@ -224,20 +286,20 @@ ${textContent || "(No text output)"}
 
 <task_metadata>
 session_id: ${sessionID}
-</task_metadata>`
+</task_metadata>`;
   } catch (error) {
     if (!cleanupReason) {
-      cleanupReason = "exception"
+      cleanupReason = "exception";
     }
     return formatDetailedError(error, {
       operation: "Launch monitored background task",
       args,
       agent: agentToUse,
       category: args.category,
-    })
+    });
   } finally {
     if (cleanupReason) {
-      await cancelUnstableAgentTask(manager, launchedTaskID, cleanupReason)
+      await cancelUnstableAgentTask(manager, launchedTaskID, cleanupReason);
     }
   }
 }

@@ -1,89 +1,101 @@
-import type { createOpencodeClient } from "@opencode-ai/sdk"
-import { log } from "./logger"
+import type { createOpencodeClient } from "@opencode-ai/sdk";
+import { log } from "./logger";
 import {
   createPromptTimeoutContext,
   PROMPT_TIMEOUT_MS,
   type PromptRetryOptions,
-} from "./prompt-timeout-context"
+} from "./prompt-timeout-context";
 
-type Client = ReturnType<typeof createOpencodeClient>
+type Client = ReturnType<typeof createOpencodeClient>;
 
 export interface ModelSuggestionInfo {
-  providerID: string
-  modelID: string
-  suggestion: string
+  providerID: string;
+  modelID: string;
+  suggestion: string;
 }
 
 function extractMessage(error: unknown): string {
-  if (typeof error === "string") return error
-  if (error instanceof Error) return error.message
+  if (typeof error === "string") return error;
+  if (error instanceof Error) return error.message;
   if (typeof error === "object" && error !== null) {
-    const obj = error as Record<string, unknown>
-    if (typeof obj.message === "string") return obj.message
+    const obj = error as Record<string, unknown>;
+    if (typeof obj.message === "string") return obj.message;
     try {
-      return JSON.stringify(error)
+      return JSON.stringify(error);
     } catch {
-      return ""
+      return "";
     }
   }
-  return String(error)
+  return String(error);
 }
 
-export function parseModelSuggestion(error: unknown): ModelSuggestionInfo | null {
-  if (!error) return null
+export function parseModelSuggestion(
+  error: unknown,
+): ModelSuggestionInfo | null {
+  if (!error) return null;
 
   if (typeof error === "object") {
-    const errObj = error as Record<string, unknown>
+    const errObj = error as Record<string, unknown>;
 
-    if (errObj.name === "ProviderModelNotFoundError" && typeof errObj.data === "object" && errObj.data !== null) {
-      const data = errObj.data as Record<string, unknown>
-      const suggestions = data.suggestions
-      if (Array.isArray(suggestions) && suggestions.length > 0 && typeof suggestions[0] === "string") {
+    if (
+      errObj.name === "ProviderModelNotFoundError" &&
+      typeof errObj.data === "object" &&
+      errObj.data !== null
+    ) {
+      const data = errObj.data as Record<string, unknown>;
+      const suggestions = data.suggestions;
+      if (
+        Array.isArray(suggestions) &&
+        suggestions.length > 0 &&
+        typeof suggestions[0] === "string"
+      ) {
         return {
           providerID: String(data.providerID ?? ""),
           modelID: String(data.modelID ?? ""),
           suggestion: suggestions[0],
-        }
+        };
       }
-      return null
+      return null;
     }
 
     for (const key of ["data", "error", "cause"] as const) {
-      const nested = errObj[key]
+      const nested = errObj[key];
       if (nested && typeof nested === "object") {
-        const result = parseModelSuggestion(nested)
-        if (result) return result
+        const result = parseModelSuggestion(nested);
+        if (result) return result;
       }
     }
   }
 
-  const message = extractMessage(error)
-  if (!message) return null
+  const message = extractMessage(error);
+  if (!message) return null;
 
-  const modelMatch = message.match(/model not found:\s*([^/\s]+)\s*\/\s*([^.\s]+)/i)
-  const suggestionMatch = message.match(/did you mean:\s*([^,?]+)/i)
+  const modelMatch = message.match(
+    /model not found:\s*([^/\s]+)\s*\/\s*([^.\s]+)/i,
+  );
+  const suggestionMatch = message.match(/did you mean:\s*([^,?]+)/i);
 
   if (modelMatch && suggestionMatch) {
     return {
       providerID: modelMatch[1].trim(),
       modelID: modelMatch[2].trim(),
       suggestion: suggestionMatch[1].trim(),
-    }
+    };
   }
 
-  return null
+  return null;
 }
 
 interface PromptBody {
-  model?: { providerID: string; modelID: string }
-  [key: string]: unknown
+  model?: { providerID: string; modelID: string };
+  [key: string]: unknown;
 }
 
 interface PromptArgs {
-  path: { id: string }
-  body: PromptBody
-  signal?: AbortSignal
-  [key: string]: unknown
+  path: { id: string };
+  body: PromptBody;
+  signal?: AbortSignal;
+  [key: string]: unknown;
 }
 
 export async function promptWithModelSuggestionRetry(
@@ -91,26 +103,26 @@ export async function promptWithModelSuggestionRetry(
   args: PromptArgs,
   options: PromptRetryOptions = {},
 ): Promise<void> {
-  const timeoutMs = options.timeoutMs ?? PROMPT_TIMEOUT_MS
-  const timeoutContext = createPromptTimeoutContext(args, timeoutMs)
+  const timeoutMs = options.timeoutMs ?? PROMPT_TIMEOUT_MS;
+  const timeoutContext = createPromptTimeoutContext(args, timeoutMs);
   // model errors happen asynchronously server-side and cannot be caught here
   const promptPromise = client.session.promptAsync({
     ...args,
     signal: timeoutContext.signal,
-  } as Parameters<typeof client.session.promptAsync>[0])
+  } as Parameters<typeof client.session.promptAsync>[0]);
 
   try {
-    await promptPromise
+    await promptPromise;
     if (timeoutContext.wasTimedOut()) {
-      throw new Error(`promptAsync timed out after ${timeoutMs}ms`)
+      throw new Error(`promptAsync timed out after ${timeoutMs}ms`);
     }
   } catch (error) {
     if (timeoutContext.wasTimedOut()) {
-      throw new Error(`promptAsync timed out after ${timeoutMs}ms`)
+      throw new Error(`promptAsync timed out after ${timeoutMs}ms`);
     }
-    throw error
+    throw error;
   } finally {
-    timeoutContext.cleanup()
+    timeoutContext.cleanup();
   }
 }
 
@@ -119,37 +131,37 @@ export async function promptSyncWithModelSuggestionRetry(
   args: PromptArgs,
   options: PromptRetryOptions = {},
 ): Promise<void> {
-  const timeoutMs = options.timeoutMs ?? PROMPT_TIMEOUT_MS
+  const timeoutMs = options.timeoutMs ?? PROMPT_TIMEOUT_MS;
 
   try {
-    const timeoutContext = createPromptTimeoutContext(args, timeoutMs)
+    const timeoutContext = createPromptTimeoutContext(args, timeoutMs);
     try {
-      const prompt = client.session.prompt.bind(client.session)
+      const prompt = client.session.prompt.bind(client.session);
       await prompt({
         ...args,
         signal: timeoutContext.signal,
-      } as Parameters<typeof client.session.prompt>[0])
+      } as Parameters<typeof client.session.prompt>[0]);
       if (timeoutContext.wasTimedOut()) {
-        throw new Error(`prompt timed out after ${timeoutMs}ms`)
+        throw new Error(`prompt timed out after ${timeoutMs}ms`);
       }
     } catch (error) {
       if (timeoutContext.wasTimedOut()) {
-        throw new Error(`prompt timed out after ${timeoutMs}ms`)
+        throw new Error(`prompt timed out after ${timeoutMs}ms`);
       }
-      throw error
+      throw error;
     } finally {
-      timeoutContext.cleanup()
+      timeoutContext.cleanup();
     }
   } catch (error) {
-    const suggestion = parseModelSuggestion(error)
+    const suggestion = parseModelSuggestion(error);
     if (!suggestion || !args.body.model) {
-      throw error
+      throw error;
     }
 
     log("[model-suggestion-retry] Model not found, retrying with suggestion", {
       original: `${suggestion.providerID}/${suggestion.modelID}`,
       suggested: suggestion.suggestion,
-    })
+    });
 
     const retryArgs: PromptArgs = {
       ...args,
@@ -160,25 +172,25 @@ export async function promptSyncWithModelSuggestionRetry(
           modelID: suggestion.suggestion,
         },
       },
-    }
+    };
 
-    const timeoutContext = createPromptTimeoutContext(retryArgs, timeoutMs)
+    const timeoutContext = createPromptTimeoutContext(retryArgs, timeoutMs);
     try {
-      const prompt = client.session.prompt.bind(client.session)
+      const prompt = client.session.prompt.bind(client.session);
       await prompt({
         ...retryArgs,
         signal: timeoutContext.signal,
-      } as Parameters<typeof client.session.prompt>[0])
+      } as Parameters<typeof client.session.prompt>[0]);
       if (timeoutContext.wasTimedOut()) {
-        throw new Error(`prompt timed out after ${timeoutMs}ms`)
+        throw new Error(`prompt timed out after ${timeoutMs}ms`);
       }
     } catch (retryError) {
       if (timeoutContext.wasTimedOut()) {
-        throw new Error(`prompt timed out after ${timeoutMs}ms`)
+        throw new Error(`prompt timed out after ${timeoutMs}ms`);
       }
-      throw retryError
+      throw retryError;
     } finally {
-      timeoutContext.cleanup()
+      timeoutContext.cleanup();
     }
   }
 }

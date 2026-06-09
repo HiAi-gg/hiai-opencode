@@ -1,19 +1,19 @@
 import type {
   AvailableCategory,
   AvailableSkill,
-} from "./dynamic-agent-prompt-types"
+} from "./dynamic-agent-prompt-types";
 
 function buildSkillsSection(skills: AvailableSkill[]): string {
-  const builtinSkills = skills.filter((skill) => skill.location === "plugin")
-  const customSkills = skills.filter((skill) => skill.location !== "plugin")
+  const builtinSkills = skills.filter((skill) => skill.location === "plugin");
+  const customSkills = skills.filter((skill) => skill.location !== "plugin");
 
-  const builtinNames = builtinSkills.map((skill) => skill.name).join(", ")
+  const builtinNames = builtinSkills.map((skill) => skill.name).join(", ");
   const customNames = customSkills
     .map((skill) => {
-      const source = skill.location === "project" ? "project" : "user"
-      return `${skill.name} (${source})`
+      const source = skill.location === "project" ? "project" : "user";
+      return `${skill.name} (${source})`;
     })
-    .join(", ")
+    .join(", ");
 
   if (customSkills.length > 0 && builtinSkills.length > 0) {
     return `#### Available Skills (via \`skill\` tool)
@@ -24,7 +24,7 @@ Skills are instruction packs, not agents. Do not look for \`strategist\`, \`crit
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
 
 > User-installed skills OVERRIDE built-in defaults. ALWAYS prefer YOUR SKILLS when domain matches.
-> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`
+> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`;
   }
 
   if (customSkills.length > 0) {
@@ -35,7 +35,7 @@ Skills are instruction packs, not agents. Do not look for \`strategist\`, \`crit
 **⚡ YOUR SKILLS (PRIORITY)**: ${customNames}
 
 > User-installed skills OVERRIDE built-in defaults. ALWAYS prefer YOUR SKILLS when domain matches.
-> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`
+> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`;
   }
 
   if (builtinSkills.length > 0) {
@@ -45,10 +45,10 @@ Skills are instruction packs, not agents. Do not look for \`strategist\`, \`crit
 
 **Built-in**: ${builtinNames}
 
-> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`
+> Full skill descriptions → use the \`skill\` tool to check before EVERY delegation.`;
   }
 
-  return ""
+  return "";
 }
 
 export function buildCategorySkillsDelegationGuide(
@@ -56,21 +56,21 @@ export function buildCategorySkillsDelegationGuide(
   skills: AvailableSkill[],
 ): string {
   if (categories.length === 0 && skills.length === 0) {
-    return ""
+    return "";
   }
 
   const categoryRows = categories.map((category) => {
-    const description = category.description || category.name
-    return `- \`${category.name}\` - ${description}`
-  })
+    const description = category.description || category.name;
+    return `- \`${category.name}\` - ${description}`;
+  });
 
-  const customSkills = skills.filter((skill) => skill.location !== "plugin")
-  const skillsSection = buildSkillsSection(skills)
+  const customSkills = skills.filter((skill) => skill.location !== "plugin");
+  const skillsSection = buildSkillsSection(skills);
   const customPriorityNote =
     customSkills.length > 0
       ? `
 > **User-installed skills get PRIORITY.** When in doubt, INCLUDE rather than omit.`
-      : ""
+      : "";
 
   return `### Category + Skills Delegation
 
@@ -92,5 +92,5 @@ task(category="[domain]", load_skills=["skill-1", "skill-2"], prompt="...")
 \`\`\`
 
 ### Category Domain Matching (ZERO TOLERANCE)
-**VISUAL WORK = ALWAYS \`visual-engineering\`.** UI/UX/CSS/styling/layout/animation/design/frontend → \`visual-engineering\`. Hard logic/architecture/algorithms → \`ultrabrain\`. Research + end-to-end impl → \`deep\`. Trivial single-file fix → \`quick\`. **Almost never \`quick\` or \`unspecified-*\` — match the domain.**`
+**VISUAL WORK = ALWAYS \`visual-engineering\`.** UI/UX/CSS/styling/layout/animation/design/frontend → \`visual-engineering\`. Hard logic/architecture/algorithms → \`ultrabrain\`. Research + end-to-end impl → \`deep\`. Trivial single-file fix → \`quick\`. **Almost never \`quick\` or \`unspecified-*\` — match the domain.**`;
 }

@@ -33,18 +33,24 @@ function resolveHeaderAuthFallback(
 }
 
 function resolveEnvironmentAuthFallback(
-  pluginConfig: HiaiOpenCodeConfig,
-  name: string,
+  _pluginConfig: HiaiOpenCodeConfig,
+  _name: string,
 ): Record<string, string> | undefined {
   return undefined;
 }
 
-function isDisabledMcpEntry(value: unknown): value is McpEntry & { enabled: false } {
-  return typeof value === "object" && value !== null && (value as McpEntry).enabled === false;
+function isDisabledMcpEntry(
+  value: unknown,
+): value is McpEntry & { enabled: false } {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    (value as McpEntry).enabled === false
+  );
 }
 
 function captureUserDisabledMcps(
-  userMcp: Record<string, unknown> | undefined
+  userMcp: Record<string, unknown> | undefined,
 ): Set<string> {
   const disabled = new Set<string>();
   if (!userMcp) return disabled;
@@ -70,12 +76,14 @@ function expandStringRecord(
   return Object.keys(expanded).length > 0 ? expanded : undefined;
 }
 
-function hasMissingResolvedValue(record: Record<string, string> | undefined): boolean {
+function hasMissingResolvedValue(
+  record: Record<string, string> | undefined,
+): boolean {
   if (!record) return false;
   return Object.values(record).some((value) => value.trim().length === 0);
 }
 
-function hasUsableLocalMcpRuntime(name: string, entry: McpEntry): boolean {
+function hasUsableLocalMcpRuntime(_name: string, entry: McpEntry): boolean {
   const command = entry.command;
   if (!Array.isArray(command) || command.length === 0) {
     return true;
@@ -86,7 +94,11 @@ function hasUsableLocalMcpRuntime(name: string, entry: McpEntry): boolean {
     return false;
   }
 
-  if (binary === "node" && typeof args[0] === "string" && args[0].endsWith(".mjs")) {
+  if (
+    binary === "node" &&
+    typeof args[0] === "string" &&
+    args[0].endsWith(".mjs")
+  ) {
     if (!existsSync(args[0])) {
       return false;
     }
@@ -99,9 +111,7 @@ function hasUsableLocalMcpRuntime(name: string, entry: McpEntry): boolean {
   }
 
   const probeArgs =
-    binary === "npx"
-      ? ["--version"]
-      : [...args.slice(0, 1), "--help"];
+    binary === "npx" ? ["--version"] : [...args.slice(0, 1), "--help"];
   const probe = spawnSync(binary, probeArgs, {
     stdio: "ignore",
     timeout: 5000,
@@ -122,34 +132,45 @@ function normalizePlatformMcpDefaults(
 
     const nextEntry: McpEntry = { ...(entry as McpEntry) };
     const headers = expandStringRecord(
-      (nextEntry.headers as Record<string, string> | undefined),
+      nextEntry.headers as Record<string, string> | undefined,
     );
     const environment = expandStringRecord(
-      (nextEntry.environment as Record<string, string> | undefined),
+      nextEntry.environment as Record<string, string> | undefined,
     );
     const headerFallback = resolveHeaderAuthFallback(pluginConfig, name);
-    const environmentFallback = resolveEnvironmentAuthFallback(pluginConfig, name);
-    const usableHeaders = headers && !hasMissingResolvedValue(headers) ? headers : undefined;
-    const usableEnvironment = environment && !hasMissingResolvedValue(environment) ? environment : undefined;
+    const environmentFallback = resolveEnvironmentAuthFallback(
+      pluginConfig,
+      name,
+    );
+    const usableHeaders =
+      headers && !hasMissingResolvedValue(headers) ? headers : undefined;
+    const usableEnvironment =
+      environment && !hasMissingResolvedValue(environment)
+        ? environment
+        : undefined;
     const headersWithFallback =
       usableHeaders && headerFallback
         ? { ...headerFallback, ...usableHeaders }
-        : usableHeaders ?? headerFallback;
+        : (usableHeaders ?? headerFallback);
     const environmentWithFallback =
       usableEnvironment && environmentFallback
         ? { ...environmentFallback, ...usableEnvironment }
-        : usableEnvironment ?? environmentFallback;
+        : (usableEnvironment ?? environmentFallback);
 
     const missingResolvedValues =
       (!!headers && !usableHeaders && !headerFallback) ||
       (!!environment && !usableEnvironment && !environmentFallback);
 
     if (missingResolvedValues) {
-      log(`MCP server "${name}" is missing environment-backed auth; keeping it visible in config`);
+      log(
+        `MCP server "${name}" is missing environment-backed auth; keeping it visible in config`,
+      );
     }
 
     if (!hasUsableLocalMcpRuntime(name, nextEntry)) {
-      log(`Skipping MCP server "${name}" because its local runtime is unavailable`);
+      log(
+        `Skipping MCP server "${name}" because its local runtime is unavailable`,
+      );
       continue;
     }
 
@@ -157,7 +178,10 @@ function normalizePlatformMcpDefaults(
       nextEntry.headers = headersWithFallback;
     }
 
-    if (environmentWithFallback && !hasMissingResolvedValue(environmentWithFallback)) {
+    if (
+      environmentWithFallback &&
+      !hasMissingResolvedValue(environmentWithFallback)
+    ) {
       nextEntry.environment = environmentWithFallback;
     }
 
@@ -178,21 +202,27 @@ export async function applyMcpConfig(params: {
   const userMcp = params.config.mcp as Record<string, unknown> | undefined;
   const userDisabledMcps = captureUserDisabledMcps(userMcp);
 
-  const mcpResult = params.pluginConfig.claude_code?.mcp ?? true
-    ? await loadMcpConfigs(disabledMcps)
-    : { servers: {} };
+  const mcpResult =
+    (params.pluginConfig.claude_code?.mcp ?? true)
+      ? await loadMcpConfigs(disabledMcps)
+      : { servers: {} };
 
   if (userMcp) {
     for (const name of Object.keys(userMcp)) {
       if (name in mcpResult.servers) {
-        log(`warning: MCP server "${name}" from user config overrides Claude Code .mcp.json`);
+        log(
+          `warning: MCP server "${name}" from user config overrides Claude Code .mcp.json`,
+        );
       }
     }
   }
 
   const merged = {
     ...normalizePlatformMcpDefaults(
-      getPlatformMcpDefaults(params.pluginConfig) as unknown as Record<string, unknown>,
+      getPlatformMcpDefaults(params.pluginConfig) as unknown as Record<
+        string,
+        unknown
+      >,
       params.pluginConfig,
     ),
     ...mcpResult.servers,

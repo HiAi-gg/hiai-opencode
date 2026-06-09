@@ -1,18 +1,18 @@
 export type ConfigLoadError = {
-  path: string
-  error: string
-}
+  path: string;
+  error: string;
+};
 
-let configLoadErrors: ConfigLoadError[] = []
+let configLoadErrors: ConfigLoadError[] = [];
 
 export function getConfigLoadErrors(): ConfigLoadError[] {
-  return configLoadErrors
+  return configLoadErrors;
 }
 
 export function clearConfigLoadErrors(): void {
-  configLoadErrors = []
+  configLoadErrors = [];
 }
 
 export function addConfigLoadError(error: ConfigLoadError): void {
-  configLoadErrors.push(error)
+  configLoadErrors.push(error);
 }

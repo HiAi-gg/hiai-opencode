@@ -1,5 +1,5 @@
 export interface NormalizeSDKResponseOptions {
-  preferResponseOnMissingData?: boolean
+  preferResponseOnMissingData?: boolean;
 }
 
 export function normalizeSDKResponse<TData>(
@@ -8,29 +8,29 @@ export function normalizeSDKResponse<TData>(
   options?: NormalizeSDKResponseOptions,
 ): TData {
   if (response == null) {
-    return fallback
+    return fallback;
   }
 
   if (Array.isArray(response)) {
-    return response as TData
+    return response as TData;
   }
 
   if (typeof response === "object" && "data" in response) {
-    const data = (response as { data?: unknown }).data
+    const data = (response as { data?: unknown }).data;
     if (data != null) {
-      return data as TData
+      return data as TData;
     }
 
     if (options?.preferResponseOnMissingData === true) {
-      return response as TData
+      return response as TData;
     }
 
-    return fallback
+    return fallback;
   }
 
   if (options?.preferResponseOnMissingData === true) {
-    return response as TData
+    return response as TData;
   }
 
-  return fallback
+  return fallback;
 }

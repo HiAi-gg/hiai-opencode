@@ -1,108 +1,116 @@
-import { spawn as bunSpawn } from "bun"
-import { spawn as nodeSpawn, type ChildProcess } from "node:child_process"
-import { existsSync, statSync } from "fs"
-import { log } from "../../shared/logger"
+import { spawn as bunSpawn } from "bun";
+import { spawn as nodeSpawn, type ChildProcess } from "node:child_process";
+import { existsSync, statSync } from "node:fs";
+import { log } from "../../shared/logger";
 function shouldUseNodeSpawn(): boolean {
-  return process.platform === "win32"
+  return process.platform === "win32";
 }
 export function validateCwd(cwd: string): { valid: boolean; error?: string } {
   try {
     if (!existsSync(cwd)) {
-      return { valid: false, error: `Working directory does not exist: ${cwd}` }
+      return {
+        valid: false,
+        error: `Working directory does not exist: ${cwd}`,
+      };
     }
-    const stats = statSync(cwd)
+    const stats = statSync(cwd);
     if (!stats.isDirectory()) {
-      return { valid: false, error: `Path is not a directory: ${cwd}` }
+      return { valid: false, error: `Path is not a directory: ${cwd}` };
     }
-    return { valid: true }
+    return { valid: true };
   } catch (err) {
-    return { valid: false, error: `Cannot access working directory: ${cwd} (${err instanceof Error ? err.message : String(err)})` }
+    return {
+      valid: false,
+      error: `Cannot access working directory: ${cwd} (${err instanceof Error ? err.message : String(err)})`,
+    };
   }
 }
 interface StreamReader {
-  read(): Promise<{ done: boolean; value: Uint8Array | undefined }>
+  read(): Promise<{ done: boolean; value: Uint8Array | undefined }>;
 }
 export interface UnifiedProcess {
-  stdin: { write(chunk: Uint8Array | string): void }
-  stdout: { getReader(): StreamReader }
-  stderr: { getReader(): StreamReader }
-  exitCode: number | null
-  exited: Promise<number>
-  kill(signal?: string): void
+  stdin: { write(chunk: Uint8Array | string): void };
+  stdout: { getReader(): StreamReader };
+  stderr: { getReader(): StreamReader };
+  exitCode: number | null;
+  exited: Promise<number>;
+  kill(signal?: string): void;
 }
 function wrapNodeProcess(proc: ChildProcess): UnifiedProcess {
-  let resolveExited: (code: number) => void
-  let exitCode: number | null = null
+  let resolveExited: (code: number) => void;
+  let exitCode: number | null = null;
   const exitedPromise = new Promise<number>((resolve) => {
-    resolveExited = resolve
-  })
+    resolveExited = resolve;
+  });
   proc.on("exit", (code) => {
-    exitCode = code ?? 1
-    resolveExited(exitCode)
-  })
+    exitCode = code ?? 1;
+    resolveExited(exitCode);
+  });
   proc.on("error", () => {
     if (exitCode === null) {
-      exitCode = 1
-      resolveExited(1)
+      exitCode = 1;
+      resolveExited(1);
     }
-  })
-  const createStreamReader = (nodeStream: NodeJS.ReadableStream | null): StreamReader => {
-    const chunks: Uint8Array[] = []
-    let streamEnded = false
-    type ReadResult = { done: boolean; value: Uint8Array | undefined }
-    let waitingResolve: ((result: ReadResult) => void) | null = null
+  });
+  const createStreamReader = (
+    nodeStream: NodeJS.ReadableStream | null,
+  ): StreamReader => {
+    const chunks: Uint8Array[] = [];
+    let streamEnded = false;
+    type ReadResult = { done: boolean; value: Uint8Array | undefined };
+    let waitingResolve: ((result: ReadResult) => void) | null = null;
 
     if (nodeStream) {
       nodeStream.on("data", (chunk: Buffer) => {
-        const uint8 = new Uint8Array(chunk)
+        const uint8 = new Uint8Array(chunk);
         if (waitingResolve) {
-          const resolve = waitingResolve
-          waitingResolve = null
-          resolve({ done: false, value: uint8 })
+          const resolve = waitingResolve;
+          waitingResolve = null;
+          resolve({ done: false, value: uint8 });
         } else {
-          chunks.push(uint8)
+          chunks.push(uint8);
         }
-      })
+      });
 
       nodeStream.on("end", () => {
-        streamEnded = true
+        streamEnded = true;
         if (waitingResolve) {
-          const resolve = waitingResolve
-          waitingResolve = null
-          resolve({ done: true, value: undefined })
+          const resolve = waitingResolve;
+          waitingResolve = null;
+          resolve({ done: true, value: undefined });
         }
-      })
+      });
 
       nodeStream.on("error", () => {
-        streamEnded = true
+        streamEnded = true;
         if (waitingResolve) {
-          const resolve = waitingResolve
-          waitingResolve = null
-          resolve({ done: true, value: undefined })
+          const resolve = waitingResolve;
+          waitingResolve = null;
+          resolve({ done: true, value: undefined });
         }
-      })
+      });
     } else {
-      streamEnded = true
+      streamEnded = true;
     }
     return {
       read(): Promise<ReadResult> {
         return new Promise((resolve) => {
           if (chunks.length > 0) {
-            resolve({ done: false, value: chunks.shift()! })
+            resolve({ done: false, value: chunks.shift()! });
           } else if (streamEnded) {
-            resolve({ done: true, value: undefined })
+            resolve({ done: true, value: undefined });
           } else {
-            waitingResolve = resolve
+            waitingResolve = resolve;
           }
-        })
+        });
       },
-    }
-  }
+    };
+  };
   return {
     stdin: {
       write(chunk: Uint8Array | string) {
         if (proc.stdin) {
-          proc.stdin.write(chunk)
+          proc.stdin.write(chunk);
         }
       },
     },
@@ -113,44 +121,46 @@ function wrapNodeProcess(proc: ChildProcess): UnifiedProcess {
       getReader: () => createStreamReader(proc.stderr),
     },
     get exitCode() {
-      return exitCode
+      return exitCode;
     },
     exited: exitedPromise,
     kill(signal?: string) {
       try {
         if (signal === "SIGKILL") {
-          proc.kill("SIGKILL")
+          proc.kill("SIGKILL");
         } else {
-          proc.kill()
+          proc.kill();
         }
       } catch (error) {
         // Process may already be dead (ESRCH) or we lack permission (EPERM).
         // Both are normal during cleanup; surface to the log so we can spot
         // servers that consistently throw on kill, but do not propagate.
-        log("[LSPProcess] kill failed", { signal, error: String(error) })
+        log("[LSPProcess] kill failed", { signal, error: String(error) });
       }
     },
-  }
+  };
 }
 export function spawnProcess(
   command: string[],
-  options: { cwd: string; env: Record<string, string | undefined> }
+  options: { cwd: string; env: Record<string, string | undefined> },
 ): UnifiedProcess {
-  const cwdValidation = validateCwd(options.cwd)
+  const cwdValidation = validateCwd(options.cwd);
   if (!cwdValidation.valid) {
-    throw new Error(`[LSP] ${cwdValidation.error}`)
+    throw new Error(`[LSP] ${cwdValidation.error}`);
   }
   if (shouldUseNodeSpawn()) {
-    const [cmd, ...args] = command
-    log("[LSP] Using Node.js child_process on Windows to avoid Bun spawn segfault")
+    const [cmd, ...args] = command;
+    log(
+      "[LSP] Using Node.js child_process on Windows to avoid Bun spawn segfault",
+    );
     const proc = nodeSpawn(cmd, args, {
       cwd: options.cwd,
       env: options.env as NodeJS.ProcessEnv,
       stdio: ["pipe", "pipe", "pipe"],
       windowsHide: true,
       shell: true,
-    })
-    return wrapNodeProcess(proc)
+    });
+    return wrapNodeProcess(proc);
   }
   const proc = bunSpawn(command, {
     stdin: "pipe",
@@ -158,6 +168,6 @@ export function spawnProcess(
     stderr: "pipe",
     cwd: options.cwd,
     env: options.env,
-  })
-  return proc as unknown as UnifiedProcess
+  });
+  return proc as unknown as UnifiedProcess;
 }

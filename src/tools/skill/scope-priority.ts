@@ -6,12 +6,14 @@ export const SCOPE_PRIORITY: Record<string, number> = {
   plugin: 1,
   config: 1,
   builtin: 1,
-}
+};
 
-export function sortByScopePriority<TItem extends { scope: string }>(items: TItem[]): TItem[] {
+export function sortByScopePriority<TItem extends { scope: string }>(
+  items: TItem[],
+): TItem[] {
   return [...items].sort((left, right) => {
-    const leftPriority = SCOPE_PRIORITY[left.scope] || 0
-    const rightPriority = SCOPE_PRIORITY[right.scope] || 0
-    return rightPriority - leftPriority
-  })
+    const leftPriority = SCOPE_PRIORITY[left.scope] || 0;
+    const rightPriority = SCOPE_PRIORITY[right.scope] || 0;
+    return rightPriority - leftPriority;
+  });
 }

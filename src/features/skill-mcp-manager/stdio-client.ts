@@ -1,118 +1,136 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js"
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
-import type { ClaudeCodeMcpServer } from "../claude-code-mcp-loader/types"
-import { createCleanMcpEnvironment } from "./env-cleaner"
-import { registerProcessCleanup, startCleanupTimer } from "./cleanup"
-import { redactSensitiveData } from "./error-redaction"
-import { logWarn } from "../../shared/logger"
-import type { ManagedClient, McpClient, McpTransport, SkillMcpClientConnectionParams } from "./types"
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
+import type { ClaudeCodeMcpServer } from "../claude-code-mcp-loader/types";
+import { createCleanMcpEnvironment } from "./env-cleaner";
+import { registerProcessCleanup, startCleanupTimer } from "./cleanup";
+import { redactSensitiveData } from "./error-redaction";
+import { logWarn } from "../../shared/logger";
+import type {
+  ManagedClient,
+  McpClient,
+  McpTransport,
+  SkillMcpClientConnectionParams,
+} from "./types";
 
 type StdioClientFactory = (
   clientInfo: { name: string; version: string },
-  options: { capabilities: Record<string, never> }
-) => McpClient
+  options: { capabilities: Record<string, never> },
+) => McpClient;
 
 type StdioTransportFactory = (
-  options: ConstructorParameters<typeof StdioClientTransport>[0]
-) => McpTransport
+  options: ConstructorParameters<typeof StdioClientTransport>[0],
+) => McpTransport;
 
 interface StdioClientDependencies {
-  createClient: StdioClientFactory
-  createTransport: StdioTransportFactory
+  createClient: StdioClientFactory;
+  createTransport: StdioTransportFactory;
 }
 
 const defaultStdioClientDependencies: StdioClientDependencies = {
   createClient: (clientInfo, options) => new Client(clientInfo, options),
   createTransport: (options) => new StdioClientTransport(options),
-}
+};
 
-let stdioClientDependencies: StdioClientDependencies = defaultStdioClientDependencies
+let stdioClientDependencies: StdioClientDependencies =
+  defaultStdioClientDependencies;
 
 export function setStdioClientDependenciesForTesting(
-  dependencies?: Partial<StdioClientDependencies>
+  dependencies?: Partial<StdioClientDependencies>,
 ): void {
   stdioClientDependencies = dependencies
     ? {
         ...defaultStdioClientDependencies,
         ...dependencies,
       }
-    : defaultStdioClientDependencies
+    : defaultStdioClientDependencies;
 }
 
-function getStdioCommand(config: ClaudeCodeMcpServer, serverName: string): string {
+function getStdioCommand(
+  config: ClaudeCodeMcpServer,
+  serverName: string,
+): string {
   if (!config.command) {
-    throw new Error(`MCP server "${serverName}" is configured for stdio but missing 'command' field.`)
+    throw new Error(
+      `MCP server "${serverName}" is configured for stdio but missing 'command' field.`,
+    );
   }
-  return config.command
+  return config.command;
 }
 
-export async function createStdioClient(params: SkillMcpClientConnectionParams): Promise<McpClient> {
-  const { state, clientKey, info, config } = params
-  const shutdownGenAtStart = state.shutdownGeneration
+export async function createStdioClient(
+  params: SkillMcpClientConnectionParams,
+): Promise<McpClient> {
+  const { state, clientKey, info, config } = params;
+  const shutdownGenAtStart = state.shutdownGeneration;
 
-  const command = getStdioCommand(config, info.serverName)
-  const args = config.args ?? []
-  const mergedEnv = createCleanMcpEnvironment(config.env)
+  const command = getStdioCommand(config, info.serverName);
+  const args = config.args ?? [];
+  const mergedEnv = createCleanMcpEnvironment(config.env);
 
-  registerProcessCleanup(state)
+  registerProcessCleanup(state);
 
   const transport: McpTransport = stdioClientDependencies.createTransport({
     command,
     args,
     env: mergedEnv,
     stderr: "ignore",
-  })
+  });
 
   const client: McpClient = stdioClientDependencies.createClient(
-    { name: `skill-mcp-${info.skillName}-${info.serverName}`, version: "1.0.0" },
-    { capabilities: {} }
-  )
+    {
+      name: `skill-mcp-${info.skillName}-${info.serverName}`,
+      version: "1.0.0",
+    },
+    { capabilities: {} },
+  );
 
   try {
-    await client.connect(transport)
+    await client.connect(transport);
   } catch (error) {
     // Close transport to prevent orphaned MCP process on connection failure
     try {
-      await transport.close()
+      await transport.close();
     } catch {
       // Process may already be terminated
     }
 
-    const errorMessage = error instanceof Error ? error.message : String(error)
-    const fullCommand = `${command} ${args.join(" ")}`
-    const safeCommand = redactSensitiveData(fullCommand)
-    const safeErrorMessage = redactSensitiveData(errorMessage)
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const fullCommand = `${command} ${args.join(" ")}`;
+    const safeCommand = redactSensitiveData(fullCommand);
+    const safeErrorMessage = redactSensitiveData(errorMessage);
     throw new Error(
       `Failed to connect to MCP server "${info.serverName}".\n\n` +
-      `Command: ${safeCommand}\n` +
-      `Reason: ${safeErrorMessage}\n\n` +
-      `Hints:\n` +
-      `  - Ensure the command is installed and available in PATH\n` +
-      `  - Check if the MCP server package exists\n` +
-      `  - Verify the args are correct for this server`
-    )
+        `Command: ${safeCommand}\n` +
+        `Reason: ${safeErrorMessage}\n\n` +
+        `Hints:\n` +
+        `  - Ensure the command is installed and available in PATH\n` +
+        `  - Check if the MCP server package exists\n` +
+        `  - Verify the args are correct for this server`,
+    );
   }
 
   if (state.shutdownGeneration !== shutdownGenAtStart) {
     try {
-      await client.close()
+      await client.close();
     } catch (error) {
       // Shutdown raced connection completion; client/transport may already
       // be torn down. The shutdown error below is the real signal.
       logWarn("[skill-mcp] client.close failed after shutdown race", {
         serverName: info.serverName,
         error: String(error),
-      })
+      });
     }
     try {
-      await transport.close()
+      await transport.close();
     } catch (error) {
       logWarn("[skill-mcp] transport.close failed after shutdown race", {
         serverName: info.serverName,
         error: String(error),
-      })
+      });
     }
-    throw new Error(`MCP server "${info.serverName}" connection completed after shutdown`)
+    throw new Error(
+      `MCP server "${info.serverName}" connection completed after shutdown`,
+    );
   }
 
   const managedClient = {
@@ -121,9 +139,9 @@ export async function createStdioClient(params: SkillMcpClientConnectionParams):
     skillName: info.skillName,
     lastUsedAt: Date.now(),
     connectionType: "stdio",
-  } satisfies ManagedClient
+  } satisfies ManagedClient;
 
-  state.clients.set(clientKey, managedClient)
-  startCleanupTimer(state)
-  return client
+  state.clients.set(clientKey, managedClient);
+  startCleanupTimer(state);
+  return client;
 }

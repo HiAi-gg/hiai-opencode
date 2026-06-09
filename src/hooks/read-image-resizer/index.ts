@@ -1,1 +1,1 @@
-export { createReadImageResizerHook } from "./hook"
+export { createReadImageResizerHook } from "./hook";

@@ -1,4 +1,4 @@
-import type { LSPServerConfig } from "./types"
+import type { LSPServerConfig } from "./types";
 
 export const LSP_INSTALL_HINTS: Record<string, string> = {
   typescript: "npm install -g typescript-language-server typescript",
@@ -41,51 +41,162 @@ export const LSP_INSTALL_HINTS: Record<string, string> = {
   "haskell-language-server": "ghcup install hls",
   bash: "npm install -g bash-language-server",
   "kotlin-ls": "See https://github.com/Kotlin/kotlin-lsp",
-}
+};
 
 // Synced with OpenCode's server.ts
 // https://github.com/sst/opencode/blob/dev/packages/opencode/src/lsp/server.ts
 export const BUILTIN_SERVERS: Record<string, Omit<LSPServerConfig, "id">> = {
-  typescript: { command: ["typescript-language-server", "--stdio"], extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"] },
-  deno: { command: ["deno", "lsp"], extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs"] },
+  typescript: {
+    command: ["typescript-language-server", "--stdio"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"],
+  },
+  deno: {
+    command: ["deno", "lsp"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs"],
+  },
   vue: { command: ["vue-language-server", "--stdio"], extensions: [".vue"] },
-  eslint: { command: ["vscode-eslint-language-server", "--stdio"], extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".vue"] },
-  oxlint: { command: ["oxlint", "--lsp"], extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".vue", ".astro", ".svelte"] },
-  biome: { command: ["biome", "lsp-proxy", "--stdio"], extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts", ".json", ".jsonc", ".vue", ".astro", ".svelte", ".css", ".graphql", ".gql", ".html"] },
+  eslint: {
+    command: ["vscode-eslint-language-server", "--stdio"],
+    extensions: [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".mts",
+      ".cts",
+      ".vue",
+    ],
+  },
+  oxlint: {
+    command: ["oxlint", "--lsp"],
+    extensions: [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".mts",
+      ".cts",
+      ".vue",
+      ".astro",
+      ".svelte",
+    ],
+  },
+  biome: {
+    command: ["biome", "lsp-proxy", "--stdio"],
+    extensions: [
+      ".ts",
+      ".tsx",
+      ".js",
+      ".jsx",
+      ".mjs",
+      ".cjs",
+      ".mts",
+      ".cts",
+      ".json",
+      ".jsonc",
+      ".vue",
+      ".astro",
+      ".svelte",
+      ".css",
+      ".graphql",
+      ".gql",
+      ".html",
+    ],
+  },
   gopls: { command: ["gopls"], extensions: [".go"] },
-  "ruby-lsp": { command: ["rubocop", "--lsp"], extensions: [".rb", ".rake", ".gemspec", ".ru"] },
-  basedpyright: { command: ["basedpyright-langserver", "--stdio"], extensions: [".py", ".pyi"] },
-  pyright: { command: ["pyright-langserver", "--stdio"], extensions: [".py", ".pyi"] },
+  "ruby-lsp": {
+    command: ["rubocop", "--lsp"],
+    extensions: [".rb", ".rake", ".gemspec", ".ru"],
+  },
+  basedpyright: {
+    command: ["basedpyright-langserver", "--stdio"],
+    extensions: [".py", ".pyi"],
+  },
+  pyright: {
+    command: ["pyright-langserver", "--stdio"],
+    extensions: [".py", ".pyi"],
+  },
   ty: { command: ["ty", "server"], extensions: [".py", ".pyi"] },
   ruff: { command: ["ruff", "server"], extensions: [".py", ".pyi"] },
   "elixir-ls": { command: ["elixir-ls"], extensions: [".ex", ".exs"] },
   zls: { command: ["zls"], extensions: [".zig", ".zon"] },
   csharp: { command: ["csharp-ls"], extensions: [".cs"] },
-  fsharp: { command: ["fsautocomplete"], extensions: [".fs", ".fsi", ".fsx", ".fsscript"] },
-  "sourcekit-lsp": { command: ["sourcekit-lsp"], extensions: [".swift", ".objc", ".objcpp"] },
+  fsharp: {
+    command: ["fsautocomplete"],
+    extensions: [".fs", ".fsi", ".fsx", ".fsscript"],
+  },
+  "sourcekit-lsp": {
+    command: ["sourcekit-lsp"],
+    extensions: [".swift", ".objc", ".objcpp"],
+  },
   rust: { command: ["rust-analyzer"], extensions: [".rs"] },
-  clangd: { command: ["clangd", "--background-index", "--clang-tidy"], extensions: [".c", ".cpp", ".cc", ".cxx", ".c++", ".h", ".hpp", ".hh", ".hxx", ".h++"] },
+  clangd: {
+    command: ["clangd", "--background-index", "--clang-tidy"],
+    extensions: [
+      ".c",
+      ".cpp",
+      ".cc",
+      ".cxx",
+      ".c++",
+      ".h",
+      ".hpp",
+      ".hh",
+      ".hxx",
+      ".h++",
+    ],
+  },
   svelte: { command: ["svelteserver", "--stdio"], extensions: [".svelte"] },
   astro: { command: ["astro-ls", "--stdio"], extensions: [".astro"] },
-  bash: { command: ["bash-language-server", "start"], extensions: [".sh", ".bash", ".zsh", ".ksh"] },
+  bash: {
+    command: ["bash-language-server", "start"],
+    extensions: [".sh", ".bash", ".zsh", ".ksh"],
+  },
   // Keep legacy alias for backward compatibility
-  "bash-ls": { command: ["bash-language-server", "start"], extensions: [".sh", ".bash", ".zsh", ".ksh"] },
+  "bash-ls": {
+    command: ["bash-language-server", "start"],
+    extensions: [".sh", ".bash", ".zsh", ".ksh"],
+  },
   jdtls: { command: ["jdtls"], extensions: [".java"] },
-  "yaml-ls": { command: ["yaml-language-server", "--stdio"], extensions: [".yaml", ".yml"] },
+  "yaml-ls": {
+    command: ["yaml-language-server", "--stdio"],
+    extensions: [".yaml", ".yml"],
+  },
   "lua-ls": { command: ["lua-language-server"], extensions: [".lua"] },
   php: { command: ["intelephense", "--stdio"], extensions: [".php"] },
-  dart: { command: ["dart", "language-server", "--lsp"], extensions: [".dart"] },
-  terraform: { command: ["terraform-ls", "serve"], extensions: [".tf", ".tfvars"] },
+  dart: {
+    command: ["dart", "language-server", "--lsp"],
+    extensions: [".dart"],
+  },
+  terraform: {
+    command: ["terraform-ls", "serve"],
+    extensions: [".tf", ".tfvars"],
+  },
   // Legacy alias for backward compatibility
-  "terraform-ls": { command: ["terraform-ls", "serve"], extensions: [".tf", ".tfvars"] },
+  "terraform-ls": {
+    command: ["terraform-ls", "serve"],
+    extensions: [".tf", ".tfvars"],
+  },
   prisma: { command: ["prisma", "language-server"], extensions: [".prisma"] },
   "ocaml-lsp": { command: ["ocamllsp"], extensions: [".ml", ".mli"] },
   texlab: { command: ["texlab"], extensions: [".tex", ".bib"] },
-  dockerfile: { command: ["docker-langserver", "--stdio"], extensions: [".dockerfile"] },
+  dockerfile: {
+    command: ["docker-langserver", "--stdio"],
+    extensions: [".dockerfile"],
+  },
   gleam: { command: ["gleam", "lsp"], extensions: [".gleam"] },
-  "clojure-lsp": { command: ["clojure-lsp", "listen"], extensions: [".clj", ".cljs", ".cljc", ".edn"] },
+  "clojure-lsp": {
+    command: ["clojure-lsp", "listen"],
+    extensions: [".clj", ".cljs", ".cljc", ".edn"],
+  },
   nixd: { command: ["nixd"], extensions: [".nix"] },
   tinymist: { command: ["tinymist"], extensions: [".typ", ".typc"] },
-  "haskell-language-server": { command: ["haskell-language-server-wrapper", "--lsp"], extensions: [".hs", ".lhs"] },
+  "haskell-language-server": {
+    command: ["haskell-language-server-wrapper", "--lsp"],
+    extensions: [".hs", ".lhs"],
+  },
   "kotlin-ls": { command: ["kotlin-lsp"], extensions: [".kt", ".kts"] },
-}
+};

@@ -49,7 +49,7 @@ export async function executeHookCommand(
     }
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     let settled = false;
     let killTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -84,7 +84,7 @@ export async function executeHookCommand(
       resolve(result);
     };
 
-    proc.on("close", code => {
+    proc.on("close", (code) => {
       settle({
         exitCode: code ?? 1,
         stdout: stdout.trim(),
@@ -92,7 +92,7 @@ export async function executeHookCommand(
       });
     });
 
-    proc.on("error", err => {
+    proc.on("error", (err) => {
       settle({ exitCode: 1, stderr: err.message });
     });
 
@@ -103,10 +103,13 @@ export async function executeHookCommand(
             process.kill(-proc.pid, signal);
           } catch (groupError) {
             // process group kill failed (e.g. EPERM, ESRCH) — fall back to direct kill.
-            logWarn("[execute-hook-command] process group kill failed, falling back to direct kill", {
-              signal,
-              error: String(groupError),
-            });
+            logWarn(
+              "[execute-hook-command] process group kill failed, falling back to direct kill",
+              {
+                signal,
+                error: String(groupError),
+              },
+            );
             proc.kill(signal);
           }
         } else {
@@ -136,7 +139,11 @@ export async function executeHookCommand(
     }, timeoutMs);
 
     // Don't let the timeout timer keep the process alive
-    if (timeoutTimer && typeof timeoutTimer === "object" && "unref" in timeoutTimer) {
+    if (
+      timeoutTimer &&
+      typeof timeoutTimer === "object" &&
+      "unref" in timeoutTimer
+    ) {
       timeoutTimer.unref();
     }
   });

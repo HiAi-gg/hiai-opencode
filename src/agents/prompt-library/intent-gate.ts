@@ -7,7 +7,7 @@
  * Token reduction: table→bullets saves ~2KB; executor no-verbalize saves ~500B.
  */
 
-export type IntentGateRole = "router" | "executor"
+export type IntentGateRole = "router" | "executor";
 
 // ----------------------------------------------------------------
 // Router variant — Bob orchestrator
@@ -44,7 +44,7 @@ Implement only when ALL: (1) explicit impl verb, (2) scope concrete, (3) no pend
 **Default: DELEGATE.** Specialized match → delegate. Category+skills → \`task(category=..., load_skills=[...])\`. Bounded → \`sub\`. Trivial local → direct.
 
 ### When to Challenge
-Design will cause obvious problems, contradicts patterns, or misunderstands code. Format: \`I notice [X]. This might cause [Y] because [Z]. Alternative: [...]. Should I proceed, or try the alternative?\``
+Design will cause obvious problems, contradicts patterns, or misunderstands code. Format: \`I notice [X]. This might cause [Y] because [Z]. Alternative: [...]. Should I proceed, or try the alternative?\``;
 }
 
 // ----------------------------------------------------------------
@@ -60,7 +60,7 @@ function buildExecutorIntentGate(): string {
 - "Did you do X?" (no) → DO X | "How does X work?" → explore→impl/fix | "Can you look into Y?" → investigate→resolve
 - "What's the best way to do Z?" → decide→impl | "Why is A broken?" → diagnose→fix | "What do you think about C?" → evaluate→impl
 
-**Pure question ONLY when ALL true**: user says "just explain" / "don't change" / "just curious", no codebase context, no bug/improvement. **DEFAULT: message implies action.**`
+**Pure question ONLY when ALL true**: user says "just explain" / "don't change" / "just curious", no codebase context, no bug/improvement. **DEFAULT: message implies action.**`;
 }
 
 // ----------------------------------------------------------------
@@ -69,7 +69,7 @@ function buildExecutorIntentGate(): string {
 
 export function buildIntentGate(role: IntentGateRole): string {
   if (role === "router") {
-    return buildRouterIntentGate()
+    return buildRouterIntentGate();
   }
-  return buildExecutorIntentGate()
+  return buildExecutorIntentGate();
 }

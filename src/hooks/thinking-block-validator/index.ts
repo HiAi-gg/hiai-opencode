@@ -1,1 +1,1 @@
-export { createThinkingBlockValidatorHook } from "./hook"
+export { createThinkingBlockValidatorHook } from "./hook";

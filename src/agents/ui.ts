@@ -1,17 +1,17 @@
 // PROMPT_VERSION: 2026-04-26
-import type { AgentConfig } from "@opencode-ai/sdk"
-import type { AgentMode, AgentPromptMetadata } from "./types"
-import { createAgentToolAllowlist } from "../shared/permission-compat"
-import { buildAgentIdentitySection } from "./prompt-library/identity"
+import type { AgentConfig } from "@opencode-ai/sdk";
+import type { AgentMode, AgentPromptMetadata } from "./types";
+import { createAgentToolAllowlist } from "../shared/permission-compat";
+import { buildAgentIdentitySection } from "./prompt-library/identity";
 
-const MODE: AgentMode = "subagent"
+const MODE: AgentMode = "subagent";
 
 export const MULTIMODAL_LOOKER_PROMPT_METADATA: AgentPromptMetadata = {
   category: "utility",
   cost: "CHEAP",
   promptAlias: "Vision",
   triggers: [],
-}
+};
 
 const VISION_PROMPT = `You interpret media files that cannot be read as plain text, and you visually verify running web UIs via agent-browser.
 
@@ -127,7 +127,7 @@ You never delegate further. You return findings; the caller decides next steps.
 - NO task() / delegate_task — return findings, let the caller act.
 - Browser actions (click/fill/navigate) are allowed in Mode 2 because they are verification, not implementation.
 - If the caller asks you to fix code or implement a change — refuse and return scope correction.
-</restrictions>`
+</restrictions>`;
 
 // Full browser automation access for Vision (primary agent-browser user)
 const VISION_AGENT_BROWSER_TOOLS = [
@@ -146,7 +146,7 @@ const VISION_AGENT_BROWSER_TOOLS = [
   "agent_browser_hover",
   "agent_browser_press",
   "agent_browser_batch",
-]
+];
 
 // Stitch MCP tools for viewing Designer-generated screens
 const VISION_STITCH_TOOLS = [
@@ -155,7 +155,7 @@ const VISION_STITCH_TOOLS = [
   "stitch_list_screens",
   "stitch_list_projects",
   "stitch_list_design_systems",
-]
+];
 
 export function createMultimodalLookerAgent(model: string): AgentConfig {
   const restrictions = createAgentToolAllowlist([
@@ -163,7 +163,7 @@ export function createMultimodalLookerAgent(model: string): AgentConfig {
     "look_at",
     ...VISION_AGENT_BROWSER_TOOLS,
     ...VISION_STITCH_TOOLS,
-  ])
+  ]);
 
   return {
     description:
@@ -172,8 +172,14 @@ export function createMultimodalLookerAgent(model: string): AgentConfig {
     model,
     temperature: 0.1,
     ...restrictions,
-    prompt: buildAgentIdentitySection("Vision", "multimodal analysis and UI verification specialist") + "\n\n" + VISION_PROMPT,
+    prompt:
+      buildAgentIdentitySection(
+        "Vision",
+        "multimodal analysis and UI verification specialist",
+      ) +
+      "\n\n" +
+      VISION_PROMPT,
     delegate_to: [],
-  }
+  };
 }
-createMultimodalLookerAgent.mode = MODE
+createMultimodalLookerAgent.mode = MODE;

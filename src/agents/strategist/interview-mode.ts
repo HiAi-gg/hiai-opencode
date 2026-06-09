@@ -5,7 +5,7 @@
  * Includes intent classification, research patterns, and anti-patterns.
  */
 
-import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
+import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder";
 
 export const STRATEGIST_INTERVIEW_MODE = `# PHASE 1: INTERVIEW MODE (DEFAULT)
 
@@ -334,4 +334,4 @@ Edit(".bob/drafts/{topic-slug}.md", oldString="---\n## Previous Section", newStr
 \`\`\`
 
 ---
-`
+`;

@@ -41,8 +41,8 @@
       "src/**/*.cjs",
       "scripts/**/*.ts",
       "scripts/**/*.js",
-      "!**/node_modules/**",
-      "!**/dist/**",
+      "!**/node_modules",
+      "!**/dist",
       "!**/*.snap.ts"
     ]
   }

@@ -27,8 +27,17 @@ export function parseLoopConfig(loop: unknown): LoopConfig | undefined {
 }
 
 // Parse a parallel item - handles "/cmd {model:...} args" syntax, plain "cmd", or {command, arguments} object
-function isParallelCommandLike(p: unknown): p is { command: unknown; arguments?: unknown; prompt?: unknown; model?: unknown; agent?: unknown; loop?: unknown; as?: unknown; inline?: unknown } {
-  return typeof p === "object" && p !== null && "command" in p
+function isParallelCommandLike(p: unknown): p is {
+  command: unknown;
+  arguments?: unknown;
+  prompt?: unknown;
+  model?: unknown;
+  agent?: unknown;
+  loop?: unknown;
+  as?: unknown;
+  inline?: unknown;
+} {
+  return typeof p === "object" && p !== null && "command" in p;
 }
 
 export function parseParallelItem(p: unknown): ParallelCommand | null {

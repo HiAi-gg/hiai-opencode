@@ -1,34 +1,36 @@
-import { z } from "zod"
-import { AnyMcpNameSchema } from "../../mcp/types"
-import { BuiltinSkillNameSchema } from "./agent-names"
-import { AgentDefinitionsConfigSchema } from "./agent-definitions"
-import { AgentOverridesSchema } from "./agent-overrides"
-import { BabysittingConfigSchema } from "./babysitting"
-import { BackgroundTaskConfigSchema } from "./background-task"
-import { BrowserAutomationConfigSchema } from "./browser-automation"
-import { CategoriesConfigSchema } from "./categories"
-import { ClaudeCodeConfigSchema } from "./claude-code"
-import { CommentCheckerConfigSchema } from "./comment-checker"
-import { BuiltinCommandNameSchema } from "./commands"
-import { ExperimentalConfigSchema } from "./experimental"
-import { GitMasterConfigSchema } from "./git-master"
-import { NotificationConfigSchema } from "./notification"
-import { ModelCapabilitiesConfigSchema } from "./model-capabilities"
-import { RalphLoopConfigSchema } from "./ralph-loop"
-import { RuntimeFallbackConfigSchema } from "./runtime-fallback"
-import { SkillsConfigSchema } from "./skills"
-import { SkillDiscoveryConfigSchema } from "./skill-discovery"
-import { BobConfigSchema } from "./bob"
-import { BobAgentConfigSchema } from "./bob-agent"
-import { TmuxConfigSchema } from "./tmux"
-import { StartWorkConfigSchema } from "./start-work"
-import { FastApplyConfigSchema } from "./fast-apply"
+import { z } from "zod";
+import { AnyMcpNameSchema } from "../../mcp/types";
+import { BuiltinSkillNameSchema } from "./agent-names";
+import { AgentDefinitionsConfigSchema } from "./agent-definitions";
+import { AgentOverridesSchema } from "./agent-overrides";
+import { BabysittingConfigSchema } from "./babysitting";
+import { BackgroundTaskConfigSchema } from "./background-task";
+import { BrowserAutomationConfigSchema } from "./browser-automation";
+import { CategoriesConfigSchema } from "./categories";
+import { ClaudeCodeConfigSchema } from "./claude-code";
+import { CommentCheckerConfigSchema } from "./comment-checker";
+import { BuiltinCommandNameSchema } from "./commands";
+import { ExperimentalConfigSchema } from "./experimental";
+import { GitMasterConfigSchema } from "./git-master";
+import { NotificationConfigSchema } from "./notification";
+import { ModelCapabilitiesConfigSchema } from "./model-capabilities";
+import { RalphLoopConfigSchema } from "./ralph-loop";
+import { RuntimeFallbackConfigSchema } from "./runtime-fallback";
+import { SkillsConfigSchema } from "./skills";
+import { SkillDiscoveryConfigSchema } from "./skill-discovery";
+import { BobConfigSchema } from "./bob";
+import { BobAgentConfigSchema } from "./bob-agent";
+import { TmuxConfigSchema } from "./tmux";
+import { StartWorkConfigSchema } from "./start-work";
+import { FastApplyConfigSchema } from "./fast-apply";
 
-const AuthConfigSchema = z.object({
-  stitch: z.string().optional(),
-  firecrawl: z.string().optional(),
-  context7: z.string().optional(),
-}).optional()
+const AuthConfigSchema = z
+  .object({
+    stitch: z.string().optional(),
+    firecrawl: z.string().optional(),
+    context7: z.string().optional(),
+  })
+  .optional();
 
 export const HiaiOpenCodeConfigSchema = z.object({
   $schema: z.string().optional(),
@@ -65,7 +67,9 @@ export const HiaiOpenCodeConfigSchema = z.object({
    * Set to false to disable, or use object for advanced config:
    * { "enabled": true, "retry_on_errors": [400, 429], "timeout_seconds": 30 }
    */
-  runtime_fallback: z.union([z.boolean(), RuntimeFallbackConfigSchema]).optional(),
+  runtime_fallback: z
+    .union([z.boolean(), RuntimeFallbackConfigSchema])
+    .optional(),
   background_task: BackgroundTaskConfigSchema.optional(),
   notification: NotificationConfigSchema.optional(),
   model_capabilities: ModelCapabilitiesConfigSchema.optional(),
@@ -78,11 +82,11 @@ export const HiaiOpenCodeConfigSchema = z.object({
   }),
   browser_automation_engine: BrowserAutomationConfigSchema.optional(),
   tmux: TmuxConfigSchema.optional(),
-  "bob": BobConfigSchema.optional(),
+  bob: BobConfigSchema.optional(),
   start_work: StartWorkConfigSchema.optional(),
   fast_apply: FastApplyConfigSchema.optional(),
   /** Migration history to prevent re-applying migrations (e.g., model version upgrades) */
   _migrations: z.array(z.string()).optional(),
-})
+});
 
-export type HiaiOpenCodeConfig = z.infer<typeof HiaiOpenCodeConfigSchema>
+export type HiaiOpenCodeConfig = z.infer<typeof HiaiOpenCodeConfigSchema>;

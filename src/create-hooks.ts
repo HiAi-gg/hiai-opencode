@@ -1,49 +1,49 @@
-import type { AvailableSkill } from "./agents/dynamic-agent-prompt-builder"
-import type { HookName, HiaiOpenCodeConfig } from "./config"
-import type { LoadedSkill } from "./features/opencode-skill-loader/types"
-import type { BackgroundManager } from "./features/background-agent"
-import type { PluginContext } from "./plugin/types"
-import type { ModelCacheState } from "./plugin-state"
-import type { Managers } from "./create-managers"
+import type { AvailableSkill } from "./agents/dynamic-agent-prompt-builder";
+import type { HookName, HiaiOpenCodeConfig } from "./config";
+import type { LoadedSkill } from "./features/opencode-skill-loader/types";
+import type { BackgroundManager } from "./features/background-agent";
+import type { PluginContext } from "./plugin/types";
+import type { ModelCacheState } from "./plugin-state";
+import type { Managers } from "./create-managers";
 
-import { createCoreHooks } from "./plugin/hooks/create-core-hooks"
-import { createContinuationHooks } from "./plugin/hooks/create-continuation-hooks"
-import { createSkillHooks } from "./plugin/hooks/create-skill-hooks"
+import { createCoreHooks } from "./plugin/hooks/create-core-hooks";
+import { createContinuationHooks } from "./plugin/hooks/create-continuation-hooks";
+import { createSkillHooks } from "./plugin/hooks/create-skill-hooks";
 
-export type CreatedHooks = ReturnType<typeof createHooks>
+export type CreatedHooks = ReturnType<typeof createHooks>;
 
-type DisposableHook = { dispose?: () => void } | null | undefined
+type DisposableHook = { dispose?: () => void } | null | undefined;
 
 export type DisposableCreatedHooks = {
-  claudeCodeHooks?: DisposableHook
-  commentChecker?: DisposableHook
-  runtimeFallback?: DisposableHook
-  todoContinuationEnforcer?: DisposableHook
-  autoSlashCommand?: DisposableHook
-  anthropicContextWindowLimitRecovery?: DisposableHook
-  subAgentReceiptHook?: DisposableHook
-}
+  claudeCodeHooks?: DisposableHook;
+  commentChecker?: DisposableHook;
+  runtimeFallback?: DisposableHook;
+  todoContinuationEnforcer?: DisposableHook;
+  autoSlashCommand?: DisposableHook;
+  anthropicContextWindowLimitRecovery?: DisposableHook;
+  subAgentReceiptHook?: DisposableHook;
+};
 
 export function disposeCreatedHooks(hooks: DisposableCreatedHooks): void {
-  hooks.claudeCodeHooks?.dispose?.()
-  hooks.commentChecker?.dispose?.()
-  hooks.runtimeFallback?.dispose?.()
-  hooks.todoContinuationEnforcer?.dispose?.()
-  hooks.autoSlashCommand?.dispose?.()
-  hooks.anthropicContextWindowLimitRecovery?.dispose?.()
-  hooks.subAgentReceiptHook?.dispose?.()
+  hooks.claudeCodeHooks?.dispose?.();
+  hooks.commentChecker?.dispose?.();
+  hooks.runtimeFallback?.dispose?.();
+  hooks.todoContinuationEnforcer?.dispose?.();
+  hooks.autoSlashCommand?.dispose?.();
+  hooks.anthropicContextWindowLimitRecovery?.dispose?.();
+  hooks.subAgentReceiptHook?.dispose?.();
 }
 
 export function createHooks(args: {
-  ctx: PluginContext
-  pluginConfig: HiaiOpenCodeConfig
-  modelCacheState: ModelCacheState
-  backgroundManager: BackgroundManager
-  managers: Managers
-  isHookEnabled: (hookName: HookName) => boolean
-  safeHookEnabled: boolean
-  mergedSkills: LoadedSkill[]
-  availableSkills: AvailableSkill[]
+  ctx: PluginContext;
+  pluginConfig: HiaiOpenCodeConfig;
+  modelCacheState: ModelCacheState;
+  backgroundManager: BackgroundManager;
+  managers: Managers;
+  isHookEnabled: (hookName: HookName) => boolean;
+  safeHookEnabled: boolean;
+  mergedSkills: LoadedSkill[];
+  availableSkills: AvailableSkill[];
 }) {
   const {
     ctx,
@@ -55,7 +55,7 @@ export function createHooks(args: {
     safeHookEnabled,
     mergedSkills,
     availableSkills,
-  } = args
+  } = args;
 
   const core = createCoreHooks({
     ctx,
@@ -63,7 +63,7 @@ export function createHooks(args: {
     modelCacheState,
     isHookEnabled,
     safeHookEnabled,
-  })
+  });
 
   const continuation = createContinuationHooks({
     ctx,
@@ -74,7 +74,7 @@ export function createHooks(args: {
     sessionRecovery: core.sessionRecovery,
     ralphLoop: core.ralphLoop,
     skillMcpManager: managers.skillMcpManager,
-  })
+  });
 
   const skill = createSkillHooks({
     ctx,
@@ -83,18 +83,18 @@ export function createHooks(args: {
     safeHookEnabled,
     mergedSkills,
     availableSkills,
-  })
+  });
 
   const hooks = {
     ...core,
     ...continuation,
     ...skill,
-  }
+  };
 
   return {
     ...hooks,
     disposeHooks: (): void => {
-      disposeCreatedHooks(hooks)
+      disposeCreatedHooks(hooks);
     },
-  }
+  };
 }

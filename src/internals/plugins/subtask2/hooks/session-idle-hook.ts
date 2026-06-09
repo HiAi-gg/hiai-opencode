@@ -8,7 +8,6 @@ import {
   shiftReturnStack,
   resolveResultReferences,
   consumePendingMainSessionCapture,
-  captureSubtaskResult,
   storeSubtaskResult,
   consumeDeferredReturnPrompt,
   pushReturnStack,
@@ -58,7 +57,7 @@ export async function handleSessionIdle(sessionID: string) {
         path: { id: sessionID },
       });
       const firstUserMsg = messages.data?.find(
-        (m: any) => (m.info?.role ?? m.role) === "user"
+        (m: any) => (m.info?.role ?? m.role) === "user",
       );
       if (firstUserMsg) {
         for (const part of firstUserMsg.parts ?? []) {
@@ -76,7 +75,7 @@ export async function handleSessionIdle(sessionID: string) {
             setSubtaskParentSession(sessionID, mappedParent);
             parentSessionID = mappedParent;
             log(
-              `session.idle: mapped subtask ${sessionID} -> parent ${parentSessionID}`
+              `session.idle: mapped subtask ${sessionID} -> parent ${parentSessionID}`,
             );
           }
 
@@ -86,11 +85,11 @@ export async function handleSessionIdle(sessionID: string) {
             if (pendingCapture.parentSessionID !== sessionID) {
               setSubtaskParentSession(
                 sessionID,
-                pendingCapture.parentSessionID
+                pendingCapture.parentSessionID,
               );
               parentSessionID = pendingCapture.parentSessionID;
               log(
-                `session.idle: mapped subtask ${sessionID} -> parent ${parentSessionID} (from capture)`
+                `session.idle: mapped subtask ${sessionID} -> parent ${parentSessionID} (from capture)`,
               );
             }
 
@@ -118,10 +117,10 @@ export async function handleSessionIdle(sessionID: string) {
               storeSubtaskResult(
                 pendingCapture.parentSessionID,
                 pendingCapture.name,
-                resultText
+                resultText,
               );
               log(
-                `session.idle: captured inline subtask result for "${pendingCapture.name}"`
+                `session.idle: captured inline subtask result for "${pendingCapture.name}"`,
               );
             }
             deletePendingResultCaptureByPrompt(promptContent);
@@ -173,7 +172,7 @@ export async function handleSessionIdle(sessionID: string) {
       if (resultText) {
         storeSubtaskResult(sessionID, pendingCaptureName, resultText);
         log(
-          `session.idle: captured main session result for "${pendingCaptureName}"`
+          `session.idle: captured main session result for "${pendingCaptureName}"`,
         );
       }
     } catch (err) {
@@ -207,7 +206,7 @@ export async function handleSessionIdle(sessionID: string) {
       const state = getLoopState(sessionID);
       if (state) {
         log(
-          `loop: continuing iteration ${state.iteration}/${state.config.max}`
+          `loop: continuing iteration ${state.iteration}/${state.config.max}`,
         );
 
         if (state.commandName === "_inline_subtask_") {
@@ -237,7 +236,7 @@ export async function handleSessionIdle(sessionID: string) {
           }
         } else {
           const cmdWithArgs = `/${state.commandName}${
-            state.arguments ? " " + state.arguments : ""
+            state.arguments ? ` ${state.arguments}` : ""
           }`;
           executeReturn(cmdWithArgs, sessionID).catch(console.error);
         }
@@ -259,7 +258,7 @@ export async function handleSessionIdle(sessionID: string) {
   if (deferredReturn) {
     const resolved = resolveResultReferences(deferredReturn, targetSessionID);
     log(
-      `session.idle: executing deferred return: "${resolved.substring(0, 40)}..."`
+      `session.idle: executing deferred return: "${resolved.substring(0, 40)}..."`,
     );
     executeReturn(resolved, targetSessionID).catch(console.error);
     return;
@@ -271,7 +270,7 @@ export async function handleSessionIdle(sessionID: string) {
     deletePendingReturn(targetSessionID);
     const resolved = resolveResultReferences(pendingFirst, targetSessionID);
     log(
-      `session.idle: executing pendingReturn (first): "${resolved.substring(0, 40)}..."`
+      `session.idle: executing pendingReturn (first): "${resolved.substring(0, 40)}..."`,
     );
 
     if (resolved.startsWith("/")) {
@@ -299,7 +298,7 @@ export async function handleSessionIdle(sessionID: string) {
     if (next) {
       next = resolveResultReferences(next, targetSessionID);
       log(
-        `session.idle: executing stacked return: "${next.substring(0, 40)}..."`
+        `session.idle: executing stacked return: "${next.substring(0, 40)}..."`,
       );
       executeReturn(next, targetSessionID).catch(console.error);
       return;
@@ -318,7 +317,7 @@ export async function handleSessionIdle(sessionID: string) {
       executeReturn(next, targetSessionID).catch(console.error);
     } else {
       log(
-        `session.idle: setting pending prompt return: "${next.substring(0, 40)}..."`
+        `session.idle: setting pending prompt return: "${next.substring(0, 40)}..."`,
       );
       // Set pending prompt for message-hooks to inject into current LLM call
       setPendingPromptReturn(targetSessionID, next);
@@ -344,7 +343,7 @@ export async function handleSessionIdle(sessionID: string) {
       deletePendingNonSubtaskReturns(targetSessionID);
     next = resolveResultReferences(next, targetSessionID);
     log(
-      `session.idle: executing non-subtask return: "${next.substring(0, 40)}..."`
+      `session.idle: executing non-subtask return: "${next.substring(0, 40)}..."`,
     );
     executeReturn(next, targetSessionID).catch(console.error);
     return;

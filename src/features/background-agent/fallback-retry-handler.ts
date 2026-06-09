@@ -1,75 +1,95 @@
-import type { BackgroundTask, LaunchInput } from "./types"
-import type { FallbackEntry } from "../../shared/model-requirements"
-import type { ConcurrencyManager } from "./concurrency"
-import type { OpencodeClient, QueueItem } from "./constants"
-import { log, readConnectedProvidersCache, readProviderModelsCache } from "../../shared"
+import type { BackgroundTask, LaunchInput } from "./types";
+import type { FallbackEntry } from "../../shared/model-requirements";
+import type { ConcurrencyManager } from "./concurrency";
+import type { OpencodeClient, QueueItem } from "./constants";
+import {
+  log,
+  readConnectedProvidersCache,
+  readProviderModelsCache,
+} from "../../shared";
 import {
   shouldRetryError,
   getNextFallback,
   hasMoreFallbacks,
   selectFallbackProvider,
-} from "../../shared/model-error-classifier"
-import { transformModelForProvider } from "../../shared/provider-model-id-transform"
-import { abortWithTimeout } from "./abort-with-timeout"
+} from "../../shared/model-error-classifier";
+import { transformModelForProvider } from "../../shared/provider-model-id-transform";
+import { abortWithTimeout } from "./abort-with-timeout";
 
 export async function tryFallbackRetry(args: {
-  task: BackgroundTask
-  errorInfo: { name?: string; message?: string }
-  source: string
-  concurrencyManager: ConcurrencyManager
-  client: OpencodeClient
-  idleDeferralTimers: Map<string, ReturnType<typeof setTimeout>>
-  queuesByKey: Map<string, QueueItem[]>
-  processKey: (key: string) => void
+  task: BackgroundTask;
+  errorInfo: { name?: string; message?: string };
+  source: string;
+  concurrencyManager: ConcurrencyManager;
+  client: OpencodeClient;
+  idleDeferralTimers: Map<string, ReturnType<typeof setTimeout>>;
+  queuesByKey: Map<string, QueueItem[]>;
+  processKey: (key: string) => void;
 }): Promise<boolean> {
-  const { task, errorInfo, source, concurrencyManager, client, idleDeferralTimers, queuesByKey, processKey } = args
-  const fallbackChain = task.fallbackChain
+  const {
+    task,
+    errorInfo,
+    source,
+    concurrencyManager,
+    client,
+    idleDeferralTimers,
+    queuesByKey,
+    processKey,
+  } = args;
+  const fallbackChain = task.fallbackChain;
   const canRetry =
     shouldRetryError(errorInfo) &&
     fallbackChain &&
     fallbackChain.length > 0 &&
-    hasMoreFallbacks(fallbackChain, task.attemptCount ?? 0)
+    hasMoreFallbacks(fallbackChain, task.attemptCount ?? 0);
 
-  if (!canRetry) return false
+  if (!canRetry) return false;
 
-  const attemptCount = task.attemptCount ?? 0
-  const providerModelsCache = readProviderModelsCache()
-  const connectedProviders = providerModelsCache?.connected ?? readConnectedProvidersCache()
-  const connectedSet = connectedProviders ? new Set(connectedProviders.map(p => p.toLowerCase())) : null
-  const preferredProvider = task.model?.providerID?.toLowerCase()
+  const attemptCount = task.attemptCount ?? 0;
+  const providerModelsCache = readProviderModelsCache();
+  const connectedProviders =
+    providerModelsCache?.connected ?? readConnectedProvidersCache();
+  const connectedSet = connectedProviders
+    ? new Set(connectedProviders.map((p) => p.toLowerCase()))
+    : null;
+  const preferredProvider = task.model?.providerID?.toLowerCase();
 
   const isReachable = (entry: FallbackEntry): boolean => {
-    if (!connectedSet) return true
-    if (entry.providers.some((provider) => connectedSet.has(provider.toLowerCase()))) {
-      return true
+    if (!connectedSet) return true;
+    if (
+      entry.providers.some((provider) =>
+        connectedSet.has(provider.toLowerCase()),
+      )
+    ) {
+      return true;
     }
-    return preferredProvider ? connectedSet.has(preferredProvider) : false
-  }
+    return preferredProvider ? connectedSet.has(preferredProvider) : false;
+  };
 
-  let selectedAttemptCount = attemptCount
-  let nextFallback: FallbackEntry | undefined
+  let selectedAttemptCount = attemptCount;
+  let nextFallback: FallbackEntry | undefined;
   while (fallbackChain && selectedAttemptCount < fallbackChain.length) {
-    const candidate = getNextFallback(fallbackChain, selectedAttemptCount)
-    if (!candidate) break
-    selectedAttemptCount++
+    const candidate = getNextFallback(fallbackChain, selectedAttemptCount);
+    if (!candidate) break;
+    selectedAttemptCount++;
     if (!isReachable(candidate)) {
       log("[background-agent] Skipping unreachable fallback:", {
         taskId: task.id,
         source,
         model: candidate.model,
         providers: candidate.providers,
-      })
-      continue
+      });
+      continue;
     }
-    nextFallback = candidate
-    break
+    nextFallback = candidate;
+    break;
   }
-  if (!nextFallback) return false
+  if (!nextFallback) return false;
 
   const providerID = selectFallbackProvider(
     nextFallback.providers,
     task.model?.providerID,
-  )
+  );
 
   log("[background-agent] Retryable error, attempting fallback:", {
     taskId: task.id,
@@ -78,36 +98,41 @@ export async function tryFallbackRetry(args: {
     errorMessage: errorInfo.message?.slice(0, 100),
     attemptCount: selectedAttemptCount,
     nextModel: `${providerID}/${nextFallback.model}`,
-  })
+  });
 
   if (task.concurrencyKey) {
-    concurrencyManager.release(task.concurrencyKey)
-    task.concurrencyKey = undefined
+    concurrencyManager.release(task.concurrencyKey);
+    task.concurrencyKey = undefined;
   }
 
-  const idleTimer = idleDeferralTimers.get(task.id)
+  const idleTimer = idleDeferralTimers.get(task.id);
   if (idleTimer) {
-    clearTimeout(idleTimer)
-    idleDeferralTimers.delete(task.id)
+    clearTimeout(idleTimer);
+    idleDeferralTimers.delete(task.id);
   }
 
-  const previousSessionID = task.sessionID
+  const previousSessionID = task.sessionID;
 
-  task.attemptCount = selectedAttemptCount
-  const transformedModelId = transformModelForProvider(providerID, nextFallback.model)
+  task.attemptCount = selectedAttemptCount;
+  const transformedModelId = transformModelForProvider(
+    providerID,
+    nextFallback.model,
+  );
   task.model = {
     providerID,
     modelID: transformedModelId,
     variant: nextFallback.variant,
-  }
-  task.status = "pending"
-  task.sessionID = undefined
-  task.startedAt = undefined
-  task.queuedAt = new Date()
-  task.error = undefined
+  };
+  task.status = "pending";
+  task.sessionID = undefined;
+  task.startedAt = undefined;
+  task.queuedAt = new Date();
+  task.error = undefined;
 
-  const key = task.model ? `${task.model.providerID}/${task.model.modelID}` : task.agent
-  const queue = queuesByKey.get(key) ?? []
+  const key = task.model
+    ? `${task.model.providerID}/${task.model.modelID}`
+    : task.agent;
+  const queue = queuesByKey.get(key) ?? [];
   const retryInput: LaunchInput = {
     description: task.description,
     prompt: task.prompt,
@@ -121,14 +146,16 @@ export async function tryFallbackRetry(args: {
     fallbackChain: task.fallbackChain,
     category: task.category,
     isUnstableAgent: task.isUnstableAgent,
-  }
+  };
 
   if (previousSessionID) {
-    await abortWithTimeout(client, previousSessionID).catch(() => { /* intentionally ignored — session may already be terminated */ })
+    await abortWithTimeout(client, previousSessionID).catch(() => {
+      /* intentionally ignored — session may already be terminated */
+    });
   }
 
-  queue.push({ task, input: retryInput })
-  queuesByKey.set(key, queue)
-  processKey(key)
-  return true
+  queue.push({ task, input: retryInput });
+  queuesByKey.set(key, queue);
+  processKey(key);
+  return true;
 }

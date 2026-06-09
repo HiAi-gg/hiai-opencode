@@ -1,4 +1,4 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const devBrowserSkill: BuiltinSkill = {
   name: "dev-browser",
@@ -218,4 +218,4 @@ console.log({
 await client.disconnect();
 EOF
 \`\`\``,
-}
+};

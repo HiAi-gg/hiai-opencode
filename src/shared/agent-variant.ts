@@ -1,37 +1,42 @@
-import type { HiaiOpenCodeConfig } from "../config"
-import { stripInvisibleAgentCharacters } from "./agent-display-names"
-import { AGENT_MODEL_REQUIREMENTS, CATEGORY_MODEL_REQUIREMENTS } from "./model-requirements"
+import type { HiaiOpenCodeConfig } from "../config";
+import { stripInvisibleAgentCharacters } from "./agent-display-names";
+import {
+  AGENT_MODEL_REQUIREMENTS,
+  CATEGORY_MODEL_REQUIREMENTS,
+} from "./model-requirements";
 
 export function resolveAgentVariant(
   config: HiaiOpenCodeConfig,
-  agentName?: string
+  agentName?: string,
 ): string | undefined {
   if (!agentName) {
-    return undefined
+    return undefined;
   }
 
-  const stripped = stripInvisibleAgentCharacters(agentName)
+  const stripped = stripInvisibleAgentCharacters(agentName);
   const agentOverrides = config.agents as
     | Record<string, { variant?: string; category?: string }>
-    | undefined
+    | undefined;
   const agentOverride = agentOverrides
-    ? agentOverrides[stripped]
-      ?? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === stripped.toLowerCase())?.[1]
-    : undefined
+    ? (agentOverrides[stripped] ??
+      Object.entries(agentOverrides).find(
+        ([key]) => key.toLowerCase() === stripped.toLowerCase(),
+      )?.[1])
+    : undefined;
   if (!agentOverride) {
-    return undefined
+    return undefined;
   }
 
   if (agentOverride.variant) {
-    return agentOverride.variant
+    return agentOverride.variant;
   }
 
-  const categoryName = agentOverride.category
+  const categoryName = agentOverride.category;
   if (!categoryName) {
-    return undefined
+    return undefined;
   }
 
-  return config.categories?.[categoryName]?.variant
+  return config.categories?.[categoryName]?.variant;
 }
 
 export function resolveVariantForModel(
@@ -39,31 +44,36 @@ export function resolveVariantForModel(
   agentName: string,
   currentModel: { providerID: string; modelID: string },
 ): string | undefined {
-  const stripped = stripInvisibleAgentCharacters(agentName)
+  const stripped = stripInvisibleAgentCharacters(agentName);
   const agentOverrides = config.agents as
     | Record<string, { variant?: string; category?: string }>
-    | undefined
+    | undefined;
   const agentOverride = agentOverrides
-    ? agentOverrides[stripped]
-      ?? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === stripped.toLowerCase())?.[1]
-    : undefined
+    ? (agentOverrides[stripped] ??
+      Object.entries(agentOverrides).find(
+        ([key]) => key.toLowerCase() === stripped.toLowerCase(),
+      )?.[1])
+    : undefined;
   if (agentOverride?.variant) {
-    return agentOverride.variant
+    return agentOverride.variant;
   }
 
-  const agentRequirement = AGENT_MODEL_REQUIREMENTS[stripped]
+  const agentRequirement = AGENT_MODEL_REQUIREMENTS[stripped];
   if (agentRequirement) {
-    return findVariantInChain(agentRequirement.fallbackChain, currentModel)
+    return findVariantInChain(agentRequirement.fallbackChain, currentModel);
   }
-  const categoryName = agentOverride?.category
+  const categoryName = agentOverride?.category;
   if (categoryName) {
-    const categoryRequirement = CATEGORY_MODEL_REQUIREMENTS[categoryName]
+    const categoryRequirement = CATEGORY_MODEL_REQUIREMENTS[categoryName];
     if (categoryRequirement) {
-      return findVariantInChain(categoryRequirement.fallbackChain, currentModel)
+      return findVariantInChain(
+        categoryRequirement.fallbackChain,
+        currentModel,
+      );
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 function findVariantInChain(
@@ -72,10 +82,10 @@ function findVariantInChain(
 ): string | undefined {
   for (const entry of fallbackChain) {
     if (
-      entry.providers.includes(currentModel.providerID)
-      && entry.model === currentModel.modelID
+      entry.providers.includes(currentModel.providerID) &&
+      entry.model === currentModel.modelID
     ) {
-      return entry.variant
+      return entry.variant;
     }
   }
 
@@ -83,19 +93,19 @@ function findVariantInChain(
   // If we didn't find an exact provider+model match, fall back to model-only matching.
   for (const entry of fallbackChain) {
     if (entry.model === currentModel.modelID) {
-      return entry.variant
+      return entry.variant;
     }
   }
-  return undefined
+  return undefined;
 }
 
 export function applyAgentVariant(
   config: HiaiOpenCodeConfig,
   agentName: string | undefined,
-  message: { variant?: string }
+  message: { variant?: string },
 ): void {
-  const variant = resolveAgentVariant(config, agentName)
+  const variant = resolveAgentVariant(config, agentName);
   if (variant !== undefined && message.variant === undefined) {
-    message.variant = variant
+    message.variant = variant;
   }
 }

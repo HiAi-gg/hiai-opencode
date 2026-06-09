@@ -1,48 +1,44 @@
-import { statSync } from "node:fs"
-import type { PluginInput } from "@opencode-ai/plugin"
+import type { PluginInput } from "@opencode-ai/plugin";
 import {
   readBoulderState,
-  appendSessionId,
-  findStrategistPlans,
-  getPlanProgress,
-  createBoulderState,
-  getPlanName,
-  getActivePlans,
   hasConflictingPlan,
   ensureRegistryExists,
-  writeBoulderForPlan,
-} from "../../features/boulder-state"
-import { log } from "../../shared/logger"
+} from "../../features/boulder-state";
+import { log } from "../../shared/logger";
 import {
   resolveRegisteredAgentName,
   updateSessionAgent,
-} from "../../features/claude-code-session-state"
-import { detectWorktreePath, createWorktreeForPlan, validateWorktreeHealth } from "./worktree-detector"
-import { parseUserRequest } from "./parse-user-request"
-import { buildStartWorkContextInfo } from "./context-info-builder"
-import { createWorktreeActiveBlock } from "./worktree-block"
+} from "../../features/claude-code-session-state";
+import {
+  detectWorktreePath,
+  createWorktreeForPlan,
+  validateWorktreeHealth,
+} from "./worktree-detector";
+import { parseUserRequest } from "./parse-user-request";
+import { buildStartWorkContextInfo } from "./context-info-builder";
+import { createWorktreeActiveBlock } from "./worktree-block";
 
-export const HOOK_NAME = "start-work" as const
-const START_WORK_TEMPLATE_MARKER = "You are starting a Bob work session."
+export const HOOK_NAME = "start-work" as const;
+const START_WORK_TEMPLATE_MARKER = "You are starting a Bob work session.";
 
 interface StartWorkHookInput {
-  sessionID: string
-  messageID?: string
+  sessionID: string;
+  messageID?: string;
 }
 
 interface StartWorkCommandExecuteBeforeInput {
-  sessionID: string
-  command: string
-  arguments: string
+  sessionID: string;
+  command: string;
+  arguments: string;
 }
 
 interface StartWorkHookOutput {
-  message?: Record<string, unknown>
-  parts: Array<{ type: string; text?: string }>
+  message?: Record<string, unknown>;
+  parts: Array<{ type: string; text?: string }>;
 }
 
 interface StartWorkProcessOptions {
-  allowMessageMutation: boolean
+  allowMessageMutation: boolean;
 }
 
 /**
@@ -50,33 +46,37 @@ interface StartWorkProcessOptions {
  */
 async function checkIfGitRepo(directory: string): Promise<boolean> {
   try {
-    const { exec } = await import("child_process")
+    const { exec } = await import("node:child_process");
     return await new Promise((resolve) => {
       exec("git rev-parse --show-toplevel", { cwd: directory }, (error) => {
-        resolve(!error)
-      })
-    })
+        resolve(!error);
+      });
+    });
   } catch {
-    return false
+    return false;
   }
 }
 
-function resolveWorktreeContext(
-  explicitWorktreePath: string | null,
-): { worktreePath: string | undefined; block: string } {
+function resolveWorktreeContext(explicitWorktreePath: string | null): {
+  worktreePath: string | undefined;
+  block: string;
+} {
   if (explicitWorktreePath === null) {
-    return { worktreePath: undefined, block: "" }
+    return { worktreePath: undefined, block: "" };
   }
 
-  const validatedPath = detectWorktreePath(explicitWorktreePath)
+  const validatedPath = detectWorktreePath(explicitWorktreePath);
   if (validatedPath) {
-    return { worktreePath: validatedPath, block: createWorktreeActiveBlock(validatedPath) }
+    return {
+      worktreePath: validatedPath,
+      block: createWorktreeActiveBlock(validatedPath),
+    };
   }
 
   return {
     worktreePath: undefined,
     block: `\n**Worktree** (needs setup): \`git worktree add ${explicitWorktreePath} <branch>\`, then add \`"worktree_path"\` to boulder.json`,
-  }
+  };
 }
 
 export function createStartWorkHook(ctx: PluginInput) {
@@ -85,67 +85,76 @@ export function createStartWorkHook(ctx: PluginInput) {
     output: StartWorkHookOutput,
     options: StartWorkProcessOptions,
   ): Promise<void> => {
-    const parts = output.parts
+    const parts = output.parts;
     const promptText =
       parts
         ?.filter((p) => p.type === "text" && p.text)
         .map((p) => p.text)
         .join("\n")
-        .trim() || ""
+        .trim() || "";
 
     if (
-      !promptText.includes("<session-context>")
-      || !promptText.includes(START_WORK_TEMPLATE_MARKER)
+      !promptText.includes("<session-context>") ||
+      !promptText.includes(START_WORK_TEMPLATE_MARKER)
     ) {
-      return
+      return;
     }
 
-    log(`[${HOOK_NAME}] Processing start-work command`, { sessionID: input.sessionID })
-    const activeAgent = "bob"
-    updateSessionAgent(input.sessionID, activeAgent)
+    log(`[${HOOK_NAME}] Processing start-work command`, {
+      sessionID: input.sessionID,
+    });
+    const activeAgent = "bob";
+    updateSessionAgent(input.sessionID, activeAgent);
     if (options.allowMessageMutation && output.message) {
-      output.message["agent"] = resolveRegisteredAgentName(activeAgent) ?? activeAgent
+      output.message.agent =
+        resolveRegisteredAgentName(activeAgent) ?? activeAgent;
     }
 
-    const existingState = readBoulderState(ctx.directory)
-    const sessionId = input.sessionID
-    const timestamp = new Date().toISOString()
+    const existingState = readBoulderState(ctx.directory);
+    const sessionId = input.sessionID;
+    const timestamp = new Date().toISOString();
 
-    const { planName: explicitPlanName, explicitWorktreePath } = parseUserRequest(promptText)
+    const { planName: explicitPlanName, explicitWorktreePath } =
+      parseUserRequest(promptText);
 
     // Phase 4: Auto-isolation decision flow
     // Ensure registry exists (triggers migration if v1 found)
-    ensureRegistryExists(ctx.directory)
+    ensureRegistryExists(ctx.directory);
 
-    let effectiveDirectory = ctx.directory
-    let isolationError: string | null = null
+    let effectiveDirectory = ctx.directory;
+    let isolationError: string | null = null;
 
     // Get the plan name for conflict checking
-    let planName = explicitPlanName
+    let planName = explicitPlanName;
     if (!planName && existingState) {
-      planName = existingState.plan_name
+      planName = existingState.plan_name;
     }
 
     // Check for conflicting plans if we have a plan name
     if (planName) {
-      const conflict = hasConflictingPlan(ctx.directory, planName)
+      const conflict = hasConflictingPlan(ctx.directory, planName);
       if (conflict) {
         // Need isolation — check if git repo
-        const isGitRepo = await checkIfGitRepo(ctx.directory)
+        const isGitRepo = await checkIfGitRepo(ctx.directory);
         if (!isGitRepo) {
-          isolationError = "Cannot isolate parallel plans: not a git repository. Complete the other plan first, or initialize git."
+          isolationError =
+            "Cannot isolate parallel plans: not a git repository. Complete the other plan first, or initialize git.";
         } else {
           // Create or reuse worktree
-          const worktreePath = createWorktreeForPlan(ctx.directory, planName, input.sessionID)
+          const worktreePath = createWorktreeForPlan(
+            ctx.directory,
+            planName,
+            input.sessionID,
+          );
           if (!worktreePath) {
-            isolationError = "Failed to create worktree for plan isolation"
+            isolationError = "Failed to create worktree for plan isolation";
           } else {
             // Validate health
-            const health = validateWorktreeHealth(worktreePath)
+            const health = validateWorktreeHealth(worktreePath);
             if (!health.valid) {
-              isolationError = `Worktree unhealthy: ${health.reason}`
+              isolationError = `Worktree unhealthy: ${health.reason}`;
             } else {
-              effectiveDirectory = worktreePath
+              effectiveDirectory = worktreePath;
             }
           }
         }
@@ -154,13 +163,15 @@ export function createStartWorkHook(ctx: PluginInput) {
 
     // Handle explicit worktree path (manual override)
     if (explicitWorktreePath !== null && !isolationError) {
-      const { worktreePath: manualWorktreePath, block: manualBlock } = resolveWorktreeContext(explicitWorktreePath)
+      const { worktreePath: manualWorktreePath, block: manualBlock } =
+        resolveWorktreeContext(explicitWorktreePath);
       if (manualWorktreePath) {
-        effectiveDirectory = manualWorktreePath
+        effectiveDirectory = manualWorktreePath;
       }
     }
 
-    const { worktreePath, block: worktreeBlock } = resolveWorktreeContext(explicitWorktreePath)
+    const { worktreePath, block: worktreeBlock } =
+      resolveWorktreeContext(explicitWorktreePath);
 
     const contextInfo = buildStartWorkContextInfo({
       ctx,
@@ -173,33 +184,36 @@ export function createStartWorkHook(ctx: PluginInput) {
       worktreeBlock,
       effectiveDirectory,
       isolationError,
-    })
+    });
 
-    const idx = output.parts.findIndex((p) => p.type === "text" && p.text)
+    const idx = output.parts.findIndex((p) => p.type === "text" && p.text);
     if (idx >= 0 && output.parts[idx].text) {
       output.parts[idx].text = output.parts[idx].text
         .replace(/\$SESSION_ID/g, sessionId)
-        .replace(/\$TIMESTAMP/g, timestamp)
+        .replace(/\$TIMESTAMP/g, timestamp);
 
-      output.parts[idx].text += `\n\n---\n${contextInfo}`
+      output.parts[idx].text += `\n\n---\n${contextInfo}`;
     }
 
     log(`[${HOOK_NAME}] Context injected`, {
       sessionID: input.sessionID,
       hasExistingState: !!existingState,
       worktreePath,
-    })
-  }
+    });
+  };
 
   return {
-    "chat.message": async (input: StartWorkHookInput, output: StartWorkHookOutput): Promise<void> => {
-      await processStartWork(input, output, { allowMessageMutation: true })
+    "chat.message": async (
+      input: StartWorkHookInput,
+      output: StartWorkHookOutput,
+    ): Promise<void> => {
+      await processStartWork(input, output, { allowMessageMutation: true });
     },
     "command.execute.before": async (
       input: StartWorkCommandExecuteBeforeInput,
       output: StartWorkHookOutput,
     ): Promise<void> => {
-      await processStartWork(input, output, { allowMessageMutation: false })
+      await processStartWork(input, output, { allowMessageMutation: false });
     },
-  }
+  };
 }

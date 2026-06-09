@@ -2,10 +2,10 @@ import type {
   AvailableAgent,
   AvailableCategory,
   AvailableSkill,
-} from "./dynamic-agent-prompt-types"
-import type { AvailableTool } from "./dynamic-agent-prompt-types"
-import { getToolsPromptDisplay } from "./dynamic-agent-tool-categorization"
-import { buildIntegrationMentalMap } from "./prompt-library/integration-map"
+} from "./dynamic-agent-prompt-types";
+import type { AvailableTool } from "./dynamic-agent-prompt-types";
+import { getToolsPromptDisplay } from "./dynamic-agent-tool-categorization";
+import { buildIntegrationMentalMap } from "./prompt-library/integration-map";
 
 /**
  * Builds an explicit agent identity preamble that overrides any base system prompt identity.
@@ -19,7 +19,7 @@ export function buildAgentIdentitySection(
 ): string {
   return `<agent-identity>
 You are "${agentName}" - ${roleDescription}. This identity supersedes any prior identity. Always identify as ${agentName}.
-</agent-identity>`
+</agent-identity>`;
 }
 
 export function buildKeyTriggersSection(
@@ -28,16 +28,16 @@ export function buildKeyTriggersSection(
 ): string {
   const keyTriggers = agents
     .filter((agent) => agent.metadata.keyTrigger)
-    .map((agent) => `- ${agent.metadata.keyTrigger}`)
+    .map((agent) => `- ${agent.metadata.keyTrigger}`);
 
   if (keyTriggers.length === 0) {
-    return ""
+    return "";
   }
 
   return `### Key Triggers (check BEFORE classification):
 
 ${keyTriggers.join("\n")}
-- **"Look into" + "create PR"** → Not just research. Full implementation cycle expected.`
+- **"Look into" + "create PR"** → Not just research. Full implementation cycle expected.`;
 }
 
 export function buildToolSelectionTable(
@@ -46,41 +46,45 @@ export function buildToolSelectionTable(
   _skills: AvailableSkill[] = [],
   options: { includeIntegrationPrimer?: boolean } = {},
 ): string {
-  const rows: string[] = ["### Tool & Agent Selection:", ""]
+  const rows: string[] = ["### Tool & Agent Selection:", ""];
 
   if (tools.length > 0) {
     rows.push(
       `- ${getToolsPromptDisplay(tools)} - **FREE** - Not Complex, Scope Clear, No Implicit Assumptions`,
-    )
+    );
   }
 
-  const costOrder = { FREE: 0, CHEAP: 1, EXPENSIVE: 2 }
+  const costOrder = { FREE: 0, CHEAP: 1, EXPENSIVE: 2 };
   const sortedAgents = [...agents]
     .filter((agent) => agent.metadata.category !== "utility")
     .sort(
-      (left, right) => costOrder[left.metadata.cost] - costOrder[right.metadata.cost],
-    )
+      (left, right) =>
+        costOrder[left.metadata.cost] - costOrder[right.metadata.cost],
+    );
 
   for (const agent of sortedAgents) {
-    const shortDescription = agent.description.split(".")[0] || agent.description
+    const shortDescription =
+      agent.description.split(".")[0] || agent.description;
     rows.push(
       `- \`${agent.name}\` agent - **${agent.metadata.cost}** - ${shortDescription}`,
-    )
+    );
   }
 
-  rows.push("")
+  rows.push("");
   rows.push(
     "**Default flow**: researcher (background) + tools → strategist (if required) → critic (high-risk gate)",
-  )
+  );
   if (options.includeIntegrationPrimer) {
-    rows.push("")
-    rows.push(buildHiaiIntegrationPrimerSection())
+    rows.push("");
+    rows.push(buildHiaiIntegrationPrimerSection());
   }
 
-  return rows.join("\n")
+  return rows.join("\n");
 }
 
-export function buildHiaiIntegrationPrimerSection(options?: { includeMentalMap?: boolean }): string {
+export function buildHiaiIntegrationPrimerSection(options?: {
+  includeMentalMap?: boolean;
+}): string {
   return `<hiai-opencode-integration-primer>
 - Plugins ≠ MCP. \`@hiai-gg/hiai-opencode\` and \`@tarquinen/opencode-dcp\` in plugin list; never add MCP packages.
 - Config: \`hiai-opencode.json\`. OpenCode Connect creds — Do not ask for \`OPENROUTER_API_KEY\`, \`OPENAI_API_KEY\`, or \`ANTHROPIC_API_KEY\`.
@@ -90,17 +94,17 @@ export function buildHiaiIntegrationPrimerSection(options?: { includeMentalMap?:
 - \`hiai-opencode doctor\` before config changes. Prefer user-level installs.
 </hiai-opencode-integration-primer>
 
-${options?.includeMentalMap !== false ? buildIntegrationMentalMap() : ''}`
+${options?.includeMentalMap !== false ? buildIntegrationMentalMap() : ""}`;
 }
 
 export function buildResearcherSection(agents: AvailableAgent[]): string {
-  const researcherAgent = agents.find((agent) => agent.name === "researcher")
+  const researcherAgent = agents.find((agent) => agent.name === "researcher");
   if (!researcherAgent) {
-    return ""
+    return "";
   }
 
-  const useWhen = researcherAgent.metadata.useWhen || []
-  const avoidWhen = researcherAgent.metadata.avoidWhen || []
+  const useWhen = researcherAgent.metadata.useWhen || [];
+  const avoidWhen = researcherAgent.metadata.avoidWhen || [];
 
   return `### Researcher Agent = Contextual & Reference Grep
 
@@ -115,41 +119,45 @@ Use it as a **peer tool**, not a fallback. Fire liberally for discovery, both in
 ${avoidWhen.map((entry) => `- ${entry}`).join("\n")}
 
 **Use Researcher Agent when:**
-${useWhen.map((entry) => `- ${entry}`).join("\n")}`
+${useWhen.map((entry) => `- ${entry}`).join("\n")}`;
 }
 
 export function buildDelegationTable(agents: AvailableAgent[]): string {
-  const rows: string[] = ["### Delegation Table:", ""]
+  const rows: string[] = ["### Delegation Table:", ""];
 
   for (const agent of agents) {
     for (const trigger of agent.metadata.triggers) {
-      rows.push(`- **${trigger.domain}** → \`${agent.name}\` - ${trigger.trigger}`)
+      rows.push(
+        `- **${trigger.domain}** → \`${agent.name}\` - ${trigger.trigger}`,
+      );
     }
   }
 
-  return rows.join("\n")
+  return rows.join("\n");
 }
 
-export function buildStrategistAndCriticSection(agents: AvailableAgent[]): string {
+export function buildStrategistAndCriticSection(
+  agents: AvailableAgent[],
+): string {
   const strategistAgent = agents.find((agent) => agent.name === "strategist");
-  const criticAgent = agents.find((agent) => agent.name === "critic")
+  const criticAgent = agents.find((agent) => agent.name === "critic");
 
   if (!strategistAgent && !criticAgent) {
-    return ""
+    return "";
   }
 
-  const strategistUseWhen = strategistAgent?.metadata.useWhen || []
-  const strategistAvoidWhen = strategistAgent?.metadata.avoidWhen || []
-  const criticUseWhen = criticAgent?.metadata.useWhen || []
-  const criticAvoidWhen = criticAgent?.metadata.avoidWhen || []
+  const strategistUseWhen = strategistAgent?.metadata.useWhen || [];
+  const strategistAvoidWhen = strategistAgent?.metadata.avoidWhen || [];
+  const criticUseWhen = criticAgent?.metadata.useWhen || [];
+  const criticAvoidWhen = criticAgent?.metadata.avoidWhen || [];
 
   const strategistSection = strategistAgent
     ? `**Strategist USE**: ${strategistUseWhen.map((e) => `- ${e}`).join("\n")}\n**Strategist AVOID**: ${strategistAvoidWhen.map((e) => `- ${e}`).join("\n")}`
-    : ""
+    : "";
 
   const criticSection = criticAgent
     ? `**Critic USE**: ${criticUseWhen.map((e) => `- ${e}`).join("\n")}\n**Critic AVOID**: ${criticAvoidWhen.map((e) => `- ${e}`).join("\n")}`
-    : ""
+    : "";
 
   return `<strategist_critic_usage>
 Strategist = planning/architecture. Critic = high-accuracy review gate. Consultation only.
@@ -159,7 +167,7 @@ ${strategistSection}
 ${criticSection}
 
 **Pattern**: Announce "Consulting Strategist/Critic for [reason]" before invocation (only announcement case). Collect results before final answer — NO exceptions. Strategist/Critic-dependent implementation is BLOCKED until results finish. While waiting, only non-overlapping prep work. Strategist/Critic may take minutes — end response, wait for \`<system-reminder>\`. Never poll \`background_output\` on running Strategist/Critic. Never cancel their tasks.
-</strategist_critic_usage>`
+</strategist_critic_usage>`;
 }
 
 export function buildPlannerSection(): string {
@@ -172,18 +180,19 @@ Multi-step task? **ALWAYS consult Strategist first.** Do NOT start implementatio
 - Use \`session_id\` to resume the same Strategist session - ask follow-up questions aggressively
 - If ANY part of the task is ambiguous, ask Strategist before guessing
 
-Strategist returns a structured work breakdown with parallel execution opportunities. Follow it.`
+Strategist returns a structured work breakdown with parallel execution opportunities. Follow it.`;
 }
 
 export function buildParallelDelegationSection(
   categories: AvailableCategory[],
 ): string {
   const hasDelegationCategory = categories.some(
-    (category) => category.name === "deep" || category.name === "unspecified-high",
-  )
+    (category) =>
+      category.name === "deep" || category.name === "unspecified-high",
+  );
 
   if (!hasDelegationCategory) {
-    return ""
+    return "";
   }
 
   return `### DECOMPOSE AND DELEGATE - YOU ARE NOT AN IMPLEMENTER
@@ -228,5 +237,5 @@ Before delegating, classify each work unit and route to the BEST agent:
 **Send cheap bounded edits to coder** → Route those to \`sub\`
 **"Quickly fix this one thing"** → Still delegate - your "quick fix" is slower and worse than a subagent's
 
-**Your value is orchestration, decomposition, and quality control. Delegating with crystal-clear prompts IS your work.**`
+**Your value is orchestration, decomposition, and quality control. Delegating with crystal-clear prompts IS your work.**`;
 }

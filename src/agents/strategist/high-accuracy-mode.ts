@@ -101,4 +101,4 @@ mcp__sequential-thinking__sequentialthinking({
 - Simple bounded tasks (direct reasoning is faster)
 - Trivial scope decisions
 - Tasks under 3 files
-`
+`;

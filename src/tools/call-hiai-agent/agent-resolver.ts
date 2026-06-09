@@ -8,7 +8,10 @@ type AgentInfo = {
   mode?: "subagent" | "primary" | "all";
 };
 
-const callableAgentsCache = new Map<string, { agents: string[]; timestamp: number }>();
+const callableAgentsCache = new Map<
+  string,
+  { agents: string[]; timestamp: number }
+>();
 const CACHE_TTL_MS = 30_000;
 
 export function clearCallableAgentsCache(): void {
@@ -46,12 +49,21 @@ export async function resolveCallableAgents(
     });
 
     const dynamicAgents = agents
-      .filter((a) => a && typeof a.name === "string" && a.name.trim().length > 0 && a.mode !== "primary")
+      .filter(
+        (a) =>
+          a &&
+          typeof a.name === "string" &&
+          a.name.trim().length > 0 &&
+          a.mode !== "primary",
+      )
       .map((a) => a.name.trim().toLowerCase());
 
     const merged = new Set([...ALLOWED_AGENTS, ...dynamicAgents]);
     const result = [...merged];
-    callableAgentsCache.set(cacheKey, { agents: result, timestamp: Date.now() });
+    callableAgentsCache.set(cacheKey, {
+      agents: result,
+      timestamp: Date.now(),
+    });
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

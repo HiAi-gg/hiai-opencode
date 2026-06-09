@@ -173,11 +173,17 @@ export class TaskPollingManager {
             adapter.notifyParentSession(task),
           )
           .catch((err) => {
-            const errorMessage = err instanceof Error ? err.message : String(err);
+            const errorMessage =
+              err instanceof Error ? err.message : String(err);
             const errorStack = err instanceof Error ? err.stack : undefined;
             log(
               "[background-agent] Error in notifyParentSession for stale-pruned task:",
-              { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID },
+              {
+                taskId: task.id,
+                error: errorMessage,
+                stack: errorStack,
+                parentSessionID: task.parentSessionID,
+              },
             );
           });
       },
@@ -256,7 +262,12 @@ export class TaskPollingManager {
         const errorStack = err instanceof Error ? err.stack : undefined;
         log(
           "[background-agent] Error in notifyParentSession for crashed task:",
-          { taskId: task.id, error: errorMessage, stack: errorStack, parentSessionID: task.parentSessionID },
+          {
+            taskId: task.id,
+            error: errorMessage,
+            stack: errorStack,
+            parentSessionID: task.parentSessionID,
+          },
         );
       });
   }

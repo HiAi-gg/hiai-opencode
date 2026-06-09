@@ -18,11 +18,7 @@ export const TARGET_TOOLS = new Set([
   "grep_app_searchgithub",
 ]);
 
-export const AGENT_TOOLS = new Set([
-  "task",
-  "call_hiai_agent",
-  "task",
-]);
+export const AGENT_TOOLS = new Set(["task", "call_hiai_agent", "task"]);
 
 export const REMINDER_MESSAGE = `
 [Agent Usage Reminder]

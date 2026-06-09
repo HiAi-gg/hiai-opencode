@@ -1,24 +1,24 @@
-import type { HiaiOpenCodeConfig } from "../config"
+import type { HiaiOpenCodeConfig } from "../config";
 import type {
   CategoryConfig as PlatformCategoryConfig,
   HiaiOpencodeConfig,
   LspServerConfig,
   McpServerConfig,
-} from "../config"
+} from "../config";
 
 type RuntimePluginConfig = HiaiOpenCodeConfig & {
-  __platformDefaults?: HiaiOpencodeConfig
-}
+  __platformDefaults?: HiaiOpencodeConfig;
+};
 
 function mergeRecords<T extends Record<string, unknown>>(
   base: T | undefined,
   override: T | undefined,
 ): T | undefined {
-  if (!base && !override) return undefined
+  if (!base && !override) return undefined;
   return {
     ...(base ?? {}),
     ...(override ?? {}),
-  } as T
+  } as T;
 }
 
 function toRuntimeCategory(
@@ -28,7 +28,7 @@ function toRuntimeCategory(
     description: category.description,
     model: category.model,
     variant: category.variant,
-  }
+  };
 }
 
 function hydrateAgentDefaults(
@@ -43,12 +43,12 @@ function hydrateAgentDefaults(
         description: config.description,
       },
     ]),
-  )
+  );
 
   return mergeRecords(
     platformAgents as HiaiOpenCodeConfig["agents"],
     pluginConfig.agents,
-  )
+  );
 }
 
 function hydrateCategoryDefaults(
@@ -60,12 +60,12 @@ function hydrateCategoryDefaults(
       name,
       toRuntimeCategory(config),
     ]),
-  )
+  );
 
   return mergeRecords(
     platformCategories as HiaiOpenCodeConfig["categories"],
     pluginConfig.categories,
-  )
+  );
 }
 
 export function hydratePluginConfigWithPlatformDefaults(
@@ -78,21 +78,24 @@ export function hydratePluginConfigWithPlatformDefaults(
     categories: hydrateCategoryDefaults(pluginConfig, platformDefaults),
     __platformDefaults: {
       ...platformDefaults,
-      mcp: { ...(platformDefaults.mcp ?? {}) } as Record<string, McpServerConfig>,
+      mcp: { ...(platformDefaults.mcp ?? {}) } as Record<
+        string,
+        McpServerConfig
+      >,
     },
-  }
+  };
 }
 
 export function getPlatformMcpDefaults(
   pluginConfig: HiaiOpenCodeConfig,
 ): Record<string, McpServerConfig> {
   return ((pluginConfig as RuntimePluginConfig).__platformDefaults?.mcp ??
-    {}) as Record<string, McpServerConfig>
+    {}) as Record<string, McpServerConfig>;
 }
 
 export function getPlatformLspDefaults(
   pluginConfig: HiaiOpenCodeConfig,
 ): Record<string, LspServerConfig> {
   return ((pluginConfig as RuntimePluginConfig).__platformDefaults?.lsp ??
-    {}) as Record<string, LspServerConfig>
+    {}) as Record<string, LspServerConfig>;
 }

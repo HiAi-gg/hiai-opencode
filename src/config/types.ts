@@ -27,11 +27,11 @@ export interface ModelSlotsConfig {
   bob?: ModelSlotConfig;
   coder?: ModelSlotConfig;
   strategist?: ModelSlotConfig;
-  manager?: ModelSlotConfig;  // formerly "manager" - orchestrator/delegate role
+  manager?: ModelSlotConfig; // formerly "manager" - orchestrator/delegate role
   critic?: ModelSlotConfig;
   designer?: ModelSlotConfig;
   researcher?: ModelSlotConfig;
-  writer?: ModelSlotConfig;   // formerly "brainstormer" - copy/content/SEO
+  writer?: ModelSlotConfig; // formerly "brainstormer" - copy/content/SEO
   vision?: ModelSlotConfig;
   sub?: ModelSlotConfig;
 }
@@ -127,7 +127,9 @@ export interface ModelRequirement {
 // Keep extensibility for custom agent ids while surfacing canonical names in types.
 export type AgentConfigMap = Partial<Record<KnownAgentName, AgentConfig>> &
   Record<string, AgentConfig>;
-export type AgentRequirementMap = Partial<Record<KnownAgentName, ModelRequirement>> &
+export type AgentRequirementMap = Partial<
+  Record<KnownAgentName, ModelRequirement>
+> &
   Record<string, ModelRequirement>;
 
 export interface HeuristicModelFamilyDefinition {

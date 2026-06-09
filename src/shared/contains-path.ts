@@ -1,50 +1,69 @@
-import { existsSync, realpathSync } from "fs"
-import { basename, dirname, isAbsolute, join, normalize, relative, resolve } from "path"
+import { existsSync, realpathSync } from "node:fs";
+import {
+  basename,
+  dirname,
+  isAbsolute,
+  join,
+  normalize,
+  relative,
+  resolve,
+} from "node:path";
 
 function findNearestExistingAncestor(resolvedPath: string): string {
-  let candidatePath = resolvedPath
+  let candidatePath = resolvedPath;
 
   while (!existsSync(candidatePath)) {
-    const parentPath = dirname(candidatePath)
+    const parentPath = dirname(candidatePath);
 
     if (parentPath === candidatePath) {
-      return candidatePath
+      return candidatePath;
     }
 
-    candidatePath = parentPath
+    candidatePath = parentPath;
   }
 
-  return candidatePath
+  return candidatePath;
 }
 
 function toCanonicalPath(pathToNormalize: string): string {
-  const resolvedPath = resolve(pathToNormalize)
+  const resolvedPath = resolve(pathToNormalize);
 
   if (existsSync(resolvedPath)) {
     try {
-      return normalize(realpathSync.native(resolvedPath))
+      return normalize(realpathSync.native(resolvedPath));
     } catch {
-      return normalize(resolvedPath)
+      return normalize(resolvedPath);
     }
   }
 
-  const nearestExistingAncestor = findNearestExistingAncestor(resolvedPath)
+  const nearestExistingAncestor = findNearestExistingAncestor(resolvedPath);
   const canonicalAncestor = existsSync(nearestExistingAncestor)
     ? realpathSync.native(nearestExistingAncestor)
-    : nearestExistingAncestor
-  const relativePathFromAncestor = relative(nearestExistingAncestor, resolvedPath)
+    : nearestExistingAncestor;
+  const relativePathFromAncestor = relative(
+    nearestExistingAncestor,
+    resolvedPath,
+  );
 
-  return normalize(join(canonicalAncestor, relativePathFromAncestor || basename(resolvedPath)))
+  return normalize(
+    join(canonicalAncestor, relativePathFromAncestor || basename(resolvedPath)),
+  );
 }
 
 export function containsPath(rootPath: string, candidatePath: string): boolean {
-  const canonicalRootPath = toCanonicalPath(rootPath)
-  const canonicalCandidatePath = toCanonicalPath(candidatePath)
-  const relativePath = relative(canonicalRootPath, canonicalCandidatePath)
+  const canonicalRootPath = toCanonicalPath(rootPath);
+  const canonicalCandidatePath = toCanonicalPath(candidatePath);
+  const relativePath = relative(canonicalRootPath, canonicalCandidatePath);
 
-  return relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  );
 }
 
-export function isWithinProject(candidatePath: string, projectRoot: string): boolean {
-  return containsPath(projectRoot, candidatePath)
+export function isWithinProject(
+  candidatePath: string,
+  projectRoot: string,
+): boolean {
+  return containsPath(projectRoot, candidatePath);
 }

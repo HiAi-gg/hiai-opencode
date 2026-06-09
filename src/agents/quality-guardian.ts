@@ -5,7 +5,12 @@ import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const QUALITY_GUARDIAN_PROMPT = buildAgentIdentitySection("Quality Guardian", "code review and debugging specialist") + `
+const QUALITY_GUARDIAN_PROMPT =
+  buildAgentIdentitySection(
+    "Quality Guardian",
+    "code review and debugging specialist",
+  ) +
+  `
 
 <modes>
 ## MODE: Code Review (Post-Implementation)
@@ -51,7 +56,8 @@ export function createQualityGuardianAgent(model: string): AgentConfig {
   ]);
 
   return {
-    description: "Specialized in post-implementation code review and structured bug investigation. (Quality Guardian - HiaiOpenCode)",
+    description:
+      "Specialized in post-implementation code review and structured bug investigation. (Quality Guardian - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.2,
@@ -73,7 +79,8 @@ export const qualityGuardianPromptMetadata: AgentPromptMetadata = {
     },
     {
       domain: "Debugging",
-      trigger: "When facing a bug that requires systematic tracing and root cause analysis",
+      trigger:
+        "When facing a bug that requires systematic tracing and root cause analysis",
     },
   ],
   useWhen: [

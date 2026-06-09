@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const BobAgentConfigSchema = z.object({
   disabled: z.boolean().optional(),
@@ -6,6 +6,6 @@ export const BobAgentConfigSchema = z.object({
   planner_enabled: z.boolean().optional(),
   replace_plan: z.boolean().optional(),
   tdd: z.boolean().default(true).optional(),
-})
+});
 
-export type BobAgentConfig = z.infer<typeof BobAgentConfigSchema>
+export type BobAgentConfig = z.infer<typeof BobAgentConfigSchema>;

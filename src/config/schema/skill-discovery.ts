@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const SkillDiscoveryConfigSchema = z.object({
   /**
@@ -20,6 +20,6 @@ export const SkillDiscoveryConfigSchema = z.object({
   global_claude: z.boolean().default(false),
   project_agents: z.boolean().default(false),
   global_agents: z.boolean().default(false),
-})
+});
 
-export type SkillDiscoveryConfig = z.infer<typeof SkillDiscoveryConfigSchema>
+export type SkillDiscoveryConfig = z.infer<typeof SkillDiscoveryConfigSchema>;

@@ -1,4 +1,4 @@
-import { AGENT_NAME_MAP } from "./migration/agent-names"
+import { AGENT_NAME_MAP } from "./migration/agent-names";
 
 /**
  * Agent config keys to display names mapping.
@@ -12,43 +12,43 @@ import { AGENT_NAME_MAP } from "./migration/agent-names"
  * type selector dropdown. Use ` - ` (space-dash-space) instead of `(...)`.
  */
 export const AGENT_DISPLAY_NAMES: Record<string, string> = {
-  "bob": "Bob",
-  "coder": "Coder",
-  "strategist": "Strategist",
-  "critic": "Critic",
-  "designer": "Designer",
-  "researcher": "Researcher",
+  bob: "Bob",
+  coder: "Coder",
+  strategist: "Strategist",
+  critic: "Critic",
+  designer: "Designer",
+  researcher: "Researcher",
   "quality-guardian": "Quality Guardian",
   "brainstormer - idea explorer": "writer",
-  "brainstormer": "writer",
-  "writer": "Writer",
+  brainstormer: "writer",
+  writer: "Writer",
   "agent-skills": "Agent Skills",
   "guard (plan executor)": "manager",
   "guard - plan executor": "manager",
-  "guard": "manager",
-  "manager": "Manager",
-  "sub": "Sub",
-  "vision": "Vision",
-}
+  guard: "manager",
+  manager: "Manager",
+  sub: "Sub",
+  vision: "Vision",
+};
 
-const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {}
+const AGENT_LIST_SORT_PREFIXES: Record<string, string> = {};
 
-const INVISIBLE_AGENT_CHARACTERS_REGEX = /[\u200B\u200C\u200D\uFEFF]/g
+const INVISIBLE_AGENT_CHARACTERS_REGEX = /\u200B|\u200C|\u200D|\uFEFF/g;
 
 export function stripInvisibleAgentCharacters(agentName: string): string {
-  return agentName.replace(INVISIBLE_AGENT_CHARACTERS_REGEX, "")
+  return agentName.replace(INVISIBLE_AGENT_CHARACTERS_REGEX, "");
 }
 
 export function stripAgentListSortPrefix(agentName: string): string {
-  return stripInvisibleAgentCharacters(agentName)
+  return stripInvisibleAgentCharacters(agentName);
 }
 
 export function getAgentRuntimeName(configKey: string): string {
-  const canonicalKey = resolveKnownAgentConfigKey(configKey) ?? configKey
-  const displayName = getAgentDisplayName(canonicalKey)
-  const prefix = AGENT_LIST_SORT_PREFIXES[canonicalKey.toLowerCase()]
+  const canonicalKey = resolveKnownAgentConfigKey(configKey) ?? configKey;
+  const displayName = getAgentDisplayName(canonicalKey);
+  const prefix = AGENT_LIST_SORT_PREFIXES[canonicalKey.toLowerCase()];
 
-  return prefix ? `${prefix}${displayName}` : displayName
+  return prefix ? `${prefix}${displayName}` : displayName;
 }
 
 /**
@@ -57,36 +57,39 @@ export function getAgentRuntimeName(configKey: string): string {
  * Returns original key if not found.
  */
 export function getAgentDisplayName(configKey: string): string {
-  const resolvedConfigKey = resolveKnownAgentConfigKey(configKey)
+  const resolvedConfigKey = resolveKnownAgentConfigKey(configKey);
   if (resolvedConfigKey !== undefined) {
-    const resolvedDisplayName = AGENT_DISPLAY_NAMES[resolvedConfigKey]
-    if (resolvedDisplayName !== undefined) return resolvedDisplayName
+    const resolvedDisplayName = AGENT_DISPLAY_NAMES[resolvedConfigKey];
+    if (resolvedDisplayName !== undefined) return resolvedDisplayName;
   }
 
   // Try exact match first
-  const exactMatch = AGENT_DISPLAY_NAMES[configKey]
-  if (exactMatch !== undefined) return exactMatch
-  
+  const exactMatch = AGENT_DISPLAY_NAMES[configKey];
+  if (exactMatch !== undefined) return exactMatch;
+
   // Fall back to case-insensitive search
-  const lowerKey = configKey.toLowerCase()
+  const lowerKey = configKey.toLowerCase();
   for (const [k, v] of Object.entries(AGENT_DISPLAY_NAMES)) {
-    if (k.toLowerCase() === lowerKey) return v
+    if (k.toLowerCase() === lowerKey) return v;
   }
-  
+
   // Unknown agent: return original key
-  return configKey
+  return configKey;
 }
 
 /**
  * Runtime-facing agent name used for OpenCode list ordering.
  */
 export function getAgentListDisplayName(configKey: string): string {
-  return getAgentRuntimeName(configKey)
+  return getAgentRuntimeName(configKey);
 }
 
 const REVERSE_DISPLAY_NAMES: Record<string, string> = Object.fromEntries(
-  Object.entries(AGENT_DISPLAY_NAMES).map(([key, displayName]) => [displayName.toLowerCase(), key]),
-)
+  Object.entries(AGENT_DISPLAY_NAMES).map(([key, displayName]) => [
+    displayName.toLowerCase(),
+    key,
+  ]),
+);
 
 // Legacy parenthesized display names for backward compatibility.
 // Old configs/sessions may reference these names; resolve them to config keys.
@@ -100,40 +103,40 @@ const LEGACY_DISPLAY_NAMES: Record<string, string> = {
   "pre-plan (plan consultant)": "strategist",
   "critic (plan critic)": "critic",
   "critic - plan critic": "critic",
-  "designer": "designer",
+  designer: "designer",
   "athena (council)": "strategist",
   "athena-junior (council)": "strategist",
   "researcher (codebase explorer)": "researcher",
   "researcher - codebase explorer": "researcher",
   "quality guardian (verifier)": "quality-guardian",
   "quality guardian - verifier": "quality-guardian",
-  "writer": "writer",
-  "copywriter": "writer",
+  writer: "writer",
+  copywriter: "writer",
   "content-writer": "writer",
   "content writer": "writer",
   "website-writer": "writer",
   "agent skills - skill composer": "agent-skills",
-  "subagent": "sub",
-  "vision": "vision",
+  subagent: "sub",
+  vision: "vision",
   "ui - multimodal": "vision",
-}
+};
 
 function resolveKnownAgentConfigKey(agentName: string): string | undefined {
-  const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase()
-  if (!lower) return undefined
+  const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase();
+  if (!lower) return undefined;
 
-  const reversed = REVERSE_DISPLAY_NAMES[lower]
-  if (reversed !== undefined) return reversed
+  const reversed = REVERSE_DISPLAY_NAMES[lower];
+  if (reversed !== undefined) return reversed;
 
-  const legacy = LEGACY_DISPLAY_NAMES[lower]
-  if (legacy !== undefined) return legacy
+  const legacy = LEGACY_DISPLAY_NAMES[lower];
+  if (legacy !== undefined) return legacy;
 
-  const migrated = AGENT_NAME_MAP[lower]
-  if (migrated !== undefined) return migrated
+  const migrated = AGENT_NAME_MAP[lower];
+  if (migrated !== undefined) return migrated;
 
-  if (AGENT_DISPLAY_NAMES[lower] !== undefined) return lower
+  if (AGENT_DISPLAY_NAMES[lower] !== undefined) return lower;
 
-  return undefined
+  return undefined;
 }
 
 /**
@@ -141,8 +144,8 @@ function resolveKnownAgentConfigKey(agentName: string): string | undefined {
  * "Manager" -> "manager", "Guard" -> "manager", "guard" -> "manager"
  */
 export function getAgentConfigKey(agentName: string): string {
-  const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase()
-  return resolveKnownAgentConfigKey(agentName) ?? lower
+  const lower = stripAgentListSortPrefix(agentName).trim().toLowerCase();
+  return resolveKnownAgentConfigKey(agentName) ?? lower;
 }
 
 /**
@@ -151,33 +154,37 @@ export function getAgentConfigKey(agentName: string): string {
  * - Known config keys (any case) -> canonical display names
  * - Unknown/custom names -> preserved as-is (trimmed)
  */
-export function normalizeAgentForPrompt(agentName: string | undefined): string | undefined {
+export function normalizeAgentForPrompt(
+  agentName: string | undefined,
+): string | undefined {
   if (typeof agentName !== "string") {
-    return undefined
+    return undefined;
   }
 
-  const trimmed = stripAgentListSortPrefix(agentName).trim()
+  const trimmed = stripAgentListSortPrefix(agentName).trim();
   if (!trimmed) {
-    return undefined
+    return undefined;
   }
 
-  const configKey = resolveKnownAgentConfigKey(trimmed)
+  const configKey = resolveKnownAgentConfigKey(trimmed);
   if (configKey !== undefined) {
-    return AGENT_DISPLAY_NAMES[configKey] ?? trimmed
+    return AGENT_DISPLAY_NAMES[configKey] ?? trimmed;
   }
 
-  return trimmed
+  return trimmed;
 }
 
-export function normalizeAgentForPromptKey(agentName: string | undefined): string | undefined {
+export function normalizeAgentForPromptKey(
+  agentName: string | undefined,
+): string | undefined {
   if (typeof agentName !== "string") {
-    return undefined
+    return undefined;
   }
 
-  const trimmed = stripAgentListSortPrefix(agentName).trim()
+  const trimmed = stripAgentListSortPrefix(agentName).trim();
   if (!trimmed) {
-    return undefined
+    return undefined;
   }
 
-  return resolveKnownAgentConfigKey(trimmed) ?? trimmed
+  return resolveKnownAgentConfigKey(trimmed) ?? trimmed;
 }

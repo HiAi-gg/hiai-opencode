@@ -4,7 +4,11 @@ import { STRATEGIST_HIGH_ACCURACY_MODE } from "../strategist/high-accuracy-mode"
 import { STRATEGIST_PLAN_TEMPLATE } from "../strategist/plan-template";
 import { STRATEGIST_BEHAVIORAL_SUMMARY } from "../strategist/behavioral-summary";
 
-export type StrategistMode = "planning" | "interview" | "pre-check" | "architecture";
+export type StrategistMode =
+  | "planning"
+  | "interview"
+  | "pre-check"
+  | "architecture";
 
 const STRATEGY_COUNCIL_MODES_HEADER = `
 <Strategy_Council_Modes>
@@ -45,7 +49,9 @@ Apply Designer's pragmatic adaptability when:
  * pre-check: core + brief pre-check guidance — lightweight ambiguity scan before planning
  * architecture: core + high_accuracy_mode + plan_generation — high-risk architecture decisions
  */
-export function getUnifiedStrategistPrompt(mode: StrategistMode = "planning"): string {
+export function getUnifiedStrategistPrompt(
+  mode: StrategistMode = "planning",
+): string {
   const core = `\n${STRATEGY_COUNCIL_MODES_HEADER}\n`;
 
   switch (mode) {
@@ -68,10 +74,7 @@ Once ambiguity is resolved, transition to planning mode.
 
     case "architecture":
       return `${core}${STRATEGIST_HIGH_ACCURACY_MODE}${STRATEGIST_PLAN_GENERATION}`;
-
-    case "planning":
     default:
       return `${core}${STRATEGIST_PLAN_GENERATION}`;
   }
 }
-

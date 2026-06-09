@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const BuiltinCommandNameSchema = z.enum([
   "init-deep",
@@ -11,6 +11,6 @@ export const BuiltinCommandNameSchema = z.enum([
   "remove-ai-slops",
   "mcp-status",
   "doctor",
-])
+]);
 
-export type BuiltinCommandName = z.infer<typeof BuiltinCommandNameSchema>
+export type BuiltinCommandName = z.infer<typeof BuiltinCommandNameSchema>;

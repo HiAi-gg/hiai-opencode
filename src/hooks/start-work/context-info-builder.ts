@@ -1,4 +1,4 @@
-import { statSync } from "node:fs"
+import { statSync } from "node:fs";
 import {
   appendSessionId,
   clearBoulderState,
@@ -6,13 +6,13 @@ import {
   findStrategistPlans,
   getPlanName,
   getPlanProgress,
-  readBoulderState,
+  type readBoulderState,
   writeBoulderState,
-} from "../../features/boulder-state"
-import { log } from "../../shared/logger"
-import { createWorktreeActiveBlock } from "./worktree-block"
-import type { PluginInput } from "@opencode-ai/plugin"
-import { HOOK_NAME } from "./start-work-hook"
+} from "../../features/boulder-state";
+import { log } from "../../shared/logger";
+import { createWorktreeActiveBlock } from "./worktree-block";
+import type { PluginInput } from "@opencode-ai/plugin";
+import { HOOK_NAME } from "./start-work-hook";
 
 function normalizePlanLookupValue(value: string): string {
   return value
@@ -22,41 +22,62 @@ function normalizePlanLookupValue(value: string): string {
     .replace(/[\s_]+/g, "-")
     .replace(/[^\p{L}\p{N}-]+/gu, "-")
     .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
+    .replace(/^-+|-+$/g, "");
 }
 
 function findPlanByName(plans: string[], requestedName: string): string | null {
-  const lowerName = requestedName.toLowerCase()
-  const normalizedRequestedName = normalizePlanLookupValue(requestedName)
-  const exactMatch = plans.find((p) => getPlanName(p).toLowerCase() === lowerName)
-  if (exactMatch) return exactMatch
-  const normalizedExactMatch = plans.find((planPath) =>
-    normalizePlanLookupValue(getPlanName(planPath)) === normalizedRequestedName,
-  )
-  if (normalizedExactMatch) return normalizedExactMatch
-  const partialMatch = plans.find((p) => getPlanName(p).toLowerCase().includes(lowerName))
-  if (partialMatch) return partialMatch
+  const lowerName = requestedName.toLowerCase();
+  const normalizedRequestedName = normalizePlanLookupValue(requestedName);
+  const exactMatch = plans.find(
+    (p) => getPlanName(p).toLowerCase() === lowerName,
+  );
+  if (exactMatch) return exactMatch;
+  const normalizedExactMatch = plans.find(
+    (planPath) =>
+      normalizePlanLookupValue(getPlanName(planPath)) ===
+      normalizedRequestedName,
+  );
+  if (normalizedExactMatch) return normalizedExactMatch;
+  const partialMatch = plans.find((p) =>
+    getPlanName(p).toLowerCase().includes(lowerName),
+  );
+  if (partialMatch) return partialMatch;
 
   const normalizedPartialMatch = plans.find((planPath) =>
-    normalizePlanLookupValue(getPlanName(planPath)).includes(normalizedRequestedName),
-  )
-  return normalizedPartialMatch || null
+    normalizePlanLookupValue(getPlanName(planPath)).includes(
+      normalizedRequestedName,
+    ),
+  );
+  return normalizedPartialMatch || null;
 }
 
 function buildAutoSelectedPlanContext(params: {
-  planPath: string
-  sessionId: string
-  timestamp: string
-  activeAgent: string
-  worktreePath: string | undefined
-  worktreeBlock: string
-  directory: string
-  effectiveDirectory: string
+  planPath: string;
+  sessionId: string;
+  timestamp: string;
+  activeAgent: string;
+  worktreePath: string | undefined;
+  worktreeBlock: string;
+  directory: string;
+  effectiveDirectory: string;
 }): string {
-  const { planPath, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory } = params
-  const progress = getPlanProgress(planPath)
-  const newState = createBoulderState(planPath, sessionId, activeAgent, worktreePath)
-  writeBoulderState(directory, newState)
+  const {
+    planPath,
+    sessionId,
+    timestamp,
+    activeAgent,
+    worktreePath,
+    worktreeBlock,
+    directory,
+  } = params;
+  const progress = getPlanProgress(planPath);
+  const newState = createBoulderState(
+    planPath,
+    sessionId,
+    activeAgent,
+    worktreePath,
+  );
+  writeBoulderState(directory, newState);
 
   return `
 ## Auto-Selected Plan
@@ -68,18 +89,23 @@ function buildAutoSelectedPlanContext(params: {
 **Started**: ${timestamp}
 ${worktreeBlock}
 
-The active boulder registry entry has been created. Read the plan and begin execution.`
+The active boulder registry entry has been created. Read the plan and begin execution.`;
 }
 
-function buildMissingPlanContext(explicitPlanName: string, allPlans: string[]): string {
-  const incompletePlans = allPlans.filter((p) => !getPlanProgress(p).isComplete)
+function buildMissingPlanContext(
+  explicitPlanName: string,
+  allPlans: string[],
+): string {
+  const incompletePlans = allPlans.filter(
+    (p) => !getPlanProgress(p).isComplete,
+  );
   if (incompletePlans.length > 0) {
     const planList = incompletePlans
       .map((p, i) => {
-        const prog = getPlanProgress(p)
-        return `${i + 1}. [${getPlanName(p)}] - Progress: ${prog.completed}/${prog.total}`
+        const prog = getPlanProgress(p);
+        return `${i + 1}. [${getPlanName(p)}] - Progress: ${prog.completed}/${prog.total}`;
       })
-      .join("\n")
+      .join("\n");
 
     return `
 ## Plan Not Found
@@ -89,47 +115,59 @@ Could not find a plan matching "${explicitPlanName}".
 Available incomplete plans:
 ${planList}
 
-Ask the user which plan to work on.`
+Ask the user which plan to work on.`;
   }
 
   return `
 ## Plan Not Found
 
  Could not find a plan matching "${explicitPlanName}".
- No incomplete plans available. Create a new plan using the Strategist agent.`
+ No incomplete plans available. Create a new plan using the Strategist agent.`;
 }
 
 function buildExplicitPlanContext(params: {
-  explicitPlanName: string
-  existingState: ReturnType<typeof readBoulderState>
-  sessionId: string
-  timestamp: string
-  activeAgent: string
-  worktreePath: string | undefined
-  worktreeBlock: string
-  directory: string
-  effectiveDirectory: string
+  explicitPlanName: string;
+  existingState: ReturnType<typeof readBoulderState>;
+  sessionId: string;
+  timestamp: string;
+  activeAgent: string;
+  worktreePath: string | undefined;
+  worktreeBlock: string;
+  directory: string;
+  effectiveDirectory: string;
 }): string {
-  const { explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
-  log(`[${HOOK_NAME}] Explicit plan name requested: ${explicitPlanName}`, { sessionID: sessionId })
+  const {
+    explicitPlanName,
+    existingState,
+    sessionId,
+    timestamp,
+    activeAgent,
+    worktreePath,
+    worktreeBlock,
+    directory,
+    effectiveDirectory,
+  } = params;
+  log(`[${HOOK_NAME}] Explicit plan name requested: ${explicitPlanName}`, {
+    sessionID: sessionId,
+  });
 
-  const allPlans = findStrategistPlans(directory)
-  const matchedPlan = findPlanByName(allPlans, explicitPlanName)
+  const allPlans = findStrategistPlans(directory);
+  const matchedPlan = findPlanByName(allPlans, explicitPlanName);
   if (!matchedPlan) {
-    return buildMissingPlanContext(explicitPlanName, allPlans)
+    return buildMissingPlanContext(explicitPlanName, allPlans);
   }
 
-  const progress = getPlanProgress(matchedPlan)
+  const progress = getPlanProgress(matchedPlan);
   if (progress.isComplete) {
     return `
 ## Plan Already Complete
 
  The requested plan "${getPlanName(matchedPlan)}" has been completed.
- All ${progress.total} tasks are done. Create a new plan using the Strategist agent.`
+ All ${progress.total} tasks are done. Create a new plan using the Strategist agent.`;
   }
 
   if (existingState) {
-    clearBoulderState(directory)
+    clearBoulderState(directory);
   }
 
   return buildAutoSelectedPlanContext({
@@ -141,34 +179,42 @@ function buildExplicitPlanContext(params: {
     worktreeBlock,
     directory,
     effectiveDirectory,
-  })
+  });
 }
 
 function buildExistingSessionContext(params: {
-  existingState: NonNullable<ReturnType<typeof readBoulderState>>
-  sessionId: string
-  activeAgent: string
-  worktreePath: string | undefined
-  worktreeBlock: string
-  directory: string
-  effectiveDirectory: string
+  existingState: NonNullable<ReturnType<typeof readBoulderState>>;
+  sessionId: string;
+  activeAgent: string;
+  worktreePath: string | undefined;
+  worktreeBlock: string;
+  directory: string;
+  effectiveDirectory: string;
 }): string {
-  const { existingState, sessionId, activeAgent, worktreePath, worktreeBlock, directory } = params
-  const progress = getPlanProgress(existingState.active_plan)
+  const {
+    existingState,
+    sessionId,
+    activeAgent,
+    worktreePath,
+    worktreeBlock,
+    directory,
+  } = params;
+  const progress = getPlanProgress(existingState.active_plan);
   if (progress.isComplete) {
     return `
 ## Previous Work Complete
 
 The previous plan (${existingState.plan_name}) has been completed.
-Looking for new plans...`
+Looking for new plans...`;
   }
 
-  const effectiveWorktree = worktreePath ?? existingState.worktree_path
-  const sessionAlreadyTracked = existingState.session_ids.includes(sessionId)
+  const effectiveWorktree = worktreePath ?? existingState.worktree_path;
+  const sessionAlreadyTracked = existingState.session_ids.includes(sessionId);
   const updatedSessions = sessionAlreadyTracked
     ? existingState.session_ids
-    : [...existingState.session_ids, sessionId]
-  const shouldRewriteState = existingState.agent !== activeAgent || worktreePath !== undefined
+    : [...existingState.session_ids, sessionId];
+  const shouldRewriteState =
+    existingState.agent !== activeAgent || worktreePath !== undefined;
 
   if (shouldRewriteState) {
     writeBoulderState(directory, {
@@ -176,14 +222,14 @@ Looking for new plans...`
       agent: activeAgent,
       ...(worktreePath !== undefined ? { worktree_path: worktreePath } : {}),
       session_ids: updatedSessions,
-    })
+    });
   } else if (!sessionAlreadyTracked) {
-    appendSessionId(directory, sessionId)
+    appendSessionId(directory, sessionId);
   }
 
   const worktreeDisplay = effectiveWorktree
-    ? (worktreeBlock || createWorktreeActiveBlock(effectiveWorktree))
-    : worktreeBlock
+    ? worktreeBlock || createWorktreeActiveBlock(effectiveWorktree)
+    : worktreeBlock;
 
   return `
 ## Active Work Session Found
@@ -197,69 +243,93 @@ Looking for new plans...`
 ${worktreeDisplay}
 
 The current session (${sessionId}) has been added to session_ids.
-Read the plan file and continue from the first unchecked task.`
+Read the plan file and continue from the first unchecked task.`;
 }
 
 function shouldDiscoverPlans(
   existingState: ReturnType<typeof readBoulderState>,
   explicitPlanName: string | null,
 ): boolean {
-  return (!existingState && !explicitPlanName)
-    || (existingState !== null && !explicitPlanName && getPlanProgress(existingState.active_plan).isComplete)
+  return (
+    (!existingState && !explicitPlanName) ||
+    (existingState !== null &&
+      !explicitPlanName &&
+      getPlanProgress(existingState.active_plan).isComplete)
+  );
 }
 
 function buildPlanDiscoveryContext(params: {
-  contextInfo: string
-  sessionId: string
-  timestamp: string
-  activeAgent: string
-  worktreePath: string | undefined
-  worktreeBlock: string
-  directory: string
-  effectiveDirectory: string
+  contextInfo: string;
+  sessionId: string;
+  timestamp: string;
+  activeAgent: string;
+  worktreePath: string | undefined;
+  worktreeBlock: string;
+  directory: string;
+  effectiveDirectory: string;
 }): string {
-  const { contextInfo, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, directory, effectiveDirectory } = params
-  const plans = findStrategistPlans(directory)
-  const incompletePlans = plans.filter((p) => !getPlanProgress(p).isComplete)
+  const {
+    contextInfo,
+    sessionId,
+    timestamp,
+    activeAgent,
+    worktreePath,
+    worktreeBlock,
+    directory,
+    effectiveDirectory,
+  } = params;
+  const plans = findStrategistPlans(directory);
+  const incompletePlans = plans.filter((p) => !getPlanProgress(p).isComplete);
 
   if (plans.length === 0) {
-    return contextInfo + `
+    return (
+      contextInfo +
+      `
 ## No Plans Found
 
  No Strategist plan files found in the .bob plans directory.
  Use the Strategist agent to create a work plan first.`
+    );
   }
 
   if (incompletePlans.length === 0) {
-    return contextInfo + `
+    return (
+      contextInfo +
+      `
 
 ## All Plans Complete
 
  All ${plans.length} plan(s) are complete. Create a new plan using the Strategist agent.`
+    );
   }
 
   if (incompletePlans.length === 1) {
-    return contextInfo + buildAutoSelectedPlanContext({
-      planPath: incompletePlans[0],
-      sessionId,
-      timestamp,
-      activeAgent,
-      worktreePath,
-      worktreeBlock,
-      directory,
-      effectiveDirectory,
-    })
+    return (
+      contextInfo +
+      buildAutoSelectedPlanContext({
+        planPath: incompletePlans[0],
+        sessionId,
+        timestamp,
+        activeAgent,
+        worktreePath,
+        worktreeBlock,
+        directory,
+        effectiveDirectory,
+      })
+    );
   }
 
   const planList = incompletePlans
     .map((p, i) => {
-      const progress = getPlanProgress(p)
-      const modified = new Date(statSync(p).mtimeMs).toISOString()
-      return `${i + 1}. [${getPlanName(p)}] - Modified: ${modified} - Progress: ${progress.completed}/${progress.total}`
+      const progress = getPlanProgress(p);
+      const modified = new Date(statSync(p).mtimeMs).toISOString();
+      return `${i + 1}. [${getPlanName(p)}] - Modified: ${modified} - Progress: ${progress.completed}/${progress.total}`;
     })
-    .join("\n")
+    .join("\n");
 
-  return contextInfo + `
+  return (
+    contextInfo +
+    `
 
 <system-reminder>
 ## Multiple Plans Found
@@ -272,21 +342,33 @@ ${planList}
 Ask the user which plan to work on. Present the options above and wait for their response.
 ${worktreeBlock}
 </system-reminder>`
+  );
 }
 
 export function buildStartWorkContextInfo(params: {
-  ctx: PluginInput
-  explicitPlanName: string | null
-  existingState: ReturnType<typeof readBoulderState>
-  sessionId: string
-  timestamp: string
-  activeAgent: string
-  worktreePath: string | undefined
-  worktreeBlock: string
-  effectiveDirectory?: string
-  isolationError?: string | null
+  ctx: PluginInput;
+  explicitPlanName: string | null;
+  existingState: ReturnType<typeof readBoulderState>;
+  sessionId: string;
+  timestamp: string;
+  activeAgent: string;
+  worktreePath: string | undefined;
+  worktreeBlock: string;
+  effectiveDirectory?: string;
+  isolationError?: string | null;
 }): string {
-  const { ctx, explicitPlanName, existingState, sessionId, timestamp, activeAgent, worktreePath, worktreeBlock, effectiveDirectory, isolationError } = params
+  const {
+    ctx,
+    explicitPlanName,
+    existingState,
+    sessionId,
+    timestamp,
+    activeAgent,
+    worktreePath,
+    worktreeBlock,
+    effectiveDirectory,
+    isolationError,
+  } = params;
 
   // If there's an isolation error, return it immediately
   if (isolationError) {
@@ -296,10 +378,10 @@ export function buildStartWorkContextInfo(params: {
 **Error**: ${isolationError}
 
 Cannot proceed with plan isolation. Please resolve the issue above.
-`
+`;
   }
 
-  let contextInfo = ""
+  let contextInfo = "";
   if (explicitPlanName) {
     contextInfo = buildExplicitPlanContext({
       explicitPlanName,
@@ -311,7 +393,7 @@ Cannot proceed with plan isolation. Please resolve the issue above.
       worktreeBlock,
       directory: ctx.directory,
       effectiveDirectory: effectiveDirectory ?? ctx.directory,
-    })
+    });
   } else if (existingState) {
     contextInfo = buildExistingSessionContext({
       existingState,
@@ -321,7 +403,7 @@ Cannot proceed with plan isolation. Please resolve the issue above.
       worktreeBlock,
       directory: ctx.directory,
       effectiveDirectory: effectiveDirectory ?? ctx.directory,
-    })
+    });
   }
 
   if (shouldDiscoverPlans(existingState, explicitPlanName)) {
@@ -334,8 +416,8 @@ Cannot proceed with plan isolation. Please resolve the issue above.
       worktreeBlock,
       directory: ctx.directory,
       effectiveDirectory: effectiveDirectory ?? ctx.directory,
-    })
+    });
   }
 
-  return contextInfo
+  return contextInfo;
 }

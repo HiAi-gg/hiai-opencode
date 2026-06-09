@@ -1,9 +1,12 @@
-import { getAgentConfigKey, stripInvisibleAgentCharacters } from "./agent-display-names"
+import {
+  getAgentConfigKey,
+  stripInvisibleAgentCharacters,
+} from "./agent-display-names";
 import {
   canAgentDelegateTo,
   formatAgentDelegateTargets,
   type DelegatableAgentKey,
-} from "./permission-compat"
+} from "./permission-compat";
 
 /**
  * Agent tool restrictions for session.prompt calls.
@@ -16,7 +19,7 @@ const RESEARCHER_DENYLIST: Record<string, boolean> = {
   edit: false,
   task: false,
   call_hiai_agent: false,
-}
+};
 
 const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
   bob: {
@@ -59,57 +62,65 @@ const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
   sub: {
     task: false,
   },
-}
+};
 
-const LEGACY_AGENT_RESTRICTION_OVERRIDES: Record<string, Record<string, boolean>> = {
+const LEGACY_AGENT_RESTRICTION_OVERRIDES: Record<
+  string,
+  Record<string, boolean>
+> = {
   ui: CANONICAL_AGENT_RESTRICTIONS.multimodal,
-}
+};
 
 const LEGACY_AGENT_ALIAS_TO_CANONICAL: Record<string, string> = {
   vision: "multimodal",
   "plan-consultant": "critic",
-}
+};
 
 function toNormalizedAgentKey(agentName: string): string {
-  return stripInvisibleAgentCharacters(agentName).trim().toLowerCase()
+  return stripInvisibleAgentCharacters(agentName).trim().toLowerCase();
 }
 
 function getRestrictionCandidates(agentName: string): string[] {
-  const direct = toNormalizedAgentKey(agentName)
-  const configKey = toNormalizedAgentKey(getAgentConfigKey(agentName))
-  return direct === configKey ? [direct] : [direct, configKey]
+  const direct = toNormalizedAgentKey(agentName);
+  const configKey = toNormalizedAgentKey(getAgentConfigKey(agentName));
+  return direct === configKey ? [direct] : [direct, configKey];
 }
 
-function resolveRestrictions(agentName: string): Record<string, boolean> | undefined {
-  const candidates = getRestrictionCandidates(agentName)
+function resolveRestrictions(
+  agentName: string,
+): Record<string, boolean> | undefined {
+  const candidates = getRestrictionCandidates(agentName);
 
   for (const candidate of candidates) {
-    const override = LEGACY_AGENT_RESTRICTION_OVERRIDES[candidate]
+    const override = LEGACY_AGENT_RESTRICTION_OVERRIDES[candidate];
     if (override) {
-      return override
+      return override;
     }
   }
 
   for (const candidate of candidates) {
-    const canonicalKey = LEGACY_AGENT_ALIAS_TO_CANONICAL[candidate] ?? candidate
-    const canonical = CANONICAL_AGENT_RESTRICTIONS[canonicalKey]
+    const canonicalKey =
+      LEGACY_AGENT_ALIAS_TO_CANONICAL[candidate] ?? candidate;
+    const canonical = CANONICAL_AGENT_RESTRICTIONS[canonicalKey];
     if (canonical) {
-      return canonical
+      return canonical;
     }
   }
 
-  return undefined
+  return undefined;
 }
 
-export function getAgentToolRestrictions(agentName: string): Record<string, boolean> {
+export function getAgentToolRestrictions(
+  agentName: string,
+): Record<string, boolean> {
   // Custom/unknown agents get no restrictions (empty object), matching Claude Code's
   // trust model where project-registered agents retain full tool access including bash.
-  return resolveRestrictions(agentName) ?? {}
+  return resolveRestrictions(agentName) ?? {};
 }
 
 export function hasAgentToolRestrictions(agentName: string): boolean {
-  const restrictions = getAgentToolRestrictions(agentName)
-  return Object.keys(restrictions).length > 0
+  const restrictions = getAgentToolRestrictions(agentName);
+  return Object.keys(restrictions).length > 0;
 }
 
 /**
@@ -119,8 +130,8 @@ export function hasAgentToolRestrictions(agentName: string): boolean {
  * suitable for surfacing to the model that initiated the `task()` call.
  */
 export interface DelegationCheckResult {
-  allowed: boolean
-  reason?: string
+  allowed: boolean;
+  reason?: string;
 }
 
 /**
@@ -141,30 +152,30 @@ export interface DelegationCheckResult {
  */
 export function checkCallerCanDelegateTo(
   callerAgent: string,
-  targetAgent: string
+  targetAgent: string,
 ): DelegationCheckResult {
-  const caller = callerAgent.trim()
-  const target = targetAgent.trim()
+  const caller = callerAgent.trim();
+  const target = targetAgent.trim();
 
   if (!caller) {
-    return { allowed: true }
+    return { allowed: true };
   }
 
   if (!target) {
     return {
       allowed: false,
       reason: "Cannot delegate to an empty target agent name.",
-    }
+    };
   }
 
   if (canAgentDelegateTo(caller, target)) {
-    return { allowed: true }
+    return { allowed: true };
   }
 
   return {
     allowed: false,
     reason: `Agent ${caller} cannot delegate to ${target}. Allowed targets: ${formatAgentDelegateTargets(caller)}`,
-  }
+  };
 }
 
 /**
@@ -173,13 +184,13 @@ export function checkCallerCanDelegateTo(
  */
 export function callerCanDelegateTo(
   callerAgent: string,
-  targetAgent: string
+  targetAgent: string,
 ): boolean {
-  return checkCallerCanDelegateTo(callerAgent, targetAgent).allowed
+  return checkCallerCanDelegateTo(callerAgent, targetAgent).allowed;
 }
 
 /**
  * Re-export the delegation types so callers can import them from a single
  * location without reaching into `permission-compat` directly.
  */
-export type { DelegatableAgentKey }
+export type { DelegatableAgentKey };

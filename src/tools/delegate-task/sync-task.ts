@@ -1,17 +1,28 @@
-import type { ModelFallbackInfo } from "../../features/task-toast-manager/types"
-import type { DelegateTaskArgs, ToolContextWithMetadata, DelegatedModelConfig } from "./types"
-import type { ExecutorContext, ParentContext } from "./executor-types"
-import { getTaskToastManager } from "../../features/task-toast-manager"
-import { storeToolMetadata } from "../../features/tool-metadata-store"
-import { resolveCallID } from "./resolve-call-id"
-import { subagentSessions, syncSubagentSessions, setSessionAgent } from "../../features/claude-code-session-state"
-import { log } from "../../shared/logger"
-import { SessionCategoryRegistry } from "../../shared/session-category-registry"
-import { formatDuration } from "./time-formatter"
-import { formatDetailedError } from "./error-formatting"
-import { syncTaskDeps, type SyncTaskDeps } from "./sync-task-deps"
-import { setSessionFallbackChain, clearSessionFallbackChain } from "../../hooks/model-fallback/hook"
-import { retrySyncPromptWithFallbacks } from "./sync-task-fallback"
+import type { ModelFallbackInfo } from "../../features/task-toast-manager/types";
+import type {
+  DelegateTaskArgs,
+  ToolContextWithMetadata,
+  DelegatedModelConfig,
+} from "./types";
+import type { ExecutorContext, ParentContext } from "./executor-types";
+import { getTaskToastManager } from "../../features/task-toast-manager";
+import { storeToolMetadata } from "../../features/tool-metadata-store";
+import { resolveCallID } from "./resolve-call-id";
+import {
+  subagentSessions,
+  syncSubagentSessions,
+  setSessionAgent,
+} from "../../features/claude-code-session-state";
+import { log } from "../../shared/logger";
+import { SessionCategoryRegistry } from "../../shared/session-category-registry";
+import { formatDuration } from "./time-formatter";
+import { formatDetailedError } from "./error-formatting";
+import { syncTaskDeps, type SyncTaskDeps } from "./sync-task-deps";
+import {
+  setSessionFallbackChain,
+  clearSessionFallbackChain,
+} from "../../hooks/model-fallback/hook";
+import { retrySyncPromptWithFallbacks } from "./sync-task-fallback";
 
 export async function executeSyncTask(
   args: DelegateTaskArgs,
@@ -23,19 +34,27 @@ export async function executeSyncTask(
   systemContent: string | undefined,
   modelInfo?: ModelFallbackInfo,
   fallbackChain?: import("../../shared/model-requirements").FallbackEntry[],
-  deps: SyncTaskDeps = syncTaskDeps
+  deps: SyncTaskDeps = syncTaskDeps,
 ): Promise<string> {
-  const { manager, client, directory, onSyncSessionCreated, syncPollTimeoutMs } = executorCtx
-  const toastManager = getTaskToastManager()
-  let taskId: string | undefined
-  let syncSessionID: string | undefined
+  const {
+    manager,
+    client,
+    directory,
+    onSyncSessionCreated,
+    syncPollTimeoutMs,
+  } = executorCtx;
+  const toastManager = getTaskToastManager();
+  let taskId: string | undefined;
+  let syncSessionID: string | undefined;
   let spawnReservation:
     | Awaited<ReturnType<ExecutorContext["manager"]["reserveSubagentSpawn"]>>
-    | undefined
+    | undefined;
 
   try {
     if (typeof manager?.reserveSubagentSpawn === "function") {
-      spawnReservation = await manager.reserveSubagentSpawn(parentContext.sessionID)
+      spawnReservation = await manager.reserveSubagentSpawn(
+        parentContext.sessionID,
+      );
     }
 
     // Depth/descendant guard. We must NOT silently fall back to childDepth: 1
@@ -44,22 +63,26 @@ export async function executeSyncTask(
     // when the manager genuinely cannot enforce limits (legacy SDK), in which
     // case we still record childDepth: 1 but log a warning so regressions are
     // visible.
-    let spawnContext: { rootSessionID: string; parentDepth: number; childDepth: number }
+    let spawnContext: {
+      rootSessionID: string;
+      parentDepth: number;
+      childDepth: number;
+    };
     if (spawnReservation?.spawnContext) {
-      spawnContext = spawnReservation.spawnContext
+      spawnContext = spawnReservation.spawnContext;
     } else if (typeof manager?.assertCanSpawn === "function") {
-      spawnContext = await manager.assertCanSpawn(parentContext.sessionID)
+      spawnContext = await manager.assertCanSpawn(parentContext.sessionID);
     } else {
       log(
         "[task] WARNING: BackgroundManager has no spawn enforcement methods (reserveSubagentSpawn / assertCanSpawn). " +
-        "Depth and descendant limits cannot be enforced for this task. This indicates an old SDK or a misconfiguration.",
-        { parentSessionID: parentContext.sessionID }
-      )
+          "Depth and descendant limits cannot be enforced for this task. This indicates an old SDK or a misconfiguration.",
+        { parentSessionID: parentContext.sessionID },
+      );
       spawnContext = {
         rootSessionID: parentContext.sessionID,
         parentDepth: 0,
         childDepth: 1,
-      }
+      };
     }
 
     const createSessionResult = await deps.createSyncSession(client, {
@@ -67,39 +90,44 @@ export async function executeSyncTask(
       agentToUse,
       description: args.description,
       defaultDirectory: directory,
-    })
+    });
 
     if (!createSessionResult.ok) {
-      spawnReservation?.rollback()
-      return createSessionResult.error
+      spawnReservation?.rollback();
+      return createSessionResult.error;
     }
 
-    const sessionID = createSessionResult.sessionID
-    spawnReservation?.commit()
-    syncSessionID = sessionID
-    subagentSessions.add(sessionID)
-    syncSubagentSessions.add(sessionID)
-    setSessionAgent(sessionID, agentToUse)
-    setSessionFallbackChain(sessionID, fallbackChain)
+    const sessionID = createSessionResult.sessionID;
+    spawnReservation?.commit();
+    syncSessionID = sessionID;
+    subagentSessions.add(sessionID);
+    syncSubagentSessions.add(sessionID);
+    setSessionAgent(sessionID, agentToUse);
+    setSessionFallbackChain(sessionID, fallbackChain);
 
     if (args.category) {
-      SessionCategoryRegistry.register(sessionID, args.category)
+      SessionCategoryRegistry.register(sessionID, args.category);
     }
 
     if (onSyncSessionCreated) {
-      log("[task] Invoking onSyncSessionCreated callback", { sessionID, parentID: parentContext.sessionID })
+      log("[task] Invoking onSyncSessionCreated callback", {
+        sessionID,
+        parentID: parentContext.sessionID,
+      });
       await onSyncSessionCreated({
         sessionID,
         parentID: parentContext.sessionID,
         title: args.description,
       }).catch((err) => {
-      log("[task] onSyncSessionCreated callback failed", { error: String(err) })
-      })
-      await new Promise(r => setTimeout(r, 200))
+        log("[task] onSyncSessionCreated callback failed", {
+          error: String(err),
+        });
+      });
+      await new Promise((r) => setTimeout(r, 200));
     }
 
-    taskId = `sync_${sessionID.slice(0, 8)}`
-    const startTime = new Date()
+    taskId = `sync_${sessionID.slice(0, 8)}`;
+    const startTime = new Date();
 
     if (toastManager) {
       toastManager.addTask({
@@ -111,7 +139,7 @@ export async function executeSyncTask(
         category: args.category,
         skills: args.load_skills,
         modelInfo,
-      })
+      });
     }
 
     const syncTaskMeta = {
@@ -127,16 +155,21 @@ export async function executeSyncTask(
         sync: true,
         spawnDepth: spawnContext.childDepth,
         command: args.command,
-        model: categoryModel ? { providerID: categoryModel.providerID, modelID: categoryModel.modelID } : undefined,
+        model: categoryModel
+          ? {
+              providerID: categoryModel.providerID,
+              modelID: categoryModel.modelID,
+            }
+          : undefined,
       },
-    }
-    await ctx.metadata?.(syncTaskMeta)
-    const callID = resolveCallID(ctx)
+    };
+    await ctx.metadata?.(syncTaskMeta);
+    const callID = resolveCallID(ctx);
     if (callID) {
-      storeToolMetadata(ctx.sessionID, callID, syncTaskMeta)
+      storeToolMetadata(ctx.sessionID, callID, syncTaskMeta);
     }
 
-    let effectiveCategoryModel = categoryModel
+    let effectiveCategoryModel = categoryModel;
     let promptError = await deps.sendSyncPrompt(client, {
       sessionID,
       agentToUse,
@@ -146,7 +179,7 @@ export async function executeSyncTask(
       toastManager,
       taskId,
       bobAgentConfig: executorCtx.bobAgentConfig,
-    })
+    });
     if (promptError) {
       const promptResult = await retrySyncPromptWithFallbacks({
         sessionID,
@@ -163,49 +196,54 @@ export async function executeSyncTask(
             toastManager,
             taskId,
             bobAgentConfig: executorCtx.bobAgentConfig,
-          })
+          });
         },
-      })
+      });
 
-      promptError = promptResult.promptError
-      effectiveCategoryModel = promptResult.categoryModel
+      promptError = promptResult.promptError;
+      effectiveCategoryModel = promptResult.categoryModel;
 
       if (promptError) {
-        return promptError
+        return promptError;
       }
     }
 
     try {
-      const pollError = await deps.pollSyncSession(ctx, client, {
-        sessionID,
-        agentToUse,
-        toastManager,
-        taskId,
-      }, syncPollTimeoutMs)
+      const pollError = await deps.pollSyncSession(
+        ctx,
+        client,
+        {
+          sessionID,
+          agentToUse,
+          toastManager,
+          taskId,
+        },
+        syncPollTimeoutMs,
+      );
       if (pollError) {
-        return pollError
+        return pollError;
       }
 
-      const result = await deps.fetchSyncResult(client, sessionID)
+      const result = await deps.fetchSyncResult(client, sessionID);
       if (!result.ok) {
-        return result.error
+        return result.error;
       }
 
-      const duration = formatDuration(startTime)
+      const duration = formatDuration(startTime);
 
       // 检测模型路由是否与父 session 不同，给用户可见的提示
       const actualModelStr = effectiveCategoryModel
         ? `${effectiveCategoryModel.providerID}/${effectiveCategoryModel.modelID}`
-        : undefined
+        : undefined;
       const parentModelStr = parentContext.model
         ? `${parentContext.model.providerID}/${parentContext.model.modelID}`
-        : undefined
+        : undefined;
       const modelRoutingNote =
         actualModelStr && parentModelStr && actualModelStr !== parentModelStr
           ? `\n⚠️  Model routing: parent used ${parentModelStr}, this subagent used ${actualModelStr} (via category: ${args.category ?? "unknown"})`
           : actualModelStr
             ? `\nModel: ${actualModelStr}${args.category ? ` (category: ${args.category})` : ""}`
-            : ""
+            : "";
 
       return `Task completed in ${duration}.
 
@@ -217,27 +255,27 @@ ${result.textContent || "(No text output)"}
 
 <task_metadata>
 session_id: ${sessionID}
-</task_metadata>`
+</task_metadata>`;
     } finally {
       if (toastManager && taskId !== undefined) {
-        toastManager.removeTask(taskId)
+        toastManager.removeTask(taskId);
       }
     }
   } catch (error) {
-    spawnReservation?.rollback()
+    spawnReservation?.rollback();
     return formatDetailedError(error, {
       operation: "Execute task",
       args,
       sessionID: syncSessionID,
       agent: agentToUse,
       category: args.category,
-    })
+    });
   } finally {
     if (syncSessionID) {
-      subagentSessions.delete(syncSessionID)
-      syncSubagentSessions.delete(syncSessionID)
-      clearSessionFallbackChain(syncSessionID)
-      SessionCategoryRegistry.remove(syncSessionID)
+      subagentSessions.delete(syncSessionID);
+      syncSubagentSessions.delete(syncSessionID);
+      clearSessionFallbackChain(syncSessionID);
+      SessionCategoryRegistry.remove(syncSessionID);
     }
   }
 }

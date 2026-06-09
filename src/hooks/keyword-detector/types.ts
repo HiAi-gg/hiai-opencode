@@ -1,4 +1,4 @@
 export interface KeywordDetectorState {
-  detected: boolean
-  injected: boolean
+  detected: boolean;
+  injected: boolean;
 }

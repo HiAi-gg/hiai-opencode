@@ -1,14 +1,14 @@
 import type {
-   AvailableCategory,
-   AvailableSkill,
- } from "../../agents/dynamic-agent-prompt-builder"
-import { getAgentConfigKey } from "../../shared/agent-display-names"
-import { truncateDescription } from "../../shared/truncate-description"
+  AvailableCategory,
+  AvailableSkill,
+} from "../../agents/dynamic-agent-prompt-builder";
+import { getAgentConfigKey } from "../../shared/agent-display-names";
+import { truncateDescription } from "../../shared/truncate-description";
 export {
   CATEGORY_DESCRIPTIONS,
   CATEGORY_PROMPT_APPENDS,
   DEFAULT_CATEGORIES,
-} from "./builtin-categories"
+} from "./builtin-categories";
 
 /**
  * System prompt prepended to plan agent invocations.
@@ -126,7 +126,7 @@ FOR EVERY TASK, YOU MUST RECOMMEND:
    - quick/writing/unspecified-low -> coder (fast bounded execution)
    - deep/ultrabrain/visual-engineering/artistry/unspecified-high -> coder (deep execution)
    - use subagent_type="critic" explicitly for review-gate passes
-`
+`;
 
 export const PLAN_AGENT_SYSTEM_PREPEND_STATIC_AFTER_SKILLS = `### REQUIRED OUTPUT FORMAT
 
@@ -265,31 +265,33 @@ WHY THIS FORMAT IS MANDATORY:
 - QA criteria ensure verifiable completion
 </FINAL_OUTPUT_FOR_CALLER>
 
-`
+`;
 
-function renderPlanAgentCategoryRows(categories: AvailableCategory[]): string[] {
-  const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name))
+function renderPlanAgentCategoryRows(
+  categories: AvailableCategory[],
+): string[] {
+  const sorted = [...categories].sort((a, b) => a.name.localeCompare(b.name));
   return sorted.map((category) => {
-    const bestFor = category.description || category.name
-    const model = category.model || ""
-    return `| \`${category.name}\` | ${bestFor} | ${model} |`
-  })
+    const bestFor = category.description || category.name;
+    const model = category.model || "";
+    return `| \`${category.name}\` | ${bestFor} | ${model} |`;
+  });
 }
 
 function renderPlanAgentSkillRows(skills: AvailableSkill[]): string[] {
-   const sorted = [...skills].sort((a, b) => a.name.localeCompare(b.name))
-   return sorted.map((skill) => {
-     const domain = truncateDescription(skill.description).trim() || skill.name
-     return `| \`${skill.name}\` | ${domain} |`
-   })
- }
+  const sorted = [...skills].sort((a, b) => a.name.localeCompare(b.name));
+  return sorted.map((skill) => {
+    const domain = truncateDescription(skill.description).trim() || skill.name;
+    return `| \`${skill.name}\` | ${domain} |`;
+  });
+}
 
 export function buildPlanAgentSkillsSection(
   categories: AvailableCategory[] = [],
-  skills: AvailableSkill[] = []
+  skills: AvailableSkill[] = [],
 ): string {
-  const categoryRows = renderPlanAgentCategoryRows(categories)
-  const skillRows = renderPlanAgentSkillRows(skills)
+  const categoryRows = renderPlanAgentCategoryRows(categories);
+  const skillRows = renderPlanAgentSkillRows(skills);
 
   return `### AVAILABLE CATEGORIES
 
@@ -304,48 +306,48 @@ YOU MUST evaluate EVERY skill and justify inclusions/omissions.
 
 | Skill | Domain |
 |-------|--------|
-${skillRows.join("\n")}`
+${skillRows.join("\n")}`;
 }
 
 export function buildPlanAgentSystemPrepend(
   categories: AvailableCategory[] = [],
-  skills: AvailableSkill[] = []
+  skills: AvailableSkill[] = [],
 ): string {
   return [
     PLAN_AGENT_SYSTEM_PREPEND_STATIC_BEFORE_SKILLS,
     buildPlanAgentSkillsSection(categories, skills),
     PLAN_AGENT_SYSTEM_PREPEND_STATIC_AFTER_SKILLS,
-  ].join("\n\n")
+  ].join("\n\n");
 }
 
 /**
  * List of agent names that should be treated as plan agents (receive plan system prompt).
  * Case-insensitive matching is used.
  */
-export const PLAN_AGENT_NAMES = ["plan"]
+export const PLAN_AGENT_NAMES = ["plan"];
 
 /**
  * Check if the given agent name is a plan agent (receives plan system prompt).
  */
 export function isPlanAgent(agentName: string | undefined): boolean {
-  if (!agentName) return false
-  const lowerName = agentName.toLowerCase().trim()
-  return PLAN_AGENT_NAMES.some(name => lowerName === name)
+  if (!agentName) return false;
+  const lowerName = agentName.toLowerCase().trim();
+  return PLAN_AGENT_NAMES.some((name) => lowerName === name);
 }
 
 /**
  * Plan family: plan + strategist. Shares mutual delegation blocking and task tool permission.
  * Does NOT share system prompt (only isPlanAgent controls that).
  */
-export const PLAN_FAMILY_NAMES = ["plan", "strategist"]
+export const PLAN_FAMILY_NAMES = ["plan", "strategist"];
 
 /**
  * Check if the given agent belongs to the plan family (blocking + task permission).
  */
-export function isPlanFamily(category: string): boolean
-export function isPlanFamily(category: string | undefined): boolean
+export function isPlanFamily(category: string): boolean;
+export function isPlanFamily(category: string | undefined): boolean;
 export function isPlanFamily(category: string | undefined): boolean {
-  if (!category) return false
-  const lowerCategory = getAgentConfigKey(category).toLowerCase().trim()
-  return PLAN_FAMILY_NAMES.some((name) => lowerCategory === name)
+  if (!category) return false;
+  const lowerCategory = getAgentConfigKey(category).toLowerCase().trim();
+  return PLAN_FAMILY_NAMES.some((name) => lowerCategory === name);
 }

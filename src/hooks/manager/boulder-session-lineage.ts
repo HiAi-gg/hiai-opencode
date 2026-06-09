@@ -1,17 +1,17 @@
-import type { PluginInput } from "@opencode-ai/plugin"
-import { log } from "../../shared/logger"
-import { HOOK_NAME } from "./hook-name"
+import type { PluginInput } from "@opencode-ai/plugin";
+import { log } from "../../shared/logger";
+import { HOOK_NAME } from "./hook-name";
 
 export async function isSessionInBoulderLineage(input: {
-  client: PluginInput["client"]
-  sessionID: string
-  boulderSessionIDs: string[]
+  client: PluginInput["client"];
+  sessionID: string;
+  boulderSessionIDs: string[];
 }): Promise<boolean> {
-  const visitedSessionIDs = new Set<string>()
-  let currentSessionID = input.sessionID
+  const visitedSessionIDs = new Set<string>();
+  let currentSessionID = input.sessionID;
 
   while (!visitedSessionIDs.has(currentSessionID)) {
-    visitedSessionIDs.add(currentSessionID)
+    visitedSessionIDs.add(currentSessionID);
 
     const sessionResult = await input.client.session
       .get({ path: { id: currentSessionID } })
@@ -20,25 +20,25 @@ export async function isSessionInBoulderLineage(input: {
           sessionID: input.sessionID,
           currentSessionID,
           error,
-        })
-        return null
-      })
+        });
+        return null;
+      });
 
     if (!sessionResult || sessionResult.error) {
-      return false
+      return false;
     }
 
-    const parentSessionID = sessionResult.data?.parentID
+    const parentSessionID = sessionResult.data?.parentID;
     if (!parentSessionID) {
-      return false
+      return false;
     }
 
     if (input.boulderSessionIDs.includes(parentSessionID)) {
-      return true
+      return true;
     }
 
-    currentSessionID = parentSessionID
+    currentSessionID = parentSessionID;
   }
 
-  return false
+  return false;
 }

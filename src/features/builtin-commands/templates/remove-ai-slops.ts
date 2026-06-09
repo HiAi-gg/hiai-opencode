@@ -93,4 +93,4 @@ If any issues are found during critical review:
 - NEVER remove code that serves a functional purpose
 - ALWAYS verify changes compile/parse correctly
 - ALWAYS preserve test coverage
-- If uncertain about a change, err on the side of keeping the original code`
+- If uncertain about a change, err on the side of keeping the original code`;

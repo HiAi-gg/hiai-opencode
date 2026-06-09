@@ -19,7 +19,7 @@ export function parseOverridesString(overridesStr: string): CommandOverrides {
   const overrides: CommandOverrides = {};
 
   // Parse key:value pairs separated by &&
-  const pairs = overridesStr.split("&&").map(s => s.trim());
+  const pairs = overridesStr.split("&&").map((s) => s.trim());
   for (const pair of pairs) {
     const colonIdx = pair.indexOf(":");
     if (colonIdx > 0) {
@@ -32,7 +32,7 @@ export function parseOverridesString(overridesStr: string): CommandOverrides {
       } else if (key === "loop") {
         // loop:10 - just max iterations, no until marker
         const max = parseInt(value, 10);
-        if (!isNaN(max) && max > 0) {
+        if (!Number.isNaN(max) && max > 0) {
           overrides.loop = { max, until: "" };
         }
       } else if (key === "until") {
@@ -46,14 +46,14 @@ export function parseOverridesString(overridesStr: string): CommandOverrides {
         // return:first || second || third - split on || for multiple returns
         overrides.return = value
           .split("||")
-          .map(s => s.trim())
-          .filter(s => s.length > 0);
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
       } else if (key === "parallel") {
         // parallel:/cmd1 args || /cmd2 args - split on || for multiple parallels
         overrides.parallel = value
           .split("||")
-          .map(s => s.trim())
-          .filter(s => s.length > 0);
+          .map((s) => s.trim())
+          .filter((s) => s.length > 0);
       } else if (key === "as") {
         // as:name - named result identifier
         overrides.as = value;

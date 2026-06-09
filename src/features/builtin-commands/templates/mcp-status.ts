@@ -33,4 +33,4 @@ Rules:
 - If a runtime is missing, give the exact install hint from the command output or the shortest safe next command.
 - Do not edit config unless the user explicitly asks.
 - Do not run package installs unless the user explicitly asks.
-`
+`;

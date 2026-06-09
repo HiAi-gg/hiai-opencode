@@ -1,164 +1,197 @@
-import type { ClaudeCodeMcpServer } from "../claude-code-mcp-loader/types"
-import { expandEnvVarsInObject } from "../claude-code-mcp-loader/env-expander"
-import { forceReconnect } from "./cleanup"
-import { getConnectionType } from "./connection-type"
-import { createHttpClient } from "./http-client"
-import { createStdioClient } from "./stdio-client"
-import { logWarn } from "../../shared/logger"
-import type { McpClient, SkillMcpClientConnectionParams, SkillMcpClientInfo, SkillMcpManagerState } from "./types"
+import type { ClaudeCodeMcpServer } from "../claude-code-mcp-loader/types";
+import { expandEnvVarsInObject } from "../claude-code-mcp-loader/env-expander";
+import { forceReconnect } from "./cleanup";
+import { getConnectionType } from "./connection-type";
+import { createHttpClient } from "./http-client";
+import { createStdioClient } from "./stdio-client";
+import { logWarn } from "../../shared/logger";
+import type {
+  McpClient,
+  SkillMcpClientConnectionParams,
+  SkillMcpClientInfo,
+  SkillMcpManagerState,
+} from "./types";
 
-function removeClientIfCurrent(state: SkillMcpManagerState, clientKey: string, client: McpClient): void {
-  const managed = state.clients.get(clientKey)
+function removeClientIfCurrent(
+  state: SkillMcpManagerState,
+  clientKey: string,
+  client: McpClient,
+): void {
+  const managed = state.clients.get(clientKey);
   if (managed?.client === client) {
-    state.clients.delete(clientKey)
+    state.clients.delete(clientKey);
   }
 }
 
-const PROJECT_SCOPES = new Set(["project", "opencode-project", "local"])
+const PROJECT_SCOPES = new Set(["project", "opencode-project", "local"]);
 
 export async function getOrCreateClient(params: {
-  state: SkillMcpManagerState
-  clientKey: string
-  info: SkillMcpClientInfo
-  config: ClaudeCodeMcpServer
+  state: SkillMcpManagerState;
+  clientKey: string;
+  info: SkillMcpClientInfo;
+  config: ClaudeCodeMcpServer;
 }): Promise<McpClient> {
-  const { state, clientKey, info, config } = params
+  const { state, clientKey, info, config } = params;
 
   if (state.disposed) {
-    throw new Error(`MCP manager for "${info.sessionID}" has been shut down, cannot create new connections.`)
+    throw new Error(
+      `MCP manager for "${info.sessionID}" has been shut down, cannot create new connections.`,
+    );
   }
 
-  const existing = state.clients.get(clientKey)
+  const existing = state.clients.get(clientKey);
   if (existing) {
-    existing.lastUsedAt = Date.now()
-    return existing.client
+    existing.lastUsedAt = Date.now();
+    return existing.client;
   }
 
   // Prevent race condition: if a connection is already in progress, wait for it
-  const pending = state.pendingConnections.get(clientKey)
+  const pending = state.pendingConnections.get(clientKey);
   if (pending) {
-    return pending
+    return pending;
   }
 
-  const isTrusted = !PROJECT_SCOPES.has(info.scope ?? "")
-  const expandedConfig = expandEnvVarsInObject(config, { trusted: isTrusted })
-  let currentConnectionPromise!: Promise<McpClient>
-  state.inFlightConnections.set(info.sessionID, (state.inFlightConnections.get(info.sessionID) ?? 0) + 1)
+  const isTrusted = !PROJECT_SCOPES.has(info.scope ?? "");
+  const expandedConfig = expandEnvVarsInObject(config, { trusted: isTrusted });
+  let currentConnectionPromise!: Promise<McpClient>;
+  state.inFlightConnections.set(
+    info.sessionID,
+    (state.inFlightConnections.get(info.sessionID) ?? 0) + 1,
+  );
   currentConnectionPromise = (async () => {
-    const disconnectGenAtStart = state.disconnectedSessions.get(info.sessionID) ?? 0
-    const shutdownGenAtStart = state.shutdownGeneration
+    const disconnectGenAtStart =
+      state.disconnectedSessions.get(info.sessionID) ?? 0;
+    const shutdownGenAtStart = state.shutdownGeneration;
 
-    const client = await createClient({ state, clientKey, info, config: expandedConfig })
+    const client = await createClient({
+      state,
+      clientKey,
+      info,
+      config: expandedConfig,
+    });
 
-    const isStale = state.pendingConnections.has(clientKey) && state.pendingConnections.get(clientKey) !== currentConnectionPromise
+    const isStale =
+      state.pendingConnections.has(clientKey) &&
+      state.pendingConnections.get(clientKey) !== currentConnectionPromise;
     if (isStale) {
-      removeClientIfCurrent(state, clientKey, client)
+      removeClientIfCurrent(state, clientKey, client);
       try {
-        await client.close()
+        await client.close();
       } catch (error) {
         // A newer connection attempt superseded us. The supersede error below
         // is the signal the caller needs; close failure is purely a leak signal.
         logWarn("[skill-mcp] client.close failed on supersede", {
           serverName: info.serverName,
           error: String(error),
-        })
+        });
       }
-      throw new Error(`Connection for "${info.sessionID}" was superseded by a newer connection attempt.`)
+      throw new Error(
+        `Connection for "${info.sessionID}" was superseded by a newer connection attempt.`,
+      );
     }
 
     if (state.shutdownGeneration !== shutdownGenAtStart) {
-      removeClientIfCurrent(state, clientKey, client)
+      removeClientIfCurrent(state, clientKey, client);
       try {
-        await client.close()
+        await client.close();
       } catch (error) {
         // Shutdown raced us; the shutdown error below is the user-facing signal.
         logWarn("[skill-mcp] client.close failed on shutdown race", {
           serverName: info.serverName,
           error: String(error),
-        })
+        });
       }
-      throw new Error(`Shutdown occurred during MCP connection for "${info.sessionID}"`)
+      throw new Error(
+        `Shutdown occurred during MCP connection for "${info.sessionID}"`,
+      );
     }
 
-    const currentDisconnectGen = state.disconnectedSessions.get(info.sessionID) ?? 0
+    const currentDisconnectGen =
+      state.disconnectedSessions.get(info.sessionID) ?? 0;
     if (currentDisconnectGen > disconnectGenAtStart) {
-      await forceReconnect(state, clientKey)
-      throw new Error(`Session "${info.sessionID}" disconnected during MCP connection setup.`)
+      await forceReconnect(state, clientKey);
+      throw new Error(
+        `Session "${info.sessionID}" disconnected during MCP connection setup.`,
+      );
     }
 
-    return client
-  })()
+    return client;
+  })();
 
-  state.pendingConnections.set(clientKey, currentConnectionPromise)
+  state.pendingConnections.set(clientKey, currentConnectionPromise);
 
   try {
-    const client = await currentConnectionPromise
-    return client
+    const client = await currentConnectionPromise;
+    return client;
   } finally {
     if (state.pendingConnections.get(clientKey) === currentConnectionPromise) {
-      state.pendingConnections.delete(clientKey)
+      state.pendingConnections.delete(clientKey);
     }
-    const remaining = (state.inFlightConnections.get(info.sessionID) ?? 1) - 1
+    const remaining = (state.inFlightConnections.get(info.sessionID) ?? 1) - 1;
     if (remaining <= 0) {
-      state.inFlightConnections.delete(info.sessionID)
-      state.disconnectedSessions.delete(info.sessionID)
+      state.inFlightConnections.delete(info.sessionID);
+      state.disconnectedSessions.delete(info.sessionID);
     } else {
-      state.inFlightConnections.set(info.sessionID, remaining)
+      state.inFlightConnections.set(info.sessionID, remaining);
     }
   }
 }
 
 export async function getOrCreateClientWithRetryImpl(params: {
-  state: SkillMcpManagerState
-  clientKey: string
-  info: SkillMcpClientInfo
-  config: ClaudeCodeMcpServer
+  state: SkillMcpManagerState;
+  clientKey: string;
+  info: SkillMcpClientInfo;
+  config: ClaudeCodeMcpServer;
 }): Promise<McpClient> {
-  const { state, clientKey } = params
+  const { state, clientKey } = params;
 
   try {
-    return await getOrCreateClient(params)
+    return await getOrCreateClient(params);
   } catch (error) {
-    const didReconnect = await forceReconnect(state, clientKey)
+    const didReconnect = await forceReconnect(state, clientKey);
     if (!didReconnect) {
-      throw error
+      throw error;
     }
-    return await getOrCreateClient(params)
+    return await getOrCreateClient(params);
   }
 }
 
 async function createClient(params: {
-  state: SkillMcpManagerState
-  clientKey: string
-  info: SkillMcpClientInfo
-  config: ClaudeCodeMcpServer
+  state: SkillMcpManagerState;
+  clientKey: string;
+  info: SkillMcpClientInfo;
+  config: ClaudeCodeMcpServer;
 }): Promise<McpClient> {
-  const { info, config } = params
-  const connectionType = getConnectionType(config)
+  const { info, config } = params;
+  const connectionType = getConnectionType(config);
 
   if (!connectionType) {
     throw new Error(
       `MCP server "${info.serverName}" has no valid connection configuration.\n\n` +
-      `The MCP configuration in skill "${info.skillName}" must specify either:\n` +
-      `  - A URL for HTTP connection (remote MCP server)\n` +
-      `  - A command for stdio connection (local MCP process)\n\n` +
-      `Examples:\n` +
-      `  HTTP:\n` +
-      `    mcp:\n` +
-      `      ${info.serverName}:\n` +
-      `        url: https://mcp.example.com/mcp\n` +
-      `        headers:\n` +
-      "          Authorization: Bearer ${API_KEY}\n\n" +
-      `  Stdio:\n` +
-      `    mcp:\n` +
-      `      ${info.serverName}:\n` +
-      `        command: npx\n` +
-      `        args: [-y, @some/mcp-server]`
-    )
+        `The MCP configuration in skill "${info.skillName}" must specify either:\n` +
+        `  - A URL for HTTP connection (remote MCP server)\n` +
+        `  - A command for stdio connection (local MCP process)\n\n` +
+        `Examples:\n` +
+        `  HTTP:\n` +
+        `    mcp:\n` +
+        `      ${info.serverName}:\n` +
+        `        url: https://mcp.example.com/mcp\n` +
+        `        headers:\n` +
+        "          Authorization: Bearer ${API_KEY}\n\n" +
+        `  Stdio:\n` +
+        `    mcp:\n` +
+        `      ${info.serverName}:\n` +
+        `        command: npx\n` +
+        `        args: [-y, @some/mcp-server]`,
+    );
   }
 
   if (connectionType === "http") {
-    return await createHttpClient(params satisfies SkillMcpClientConnectionParams)
+    return await createHttpClient(
+      params satisfies SkillMcpClientConnectionParams,
+    );
   }
-  return await createStdioClient(params satisfies SkillMcpClientConnectionParams)
+  return await createStdioClient(
+    params satisfies SkillMcpClientConnectionParams,
+  );
 }
