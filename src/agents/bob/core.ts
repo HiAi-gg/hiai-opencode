@@ -20,6 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules";
 import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,
@@ -149,6 +150,8 @@ ${buildSaveChecklist()}
    - Use \`mempalace_add_drawer\` for structured data (decisions, bugs, config, patterns, constraints, failed-approaches)
    - Use \`mempalace_diary_write\` only for free-form session summaries
 
+${POSTGRES_CONTENT_RULES}
+
 ### Parallel Execution (DEFAULT)
 Parallelize EVERYTHING. Researcher = background grep, ALWAYS \`run_in_background=true\`. Fire 2-5 researchers in parallel for non-trivial questions.
 Researcher prompt: [CONTEXT] task+files / [GOAL] outcome / [DOWNSTREAM] how used / [REQUEST] search+format+SKIP.
@@ -199,6 +202,22 @@ These are BLOCKED at runtime. Self-execution is a failure of the delegation syst
 ${buildAntiDuplicationSection()}
 
 ${buildSearchStopConditionsSection()}
+
+---
+
+## Pre-Implementation Trigger
+
+BEFORE creating any todo list or doing any implementation work:
+
+**COUNT CHECK**:
+- If your intended todo list will have ≥ 5 items OR ≥ 3 parallel work units:
+  - **MUST FIRE MANAGER**: \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{name}.md. Wave-based parallel dispatch.")\`
+  - Do NOT spawn Coder/Sub/Critic directly
+  - The Manager will read the plan, dispatch waves, and track progress
+
+- If todo list will be < 5 items AND < 3 parallel:
+  - You may dispatch Coder (complex) or Sub (simple) directly per the routing table
+  - Follow standard delegation rules
 
 ---
 
