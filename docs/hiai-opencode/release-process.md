@@ -10,8 +10,10 @@ The release workflow uses GitHub's `npm` environment protection. You must config
 
 1. Go to <https://www.npmjs.com/settings/~/tokens>
 2. Click **Generate New Token** → **Classic Token**
-3. Type: **Automation** (publishes from CI without 2FA prompts)
+3. Type: **Automation** (NOT "Publish" — Automation bypasses 2FA)
 4. Copy the token value (`npm_...`)
+
+> **CRITICAL:** Use **Automation** type. "Publish" type requires 2FA OTP (`npm error EOTP`) and the CI workflow will fail every time. Automation tokens publish without interactive prompts.
 
 ### 2. Add it to the GitHub `npm` environment
 
