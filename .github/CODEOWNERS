@@ -1,0 +1,11 @@
+# Default owners for everything
+* @opencode-ai/maintainers
+
+# Critical paths need review
+/src/agents/bob/ @opencode-ai/maintainers
+/src/agents/manager/ @opencode-ai/maintainers
+/src/agents/strategist/ @opencode-ai/maintainers
+/src/hooks/agent-tool-permission/ @opencode-ai/maintainers
+/src/hooks/mempalace-auto-save/ @opencode-ai/maintainers
+/.github/workflows/ @opencode-ai/maintainers
+/package.json @opencode-ai/maintainers
