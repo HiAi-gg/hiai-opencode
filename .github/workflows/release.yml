@@ -82,13 +82,16 @@ jobs:
       - name: Publish to npm (with provenance, fallback to no-provenance on EOTP)
         id: publish
         run: |
+          set -o pipefail
           if npm publish --access public --provenance 2>&1 | tee /tmp/publish.log; then
-            echo "Published with provenance"
+            echo "✓ Published with provenance"
           else
             if grep -q "EOTP" /tmp/publish.log; then
               echo "::warning::NPM_TOKEN requires 2FA — retrying without --provenance. Replace with an Automation-type token to enable provenance. See docs/hiai-opencode/release-process.md"
-              npm publish --access public --no-provenance
+              npm publish --access public --no-provenance && echo "✓ Published without provenance (EOTP fallback)" || { echo "::error::Fallback also failed"; exit 1; }
             else
+              echo "::error::npm publish failed (not EOTP):"
+              cat /tmp/publish.log
               exit 1
             fi
           fi
