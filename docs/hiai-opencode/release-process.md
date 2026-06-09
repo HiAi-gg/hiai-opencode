@@ -15,6 +15,8 @@ The release workflow uses GitHub's `npm` environment protection. You must config
 
 ### 2. Add it to the GitHub `npm` environment
 
+**Option A — Web UI** (recommended for first-time setup):
+
 1. Go to <https://github.com/HiAi-gg/hiai-opencode/settings/environments>
 2. Click **New environment** (or open existing `npm` if present)
 3. Name: `npm`
@@ -22,6 +24,24 @@ The release workflow uses GitHub's `npm` environment protection. You must config
    - Name: `NPM_TOKEN`
    - Value: paste the token from step 1
 5. Click **Add secret**
+
+**Option B — gh CLI** (faster for repeat use, requires `gh auth` with `repo` + `admin:org` scopes):
+
+```bash
+# Get the public key for the env
+KEY_ID=$(gh api /repos/HiAi-gg/hiai-opencode/environments/npm/secrets/public-key --jq .key_id)
+PUBKEY=$(gh api /repos/HiAi-gg/hiai-opencode/environments/npm/secrets/public-key --jq .key)
+
+# Encrypt the token with the public key (libsodium sealed box)
+ENCRYPTED=$(echo -n "$NPM_TOKEN" | openssl pkeyutl -encrypt -pubin -inkey <(echo "$PUBKEY" | base64 -d) 2>/dev/null | base64 -w0)
+
+# Write to the env
+gh api -X PUT /repos/HiAi-gg/hiai-opencode/environments/npm/secrets/NPM_TOKEN \
+  -f encrypted_value="$ENCRYPTED" \
+  -f key_id="$KEY_ID"
+```
+
+> **Note:** Option B requires the `pkeyutl` openssl feature (libsodium-compatible). If unavailable, use Option A. The unencrypted value of `$NPM_TOKEN` is sensitive — never log it or pass it via shell history (`export HISTCONTROL=ignorespace` and prefix with space, or use a `.env` file).
 
 Optional but recommended — add a protection rule:
 
