@@ -1,4 +1,4 @@
-import { log } from "../../shared/logger"
+import { log } from "../../shared/logger";
 
 type ManagedClientForCleanup = {
   client: {
@@ -21,7 +21,9 @@ export type LspProcessCleanupHandle = {
   unregister: () => void;
 };
 
-export function registerLspManagerProcessCleanup(options: ProcessCleanupOptions): LspProcessCleanupHandle {
+export function registerLspManagerProcessCleanup(
+  options: ProcessCleanupOptions,
+): LspProcessCleanupHandle {
   const handlers: RegisteredHandler[] = [];
 
   const logCleanupError = (phase: string, error: unknown): void => {
@@ -47,25 +49,31 @@ export function registerLspManagerProcessCleanup(options: ProcessCleanupOptions)
   const asyncCleanup = async () => {
     const stopPromises: Promise<void>[] = [];
     for (const [, managed] of options.getClients()) {
-      stopPromises.push(managed.client.stop().catch((error) => {
-        logCleanupError("stop failed during signal cleanup", error);
-      }));
+      stopPromises.push(
+        managed.client.stop().catch((error) => {
+          logCleanupError("stop failed during signal cleanup", error);
+        }),
+      );
     }
     await Promise.allSettled(stopPromises);
     options.clearClients();
     options.clearCleanupInterval();
   };
 
-  const registerHandler = (event: string, listener: (...args: unknown[]) => void) => {
+  const registerHandler = (
+    event: string,
+    listener: (...args: unknown[]) => void,
+  ) => {
     handlers.push({ event, listener });
     process.on(event, listener);
   };
 
   registerHandler("exit", syncCleanup);
 
-  const signalCleanup = () => void asyncCleanup().catch((error) => {
-    logCleanupError("signal cleanup failed", error);
-  });
+  const signalCleanup = () =>
+    void asyncCleanup().catch((error) => {
+      logCleanupError("signal cleanup failed", error);
+    });
   registerHandler("SIGINT", signalCleanup);
   registerHandler("SIGTERM", signalCleanup);
   if (process.platform === "win32") {

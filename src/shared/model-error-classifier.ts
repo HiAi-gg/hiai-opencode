@@ -1,5 +1,5 @@
-import type { FallbackEntry } from "./model-requirements"
-import { readConnectedProvidersCache } from "./connected-providers-cache"
+import type { FallbackEntry } from "./model-requirements";
+import { readConnectedProvidersCache } from "./connected-providers-cache";
 
 /**
  * Error names that indicate a retryable model error (deadstop).
@@ -11,13 +11,13 @@ const RETRYABLE_ERROR_NAMES = new Set([
   "modelunavailableerror",
   "providerconnectionerror",
   "authenticationerror",
-])
+]);
 
 const STOP_ERROR_NAMES = new Set([
   "quotaexceedederror",
   "insufficientcreditserror",
   "freeusagelimiterror",
-])
+]);
 
 /**
  * Error names that should NOT trigger retry.
@@ -31,7 +31,7 @@ const NON_RETRYABLE_ERROR_NAMES = new Set([
   "validationerror",
   "syntaxerror",
   "usererror",
-])
+]);
 
 /**
  * Message patterns that indicate a retryable error even without a known error name.
@@ -72,7 +72,7 @@ const RETRYABLE_MESSAGE_PATTERNS = [
   "504",
   "429",
   "529",
-]
+];
 
 /**
  * Message patterns that indicate a non-retryable STOP error (quota/billing exhaustion).
@@ -97,24 +97,24 @@ const STOP_MESSAGE_PATTERNS = [
   "credit balance",
   "usage limit for this month",
   "exhausted your capacity",
-]
+];
 
 const AUTO_RETRY_GATE_PATTERNS = [
   "rate limit",
   "cooling down",
   "credentials for model",
-]
+];
 
 function hasProviderAutoRetrySignal(message: string): boolean {
   if (!message.includes("retrying in")) {
-    return false
+    return false;
   }
-  return AUTO_RETRY_GATE_PATTERNS.some((pattern) => message.includes(pattern))
+  return AUTO_RETRY_GATE_PATTERNS.some((pattern) => message.includes(pattern));
 }
 
 export interface ErrorInfo {
-  name?: string
-  message?: string
+  name?: string;
+  message?: string;
 }
 
 /**
@@ -124,32 +124,32 @@ export interface ErrorInfo {
 export function isRetryableModelError(error: ErrorInfo): boolean {
   // If we have an error name, check against known lists
   if (error.name) {
-    const errorNameLower = error.name.toLowerCase()
+    const errorNameLower = error.name.toLowerCase();
     // Explicit non-retryable takes precedence
     if (NON_RETRYABLE_ERROR_NAMES.has(errorNameLower)) {
-      return false
+      return false;
     }
     if (STOP_ERROR_NAMES.has(errorNameLower)) {
-      return false
+      return false;
     }
     // Check if it's a known retryable error
     if (RETRYABLE_ERROR_NAMES.has(errorNameLower)) {
-      return true
+      return true;
     }
   }
 
   // Check message patterns for unknown errors
-  const msg = error.message?.toLowerCase() ?? ""
+  const msg = error.message?.toLowerCase() ?? "";
 
   // STOP patterns take precedence over retryable patterns
   if (STOP_MESSAGE_PATTERNS.some((pattern) => msg.includes(pattern))) {
-    return false
+    return false;
   }
 
   if (hasProviderAutoRetrySignal(msg)) {
-    return true
+    return true;
   }
-  return RETRYABLE_MESSAGE_PATTERNS.some((pattern) => msg.includes(pattern))
+  return RETRYABLE_MESSAGE_PATTERNS.some((pattern) => msg.includes(pattern));
 }
 
 /**
@@ -157,7 +157,7 @@ export function isRetryableModelError(error: ErrorInfo): boolean {
  * Returns true for deadstop errors that completely halt the action loop.
  */
 export function shouldRetryError(error: ErrorInfo): boolean {
-  return isRetryableModelError(error)
+  return isRetryableModelError(error);
 }
 
 /**
@@ -168,7 +168,7 @@ export function getNextFallback(
   fallbackChain: FallbackEntry[],
   attemptCount: number,
 ): FallbackEntry | undefined {
-  return fallbackChain[attemptCount]
+  return fallbackChain[attemptCount];
 }
 
 /**
@@ -178,7 +178,7 @@ export function hasMoreFallbacks(
   fallbackChain: FallbackEntry[],
   attemptCount: number,
 ): boolean {
-  return attemptCount < fallbackChain.length
+  return attemptCount < fallbackChain.length;
 }
 
 /**
@@ -192,13 +192,15 @@ export function selectFallbackProvider(
   providers: string[],
   preferredProviderID?: string,
 ): string {
-  const connectedProviders = readConnectedProvidersCache()
+  const connectedProviders = readConnectedProvidersCache();
   if (connectedProviders) {
-    const connectedSet = new Set(connectedProviders.map(p => p.toLowerCase()))
+    const connectedSet = new Set(
+      connectedProviders.map((p) => p.toLowerCase()),
+    );
 
     for (const provider of providers) {
       if (connectedSet.has(provider.toLowerCase())) {
-        return provider
+        return provider;
       }
     }
 
@@ -206,9 +208,9 @@ export function selectFallbackProvider(
       preferredProviderID &&
       connectedSet.has(preferredProviderID.toLowerCase())
     ) {
-      return preferredProviderID
+      return preferredProviderID;
     }
   }
 
-  return providers[0] || preferredProviderID || "opencode"
+  return providers[0] || preferredProviderID || "opencode";
 }

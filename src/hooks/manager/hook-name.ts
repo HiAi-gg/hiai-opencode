@@ -1,1 +1,1 @@
-export const HOOK_NAME = "manager"
+export const HOOK_NAME = "manager";

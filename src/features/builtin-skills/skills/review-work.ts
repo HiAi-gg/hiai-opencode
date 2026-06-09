@@ -1,10 +1,10 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const reviewWorkSkill: BuiltinSkill = {
-	name: "review-work",
-	description:
-		"Post-implementation review orchestrator. Launches 5 parallel background sub-agents: critic (goal/constraint verification), critic (code quality), critic (security), unspecified-high (hands-on QA execution), researcher (context mining from GitHub/git/Slack/Notion). All must pass for review to pass. MUST USE after completing any significant implementation work. Triggers: 'review work', 'review my work', 'review changes', 'QA my work', 'verify implementation', 'check my work', 'validate changes', 'post-implementation review'.",
-	template: `# Review Work - 5-Agent Parallel Review Orchestrator
+  name: "review-work",
+  description:
+    "Post-implementation review orchestrator. Launches 5 parallel background sub-agents: critic (goal/constraint verification), critic (code quality), critic (security), unspecified-high (hands-on QA execution), researcher (context mining from GitHub/git/Slack/Notion). All must pass for review to pass. MUST USE after completing any significant implementation work. Triggers: 'review work', 'review my work', 'review changes', 'QA my work', 'verify implementation', 'check my work', 'validate changes', 'post-implementation review'.",
+  template: `# Review Work - 5-Agent Parallel Review Orchestrator
 
 Launch 5 specialized sub-agents in parallel to review completed implementation work from every angle. All 5 must pass for the review to pass. If even ONE fails, the review fails.
 
@@ -533,4 +533,4 @@ Compile the final report in this format:
 If FAILED - be specific. The user should know exactly what to fix and in what order. No vague "consider improving X" - state the problem, the file, and the fix.
 
 If PASSED - keep it short. Highlight any non-blocking suggestions, but don't turn a passing review into a lecture.`,
-}
+};

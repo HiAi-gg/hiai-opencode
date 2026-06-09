@@ -1,7 +1,7 @@
-import type { HookName, HiaiOpenCodeConfig } from "../../config"
-import type { BackgroundManager } from "../../features/background-agent"
-import type { PluginContext } from "../types"
-import type { SkillMcpManager } from "../../features/skill-mcp-manager"
+import type { HookName, HiaiOpenCodeConfig } from "../../config";
+import type { BackgroundManager } from "../../features/background-agent";
+import type { PluginContext } from "../types";
+import type { SkillMcpManager } from "../../features/skill-mcp-manager";
 
 import {
   createTodoContinuationEnforcer,
@@ -11,38 +11,52 @@ import {
   createCompactionTodoPreserverHook,
   createGuardHook,
   type RalphLoopHook,
-} from "../../hooks"
-import { safeCreateHook } from "../../shared/safe-create-hook"
-import { createUnstableAgentBabysitter } from "../unstable-agent-babysitter"
-import { createMemPalaceAutoSave } from "../../hooks/mempalace-auto-save"
-import { createSubAgentReceiptHook } from "../../hooks/sub-agent-receipt"
+} from "../../hooks";
+import { safeCreateHook } from "../../shared/safe-create-hook";
+import { createUnstableAgentBabysitter } from "../unstable-agent-babysitter";
+import { createMemPalaceAutoSave } from "../../hooks/mempalace-auto-save";
+import { createSubAgentReceiptHook } from "../../hooks/sub-agent-receipt";
 
 export type ContinuationHooks = {
-  stopContinuationGuard: ReturnType<typeof createStopContinuationGuardHook> | null
-  compactionContextInjector: ReturnType<typeof createCompactionContextInjector> | null
-  compactionTodoPreserver: ReturnType<typeof createCompactionTodoPreserverHook> | null
-  todoContinuationEnforcer: ReturnType<typeof createTodoContinuationEnforcer> | null
-  unstableAgentBabysitter: ReturnType<typeof createUnstableAgentBabysitter> | null
-  backgroundNotificationHook: ReturnType<typeof createBackgroundNotificationHook> | null
-  subAgentReceiptHook: ReturnType<typeof createSubAgentReceiptHook> | null
-  guardHook: ReturnType<typeof createGuardHook> | null
-  mempalaceAutoSave: ReturnType<typeof createMemPalaceAutoSave> | null
-}
+  stopContinuationGuard: ReturnType<
+    typeof createStopContinuationGuardHook
+  > | null;
+  compactionContextInjector: ReturnType<
+    typeof createCompactionContextInjector
+  > | null;
+  compactionTodoPreserver: ReturnType<
+    typeof createCompactionTodoPreserverHook
+  > | null;
+  todoContinuationEnforcer: ReturnType<
+    typeof createTodoContinuationEnforcer
+  > | null;
+  unstableAgentBabysitter: ReturnType<
+    typeof createUnstableAgentBabysitter
+  > | null;
+  backgroundNotificationHook: ReturnType<
+    typeof createBackgroundNotificationHook
+  > | null;
+  subAgentReceiptHook: ReturnType<typeof createSubAgentReceiptHook> | null;
+  guardHook: ReturnType<typeof createGuardHook> | null;
+  mempalaceAutoSave: ReturnType<typeof createMemPalaceAutoSave> | null;
+};
 
 type SessionRecovery = {
-  setOnAbortCallback: (callback: (sessionID: string) => void) => void
-  setOnRecoveryCompleteCallback: (callback: (sessionID: string) => void) => void
-} | null
+  setOnAbortCallback: (callback: (sessionID: string) => void) => void;
+  setOnRecoveryCompleteCallback: (
+    callback: (sessionID: string) => void,
+  ) => void;
+} | null;
 
 export function createContinuationHooks(args: {
-  ctx: PluginContext
-  pluginConfig: HiaiOpenCodeConfig
-  isHookEnabled: (hookName: HookName) => boolean
-  safeHookEnabled: boolean
-  backgroundManager: BackgroundManager
-  skillMcpManager: SkillMcpManager
-  sessionRecovery: SessionRecovery
-  ralphLoop?: RalphLoopHook | null
+  ctx: PluginContext;
+  pluginConfig: HiaiOpenCodeConfig;
+  isHookEnabled: (hookName: HookName) => boolean;
+  safeHookEnabled: boolean;
+  backgroundManager: BackgroundManager;
+  skillMcpManager: SkillMcpManager;
+  sessionRecovery: SessionRecovery;
+  ralphLoop?: RalphLoopHook | null;
 }): ContinuationHooks {
   const {
     ctx,
@@ -53,82 +67,100 @@ export function createContinuationHooks(args: {
     sessionRecovery,
     ralphLoop,
     skillMcpManager,
-  } = args
+  } = args;
 
   const safeHook = <T>(hookName: HookName, factory: () => T): T | null =>
-    safeCreateHook(hookName, factory, { enabled: safeHookEnabled })
+    safeCreateHook(hookName, factory, { enabled: safeHookEnabled });
 
   const stopContinuationGuard = isHookEnabled("stop-continuation-guard")
     ? safeHook("stop-continuation-guard", () =>
         createStopContinuationGuardHook(ctx, {
           backgroundManager,
-        }))
-    : null
+        }),
+      )
+    : null;
 
   const compactionContextInjector = isHookEnabled("compaction-context-injector")
     ? safeHook("compaction-context-injector", () =>
-        createCompactionContextInjector({ ctx, backgroundManager }))
-    : null
+        createCompactionContextInjector({ ctx, backgroundManager }),
+      )
+    : null;
 
   const compactionTodoPreserver = isHookEnabled("compaction-todo-preserver")
-    ? safeHook("compaction-todo-preserver", () => createCompactionTodoPreserverHook(ctx))
-    : null
+    ? safeHook("compaction-todo-preserver", () =>
+        createCompactionTodoPreserverHook(ctx),
+      )
+    : null;
 
-  const autoLoopThreshold = pluginConfig.ralph_loop?.auto_start_threshold ?? 0
+  const autoLoopThreshold = pluginConfig.ralph_loop?.auto_start_threshold ?? 0;
   const todoContinuationEnforcer = isHookEnabled("todo-continuation-enforcer")
     ? safeHook("todo-continuation-enforcer", () =>
-      createTodoContinuationEnforcer(ctx, {
+        createTodoContinuationEnforcer(ctx, {
           backgroundManager,
           isContinuationStopped: stopContinuationGuard?.isStopped,
           autoLoopThreshold,
           startRalphLoop: ralphLoop
-            ? (sessionID: string, prompt: string, opts?: { ultrawork?: boolean }): boolean =>
-                ralphLoop.startLoop(sessionID, prompt, opts)
+            ? (
+                sessionID: string,
+                prompt: string,
+                opts?: { ultrawork?: boolean },
+              ): boolean => ralphLoop.startLoop(sessionID, prompt, opts)
             : undefined,
           isRalphLoopActive: ralphLoop
             ? (sessionID: string): boolean => {
-                const state = ralphLoop.getState()
-                return !!state?.active && (state.session_id === undefined || state.session_id === sessionID)
+                const state = ralphLoop.getState();
+                return (
+                  !!state?.active &&
+                  (state.session_id === undefined ||
+                    state.session_id === sessionID)
+                );
               }
             : undefined,
-        }))
-    : null
+        }),
+      )
+    : null;
 
   const unstableAgentBabysitter = isHookEnabled("unstable-agent-babysitter")
     ? safeHook("unstable-agent-babysitter", () =>
-        createUnstableAgentBabysitter({ ctx, backgroundManager, pluginConfig }))
-    : null
+        createUnstableAgentBabysitter({ ctx, backgroundManager, pluginConfig }),
+      )
+    : null;
 
   if (sessionRecovery) {
-    const onAbortCallbacks: Array<(sessionID: string) => void> = []
-    const onRecoveryCompleteCallbacks: Array<(sessionID: string) => void> = []
+    const onAbortCallbacks: Array<(sessionID: string) => void> = [];
+    const onRecoveryCompleteCallbacks: Array<(sessionID: string) => void> = [];
 
     if (todoContinuationEnforcer) {
-      onAbortCallbacks.push(todoContinuationEnforcer.markRecovering)
-      onRecoveryCompleteCallbacks.push(todoContinuationEnforcer.markRecoveryComplete)
+      onAbortCallbacks.push(todoContinuationEnforcer.markRecovering);
+      onRecoveryCompleteCallbacks.push(
+        todoContinuationEnforcer.markRecoveryComplete,
+      );
     }
-
 
     if (onAbortCallbacks.length > 0) {
       sessionRecovery.setOnAbortCallback((sessionID: string) => {
-        for (const callback of onAbortCallbacks) callback(sessionID)
-      })
+        for (const callback of onAbortCallbacks) callback(sessionID);
+      });
     }
 
     if (onRecoveryCompleteCallbacks.length > 0) {
       sessionRecovery.setOnRecoveryCompleteCallback((sessionID: string) => {
-        for (const callback of onRecoveryCompleteCallbacks) callback(sessionID)
-      })
+        for (const callback of onRecoveryCompleteCallbacks) callback(sessionID);
+      });
     }
   }
 
   const backgroundNotificationHook = isHookEnabled("background-notification")
-    ? safeHook("background-notification", () => createBackgroundNotificationHook(backgroundManager))
-    : null
+    ? safeHook("background-notification", () =>
+        createBackgroundNotificationHook(backgroundManager),
+      )
+    : null;
 
   const subAgentReceiptHook = isHookEnabled("sub-agent-receipt")
-    ? safeHook("sub-agent-receipt", () => createSubAgentReceiptHook(backgroundManager))
-    : null
+    ? safeHook("sub-agent-receipt", () =>
+        createSubAgentReceiptHook(backgroundManager),
+      )
+    : null;
 
   const guardHook = isHookEnabled("manager")
     ? safeHook("manager", () =>
@@ -139,14 +171,15 @@ export function createContinuationHooks(args: {
             stopContinuationGuard?.isStopped(sessionID) ?? false,
           agentOverrides: pluginConfig.agents,
           autoCommit: pluginConfig.start_work?.auto_commit,
-        }))
-    : null
+        }),
+      )
+    : null;
 
   const mempalaceAutoSave = createMemPalaceAutoSave(
     ctx as Parameters<typeof createMemPalaceAutoSave>[0],
     skillMcpManager,
-    { enabled: true }
-  )
+    { enabled: true },
+  );
 
   return {
     stopContinuationGuard,
@@ -158,5 +191,5 @@ export function createContinuationHooks(args: {
     subAgentReceiptHook,
     guardHook,
     mempalaceAutoSave,
-  }
+  };
 }

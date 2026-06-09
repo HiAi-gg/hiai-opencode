@@ -1,6 +1,6 @@
-const PARENTHETICAL_SUFFIX_PATTERN = /\s*(\([^)]*\)\s*)+$/u
-const DASH_SUFFIX_PATTERN = /\s+-\s+.+$/u
-const ZERO_WIDTH_CHARACTERS_PATTERN = /[\u200B\u200C\u200D\uFEFF]/g
+const PARENTHETICAL_SUFFIX_PATTERN = /\s*(\([^)]*\)\s*)+$/u;
+const DASH_SUFFIX_PATTERN = /\s+-\s+.+$/u;
+const ZERO_WIDTH_CHARACTERS_PATTERN = /\u200B|\u200C|\u200D|\uFEFF/g;
 
 export function normalizeProtectedAgentName(agentName: string): string {
   return agentName
@@ -10,20 +10,22 @@ export function normalizeProtectedAgentName(agentName: string): string {
     .replace(PARENTHETICAL_SUFFIX_PATTERN, "")
     .replace(DASH_SUFFIX_PATTERN, "")
     .replace(/[-_]/g, "")
-    .trim()
+    .trim();
 }
 
-export function createProtectedAgentNameSet(agentNames: Iterable<string>): Set<string> {
-  const protectedAgentNames = new Set<string>()
+export function createProtectedAgentNameSet(
+  agentNames: Iterable<string>,
+): Set<string> {
+  const protectedAgentNames = new Set<string>();
 
   for (const agentName of agentNames) {
-    const normalizedAgentName = normalizeProtectedAgentName(agentName)
-    if (normalizedAgentName.length === 0) continue
+    const normalizedAgentName = normalizeProtectedAgentName(agentName);
+    if (normalizedAgentName.length === 0) continue;
 
-    protectedAgentNames.add(normalizedAgentName)
+    protectedAgentNames.add(normalizedAgentName);
   }
 
-  return protectedAgentNames
+  return protectedAgentNames;
 }
 
 export function filterProtectedAgentOverrides<TAgent>(
@@ -32,7 +34,7 @@ export function filterProtectedAgentOverrides<TAgent>(
 ): Record<string, TAgent> {
   return Object.fromEntries(
     Object.entries(agents).filter(([agentName]) => {
-      return !protectedAgentNames.has(normalizeProtectedAgentName(agentName))
+      return !protectedAgentNames.has(normalizeProtectedAgentName(agentName));
     }),
-  )
+  );
 }

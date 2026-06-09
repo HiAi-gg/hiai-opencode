@@ -1,70 +1,82 @@
-import { promises as fs, type Dirent } from "fs"
-import { join, basename } from "path"
-import { parseFrontmatter } from "../../shared/frontmatter"
-import { sanitizeModelField } from "../../shared/model-sanitizer"
-import { isMarkdownFile } from "../../shared/file-utils"
+import { promises as fs, type Dirent } from "node:fs";
+import { join, basename } from "node:path";
+import { parseFrontmatter } from "../../shared/frontmatter";
+import { sanitizeModelField } from "../../shared/model-sanitizer";
+import { isMarkdownFile } from "../../shared/file-utils";
 import {
   findProjectOpencodeCommandDirs,
   getClaudeConfigDir,
   getOpenCodeCommandDirs,
-} from "../../shared"
-import { log } from "../../shared/logger"
-import type { CommandScope, CommandDefinition, CommandFrontmatter, LoadedCommand } from "./types"
+} from "../../shared";
+import { log } from "../../shared/logger";
+import type {
+  CommandScope,
+  CommandDefinition,
+  CommandFrontmatter,
+  LoadedCommand,
+} from "./types";
 
 async function loadCommandsFromDir(
   commandsDir: string,
   scope: CommandScope,
   visited: Set<string> = new Set(),
-  prefix: string = ""
+  prefix: string = "",
 ): Promise<LoadedCommand[]> {
   try {
-    await fs.access(commandsDir)
+    await fs.access(commandsDir);
   } catch {
-    return []
+    return [];
   }
 
-  let realPath: string
+  let realPath: string;
   try {
-    realPath = await fs.realpath(commandsDir)
+    realPath = await fs.realpath(commandsDir);
   } catch (error) {
-    log(`Failed to resolve command directory: ${commandsDir}`, error)
-    return []
+    log(`Failed to resolve command directory: ${commandsDir}`, error);
+    return [];
   }
 
   if (visited.has(realPath)) {
-    return []
+    return [];
   }
-  visited.add(realPath)
+  visited.add(realPath);
 
-  let entries: Dirent[]
+  let entries: Dirent[];
   try {
-    entries = await fs.readdir(commandsDir, { withFileTypes: true })
+    entries = await fs.readdir(commandsDir, { withFileTypes: true });
   } catch (error) {
-    log(`Failed to read command directory: ${commandsDir}`, error)
-    return []
+    log(`Failed to read command directory: ${commandsDir}`, error);
+    return [];
   }
 
-  const commands: LoadedCommand[] = []
+  const commands: LoadedCommand[] = [];
 
   for (const entry of entries) {
     if (entry.isDirectory()) {
-      if (entry.name.startsWith(".")) continue
-      const subDirPath = join(commandsDir, entry.name)
-      const subPrefix = prefix ? `${prefix}/${entry.name}` : entry.name
-      const subCommands = await loadCommandsFromDir(subDirPath, scope, visited, subPrefix)
-      commands.push(...subCommands)
-      continue
+      if (entry.name.startsWith(".")) continue;
+      const subDirPath = join(commandsDir, entry.name);
+      const subPrefix = prefix ? `${prefix}/${entry.name}` : entry.name;
+      const subCommands = await loadCommandsFromDir(
+        subDirPath,
+        scope,
+        visited,
+        subPrefix,
+      );
+      commands.push(...subCommands);
+      continue;
     }
 
-    if (!isMarkdownFile(entry)) continue
+    if (!isMarkdownFile(entry)) continue;
 
-    const commandPath = join(commandsDir, entry.name)
-    const baseCommandName = basename(entry.name, ".md")
-    const commandName = prefix ? `${prefix}/${baseCommandName}` : baseCommandName
+    const commandPath = join(commandsDir, entry.name);
+    const baseCommandName = basename(entry.name, ".md");
+    const commandName = prefix
+      ? `${prefix}/${baseCommandName}`
+      : baseCommandName;
 
     try {
-      const content = await fs.readFile(commandPath, "utf-8")
-      const { data, body } = parseFrontmatter<CommandFrontmatter>(content)
+      const content = await fs.readFile(commandPath, "utf-8");
+      const { data, body } = parseFrontmatter<CommandFrontmatter>(content);
 
       const wrappedTemplate = `<command-instruction>
 ${body.trim()}
@@ -72,98 +84,127 @@ ${body.trim()}
 
 <user-request>
 $ARGUMENTS
-</user-request>`
+</user-request>`;
 
-      const formattedDescription = `(${scope}) ${data.description || ""}`
+      const formattedDescription = `(${scope}) ${data.description || ""}`;
 
-      const isOpencodeSource = scope === "opencode" || scope === "opencode-project"
+      const isOpencodeSource =
+        scope === "opencode" || scope === "opencode-project";
       const definition: CommandDefinition = {
         name: commandName,
         description: formattedDescription,
         template: wrappedTemplate,
         agent: data.agent,
-        model: sanitizeModelField(data.model, isOpencodeSource ? "opencode" : "claude-code"),
+        model: sanitizeModelField(
+          data.model,
+          isOpencodeSource ? "opencode" : "claude-code",
+        ),
         subtask: data.subtask,
         argumentHint: data["argument-hint"],
         handoffs: data.handoffs,
-      }
+      };
 
       commands.push({
         name: commandName,
         path: commandPath,
         definition,
         scope,
-      })
+      });
     } catch (error) {
-      log(`Failed to parse command: ${commandPath}`, error)
-      continue
+      log(`Failed to parse command: ${commandPath}`, error);
     }
   }
 
-  return commands
+  return commands;
 }
 
-function deduplicateLoadedCommandsByName(commands: LoadedCommand[]): LoadedCommand[] {
-  const seen = new Set<string>()
-  const deduplicatedCommands: LoadedCommand[] = []
+function deduplicateLoadedCommandsByName(
+  commands: LoadedCommand[],
+): LoadedCommand[] {
+  const seen = new Set<string>();
+  const deduplicatedCommands: LoadedCommand[] = [];
 
   for (const command of commands) {
     if (seen.has(command.name)) {
-      continue
+      continue;
     }
 
-    seen.add(command.name)
-    deduplicatedCommands.push(command)
+    seen.add(command.name);
+    deduplicatedCommands.push(command);
   }
 
-  return deduplicatedCommands
+  return deduplicatedCommands;
 }
 
-function commandsToRecord(commands: LoadedCommand[]): Record<string, CommandDefinition> {
-  const result: Record<string, CommandDefinition> = {}
+function commandsToRecord(
+  commands: LoadedCommand[],
+): Record<string, CommandDefinition> {
+  const result: Record<string, CommandDefinition> = {};
   for (const cmd of deduplicateLoadedCommandsByName(commands)) {
-    const { name: _name, argumentHint: _argumentHint, ...openCodeCompatible } = cmd.definition
-    result[cmd.name] = openCodeCompatible as CommandDefinition
+    const {
+      name: _name,
+      argumentHint: _argumentHint,
+      ...openCodeCompatible
+    } = cmd.definition;
+    result[cmd.name] = openCodeCompatible as CommandDefinition;
   }
-  return result
+  return result;
 }
 
-export async function loadUserCommands(): Promise<Record<string, CommandDefinition>> {
-  const userCommandsDir = join(getClaudeConfigDir(), "commands")
-  const commands = await loadCommandsFromDir(userCommandsDir, "user")
-  return commandsToRecord(commands)
+export async function loadUserCommands(): Promise<
+  Record<string, CommandDefinition>
+> {
+  const userCommandsDir = join(getClaudeConfigDir(), "commands");
+  const commands = await loadCommandsFromDir(userCommandsDir, "user");
+  return commandsToRecord(commands);
 }
 
-export async function loadProjectCommands(directory?: string): Promise<Record<string, CommandDefinition>> {
-  const projectCommandsDir = join(directory ?? process.cwd(), ".claude", "commands")
-  const commands = await loadCommandsFromDir(projectCommandsDir, "project")
-  return commandsToRecord(commands)
+export async function loadProjectCommands(
+  directory?: string,
+): Promise<Record<string, CommandDefinition>> {
+  const projectCommandsDir = join(
+    directory ?? process.cwd(),
+    ".claude",
+    "commands",
+  );
+  const commands = await loadCommandsFromDir(projectCommandsDir, "project");
+  return commandsToRecord(commands);
 }
 
-export async function loadOpencodeGlobalCommands(): Promise<Record<string, CommandDefinition>> {
-  const opencodeCommandDirs = getOpenCodeCommandDirs({ binary: "opencode" })
+export async function loadOpencodeGlobalCommands(): Promise<
+  Record<string, CommandDefinition>
+> {
+  const opencodeCommandDirs = getOpenCodeCommandDirs({ binary: "opencode" });
   const allCommands = await Promise.all(
-    opencodeCommandDirs.map((commandsDir) => loadCommandsFromDir(commandsDir, "opencode")),
-  )
-  return commandsToRecord(allCommands.flat())
+    opencodeCommandDirs.map((commandsDir) =>
+      loadCommandsFromDir(commandsDir, "opencode"),
+    ),
+  );
+  return commandsToRecord(allCommands.flat());
 }
 
-export async function loadOpencodeProjectCommands(directory?: string): Promise<Record<string, CommandDefinition>> {
-  const opencodeProjectDirs = findProjectOpencodeCommandDirs(directory ?? process.cwd())
+export async function loadOpencodeProjectCommands(
+  directory?: string,
+): Promise<Record<string, CommandDefinition>> {
+  const opencodeProjectDirs = findProjectOpencodeCommandDirs(
+    directory ?? process.cwd(),
+  );
   const allCommands = await Promise.all(
     opencodeProjectDirs.map((commandsDir) =>
       loadCommandsFromDir(commandsDir, "opencode-project"),
     ),
-  )
-  return commandsToRecord(allCommands.flat())
+  );
+  return commandsToRecord(allCommands.flat());
 }
 
-export async function loadAllCommands(directory?: string): Promise<Record<string, CommandDefinition>> {
+export async function loadAllCommands(
+  directory?: string,
+): Promise<Record<string, CommandDefinition>> {
   const [user, project, global, projectOpencode] = await Promise.all([
     loadUserCommands(),
     loadProjectCommands(directory),
     loadOpencodeGlobalCommands(),
     loadOpencodeProjectCommands(directory),
-  ])
-  return { ...projectOpencode, ...global, ...project, ...user }
+  ]);
+  return { ...projectOpencode, ...global, ...project, ...user };
 }

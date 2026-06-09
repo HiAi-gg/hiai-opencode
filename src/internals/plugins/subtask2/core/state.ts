@@ -1,5 +1,4 @@
 import type { CommandConfig, Subtask2Config } from "../types";
-import type { LoopState } from "../loop";
 
 /**
  * Centralized session state management for subtask2 plugin
@@ -258,7 +257,7 @@ export function getPendingReturn(sessionID: string): string | undefined {
 
 export function setPendingReturn(
   sessionID: string,
-  returnPrompt: string
+  returnPrompt: string,
 ): void {
   pendingReturns.set(sessionID, returnPrompt);
 }
@@ -280,14 +279,14 @@ export function getAllPendingReturns(): IterableIterator<[string, string]> {
 // ============================================================================
 
 export function getPendingNonSubtaskReturns(
-  sessionID: string
+  sessionID: string,
 ): string[] | undefined {
   return pendingNonSubtaskReturns.get(sessionID);
 }
 
 export function setPendingNonSubtaskReturns(
   sessionID: string,
-  returns: string[]
+  returns: string[],
 ): void {
   pendingNonSubtaskReturns.set(sessionID, returns);
 }
@@ -382,7 +381,7 @@ export function getSubtaskParentSession(sessionID: string): string | undefined {
 
 export function setSubtaskParentSession(
   sessionID: string,
-  parentID: string
+  parentID: string,
 ): void {
   subtaskParentSession.set(sessionID, parentID);
 }
@@ -401,7 +400,7 @@ export function getPendingModelOverride(sessionID: string): string | undefined {
 
 export function setPendingModelOverride(
   sessionID: string,
-  model: string
+  model: string,
 ): void {
   pendingModelOverride.set(sessionID, model);
 }
@@ -416,7 +415,7 @@ export function getPendingAgentOverride(sessionID: string): string | undefined {
 
 export function setPendingAgentOverride(
   sessionID: string,
-  agent: string
+  agent: string,
 ): void {
   pendingAgentOverride.set(sessionID, agent);
 }
@@ -435,7 +434,7 @@ export function getDeferredReturnPrompt(sessionID: string): string | undefined {
 
 export function setDeferredReturnPrompt(
   sessionID: string,
-  prompt: string
+  prompt: string,
 ): void {
   if (!deferredReturnPrompt.has(sessionID)) {
     deferredReturnPrompt.set(sessionID, prompt);
@@ -443,7 +442,7 @@ export function setDeferredReturnPrompt(
 }
 
 export function consumeDeferredReturnPrompt(
-  sessionID: string
+  sessionID: string,
 ): string | undefined {
   const prompt = deferredReturnPrompt.get(sessionID);
   if (prompt) {
@@ -463,7 +462,7 @@ export function consumeDeferredReturnPrompt(
  */
 export function setLastReturnType(
   sessionID: string,
-  type: "inline_subtask" | "command" | "prompt"
+  type: "inline_subtask" | "command" | "prompt",
 ): void {
   lastReturnType.set(sessionID, type);
 }
@@ -472,7 +471,7 @@ export function setLastReturnType(
  * Get the type of the last executed return for a session.
  */
 export function getLastReturnType(
-  sessionID: string
+  sessionID: string,
 ): "inline_subtask" | "command" | "prompt" | undefined {
   return lastReturnType.get(sessionID);
 }
@@ -521,7 +520,7 @@ export function clearPendingStackedPromptResponse(sessionID: string): void {
  */
 export function setPendingPromptReturn(
   sessionID: string,
-  prompt: string
+  prompt: string,
 ): void {
   pendingPromptReturn.set(sessionID, prompt);
 }
@@ -531,7 +530,7 @@ export function setPendingPromptReturn(
  * Called by message-hooks.ts during transform to substitute the generic message.
  */
 export function consumePendingPromptReturn(
-  sessionID: string
+  sessionID: string,
 ): string | undefined {
   const prompt = pendingPromptReturn.get(sessionID);
   if (prompt) {
@@ -561,7 +560,7 @@ export function hasPendingPromptReturn(sessionID: string): boolean {
  */
 export function registerPendingParentForPrompt(
   prompt: string,
-  parentSessionID: string
+  parentSessionID: string,
 ): void {
   pendingParentByPrompt.set(prompt, parentSessionID);
 }
@@ -601,7 +600,7 @@ export function setHasActiveSubtask(value: boolean): void {
  */
 export function registerPendingMainSessionCapture(
   sessionID: string,
-  name: string
+  name: string,
 ): void {
   pendingMainSessionCapture.set(sessionID, name);
 }
@@ -611,7 +610,7 @@ export function registerPendingMainSessionCapture(
  * Returns the name to capture under, or undefined if none pending.
  */
 export function consumePendingMainSessionCapture(
-  sessionID: string
+  sessionID: string,
 ): string | undefined {
   const name = pendingMainSessionCapture.get(sessionID);
   if (name) {
@@ -629,7 +628,7 @@ export function consumePendingMainSessionCapture(
 export function registerPendingResultCaptureByPrompt(
   prompt: string,
   parentSessionID: string,
-  name: string
+  name: string,
 ): void {
   pendingResultCaptureByPrompt.set(prompt, { parentSessionID, name });
 }
@@ -639,7 +638,7 @@ export function registerPendingResultCaptureByPrompt(
  * Called when tool.execute.before fires and we know the subtask session ID.
  */
 export function consumePendingResultCaptureByPrompt(
-  prompt: string
+  prompt: string,
 ): { parentSessionID: string; name: string } | undefined {
   const entry = pendingResultCaptureByPrompt.get(prompt);
   if (entry) {
@@ -653,7 +652,7 @@ export function consumePendingResultCaptureByPrompt(
  * Used in session.idle to match subtask sessions by prompt content.
  */
 export function getPendingResultCaptureByPrompt(
-  prompt: string
+  prompt: string,
 ): { parentSessionID: string; name: string } | undefined {
   return pendingResultCaptureByPrompt.get(prompt);
 }
@@ -672,7 +671,7 @@ export function deletePendingResultCaptureByPrompt(prompt: string): void {
 export function registerPendingResultCapture(
   subtaskSessionID: string,
   parentSessionID: string,
-  name: string
+  name: string,
 ): void {
   pendingResultCapture.set(subtaskSessionID, { parentSessionID, name });
 }
@@ -681,7 +680,7 @@ export function registerPendingResultCapture(
  * Check if a subtask session has a pending result capture.
  */
 export function getPendingResultCapture(
-  subtaskSessionID: string
+  subtaskSessionID: string,
 ): { parentSessionID: string; name: string } | undefined {
   return pendingResultCapture.get(subtaskSessionID);
 }
@@ -692,7 +691,7 @@ export function getPendingResultCapture(
  */
 export function captureSubtaskResult(
   subtaskSessionID: string,
-  result: string
+  result: string,
 ): void {
   const pending = pendingResultCapture.get(subtaskSessionID);
   if (!pending) return;
@@ -713,7 +712,7 @@ export function captureSubtaskResult(
 export function storeSubtaskResult(
   sessionID: string,
   name: string,
-  result: string
+  result: string,
 ): void {
   if (!subtaskResults.has(sessionID)) {
     subtaskResults.set(sessionID, new Map());
@@ -726,7 +725,7 @@ export function storeSubtaskResult(
  */
 export function getSubtaskResult(
   sessionID: string,
-  name: string
+  name: string,
 ): string | undefined {
   return subtaskResults.get(sessionID)?.get(name);
 }
@@ -735,7 +734,7 @@ export function getSubtaskResult(
  * Get all named results for a session.
  */
 export function getAllSubtaskResults(
-  sessionID: string
+  sessionID: string,
 ): Map<string, string> | undefined {
   return subtaskResults.get(sessionID);
 }
@@ -745,7 +744,7 @@ export function getAllSubtaskResults(
  */
 export function resolveResultReferences(
   text: string,
-  sessionID: string
+  sessionID: string,
 ): string {
   const results = subtaskResults.get(sessionID);
   if (!results || results.size === 0) return text;

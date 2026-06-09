@@ -1,35 +1,47 @@
-import { extname } from "node:path"
+import { extname } from "node:path";
 
 export function inferMimeTypeFromBase64(base64Data: string): string {
   if (base64Data.startsWith("data:")) {
-    const match = base64Data.match(/^data:([^;]+);/)
-    if (match) return match[1]
+    const match = base64Data.match(/^data:([^;]+);/);
+    if (match) return match[1];
   }
 
   try {
-    const cleanData = base64Data.replace(/^data:[^;]+;base64,/, "")
-    const header = Buffer.from(cleanData.slice(0, 256), "base64").toString("binary")
+    const cleanData = base64Data.replace(/^data:[^;]+;base64,/, "");
+    const header = Buffer.from(cleanData.slice(0, 256), "base64").toString(
+      "binary",
+    );
 
-    if (header.startsWith("\x89PNG")) return "image/png"
-    if (header.startsWith("\xFF\xD8\xFF")) return "image/jpeg"
-    if (header.startsWith("GIF8")) return "image/gif"
-    if (header.startsWith("RIFF") && header.includes("WEBP")) return "image/webp"
-    if (header.includes("ftypheic") || header.includes("ftypheix") || header.includes("ftyphevc") || header.includes("ftyphevx")) {
-      return "image/heic"
+    if (header.startsWith("\x89PNG")) return "image/png";
+    if (header.startsWith("\xFF\xD8\xFF")) return "image/jpeg";
+    if (header.startsWith("GIF8")) return "image/gif";
+    if (header.startsWith("RIFF") && header.includes("WEBP"))
+      return "image/webp";
+    if (
+      header.includes("ftypheic") ||
+      header.includes("ftypheix") ||
+      header.includes("ftyphevc") ||
+      header.includes("ftyphevx")
+    ) {
+      return "image/heic";
     }
-    if (header.includes("ftypheif") || header.includes("ftypmif1") || header.includes("ftypmsf1")) {
-      return "image/heif"
+    if (
+      header.includes("ftypheif") ||
+      header.includes("ftypmif1") ||
+      header.includes("ftypmsf1")
+    ) {
+      return "image/heif";
     }
-    if (header.startsWith("%PDF")) return "application/pdf"
+    if (header.startsWith("%PDF")) return "application/pdf";
   } catch {
     // invalid base64 - fall through
   }
 
-  return "image/png"
+  return "image/png";
 }
 
 export function inferMimeTypeFromFilePath(filePath: string): string {
-  const ext = extname(filePath).toLowerCase()
+  const ext = extname(filePath).toLowerCase();
   const mimeTypes: Record<string, string> = {
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
@@ -79,16 +91,16 @@ export function inferMimeTypeFromFilePath(filePath: string): string {
     ".xml": "application/xml",
     ".js": "text/javascript",
     ".py": "text/x-python",
-  }
-  return mimeTypes[ext] || "application/octet-stream"
+  };
+  return mimeTypes[ext] || "application/octet-stream";
 }
 
 export function extractBase64Data(imageData: string): string {
   if (imageData.startsWith("data:")) {
-    const commaIndex = imageData.indexOf(",")
+    const commaIndex = imageData.indexOf(",");
     if (commaIndex !== -1) {
-      return imageData.slice(commaIndex + 1)
+      return imageData.slice(commaIndex + 1);
     }
   }
-  return imageData
+  return imageData;
 }

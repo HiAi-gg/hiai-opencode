@@ -3,7 +3,10 @@ import { dirname, isAbsolute, join, resolve } from "node:path";
 
 import { AGENTS_FILENAME } from "./constants";
 
-export function resolveFilePath(rootDirectory: string, path: string): string | null {
+export function resolveFilePath(
+  rootDirectory: string,
+  path: string,
+): string | null {
   if (!path) return null;
   if (isAbsolute(path)) return path;
   return resolve(rootDirectory, path);

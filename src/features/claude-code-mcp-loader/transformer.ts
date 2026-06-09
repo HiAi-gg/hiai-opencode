@@ -3,55 +3,55 @@ import type {
   McpLocalConfig,
   McpRemoteConfig,
   McpServerConfig,
-} from "./types"
-import { expandEnvVarsInObject } from "./env-expander"
+} from "./types";
+import { expandEnvVarsInObject } from "./env-expander";
 
 export function transformMcpServer(
   name: string,
-  server: ClaudeCodeMcpServer
+  server: ClaudeCodeMcpServer,
 ): McpServerConfig {
-  const expanded = expandEnvVarsInObject(server)
-  const serverType = expanded.type ?? "stdio"
+  const expanded = expandEnvVarsInObject(server);
+  const serverType = expanded.type ?? "stdio";
 
   if (serverType === "http" || serverType === "sse") {
     if (!expanded.url) {
       throw new Error(
-        `MCP server "${name}" requires url for type "${serverType}"`
-      )
+        `MCP server "${name}" requires url for type "${serverType}"`,
+      );
     }
 
     const config: McpRemoteConfig = {
       type: "remote",
       url: expanded.url,
       enabled: true,
-    }
+    };
 
     if (expanded.headers && Object.keys(expanded.headers).length > 0) {
-      config.headers = expanded.headers
+      config.headers = expanded.headers;
     }
 
     if (expanded.oauth && Object.keys(expanded.oauth).length > 0) {
-      config.oauth = expanded.oauth
+      config.oauth = expanded.oauth;
     }
 
-    return config
+    return config;
   }
 
   if (!expanded.command) {
-    throw new Error(`MCP server "${name}" requires command for stdio type`)
+    throw new Error(`MCP server "${name}" requires command for stdio type`);
   }
 
-  const commandArray = [expanded.command, ...(expanded.args ?? [])]
+  const commandArray = [expanded.command, ...(expanded.args ?? [])];
 
   const config: McpLocalConfig = {
     type: "local",
     command: commandArray,
     enabled: true,
-  }
+  };
 
   if (expanded.env && Object.keys(expanded.env).length > 0) {
-    config.environment = expanded.env
+    config.environment = expanded.env;
   }
 
-  return config
+  return config;
 }

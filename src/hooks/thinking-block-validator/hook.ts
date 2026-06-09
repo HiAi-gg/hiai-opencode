@@ -14,36 +14,38 @@
  * - User never sees the error vs User sees error then recovery
  */
 
-import type { Message, Part } from "@opencode-ai/sdk"
+import type { Message, Part } from "@opencode-ai/sdk";
 
 interface MessageWithParts {
-  info: Message
-  parts: Part[]
+  info: Message;
+  parts: Part[];
 }
 
 type MessagesTransformHook = {
   "experimental.chat.messages.transform"?: (
     input: Record<string, never>,
-    output: { messages: MessageWithParts[] }
-  ) => Promise<void>
-}
+    output: { messages: MessageWithParts[] },
+  ) => Promise<void>;
+};
 
 type SignedThinkingPart = Part & {
-  type: "thinking" | "redacted_thinking"
-  thinking?: string
-  signature: string
-  synthetic?: boolean
-}
+  type: "thinking" | "redacted_thinking";
+  thinking?: string;
+  signature: string;
+  synthetic?: boolean;
+};
 
 function isSignedThinkingPart(part: Part): part is SignedThinkingPart {
-  const type = part.type as string
+  const type = part.type as string;
   if (type !== "thinking" && type !== "redacted_thinking") {
-    return false
+    return false;
   }
 
-  const signature = (part as { signature?: unknown }).signature
-  const synthetic = (part as { synthetic?: unknown }).synthetic
-  return typeof signature === "string" && signature.length > 0 && synthetic !== true
+  const signature = (part as { signature?: unknown }).signature;
+  const synthetic = (part as { synthetic?: unknown }).synthetic;
+  return (
+    typeof signature === "string" && signature.length > 0 && synthetic !== true
+  );
 }
 
 /**
@@ -56,36 +58,40 @@ function isSignedThinkingPart(part: Part): part is SignedThinkingPart {
  * Model-name checks are unreliable (miss GPT+thinking, custom model IDs, etc.)
  * so we inspect the messages themselves.
  */
-function hasSignedThinkingBlocksInHistory(messages: MessageWithParts[]): boolean {
+function hasSignedThinkingBlocksInHistory(
+  messages: MessageWithParts[],
+): boolean {
   return messages.some(
-    m =>
+    (m) =>
       m.info.role === "assistant" &&
       m.parts?.some((p: Part) => isSignedThinkingPart(p)),
-  )
+  );
 }
 
 /**
  * Check if a message has any content parts (tool_use, text, or other non-thinking content)
  */
 function hasContentParts(parts: Part[]): boolean {
-  if (!parts || parts.length === 0) return false
+  if (!parts || parts.length === 0) return false;
 
   return parts.some((part: Part) => {
-    const type = part.type as string
+    const type = part.type as string;
     // Include tool parts and text parts (anything that's not thinking/reasoning)
-    return type === "tool" || type === "tool_use" || type === "text"
-  })
+    return type === "tool" || type === "tool_use" || type === "text";
+  });
 }
 
 /**
  * Check if a message starts with a thinking/reasoning block
  */
 function startsWithThinkingBlock(parts: Part[]): boolean {
-  if (!parts || parts.length === 0) return false
+  if (!parts || parts.length === 0) return false;
 
-  const firstPart = parts[0]
-  const type = firstPart.type as string
-  return type === "thinking" || type === "redacted_thinking" || type === "reasoning"
+  const firstPart = parts[0];
+  const type = firstPart.type as string;
+  return (
+    type === "thinking" || type === "redacted_thinking" || type === "reasoning"
+  );
 }
 
 /**
@@ -98,22 +104,25 @@ function startsWithThinkingBlock(parts: Part[]): boolean {
  * rejected by the API with "Invalid `signature` in `thinking` block".
  * Synthetic parts injected by a previous run of this hook are also skipped.
  */
-function findPreviousThinkingPart(messages: MessageWithParts[], currentIndex: number): SignedThinkingPart | null {
+function findPreviousThinkingPart(
+  messages: MessageWithParts[],
+  currentIndex: number,
+): SignedThinkingPart | null {
   // Search backwards from current message
   for (let i = currentIndex - 1; i >= 0; i--) {
-    const msg = messages[i]
-    if (msg.info.role !== "assistant") continue
-    if (!msg.parts) continue
+    const msg = messages[i];
+    if (msg.info.role !== "assistant") continue;
+    if (!msg.parts) continue;
 
     for (const part of msg.parts) {
       // Only Anthropic thinking blocks - type must be "thinking", not "reasoning"
-      if (!isSignedThinkingPart(part)) continue
+      if (!isSignedThinkingPart(part)) continue;
 
-      return part
+      return part;
     }
   }
 
-  return null
+  return null;
 }
 
 /**
@@ -124,12 +133,15 @@ function findPreviousThinkingPart(messages: MessageWithParts[], currentIndex: nu
  * the Anthropic API validates the `signature` field against the thinking
  * content.  Any synthetic block we create ourselves would fail that check.
  */
-function prependThinkingBlock(message: MessageWithParts, thinkingPart: SignedThinkingPart): void {
+function prependThinkingBlock(
+  message: MessageWithParts,
+  thinkingPart: SignedThinkingPart,
+): void {
   if (!message.parts) {
-    message.parts = []
+    message.parts = [];
   }
 
-  message.parts.unshift(thinkingPart)
+  message.parts.unshift(thinkingPart);
 }
 
 /**
@@ -138,10 +150,10 @@ function prependThinkingBlock(message: MessageWithParts, thinkingPart: SignedThi
 export function createThinkingBlockValidatorHook(): MessagesTransformHook {
   return {
     "experimental.chat.messages.transform": async (_input, output) => {
-      const { messages } = output
+      const { messages } = output;
 
       if (!messages || messages.length === 0) {
-        return
+        return;
       }
 
       // Skip if there are no Anthropic-signed thinking blocks in history.
@@ -150,15 +162,15 @@ export function createThinkingBlockValidatorHook(): MessagesTransformHook {
       // reasoning blocks (type="reasoning", no signature) do NOT trigger this
       // hook - only real Anthropic thinking blocks do.
       if (!hasSignedThinkingBlocksInHistory(messages)) {
-        return
+        return;
       }
 
       // Process all assistant messages
       for (let i = 0; i < messages.length; i++) {
-        const msg = messages[i]
+        const msg = messages[i];
 
         // Only check assistant messages
-        if (msg.info.role !== "assistant") continue
+        if (msg.info.role !== "assistant") continue;
 
         // Check if message has content parts but doesn't start with thinking
         if (hasContentParts(msg.parts) && !startsWithThinkingBlock(msg.parts)) {
@@ -166,10 +178,10 @@ export function createThinkingBlockValidatorHook(): MessagesTransformHook {
           // previous turns.  If none exists we cannot safely inject a thinking
           // block - a synthetic block without a signature would cause the API
           // to reject the request with "Invalid `signature` in `thinking` block".
-          const previousThinkingPart = findPreviousThinkingPart(messages, i)
+          const previousThinkingPart = findPreviousThinkingPart(messages, i);
 
           if (previousThinkingPart) {
-            prependThinkingBlock(msg, previousThinkingPart)
+            prependThinkingBlock(msg, previousThinkingPart);
           }
           // If no real thinking part is available, skip injection entirely.
           // The downstream error (if any) is preferable to a guaranteed API
@@ -177,5 +189,5 @@ export function createThinkingBlockValidatorHook(): MessagesTransformHook {
         }
       }
     },
-  }
+  };
 }

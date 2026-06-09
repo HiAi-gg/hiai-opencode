@@ -1,4 +1,4 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const websiteCopywritingSkill: BuiltinSkill = {
   name: "website-copywriting",
@@ -38,4 +38,4 @@ Prefer copy that can be pasted into UI:
 
 Use \`task(subagent_type="writer", load_skills=["website-copywriting"], ...)\` for copy-only work.
 Use \`category="writing"\` when a category is required. Writer/copywriter aliases map to Brainstormer.`,
-}
+};

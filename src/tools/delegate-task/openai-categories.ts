@@ -1,4 +1,4 @@
-import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
+import type { BuiltinCategoryDefinition } from "./builtin-category-definition";
 
 const ULTRABRAIN_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on DEEP LOGICAL REASONING / ARCHITECTURE / STRATEGY tasks.
@@ -28,7 +28,7 @@ You MUST NOT:
 - For unfamiliar domains, recommend a \`task(subagent_type="researcher", run_in_background=true, ...)\` exploration step before planning.
 - One clear recommendation with effort estimate (Quick / Short / Medium / Large).
 </Reasoning_Discipline>
-</Category_Context>`
+</Category_Context>`;
 
 const DEEP_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on GOAL-ORIENTED AUTONOMOUS tasks.
@@ -53,7 +53,7 @@ Genuinely independent tasks = flag and refuse, require separate delegations.
 Approach: explore extensively, understand deeply, then act decisively. Prefer comprehensive solutions over quick patches. If the goal is unclear, make reasonable assumptions and proceed.
 
 Minimal status updates. Focus on results, not play-by-play. Report completion with summary of changes.
-</Category_Context>`
+</Category_Context>`;
 
 const QUICK_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on SMALL / QUICK tasks.
@@ -108,25 +108,28 @@ EXPECTED OUTPUT:
 \`\`\`
 
 If your prompt lacks this structure, REWRITE IT before delegating.
-</Caller_Warning>`
+</Caller_Warning>`;
 
 export const OPENAI_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "ultrabrain",
     config: {},
-    description: "Hard logic, architecture, strategy. Returns structured plan (decomposition + dependency graph + tradeoffs), NOT implementation. Follow up with deep/bounded/cross-module mode for build.",
+    description:
+      "Hard logic, architecture, strategy. Returns structured plan (decomposition + dependency graph + tradeoffs), NOT implementation. Follow up with deep/bounded/cross-module mode for build.",
     promptAppend: ULTRABRAIN_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "deep",
     config: {},
-    description: "Deep autonomous implementation with full context buildup. Uses coder execution contour.",
+    description:
+      "Deep autonomous implementation with full context buildup. Uses coder execution contour.",
     promptAppend: DEEP_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "quick",
     config: {},
-    description: "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses sub (cheap fast-tier) execution contour.",
+    description:
+      "Fast bounded execution: single-file fixes, typos, and simple modifications. Uses sub (cheap fast-tier) execution contour.",
     promptAppend: QUICK_CATEGORY_PROMPT_APPEND,
   },
-]
+];

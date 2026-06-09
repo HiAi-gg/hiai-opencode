@@ -1,1 +1,1 @@
-export { createFastApplyHook } from "./hook"
+export { createFastApplyHook } from "./hook";

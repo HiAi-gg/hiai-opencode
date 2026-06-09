@@ -22,27 +22,31 @@ const BUILTIN_ALLOWED_MCP_ENV_VARS = [
   "USERPROFILE",
   "APPDATA",
   "LOCALAPPDATA",
-]
-const SENSITIVE_MCP_ENV_VAR_PATTERN = /KEY|TOKEN|SECRET|PASSWORD|AUTH|CREDENTIAL/i
+];
+const SENSITIVE_MCP_ENV_VAR_PATTERN =
+  /KEY|TOKEN|SECRET|PASSWORD|AUTH|CREDENTIAL/i;
 
-let additionalAllowedMcpEnvVars = new Set<string>()
+let additionalAllowedMcpEnvVars = new Set<string>();
 
 export function getAllowedMcpEnvVars(): Set<string> {
-  return new Set([...BUILTIN_ALLOWED_MCP_ENV_VARS, ...additionalAllowedMcpEnvVars])
+  return new Set([
+    ...BUILTIN_ALLOWED_MCP_ENV_VARS,
+    ...additionalAllowedMcpEnvVars,
+  ]);
 }
 
 export function isSensitiveMcpEnvVar(varName: string): boolean {
-  return SENSITIVE_MCP_ENV_VAR_PATTERN.test(varName)
+  return SENSITIVE_MCP_ENV_VAR_PATTERN.test(varName);
 }
 
 export function isAllowedMcpEnvVar(varName: string): boolean {
-  return getAllowedMcpEnvVars().has(varName)
+  return getAllowedMcpEnvVars().has(varName);
 }
 
 export function setAdditionalAllowedMcpEnvVars(varNames: string[]): void {
-  additionalAllowedMcpEnvVars = new Set(varNames)
+  additionalAllowedMcpEnvVars = new Set(varNames);
 }
 
 export function resetAdditionalAllowedMcpEnvVars(): void {
-  additionalAllowedMcpEnvVars = new Set()
+  additionalAllowedMcpEnvVars = new Set();
 }

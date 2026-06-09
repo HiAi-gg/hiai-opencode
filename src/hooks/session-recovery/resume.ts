@@ -1,36 +1,50 @@
-import type { createOpencodeClient } from "@opencode-ai/sdk"
-import type { MessageData, ResumeConfig } from "./types"
-import { createInternalAgentTextPart, resolveInheritedPromptTools } from "../../shared"
+import type { createOpencodeClient } from "@opencode-ai/sdk";
+import type { MessageData, ResumeConfig } from "./types";
+import {
+  createInternalAgentTextPart,
+  resolveInheritedPromptTools,
+} from "../../shared";
 
-const RECOVERY_RESUME_TEXT = "[session recovered - continuing previous task]"
+const RECOVERY_RESUME_TEXT = "[session recovered - continuing previous task]";
 
-type Client = ReturnType<typeof createOpencodeClient>
+type Client = ReturnType<typeof createOpencodeClient>;
 
-export function findLastUserMessage(messages: MessageData[]): MessageData | undefined {
+export function findLastUserMessage(
+  messages: MessageData[],
+): MessageData | undefined {
   for (let i = messages.length - 1; i >= 0; i--) {
     if (messages[i].info?.role === "user") {
-      return messages[i]
+      return messages[i];
     }
   }
-  return undefined
+  return undefined;
 }
 
-export function extractResumeConfig(userMessage: MessageData | undefined, sessionID: string): ResumeConfig {
+export function extractResumeConfig(
+  userMessage: MessageData | undefined,
+  sessionID: string,
+): ResumeConfig {
   return {
     sessionID,
     agent: userMessage?.info?.agent,
     model: userMessage?.info?.model,
     tools: userMessage?.info?.tools,
-  }
+  };
 }
 
-export async function resumeSession(client: Client, config: ResumeConfig): Promise<boolean> {
+export async function resumeSession(
+  client: Client,
+  config: ResumeConfig,
+): Promise<boolean> {
   try {
-    const inheritedTools = resolveInheritedPromptTools(config.sessionID, config.tools)
+    const inheritedTools = resolveInheritedPromptTools(
+      config.sessionID,
+      config.tools,
+    );
     const launchModel = config.model
       ? { providerID: config.model.providerID, modelID: config.model.modelID }
-      : undefined
-    const launchVariant = config.model?.variant
+      : undefined;
+    const launchVariant = config.model?.variant;
 
     await client.session.promptAsync({
       path: { id: config.sessionID },
@@ -41,9 +55,9 @@ export async function resumeSession(client: Client, config: ResumeConfig): Promi
         ...(launchVariant ? { variant: launchVariant } : {}),
         ...(inheritedTools ? { tools: inheritedTools } : {}),
       },
-    })
-    return true
+    });
+    return true;
   } catch {
-    return false
+    return false;
   }
 }

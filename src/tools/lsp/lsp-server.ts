@@ -1,5 +1,8 @@
 import { LSPClient } from "./lsp-client";
-import { registerLspManagerProcessCleanup, type LspProcessCleanupHandle } from "./lsp-manager-process-cleanup";
+import {
+  registerLspManagerProcessCleanup,
+  type LspProcessCleanupHandle,
+} from "./lsp-manager-process-cleanup";
 import { cleanupTempDirectoryLspClients } from "./lsp-manager-temp-directory-cleanup";
 import { logWarn } from "../../shared/logger";
 import type { ResolvedServer } from "./types";
@@ -53,7 +56,10 @@ class LSPServerManager {
     this.cleanupInterval = setInterval(() => {
       this.cleanupIdleClients();
     }, 60000);
-    if (typeof this.cleanupInterval === "object" && "unref" in this.cleanupInterval) {
+    if (
+      typeof this.cleanupInterval === "object" &&
+      "unref" in this.cleanupInterval
+    ) {
       this.cleanupInterval.unref();
     }
   }
@@ -61,7 +67,10 @@ class LSPServerManager {
   private cleanupIdleClients(): void {
     const now = Date.now();
     for (const [key, managed] of this.clients) {
-      if (managed.refCount === 0 && now - managed.lastUsedAt > this.IDLE_TIMEOUT) {
+      if (
+        managed.refCount === 0 &&
+        now - managed.lastUsedAt > this.IDLE_TIMEOUT
+      ) {
         managed.client.stop();
         this.clients.delete(key);
       }
@@ -209,7 +218,9 @@ class LSPServerManager {
       .catch(() => {
         // Warmup failures must not permanently block future initialization.
         this.clients.delete(key);
-        void client.stop().catch(() => { /* intentionally ignored — cleanup after warmup failure */ });
+        void client.stop().catch(() => {
+          /* intentionally ignored — cleanup after warmup failure */
+        });
       });
   }
 

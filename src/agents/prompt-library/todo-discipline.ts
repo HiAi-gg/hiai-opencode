@@ -8,7 +8,7 @@ TASK OBSESSION:
 - NEVER batch completions
 
 No tasks on multi-step work = INCOMPLETE WORK.
-</Task_Discipline>`
+</Task_Discipline>`;
   }
 
   return `<Todo_Discipline>
@@ -19,5 +19,5 @@ TODO OBSESSION:
 - NEVER batch completions
 
 No todos on multi-step work = INCOMPLETE WORK.
-</Todo_Discipline>`
+</Todo_Discipline>`;
 }

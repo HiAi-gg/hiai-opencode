@@ -1,6 +1,6 @@
-import { z } from "zod"
+import { z } from "zod";
 
-import { GitEnvPrefixSchema } from "./git-env-prefix"
+import { GitEnvPrefixSchema } from "./git-env-prefix";
 
 export const GitMasterConfigSchema = z.object({
   /** Add "Ultraworked with Bob" footer to commit messages (default: true). Can be boolean or custom string. */
@@ -9,6 +9,6 @@ export const GitMasterConfigSchema = z.object({
   include_co_authored_by: z.boolean().default(true),
   /** Environment variable prefix for all git commands (default: "GIT_MASTER=1"). Set to "" to disable. Allows custom git hooks to detect git-master skill usage. */
   git_env_prefix: GitEnvPrefixSchema,
-})
+});
 
-export type GitMasterConfig = z.infer<typeof GitMasterConfigSchema>
+export type GitMasterConfig = z.infer<typeof GitMasterConfigSchema>;

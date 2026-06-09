@@ -21,10 +21,7 @@ import {
 import { resolveTurnReferences } from "../features/turns";
 import { flattenParallels } from "../features/parallel";
 import { executeAutoWorkflow } from "../features/auto";
-import {
-  executeInlineSubtask,
-  buildInlineSubtaskPart,
-} from "../features/inline-subtasks";
+import { buildInlineSubtaskPart } from "../features/inline-subtasks";
 import { startLoop, getLoopState } from "../loop";
 
 /**
@@ -33,7 +30,7 @@ import { startLoop, getLoopState } from "../loop";
  */
 export async function commandExecuteBefore(
   input: { command: string; sessionID: string; arguments: string },
-  output: { parts: any[] }
+  output: { parts: any[] },
 ) {
   const cmd = input.command;
 
@@ -49,7 +46,7 @@ export async function commandExecuteBefore(
       parsed = parseInlineSubtask(argsToCheck);
       if (parsed) {
         log(
-          `/subtask command intercept: prompt="${parsed.prompt.substring(0, 50)}...", overrides=${JSON.stringify(parsed.overrides)}`
+          `/subtask command intercept: prompt="${parsed.prompt.substring(0, 50)}...", overrides=${JSON.stringify(parsed.overrides)}`,
         );
       }
     }
@@ -57,7 +54,7 @@ export async function commandExecuteBefore(
     else if (argsToCheck.length > 0) {
       parsed = { prompt: argsToCheck, overrides: {} };
       log(
-        `/subtask command intercept (plain): prompt="${parsed.prompt.substring(0, 50)}..."`
+        `/subtask command intercept (plain): prompt="${parsed.prompt.substring(0, 50)}..."`,
       );
     }
 
@@ -78,7 +75,7 @@ export async function commandExecuteBefore(
           parsed.prompt,
           input.sessionID,
           parsed.overrides.agent,
-          model
+          model,
         );
 
         // Prevent normal command execution
@@ -102,10 +99,10 @@ export async function commandExecuteBefore(
     config
       ? {
           return: config.return,
-          parallel: config.parallel.map(p => p.command),
+          parallel: config.parallel.map((p) => p.command),
           agent: config.agent,
         }
-      : "no config"
+      : "no config",
   );
 
   // CHECK FOR AUTO MODE FIRST (POC) - intercepts command and generates workflow dynamically
@@ -124,7 +121,7 @@ export async function commandExecuteBefore(
       input.arguments || "",
       input.sessionID,
       config.agent,
-      model
+      model,
     );
 
     // Prevent normal command execution
@@ -157,10 +154,10 @@ export async function commandExecuteBefore(
       cmd,
       effectiveArgs,
       modelOverride,
-      agentOverride
+      agentOverride,
     );
     log(
-      `cmd.before: started retry loop: max=${activeRetry.max}, until="${activeRetry.until}"`
+      `cmd.before: started retry loop: max=${activeRetry.max}, until="${activeRetry.until}"`,
     );
   }
 
@@ -190,7 +187,7 @@ export async function commandExecuteBefore(
   }
 
   // Parse pipe-separated arguments: main || arg1 || arg2 || arg3 ...
-  const argSegments = effectiveArgs.split("||").map(s => s.trim());
+  const argSegments = effectiveArgs.split("||").map((s) => s.trim());
   let mainArgs = argSegments[0] || "";
   const allPipedArgs = argSegments.slice(1);
 
@@ -211,7 +208,7 @@ export async function commandExecuteBefore(
     log(
       `Part type=${
         part.type
-      }, hasPrompt=${!!part.prompt}, hasText=${!!part.text}`
+      }, hasPrompt=${!!part.prompt}, hasText=${!!part.text}`,
     );
     if (part.type === "subtask" && part.prompt) {
       log(`Subtask prompt (first 200): ${part.prompt.substring(0, 200)}`);
@@ -221,8 +218,8 @@ export async function commandExecuteBefore(
         log(
           `Resolved subtask prompt (first 200): ${part.prompt.substring(
             0,
-            200
-          )}`
+            200,
+          )}`,
         );
       }
     }
@@ -259,13 +256,13 @@ export async function commandExecuteBefore(
     if (part.type === "subtask" && part.prompt) {
       registerPendingParentForPrompt(part.prompt, input.sessionID);
       log(
-        `cmd.before: registered parent for prompt (${part.prompt.length} chars)`
+        `cmd.before: registered parent for prompt (${part.prompt.length} chars)`,
       );
       if ("as" in part && part.as) {
         registerPendingResultCaptureByPrompt(
           part.prompt,
           input.sessionID,
-          String(part.as)
+          String(part.as),
         );
       }
     }
@@ -277,7 +274,7 @@ export async function commandExecuteBefore(
   const parallelParts = await flattenParallels(
     config.parallel,
     mainArgs,
-    input.sessionID
+    input.sessionID,
   );
   output.parts.push(...parallelParts);
 }

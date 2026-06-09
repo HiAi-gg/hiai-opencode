@@ -7,30 +7,30 @@ export type ContextSourceType =
   | "rules-injector"
   | "directory-agents"
   | "directory-readme"
-  | "custom"
+  | "custom";
 
 /**
  * Priority levels for context ordering
  * Higher priority contexts appear first in the merged output
  */
-export type ContextPriority = "critical" | "high" | "normal" | "low"
+export type ContextPriority = "critical" | "high" | "normal" | "low";
 
 /**
  * A single context entry registered by a source
  */
 export interface ContextEntry {
   /** Unique identifier for this entry within the source */
-  id: string
+  id: string;
   /** The source that registered this context */
-  source: ContextSourceType
+  source: ContextSourceType;
   /** The actual context content to inject */
-  content: string
+  content: string;
   /** Priority for ordering (default: normal) */
-  priority: ContextPriority
+  priority: ContextPriority;
   /** Monotonic order when registered */
-  registrationOrder: number
+  registrationOrder: number;
   /** Optional metadata for debugging/logging */
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -38,15 +38,15 @@ export interface ContextEntry {
  */
 export interface RegisterContextOptions {
   /** Unique ID for this context entry (used for deduplication) */
-  id: string
+  id: string;
   /** Source identifier */
-  source: ContextSourceType
+  source: ContextSourceType;
   /** The content to inject */
-  content: string
+  content: string;
   /** Priority for ordering (default: normal) */
-  priority?: ContextPriority
+  priority?: ContextPriority;
   /** Optional metadata */
-  metadata?: Record<string, unknown>
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -54,11 +54,11 @@ export interface RegisterContextOptions {
  */
 export interface PendingContext {
   /** Merged context string, ready for injection */
-  merged: string
+  merged: string;
   /** Individual entries that were merged */
-  entries: ContextEntry[]
+  entries: ContextEntry[];
   /** Whether there's any content to inject */
-  hasContent: boolean
+  hasContent: boolean;
 }
 
 /**
@@ -66,26 +66,26 @@ export interface PendingContext {
  * Used when injecting to match the message format
  */
 export interface MessageContext {
-  agent?: string
+  agent?: string;
   model?: {
-    providerID?: string
-    modelID?: string
-  }
+    providerID?: string;
+    modelID?: string;
+  };
   path?: {
-    cwd?: string
-    root?: string
-  }
-  tools?: Record<string, boolean>
+    cwd?: string;
+    root?: string;
+  };
+  tools?: Record<string, boolean>;
 }
 
 /**
  * Output parts from chat.message hook
  */
 export interface OutputParts {
-  parts: Array<{ type: string; text?: string; [key: string]: unknown }>
+  parts: Array<{ type: string; text?: string; [key: string]: unknown }>;
 }
 
 /**
  * Injection strategy
  */
-export type InjectionStrategy = "prepend-parts" | "storage" | "auto"
+export type InjectionStrategy = "prepend-parts" | "storage" | "auto";

@@ -32,7 +32,10 @@ export async function processFilePathForReadmeInjection(input: {
 
   const dir = dirname(resolved);
   const cache = getSessionCache(input.sessionCaches, input.sessionID);
-  const readmePaths = findReadmeMdUp({ startDir: dir, rootDir: input.ctx.directory });
+  const readmePaths = findReadmeMdUp({
+    startDir: dir,
+    rootDir: input.ctx.directory,
+  });
 
   let dirty = false;
   for (const readmePath of readmePaths) {

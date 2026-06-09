@@ -1,76 +1,86 @@
-import type { OpencodeClient } from '@opencode-ai/sdk'
-import { semver } from 'bun'
-import { Terminal } from 'bun-pty'
-import { version as bunPtyVersion } from 'bun-pty/package.json'
-import { NotificationManager } from './notification-manager'
-import { OutputManager } from './output-manager'
-import { SessionLifecycleManager } from './session-lifecycle'
-import type { PTYSessionInfo, ReadResult, SearchResult, SpawnOptions } from './types'
-import { withSession } from './utils'
+import type { OpencodeClient } from "@opencode-ai/sdk";
+import { semver } from "bun";
+import { Terminal } from "bun-pty";
+import { version as bunPtyVersion } from "bun-pty/package.json";
+import { NotificationManager } from "./notification-manager";
+import { OutputManager } from "./output-manager";
+import { SessionLifecycleManager } from "./session-lifecycle";
+import type {
+  PTYSessionInfo,
+  ReadResult,
+  SearchResult,
+  SpawnOptions,
+} from "./types";
+import { withSession } from "./utils";
 
 // Monkey-patch bun-pty to fix race condition in _startReadLoop
 // Temporary workaround until https://github.com/sursaone/bun-pty/pull/37 is merged
-if (semver.order(bunPtyVersion, '0.4.8') > 0) {
+if (semver.order(bunPtyVersion, "0.4.8") > 0) {
   throw new Error(
-    `bun-pty version ${bunPtyVersion} is too new for patching; remove the workaround.`
-  )
+    `bun-pty version ${bunPtyVersion} is too new for patching; remove the workaround.`,
+  );
 }
 
-const proto = Terminal.prototype as unknown as { _startReadLoop?: (...args: unknown[]) => unknown }
+const proto = Terminal.prototype as unknown as {
+  _startReadLoop?: (...args: unknown[]) => unknown;
+};
 
-const original = proto._startReadLoop
+const original = proto._startReadLoop;
 
-if (typeof original === 'function') {
-  proto._startReadLoop = async function (this: InstanceType<typeof Terminal>, ...args: unknown[]) {
-    await Promise.resolve() // Yield to allow event handlers to be registered
-    return original.apply(this, args)
-  }
+if (typeof original === "function") {
+  proto._startReadLoop = async function (
+    this: InstanceType<typeof Terminal>,
+    ...args: unknown[]
+  ) {
+    await Promise.resolve(); // Yield to allow event handlers to be registered
+    return original.apply(this, args);
+  };
 }
 
-type SessionUpdateCallback = (session: PTYSessionInfo) => void
+type SessionUpdateCallback = (session: PTYSessionInfo) => void;
 
-export const sessionUpdateCallbacks: SessionUpdateCallback[] = []
+export const sessionUpdateCallbacks: SessionUpdateCallback[] = [];
 
 export function registerSessionUpdateCallback(callback: SessionUpdateCallback) {
-  sessionUpdateCallbacks.push(callback)
+  sessionUpdateCallbacks.push(callback);
 }
 
 export function removeSessionUpdateCallback(callback: SessionUpdateCallback) {
-  const index = sessionUpdateCallbacks.indexOf(callback)
+  const index = sessionUpdateCallbacks.indexOf(callback);
   if (index !== -1) {
-    sessionUpdateCallbacks.splice(index, 1)
+    sessionUpdateCallbacks.splice(index, 1);
   }
 }
 
 function notifySessionUpdate(session: PTYSessionInfo) {
   for (const callback of sessionUpdateCallbacks) {
     try {
-      callback(session)
+      callback(session);
     } catch {
       // Ignore callback errors
     }
   }
 }
 
-type RawOutputCallback = (session: PTYSessionInfo, rawData: string) => void
+type RawOutputCallback = (session: PTYSessionInfo, rawData: string) => void;
 
-export const rawOutputCallbacks: RawOutputCallback[] = []
+export const rawOutputCallbacks: RawOutputCallback[] = [];
 
 export function registerRawOutputCallback(callback: RawOutputCallback): void {
-  rawOutputCallbacks.push(callback)
+  rawOutputCallbacks.push(callback);
 }
 
 export function removeRawOutputCallback(callback: RawOutputCallback): void {
-  const index = rawOutputCallbacks.indexOf(callback)
+  const index = rawOutputCallbacks.indexOf(callback);
   if (index !== -1) {
-    rawOutputCallbacks.splice(index, 1)
+    rawOutputCallbacks.splice(index, 1);
   }
 }
 
 function notifyRawOutput(session: PTYSessionInfo, rawData: string): void {
   for (const callback of rawOutputCallbacks) {
     try {
-      callback(session, rawData)
+      callback(session, rawData);
     } catch {
       // Ignore callback errors
     }
@@ -78,33 +88,36 @@ function notifyRawOutput(session: PTYSessionInfo, rawData: string): void {
 }
 
 class PTYManager {
-  private lifecycleManager = new SessionLifecycleManager()
-  private outputManager = new OutputManager()
-  private notificationManager = new NotificationManager()
+  private lifecycleManager = new SessionLifecycleManager();
+  private outputManager = new OutputManager();
+  private notificationManager = new NotificationManager();
 
   init(client: OpencodeClient): void {
-    this.notificationManager.init(client)
+    this.notificationManager.init(client);
   }
 
   clearAllSessions(): void {
-    this.lifecycleManager.clearAllSessions()
+    this.lifecycleManager.clearAllSessions();
   }
 
   spawn(opts: SpawnOptions): PTYSessionInfo {
     const session = this.lifecycleManager.spawn(
       opts,
       (session, data) => {
-        notifyRawOutput(this.lifecycleManager.toInfo(session), data)
+        notifyRawOutput(this.lifecycleManager.toInfo(session), data);
       },
       async (session, exitCode) => {
-        notifySessionUpdate(this.lifecycleManager.toInfo(session))
+        notifySessionUpdate(this.lifecycleManager.toInfo(session));
         if (session?.notifyOnExit) {
-          await this.notificationManager.sendExitNotification(session, exitCode || 0)
+          await this.notificationManager.sendExitNotification(
+            session,
+            exitCode || 0,
+          );
         }
-      }
-    )
-    notifySessionUpdate(session)
-    return session
+      },
+    );
+    notifySessionUpdate(session);
+    return session;
   }
 
   write(id: string, data: string): boolean {
@@ -112,8 +125,8 @@ class PTYManager {
       this.lifecycleManager,
       id,
       (session) => this.outputManager.write(session, data),
-      false
-    )
+      false,
+    );
   }
 
   read(id: string, offset: number = 0, limit?: number): ReadResult | null {
@@ -121,21 +134,28 @@ class PTYManager {
       this.lifecycleManager,
       id,
       (session) => this.outputManager.read(session, offset, limit),
-      null
-    )
+      null,
+    );
   }
 
-  search(id: string, pattern: RegExp, offset: number = 0, limit?: number): SearchResult | null {
+  search(
+    id: string,
+    pattern: RegExp,
+    offset: number = 0,
+    limit?: number,
+  ): SearchResult | null {
     return withSession(
       this.lifecycleManager,
       id,
       (session) => this.outputManager.search(session, pattern, offset, limit),
-      null
-    )
+      null,
+    );
   }
 
   list(): PTYSessionInfo[] {
-    return this.lifecycleManager.listSessions().map((s) => this.lifecycleManager.toInfo(s))
+    return this.lifecycleManager
+      .listSessions()
+      .map((s) => this.lifecycleManager.toInfo(s));
   }
 
   get(id: string): PTYSessionInfo | null {
@@ -143,8 +163,8 @@ class PTYManager {
       this.lifecycleManager,
       id,
       (session) => this.lifecycleManager.toInfo(session),
-      null
-    )
+      null,
+    );
   }
 
   getRawBuffer(id: string): { raw: string; byteLength: number } | null {
@@ -155,21 +175,21 @@ class PTYManager {
         raw: session.buffer.readRaw(),
         byteLength: session.buffer.byteLength,
       }),
-      null
-    )
+      null,
+    );
   }
 
   kill(id: string, cleanup: boolean = false): boolean {
-    return this.lifecycleManager.kill(id, cleanup)
+    return this.lifecycleManager.kill(id, cleanup);
   }
 
   cleanupBySession(parentSessionId: string): void {
-    this.lifecycleManager.cleanupBySession(parentSessionId)
+    this.lifecycleManager.cleanupBySession(parentSessionId);
   }
 }
 
-export const manager = new PTYManager()
+export const manager = new PTYManager();
 
 export function initManager(opcClient: OpencodeClient): void {
-  manager.init(opcClient)
+  manager.init(opcClient);
 }

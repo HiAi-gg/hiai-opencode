@@ -1,39 +1,51 @@
-import { HASHLINE_DICT } from "./constants"
-import { createHashlineChunkFormatter } from "./hashline-chunk-formatter"
+import { HASHLINE_DICT } from "./constants";
+import { createHashlineChunkFormatter } from "./hashline-chunk-formatter";
 
-const RE_SIGNIFICANT = /[\p{L}\p{N}]/u
+const RE_SIGNIFICANT = /[\p{L}\p{N}]/u;
 
-function computeNormalizedLineHash(lineNumber: number, normalizedContent: string): string {
-  const stripped = normalizedContent
-  const seed = RE_SIGNIFICANT.test(stripped) ? 0 : lineNumber
-  const hash = Bun.hash.xxHash32(stripped, seed)
-  const index = hash % 256
-  return HASHLINE_DICT[index]
+function computeNormalizedLineHash(
+  lineNumber: number,
+  normalizedContent: string,
+): string {
+  const stripped = normalizedContent;
+  const seed = RE_SIGNIFICANT.test(stripped) ? 0 : lineNumber;
+  const hash = Bun.hash.xxHash32(stripped, seed);
+  const index = hash % 256;
+  return HASHLINE_DICT[index];
 }
 
 export function computeLineHash(lineNumber: number, content: string): string {
-  return computeNormalizedLineHash(lineNumber, content.replace(/\r/g, "").trimEnd())
+  return computeNormalizedLineHash(
+    lineNumber,
+    content.replace(/\r/g, "").trimEnd(),
+  );
 }
 
-export function computeLegacyLineHash(lineNumber: number, content: string): string {
-  return computeNormalizedLineHash(lineNumber, content.replace(/\r/g, "").replace(/\s+/g, ""))
+export function computeLegacyLineHash(
+  lineNumber: number,
+  content: string,
+): string {
+  return computeNormalizedLineHash(
+    lineNumber,
+    content.replace(/\r/g, "").replace(/\s+/g, ""),
+  );
 }
 
 export function formatHashLine(lineNumber: number, content: string): string {
-  const hash = computeLineHash(lineNumber, content)
-  return `${lineNumber}#${hash}|${content}`
+  const hash = computeLineHash(lineNumber, content);
+  return `${lineNumber}#${hash}|${content}`;
 }
 
 export function formatHashLines(content: string): string {
-  if (!content) return ""
-  const lines = content.split("\n")
-  return lines.map((line, index) => formatHashLine(index + 1, line)).join("\n")
+  if (!content) return "";
+  const lines = content.split("\n");
+  return lines.map((line, index) => formatHashLine(index + 1, line)).join("\n");
 }
 
 export interface HashlineStreamOptions {
-  startLine?: number
-  maxChunkLines?: number
-  maxChunkBytes?: number
+  startLine?: number;
+  maxChunkLines?: number;
+  maxChunkBytes?: number;
 }
 
 function isReadableStream(value: unknown): value is ReadableStream<Uint8Array> {
@@ -42,113 +54,123 @@ function isReadableStream(value: unknown): value is ReadableStream<Uint8Array> {
     value !== null &&
     "getReader" in value &&
     typeof (value as { getReader?: unknown }).getReader === "function"
-  )
+  );
 }
 
-async function* bytesFromReadableStream(stream: ReadableStream<Uint8Array>): AsyncGenerator<Uint8Array> {
-  const reader = stream.getReader()
+async function* bytesFromReadableStream(
+  stream: ReadableStream<Uint8Array>,
+): AsyncGenerator<Uint8Array> {
+  const reader = stream.getReader();
   try {
     while (true) {
-      const { done, value } = await reader.read()
-      if (done) return
-      if (value) yield value
+      const { done, value } = await reader.read();
+      if (done) return;
+      if (value) yield value;
     }
   } finally {
-    reader.releaseLock()
+    reader.releaseLock();
   }
 }
 
 export async function* streamHashLinesFromUtf8(
   source: ReadableStream<Uint8Array> | AsyncIterable<Uint8Array>,
-  options: HashlineStreamOptions = {}
+  options: HashlineStreamOptions = {},
 ): AsyncGenerator<string> {
-  const startLine = options.startLine ?? 1
-  const maxChunkLines = options.maxChunkLines ?? 200
-  const maxChunkBytes = options.maxChunkBytes ?? 64 * 1024
-  const decoder = new TextDecoder("utf-8")
-  const chunks = isReadableStream(source) ? bytesFromReadableStream(source) : source
+  const startLine = options.startLine ?? 1;
+  const maxChunkLines = options.maxChunkLines ?? 200;
+  const maxChunkBytes = options.maxChunkBytes ?? 64 * 1024;
+  const decoder = new TextDecoder("utf-8");
+  const chunks = isReadableStream(source)
+    ? bytesFromReadableStream(source)
+    : source;
 
-  let lineNumber = startLine
-  let pending = ""
-  let sawAnyText = false
-  let endedWithNewline = false
-  const chunkFormatter = createHashlineChunkFormatter({ maxChunkLines, maxChunkBytes })
+  let lineNumber = startLine;
+  let pending = "";
+  let sawAnyText = false;
+  let endedWithNewline = false;
+  const chunkFormatter = createHashlineChunkFormatter({
+    maxChunkLines,
+    maxChunkBytes,
+  });
 
   const pushLine = (line: string): string[] => {
-    const formatted = formatHashLine(lineNumber, line)
-    lineNumber += 1
-    return chunkFormatter.push(formatted)
-  }
+    const formatted = formatHashLine(lineNumber, line);
+    lineNumber += 1;
+    return chunkFormatter.push(formatted);
+  };
 
   const consumeText = (text: string): string[] => {
-    if (text.length === 0) return []
-    sawAnyText = true
-    pending += text
-    const chunksToYield: string[] = []
+    if (text.length === 0) return [];
+    sawAnyText = true;
+    pending += text;
+    const chunksToYield: string[] = [];
 
-    let lastIdx = 0
+    let lastIdx = 0;
     while (true) {
-      const idx = pending.indexOf("\n", lastIdx)
-      if (idx === -1) break
-      const line = pending.slice(lastIdx, idx)
-      lastIdx = idx + 1
-      endedWithNewline = true
-      chunksToYield.push(...pushLine(line))
+      const idx = pending.indexOf("\n", lastIdx);
+      if (idx === -1) break;
+      const line = pending.slice(lastIdx, idx);
+      lastIdx = idx + 1;
+      endedWithNewline = true;
+      chunksToYield.push(...pushLine(line));
     }
 
-    pending = pending.slice(lastIdx)
-    if (pending.length > 0) endedWithNewline = false
-    return chunksToYield
-  }
+    pending = pending.slice(lastIdx);
+    if (pending.length > 0) endedWithNewline = false;
+    return chunksToYield;
+  };
 
   for await (const chunk of chunks) {
     for (const out of consumeText(decoder.decode(chunk, { stream: true }))) {
-      yield out
+      yield out;
     }
   }
 
   for (const out of consumeText(decoder.decode())) {
-    yield out
+    yield out;
   }
 
   if (sawAnyText && (pending.length > 0 || endedWithNewline)) {
     for (const out of pushLine(pending)) {
-      yield out
+      yield out;
     }
   }
 
-  const finalChunk = chunkFormatter.flush()
-  if (finalChunk) yield finalChunk
+  const finalChunk = chunkFormatter.flush();
+  if (finalChunk) yield finalChunk;
 }
 
 export async function* streamHashLinesFromLines(
   lines: Iterable<string> | AsyncIterable<string>,
-  options: HashlineStreamOptions = {}
+  options: HashlineStreamOptions = {},
 ): AsyncGenerator<string> {
-  const startLine = options.startLine ?? 1
-  const maxChunkLines = options.maxChunkLines ?? 200
-  const maxChunkBytes = options.maxChunkBytes ?? 64 * 1024
+  const startLine = options.startLine ?? 1;
+  const maxChunkLines = options.maxChunkLines ?? 200;
+  const maxChunkBytes = options.maxChunkBytes ?? 64 * 1024;
 
-  let lineNumber = startLine
-  const chunkFormatter = createHashlineChunkFormatter({ maxChunkLines, maxChunkBytes })
+  let lineNumber = startLine;
+  const chunkFormatter = createHashlineChunkFormatter({
+    maxChunkLines,
+    maxChunkBytes,
+  });
 
   const pushLine = (line: string): string[] => {
-    const formatted = formatHashLine(lineNumber, line)
-    lineNumber += 1
-    return chunkFormatter.push(formatted)
-  }
+    const formatted = formatHashLine(lineNumber, line);
+    lineNumber += 1;
+    return chunkFormatter.push(formatted);
+  };
 
-  const asyncIterator = (lines as AsyncIterable<string>)[Symbol.asyncIterator]
+  const asyncIterator = (lines as AsyncIterable<string>)[Symbol.asyncIterator];
   if (typeof asyncIterator === "function") {
     for await (const line of lines as AsyncIterable<string>) {
-      for (const out of pushLine(line)) yield out
+      for (const out of pushLine(line)) yield out;
     }
   } else {
     for (const line of lines as Iterable<string>) {
-      for (const out of pushLine(line)) yield out
+      for (const out of pushLine(line)) yield out;
     }
   }
 
-  const finalChunk = chunkFormatter.flush()
-  if (finalChunk) yield finalChunk
+  const finalChunk = chunkFormatter.flush();
+  if (finalChunk) yield finalChunk;
 }

@@ -1,22 +1,26 @@
-import type { CommandDefinition } from "../claude-code-command-loader"
-import type { BuiltinCommandName, BuiltinCommands } from "./types"
-import { INIT_DEEP_TEMPLATE } from "./templates/init-deep"
-import { RALPH_LOOP_TEMPLATE, ULW_LOOP_TEMPLATE, CANCEL_RALPH_TEMPLATE } from "./templates/ralph-loop"
-import { LOOP_COMMAND_TEMPLATE, CANCEL_LOOP_TEMPLATE } from "./templates/loop"
-import { STOP_CONTINUATION_TEMPLATE } from "./templates/stop-continuation"
-import { REFACTOR_TEMPLATE } from "./templates/refactor"
-import { START_WORK_TEMPLATE } from "./templates/start-work"
-import { HANDOFF_TEMPLATE } from "./templates/handoff"
-import { REMOVE_AI_SLOPS_TEMPLATE } from "./templates/remove-ai-slops"
-import { MCP_STATUS_TEMPLATE } from "./templates/mcp-status"
-import { DOCTOR_TEMPLATE } from "./templates/doctor"
+import type { CommandDefinition } from "../claude-code-command-loader";
+import type { BuiltinCommandName, BuiltinCommands } from "./types";
+import { INIT_DEEP_TEMPLATE } from "./templates/init-deep";
+import {
+  RALPH_LOOP_TEMPLATE,
+  ULW_LOOP_TEMPLATE,
+  CANCEL_RALPH_TEMPLATE,
+} from "./templates/ralph-loop";
+import { LOOP_COMMAND_TEMPLATE, CANCEL_LOOP_TEMPLATE } from "./templates/loop";
+import { STOP_CONTINUATION_TEMPLATE } from "./templates/stop-continuation";
+import { REFACTOR_TEMPLATE } from "./templates/refactor";
+import { START_WORK_TEMPLATE } from "./templates/start-work";
+import { HANDOFF_TEMPLATE } from "./templates/handoff";
+import { REMOVE_AI_SLOPS_TEMPLATE } from "./templates/remove-ai-slops";
+import { MCP_STATUS_TEMPLATE } from "./templates/mcp-status";
+import { DOCTOR_TEMPLATE } from "./templates/doctor";
 
 interface LoadBuiltinCommandsOptions {
-  useRegisteredAgents?: boolean
+  useRegisteredAgents?: boolean;
 }
 
 function resolveStartWorkAgent(_options?: LoadBuiltinCommandsOptions): "bob" {
-  return "bob"
+  return "bob";
 }
 
 function createBuiltinCommandDefinitions(
@@ -35,7 +39,8 @@ $ARGUMENTS
       argumentHint: "[--create-new] [--max-depth=N]",
     },
     loop: {
-      description: "(builtin) Unified development loop — normal or ultrawork mode",
+      description:
+        "(builtin) Unified development loop — normal or ultrawork mode",
       template: `<command-instruction>
 ${LOOP_COMMAND_TEMPLATE}
 </command-instruction>
@@ -43,7 +48,8 @@ ${LOOP_COMMAND_TEMPLATE}
 <user-task>
 $ARGUMENTS
 </user-task>`,
-      argumentHint: '"task description" [--mode=normal|ultrawork] [--completion-promise=TEXT] [--strategy=reset|continue]',
+      argumentHint:
+        '"task description" [--mode=normal|ultrawork] [--completion-promise=TEXT] [--strategy=reset|continue]',
     },
     "cancel-loop": {
       description: "(builtin) Cancel active development loop",
@@ -51,33 +57,38 @@ $ARGUMENTS
 ${CANCEL_LOOP_TEMPLATE}
 </command-instruction>`,
     },
-     "ralph-loop": {
-       hidden: true,
-       description: "(builtin) [DEPRECATED: use /loop] Start self-referential development loop",
-       template: `<command-instruction>
+    "ralph-loop": {
+      hidden: true,
+      description:
+        "(builtin) [DEPRECATED: use /loop] Start self-referential development loop",
+      template: `<command-instruction>
 ${RALPH_LOOP_TEMPLATE}
 </command-instruction>
 
 <user-task>
 $ARGUMENTS
 </user-task>`,
-       argumentHint: '"task description" [--completion-promise=TEXT] [--max-iterations=N] [--strategy=reset|continue]',
-     },
-     "ulw-loop": {
-        hidden: true,
-        description: "(builtin) [DEPRECATED: use /loop --mode=ultrawork] Start ultrawork loop",
-        template: `<command-instruction>
+      argumentHint:
+        '"task description" [--completion-promise=TEXT] [--max-iterations=N] [--strategy=reset|continue]',
+    },
+    "ulw-loop": {
+      hidden: true,
+      description:
+        "(builtin) [DEPRECATED: use /loop --mode=ultrawork] Start ultrawork loop",
+      template: `<command-instruction>
 ${ULW_LOOP_TEMPLATE}
 </command-instruction>
 
 <user-task>
 $ARGUMENTS
 </user-task>`,
-        argumentHint: '"task description" [--completion-promise=TEXT] [--strategy=reset|continue]',
-      },
+      argumentHint:
+        '"task description" [--completion-promise=TEXT] [--strategy=reset|continue]',
+    },
     "cancel-ralph": {
       hidden: true,
-      description: "(builtin) [DEPRECATED: use /cancel-loop] Cancel active Ralph Loop",
+      description:
+        "(builtin) [DEPRECATED: use /cancel-loop] Cancel active Ralph Loop",
       template: `<command-instruction>
 ${CANCEL_RALPH_TEMPLATE}
 </command-instruction>`,
@@ -88,7 +99,8 @@ ${CANCEL_RALPH_TEMPLATE}
       template: `<command-instruction>
 ${REFACTOR_TEMPLATE}
 </command-instruction>`,
-      argumentHint: "<refactoring-target> [--scope=<file|module|project>] [--strategy=<safe|aggressive>]",
+      argumentHint:
+        "<refactoring-target> [--scope=<file|module|project>] [--strategy=<safe|aggressive>]",
     },
     "start-work": {
       description: "(builtin) Start Bob work session from Strategist plan",
@@ -108,13 +120,15 @@ $ARGUMENTS
       argumentHint: "[plan-name]",
     },
     "stop-continuation": {
-      description: "(builtin) Stop all continuation mechanisms (ralph loop, todo continuation, boulder) for this session",
+      description:
+        "(builtin) Stop all continuation mechanisms (ralph loop, todo continuation, boulder) for this session",
       template: `<command-instruction>
 ${STOP_CONTINUATION_TEMPLATE}
 </command-instruction>`,
     },
     "remove-ai-slops": {
-      description: "(builtin) Remove AI-generated code smells from branch changes and critically review the results",
+      description:
+        "(builtin) Remove AI-generated code smells from branch changes and critically review the results",
       template: `<command-instruction>
 ${REMOVE_AI_SLOPS_TEMPLATE}
 </command-instruction>
@@ -124,7 +138,8 @@ $ARGUMENTS
 </user-request>`,
     },
     handoff: {
-      description: "(builtin) Create a detailed context summary for continuing work in a new session",
+      description:
+        "(builtin) Create a detailed context summary for continuing work in a new session",
       template: `<command-instruction>
 ${HANDOFF_TEMPLATE}
 </command-instruction>
@@ -140,34 +155,36 @@ $ARGUMENTS
       argumentHint: "[goal]",
     },
     "mcp-status": {
-      description: "(builtin) Show hiai-opencode MCP server status, missing keys, and local runtime availability",
+      description:
+        "(builtin) Show hiai-opencode MCP server status, missing keys, and local runtime availability",
       template: `<command-instruction>
 ${MCP_STATUS_TEMPLATE}
 </command-instruction>`,
     },
     doctor: {
-      description: "(builtin) Run hiai-opencode install/runtime diagnostics and explain setup issues",
+      description:
+        "(builtin) Run hiai-opencode install/runtime diagnostics and explain setup issues",
       template: `<command-instruction>
 ${DOCTOR_TEMPLATE}
 </command-instruction>`,
     },
-  }
+  };
 }
 
 export function loadBuiltinCommands(
   disabledCommands?: BuiltinCommandName[],
   options?: LoadBuiltinCommandsOptions,
 ): BuiltinCommands {
-  const builtinCommandDefinitions = createBuiltinCommandDefinitions(options)
-  const disabled = new Set(disabledCommands ?? [])
-  const commands: BuiltinCommands = {}
+  const builtinCommandDefinitions = createBuiltinCommandDefinitions(options);
+  const disabled = new Set(disabledCommands ?? []);
+  const commands: BuiltinCommands = {};
 
   for (const [name, definition] of Object.entries(builtinCommandDefinitions)) {
     if (!disabled.has(name as BuiltinCommandName)) {
-      const { argumentHint: _argumentHint, ...openCodeCompatible } = definition
-      commands[name] = { ...openCodeCompatible, name } as CommandDefinition
+      const { argumentHint: _argumentHint, ...openCodeCompatible } = definition;
+      commands[name] = { ...openCodeCompatible, name } as CommandDefinition;
     }
   }
 
-  return commands
+  return commands;
 }

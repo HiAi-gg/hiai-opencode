@@ -17,23 +17,26 @@
  */
 
 export interface PendingToolMetadata {
-  title?: string
-  metadata?: Record<string, unknown>
+  title?: string;
+  metadata?: Record<string, unknown>;
 }
 
-const pendingStore = new Map<string, PendingToolMetadata & { storedAt: number }>()
+const pendingStore = new Map<
+  string,
+  PendingToolMetadata & { storedAt: number }
+>();
 
-const STALE_TIMEOUT_MS = 15 * 60 * 1000
+const STALE_TIMEOUT_MS = 15 * 60 * 1000;
 
 function makeKey(sessionID: string, callID: string): string {
-  return `${sessionID}:${callID}`
+  return `${sessionID}:${callID}`;
 }
 
 function cleanupStaleEntries(): void {
-  const now = Date.now()
+  const now = Date.now();
   for (const [key, entry] of pendingStore) {
     if (now - entry.storedAt > STALE_TIMEOUT_MS) {
-      pendingStore.delete(key)
+      pendingStore.delete(key);
     }
   }
 }
@@ -45,10 +48,13 @@ function cleanupStaleEntries(): void {
 export function storeToolMetadata(
   sessionID: string,
   callID: string,
-  data: PendingToolMetadata
+  data: PendingToolMetadata,
 ): void {
-  cleanupStaleEntries()
-  pendingStore.set(makeKey(sessionID, callID), { ...data, storedAt: Date.now() })
+  cleanupStaleEntries();
+  pendingStore.set(makeKey(sessionID, callID), {
+    ...data,
+    storedAt: Date.now(),
+  });
 }
 
 /**
@@ -57,28 +63,28 @@ export function storeToolMetadata(
  */
 export function consumeToolMetadata(
   sessionID: string,
-  callID: string
+  callID: string,
 ): PendingToolMetadata | undefined {
-  const key = makeKey(sessionID, callID)
-  const stored = pendingStore.get(key)
+  const key = makeKey(sessionID, callID);
+  const stored = pendingStore.get(key);
   if (stored) {
-    pendingStore.delete(key)
-    const { storedAt: _, ...data } = stored
-    return data
+    pendingStore.delete(key);
+    const { storedAt: _, ...data } = stored;
+    return data;
   }
-  return undefined
+  return undefined;
 }
 
 /**
  * Get current store size (for testing/debugging).
  */
 export function getPendingStoreSize(): number {
-  return pendingStore.size
+  return pendingStore.size;
 }
 
 /**
  * Clear all pending metadata (for testing).
  */
 export function clearPendingStore(): void {
-  pendingStore.clear()
+  pendingStore.clear();
 }

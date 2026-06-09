@@ -1,1 +1,1 @@
-export { createGlobTools } from "./tools"
+export { createGlobTools } from "./tools";

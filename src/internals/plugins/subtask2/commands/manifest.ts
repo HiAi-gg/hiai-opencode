@@ -1,9 +1,14 @@
 /// <reference types="bun-types" />
 
-import { join } from "path";
+import { join } from "node:path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import type { CommandConfig } from "../types";
-import { parseFrontmatter, getTemplateBody, parseParallelConfig, parseLoopConfig } from "../parsing";
+import {
+  parseFrontmatter,
+  getTemplateBody,
+  parseParallelConfig,
+  parseLoopConfig,
+} from "../parsing";
 
 /**
  * Commands: Manifest building
@@ -52,7 +57,7 @@ export async function buildManifest(): Promise<Record<string, CommandConfig>> {
           manifest[pathKey] = config;
         }
       }
-    } catch (e) {
+    } catch (_e) {
       // Ignore errors scanning directories that don't exist
     }
   }

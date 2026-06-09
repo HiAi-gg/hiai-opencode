@@ -1,6 +1,8 @@
-import type { DelegateTaskArgs } from './types.js';
+import type { DelegateTaskArgs } from "./types.js";
 
-export function validateDelegateTaskArgs(args: unknown): args is DelegateTaskArgs {
+export function validateDelegateTaskArgs(
+  args: unknown,
+): args is DelegateTaskArgs {
   if (!args || typeof args !== "object") return false;
   const a = args as Record<string, unknown>;
   return typeof a.prompt === "string" || typeof a.command === "string";

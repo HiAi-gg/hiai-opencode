@@ -1,2 +1,2 @@
-export { createBackgroundNotificationHook } from "./hook"
-export type { BackgroundNotificationHookConfig } from "./types"
+export { createBackgroundNotificationHook } from "./hook";
+export type { BackgroundNotificationHookConfig } from "./types";

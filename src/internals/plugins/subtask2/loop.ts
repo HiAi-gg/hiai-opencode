@@ -42,7 +42,7 @@ export function startLoop(
   args: string,
   model?: string,
   agent?: string,
-  deferredReturns?: string[]
+  deferredReturns?: string[],
 ): void {
   activeLoops.set(sessionId, {
     config,
@@ -95,7 +95,7 @@ export function isMaxIterationsReached(sessionId: string): boolean {
  */
 export function setPendingEvaluation(
   sessionId: string,
-  state: LoopState
+  state: LoopState,
 ): void {
   pendingLoopEvaluation.set(sessionId, state);
 }

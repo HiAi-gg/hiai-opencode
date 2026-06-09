@@ -1,13 +1,16 @@
 // PROMPT_VERSION: 2026-04-26
-import type { AgentConfig } from "@opencode-ai/sdk"
-import type { AgentMode, AgentPromptMetadata } from "./types"
-import { createAgentToolRestrictions } from "../shared/permission-compat"
-import { buildAgentIdentitySection } from "./prompt-library/identity"
+import type { AgentConfig } from "@opencode-ai/sdk";
+import type { AgentMode, AgentPromptMetadata } from "./types";
+import { createAgentToolRestrictions } from "../shared/permission-compat";
+import { buildAgentIdentitySection } from "./prompt-library/identity";
 
-const MODE: AgentMode = "subagent"
+const MODE: AgentMode = "subagent";
 
 export function createWriterAgent(model: string): AgentConfig {
-  const restrictions = createAgentToolRestrictions(["apply_patch", "call_hiai_agent"])
+  const restrictions = createAgentToolRestrictions([
+    "apply_patch",
+    "call_hiai_agent",
+  ]);
 
   return {
     description:
@@ -16,7 +19,10 @@ export function createWriterAgent(model: string): AgentConfig {
     model,
     temperature: 0.7,
     ...restrictions,
-    prompt: buildAgentIdentitySection("Writer", "writing and ideation specialist") + "\n\n" + `# Brainstormer / Writer
+    prompt:
+      buildAgentIdentitySection("Writer", "writing and ideation specialist") +
+      "\n\n" +
+      `# Brainstormer / Writer
 
 Primary responsibilities:
 - Website copy: landing pages, hero sections, feature blocks, CTA text, pricing copy, onboarding text, empty states, product pages.
@@ -84,27 +90,31 @@ Operating rules:
 When called as "writer", treat it as the same role.`,
     thinking: { type: "enabled", budgetTokens: 8000 },
     delegate_to: ["researcher"],
-  } as AgentConfig
+  } as AgentConfig;
 }
-createWriterAgent.mode = MODE
+createWriterAgent.mode = MODE;
 
 export const writerPromptMetadata: AgentPromptMetadata = {
   category: "specialist",
   cost: "CHEAP",
   promptAlias: "Brainstormer",
-  keyTrigger: "Website copy, product messaging, naming, CTA text, or tone-of-voice work → use writer.",
+  keyTrigger:
+    "Website copy, product messaging, naming, CTA text, or tone-of-voice work → use writer.",
   triggers: [
     {
       domain: "Website copy",
-      trigger: "Landing page, hero, feature, pricing, CTA, onboarding, or empty-state text",
+      trigger:
+        "Landing page, hero, feature, pricing, CTA, onboarding, or empty-state text",
     },
     {
       domain: "Product messaging",
-      trigger: "Need positioning, value proposition, naming, voice, or messaging hierarchy",
+      trigger:
+        "Need positioning, value proposition, naming, voice, or messaging hierarchy",
     },
     {
       domain: "Ideation",
-      trigger: "Need multiple creative options with tradeoffs before choosing a direction",
+      trigger:
+        "Need multiple creative options with tradeoffs before choosing a direction",
     },
   ],
   useWhen: [
@@ -117,4 +127,4 @@ export const writerPromptMetadata: AgentPromptMetadata = {
     "Technical architecture or implementation planning (use Strategist/Coder)",
     "Factual research where sources are needed (use Researcher first)",
   ],
-}
+};

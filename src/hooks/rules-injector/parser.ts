@@ -102,7 +102,7 @@ function parseStringValue(value: string): string {
 function parseArrayOrStringValue(
   rawValue: string,
   lines: string[],
-  currentIndex: number
+  currentIndex: number,
 ): { value: string | string[]; consumed: number } {
   // Case 1: Inline array ["a", "b", "c"]
   if (rawValue.startsWith("[")) {
@@ -200,7 +200,7 @@ function parseInlineArray(value: string): string[] {
  */
 function mergeGlobs(
   existing: string | string[] | undefined,
-  newValue: string | string[]
+  newValue: string | string[],
 ): string | string[] {
   if (!existing) return newValue;
 

@@ -16,14 +16,19 @@ interface AskUserQuestionArgs {
   questions: Question[];
 }
 
-function truncateLabel(label: string, maxLength: number = MAX_LABEL_LENGTH): string {
+function truncateLabel(
+  label: string,
+  maxLength: number = MAX_LABEL_LENGTH,
+): string {
   if (label.length <= maxLength) {
     return label;
   }
-  return label.substring(0, maxLength - 3) + "...";
+  return `${label.substring(0, maxLength - 3)}...`;
 }
 
-function truncateQuestionLabels(args: AskUserQuestionArgs): AskUserQuestionArgs {
+function truncateQuestionLabels(
+  args: AskUserQuestionArgs,
+): AskUserQuestionArgs {
   if (!args.questions || !Array.isArray(args.questions)) {
     return args;
   }
@@ -45,7 +50,7 @@ export function createQuestionLabelTruncatorHook() {
   return {
     "tool.execute.before": async (
       input: { tool: string },
-      output: { args: Record<string, unknown> }
+      output: { args: Record<string, unknown> },
     ): Promise<void> => {
       const toolName = input.tool?.toLowerCase();
 

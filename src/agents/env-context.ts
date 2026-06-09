@@ -5,12 +5,12 @@
  * See: https://github.com/code-yeongyu/hiai-opencode/issues/379
  */
 export function createEnvContext(): string {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
-  const locale = Intl.DateTimeFormat().resolvedOptions().locale
+  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const locale = Intl.DateTimeFormat().resolvedOptions().locale;
 
   return `
 <omo-env>
   Timezone: ${timezone}
   Locale: ${locale}
-</omo-env>`
+</omo-env>`;
 }

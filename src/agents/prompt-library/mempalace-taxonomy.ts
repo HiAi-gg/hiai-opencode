@@ -17,7 +17,7 @@
 export const CANONICAL_WINGS = {
   PROJECT: "hiai-opencode",
   AGENT_DIARY: (agentName: string) => `wing_${agentName}`,
-} as const
+} as const;
 
 export const CANONICAL_ROOMS = {
   /** Architecture and design choices with rationale */
@@ -50,9 +50,10 @@ export const CANONICAL_ROOMS = {
   FAILED_APPROACHES: "failed-approaches",
   /** Free-form session logs (default if no room specified) */
   DIARY: "diary",
-} as const
+} as const;
 
-export type CanonicalRoom = typeof CANONICAL_ROOMS[keyof typeof CANONICAL_ROOMS]
+export type CanonicalRoom =
+  (typeof CANONICAL_ROOMS)[keyof typeof CANONICAL_ROOMS];
 
 /**
  * Build a save checklist string for inclusion in agent prompts.
@@ -78,5 +79,5 @@ export function buildSaveChecklist(): string {
 - Routine status updates (use todos instead)
 - Temporary debugging state
 - Trivial fixes (<3 lines, obvious)
-- Information already in git history`
+- Information already in git history`;
 }

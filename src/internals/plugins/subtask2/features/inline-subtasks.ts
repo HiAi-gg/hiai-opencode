@@ -23,7 +23,7 @@ export async function buildInlineSubtaskPart(
     prompt: string;
     overrides: CommandOverrides;
   },
-  sessionID: string
+  sessionID: string,
 ): Promise<any> {
   let prompt = parsed.prompt;
 
@@ -42,7 +42,7 @@ export async function buildInlineSubtaskPart(
   log(
     `buildInlineSubtaskPart: prompt="${prompt.substring(0, 50)}...", model=${
       parsed.overrides.model
-    }, agent=${parsed.overrides.agent}`
+    }, agent=${parsed.overrides.agent}`,
   );
 
   // Start loop if configured
@@ -54,10 +54,10 @@ export async function buildInlineSubtaskPart(
       prompt,
       parsed.overrides.model,
       parsed.overrides.agent,
-      parsed.overrides.return
+      parsed.overrides.return,
     );
     log(
-      `buildInlineSubtaskPart: started loop for "${parsed.overrides.loop.until}" max=${parsed.overrides.loop.max}`
+      `buildInlineSubtaskPart: started loop for "${parsed.overrides.loop.until}" max=${parsed.overrides.loop.max}`,
     );
   }
 
@@ -69,10 +69,10 @@ export async function buildInlineSubtaskPart(
     registerPendingResultCaptureByPrompt(
       prompt,
       sessionID,
-      parsed.overrides.as
+      parsed.overrides.as,
     );
     log(
-      `buildInlineSubtaskPart: registered result capture as "${parsed.overrides.as}"`
+      `buildInlineSubtaskPart: registered result capture as "${parsed.overrides.as}"`,
     );
   }
 
@@ -90,7 +90,7 @@ export async function executeInlineSubtask(
     prompt: string;
     overrides: CommandOverrides;
   },
-  sessionID: string
+  sessionID: string,
 ) {
   let prompt = parsed.prompt;
 
@@ -109,7 +109,7 @@ export async function executeInlineSubtask(
   log(
     `executeInlineSubtask: prompt="${prompt.substring(0, 50)}...", model=${
       parsed.overrides.model
-    }, agent=${parsed.overrides.agent}`
+    }, agent=${parsed.overrides.agent}`,
   );
 
   // Start loop if configured
@@ -121,10 +121,10 @@ export async function executeInlineSubtask(
       prompt,
       parsed.overrides.model,
       parsed.overrides.agent,
-      parsed.overrides.return
+      parsed.overrides.return,
     );
     log(
-      `inline subtask: started loop for "${parsed.overrides.loop.until}" max=${parsed.overrides.loop.max}`
+      `inline subtask: started loop for "${parsed.overrides.loop.until}" max=${parsed.overrides.loop.max}`,
     );
   }
 
@@ -138,10 +138,10 @@ export async function executeInlineSubtask(
     registerPendingResultCaptureByPrompt(
       prompt,
       sessionID,
-      parsed.overrides.as
+      parsed.overrides.as,
     );
     log(
-      `executeInlineSubtask: registered result capture as "${parsed.overrides.as}"`
+      `executeInlineSubtask: registered result capture as "${parsed.overrides.as}"`,
     );
   }
 
@@ -159,14 +159,14 @@ export async function executeInlineSubtask(
   // Add parallel subtasks if specified
   if (parsed.overrides.parallel?.length) {
     const parallelCommands = parsed.overrides.parallel
-      .map(p => parseParallelItem(p))
+      .map((p) => parseParallelItem(p))
       .filter((p): p is NonNullable<typeof p> => p !== null);
 
     if (parallelCommands.length) {
       const parallelParts = await flattenParallels(
         parallelCommands,
         "", // No main args for inline subtask parallels
-        sessionID
+        sessionID,
       );
       for (const pp of parallelParts) {
         parts.push({
@@ -182,7 +182,7 @@ export async function executeInlineSubtask(
         }
       }
       log(
-        `executeInlineSubtask: added ${parallelParts.length} parallel subtasks`
+        `executeInlineSubtask: added ${parallelParts.length} parallel subtasks`,
       );
     }
   }
@@ -190,14 +190,14 @@ export async function executeInlineSubtask(
   // Execute as subtask via promptAsync
   try {
     log(
-      `executeInlineSubtask: calling promptAsync for session ${sessionID} with ${parts.length} parts`
+      `executeInlineSubtask: calling promptAsync for session ${sessionID} with ${parts.length} parts`,
     );
     const result = await client.session.promptAsync({
       path: { id: sessionID },
       body: { parts },
     });
     log(
-      `executeInlineSubtask: promptAsync returned: ${JSON.stringify(result)}`
+      `executeInlineSubtask: promptAsync returned: ${JSON.stringify(result)}`,
     );
   } catch (err) {
     log(`executeInlineSubtask ERROR: ${err}`);

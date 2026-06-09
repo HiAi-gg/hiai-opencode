@@ -6,54 +6,63 @@ import {
   lsp_prepare_rename,
   lsp_rename,
   lspManager,
-} from "./lsp"
+} from "./lsp";
 
-export { lspManager }
+export { lspManager };
 
-export { createAstGrepTools } from "./ast-grep"
-export { createGrepTools } from "./grep"
-export { createGlobTools } from "./glob"
-export { createSkillTool } from "./skill"
-export { discoverCommandsSync } from "./slashcommand"
-export { createSessionManagerTools } from "./session-manager"
+export { createAstGrepTools } from "./ast-grep";
+export { createGrepTools } from "./grep";
+export { createGlobTools } from "./glob";
+export { createSkillTool } from "./skill";
+export { discoverCommandsSync } from "./slashcommand";
+export { createSessionManagerTools } from "./session-manager";
 
-export { sessionExists } from "./session-manager/storage"
+export { sessionExists } from "./session-manager/storage";
 
-export { interactive_bash, startBackgroundCheck as startTmuxCheck } from "./interactive-bash"
-export { createSkillMcpTool } from "./skill-mcp"
+export {
+  interactive_bash,
+  startBackgroundCheck as startTmuxCheck,
+} from "./interactive-bash";
+export { createSkillMcpTool } from "./skill-mcp";
 
 import {
   createBackgroundOutput,
   createBackgroundCancel,
   type BackgroundOutputManager,
   type BackgroundCancelClient,
-} from "./background-task"
+} from "./background-task";
 
-import type { PluginInput, ToolDefinition } from "@opencode-ai/plugin"
-import type { BackgroundManager } from "../features/background-agent"
+import type { PluginInput, ToolDefinition } from "@opencode-ai/plugin";
+import type { BackgroundManager } from "../features/background-agent";
 
-type OpencodeClient = PluginInput["client"]
+type OpencodeClient = PluginInput["client"];
 
-export { createCallHiaiAgent } from "./call-hiai-agent"
-export { createLookAt } from "./look-at"
-export { createDelegateTask } from "./delegate-task"
+export { createCallHiaiAgent } from "./call-hiai-agent";
+export { createLookAt } from "./look-at";
+export { createDelegateTask } from "./delegate-task";
 export {
   createTaskCreateTool,
   createTaskGetTool,
   createTaskList,
   createTaskUpdateTool,
-} from "./task"
-export { createHashlineEditTool } from "./hashline-edit"
+} from "./task";
+export { createHashlineEditTool } from "./hashline-edit";
 
-export { createAgentBrowserTool, createAgentBrowserIntegrationTool } from "./agent-browser"
+export {
+  createAgentBrowserTool,
+  createAgentBrowserIntegrationTool,
+} from "./agent-browser";
 
-export function createBackgroundTools(manager: BackgroundManager, client: OpencodeClient): Record<string, ToolDefinition> {
-  const outputManager: BackgroundOutputManager = manager
-  const cancelClient: BackgroundCancelClient = client
+export function createBackgroundTools(
+  manager: BackgroundManager,
+  client: OpencodeClient,
+): Record<string, ToolDefinition> {
+  const outputManager: BackgroundOutputManager = manager;
+  const cancelClient: BackgroundCancelClient = client;
   return {
     background_output: createBackgroundOutput(outputManager, client),
     background_cancel: createBackgroundCancel(manager, cancelClient),
-  }
+  };
 }
 
 export const builtinTools: Record<string, ToolDefinition> = {
@@ -63,4 +72,4 @@ export const builtinTools: Record<string, ToolDefinition> = {
   lsp_diagnostics,
   lsp_prepare_rename,
   lsp_rename,
-}
+};

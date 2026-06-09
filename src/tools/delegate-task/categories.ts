@@ -1,23 +1,23 @@
-import type { CategoryConfig, CategoriesConfig } from "../../config/schema"
-import { DEFAULT_CATEGORIES, CATEGORY_PROMPT_APPENDS } from "./constants"
-import { resolveModel } from "../../shared/model-resolver"
-import { isModelAvailable } from "../../shared/model-availability"
-import { normalizeModel } from "../../shared/model-normalization"
-import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
-import { log } from "../../shared/logger"
+import type { CategoryConfig, CategoriesConfig } from "../../config/schema";
+import { DEFAULT_CATEGORIES, CATEGORY_PROMPT_APPENDS } from "./constants";
+import { resolveModel } from "../../shared/model-resolver";
+import { isModelAvailable } from "../../shared/model-availability";
+import { normalizeModel } from "../../shared/model-normalization";
+import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements";
+import { log } from "../../shared/logger";
 
 export interface ResolveCategoryConfigOptions {
-  userCategories?: CategoriesConfig
-  inheritedModel?: string
-  systemDefaultModel?: string
-  availableModels?: Set<string>
+  userCategories?: CategoriesConfig;
+  inheritedModel?: string;
+  systemDefaultModel?: string;
+  availableModels?: Set<string>;
 }
 
 export interface ResolveCategoryConfigResult {
-  config: CategoryConfig
-  promptAppend: string
-  model: string | undefined
-  isUserConfiguredModel: boolean
+  config: CategoryConfig;
+  promptAppend: string;
+  model: string | undefined;
+  isUserConfiguredModel: boolean;
 }
 
 /**
@@ -26,29 +26,36 @@ export interface ResolveCategoryConfigResult {
  */
 export function resolveCategoryConfig(
   categoryName: string,
-  options: ResolveCategoryConfigOptions
+  options: ResolveCategoryConfigOptions,
 ): ResolveCategoryConfigResult | null {
-  const { userCategories, inheritedModel: _inheritedModel, systemDefaultModel, availableModels } = options
+  const {
+    userCategories,
+    inheritedModel: _inheritedModel,
+    systemDefaultModel,
+    availableModels,
+  } = options;
 
-  const defaultConfig = DEFAULT_CATEGORIES[categoryName]
-  const userConfig = userCategories?.[categoryName]
-  const hasExplicitUserConfig = userConfig !== undefined
+  const defaultConfig = DEFAULT_CATEGORIES[categoryName];
+  const userConfig = userCategories?.[categoryName];
+  const hasExplicitUserConfig = userConfig !== undefined;
 
   if (userConfig?.disable) {
-    return null
+    return null;
   }
 
-  const categoryReq = CATEGORY_MODEL_REQUIREMENTS[categoryName]
+  const categoryReq = CATEGORY_MODEL_REQUIREMENTS[categoryName];
   if (categoryReq?.requiresModel && availableModels && !hasExplicitUserConfig) {
     if (!isModelAvailable(categoryReq.requiresModel, availableModels)) {
-      log(`[resolveCategoryConfig] Category ${categoryName} requires ${categoryReq.requiresModel} but not available`)
-      return null
+      log(
+        `[resolveCategoryConfig] Category ${categoryName} requires ${categoryReq.requiresModel} but not available`,
+      );
+      return null;
     }
   }
-  const defaultPromptAppend = CATEGORY_PROMPT_APPENDS[categoryName] ?? ""
+  const defaultPromptAppend = CATEGORY_PROMPT_APPENDS[categoryName] ?? "";
 
   if (!defaultConfig && !userConfig) {
-    return null
+    return null;
   }
 
   // Model priority for categories: user override > category default > system default
@@ -57,21 +64,21 @@ export function resolveCategoryConfig(
     userModel: userConfig?.model,
     inheritedModel: defaultConfig?.model, // Category's built-in model takes precedence over system default
     systemDefault: systemDefaultModel,
-  })
-  const isUserConfiguredModel = normalizeModel(userConfig?.model) !== undefined
+  });
+  const isUserConfiguredModel = normalizeModel(userConfig?.model) !== undefined;
   const config: CategoryConfig = {
     ...defaultConfig,
     ...userConfig,
     model,
     variant: userConfig?.variant ?? defaultConfig?.variant,
-  }
+  };
 
-  let promptAppend = defaultPromptAppend
+  let promptAppend = defaultPromptAppend;
   if (userConfig?.prompt_append) {
     promptAppend = defaultPromptAppend
-      ? defaultPromptAppend + "\n\n" + userConfig.prompt_append
-      : userConfig.prompt_append
+      ? `${defaultPromptAppend}\n\n${userConfig.prompt_append}`
+      : userConfig.prompt_append;
   }
 
-  return { config, promptAppend, model, isUserConfiguredModel }
+  return { config, promptAppend, model, isUserConfiguredModel };
 }

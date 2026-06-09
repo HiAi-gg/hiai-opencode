@@ -1,5 +1,5 @@
-import { z } from "zod"
-import { DynamicContextPruningConfigSchema } from "./dynamic-context-pruning"
+import { z } from "zod";
+import { DynamicContextPruningConfigSchema } from "./dynamic-context-pruning";
 
 export const ExperimentalConfigSchema = z.object({
   aggressive_truncation: z.boolean().optional(),
@@ -22,6 +22,6 @@ export const ExperimentalConfigSchema = z.object({
   model_fallback_title: z.boolean().optional(),
   /** Maximum number of tools to register. When set, lower-priority tools are excluded to stay within provider limits (e.g., OpenAI's 128-tool cap). Accounts for ~20 OpenCode built-in tools. */
   max_tools: z.number().int().min(1).optional(),
-})
+});
 
-export type ExperimentalConfig = z.infer<typeof ExperimentalConfigSchema>
+export type ExperimentalConfig = z.infer<typeof ExperimentalConfigSchema>;

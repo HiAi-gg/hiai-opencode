@@ -5,80 +5,96 @@
  * Single unified prompt across all models.
  */
 
-import type { AgentConfig } from "@opencode-ai/sdk"
-import type { AgentMode, AgentPromptMetadata } from "../types"
-import type { AvailableAgent, AvailableSkill, AvailableCategory } from "../dynamic-agent-prompt-builder"
-import { buildAgentIdentitySection, buildCategorySkillsDelegationGuide } from "../dynamic-agent-prompt-builder"
-import type { CategoryConfig } from "../../config/schema"
-import { mergeCategories } from "../../shared/merge-categories"
-import { createAgentToolRestrictions } from "../../shared/permission-compat"
+import type { AgentConfig } from "@opencode-ai/sdk";
+import type { AgentMode, AgentPromptMetadata } from "../types";
+import type {
+  AvailableAgent,
+  AvailableSkill,
+  AvailableCategory,
+} from "../dynamic-agent-prompt-builder";
+import {
+  buildAgentIdentitySection,
+  buildCategorySkillsDelegationGuide,
+} from "../dynamic-agent-prompt-builder";
+import type { CategoryConfig } from "../../config/schema";
+import { mergeCategories } from "../../shared/merge-categories";
+import { createAgentToolRestrictions } from "../../shared/permission-compat";
 
-import { getDefaultManagerPrompt } from "./default"
+import { getDefaultManagerPrompt } from "./default";
 import {
   getCategoryDescription,
   buildAgentSelectionSection,
   buildCategorySection,
   buildSkillsSection,
   buildDecisionMatrix,
-} from "./prompt-section-builder"
+} from "./prompt-section-builder";
 
-const MODE: AgentMode = "subagent"
+const MODE: AgentMode = "subagent";
 
-export type ManagerPromptSource = "default"
+export type ManagerPromptSource = "default";
 
 export function getManagerPromptSource(_model?: string): ManagerPromptSource {
-  return "default"
+  return "default";
 }
 
 export interface OrchestratorContext {
-  model?: string
-  availableAgents?: AvailableAgent[]
-  availableSkills?: AvailableSkill[]
-  userCategories?: Record<string, CategoryConfig>
+  model?: string;
+  availableAgents?: AvailableAgent[];
+  availableSkills?: AvailableSkill[];
+  userCategories?: Record<string, CategoryConfig>;
 }
 
 export function getManagerPrompt(_model?: string): string {
-  return getDefaultManagerPrompt()
+  return getDefaultManagerPrompt();
 }
 
 function buildDynamicOrchestratorPrompt(ctx?: OrchestratorContext): string {
-  const agents = ctx?.availableAgents ?? []
-  const skills = ctx?.availableSkills ?? []
-  const userCategories = ctx?.userCategories
+  const agents = ctx?.availableAgents ?? [];
+  const skills = ctx?.availableSkills ?? [];
+  const userCategories = ctx?.userCategories;
 
-  const allCategories = mergeCategories(userCategories)
-  const availableCategories: AvailableCategory[] = Object.entries(allCategories).map(([name]) => ({
+  const allCategories = mergeCategories(userCategories);
+  const availableCategories: AvailableCategory[] = Object.entries(
+    allCategories,
+  ).map(([name]) => ({
     name,
     description: getCategoryDescription(name, userCategories),
-  }))
+  }));
 
-  const categorySection = buildCategorySection(userCategories)
-  const agentSection = buildAgentSelectionSection(agents)
-  const decisionMatrix = buildDecisionMatrix(agents, userCategories)
-  const skillsSection = buildSkillsSection(skills)
-  const categorySkillsGuide = buildCategorySkillsDelegationGuide(availableCategories, skills)
+  const categorySection = buildCategorySection(userCategories);
+  const agentSection = buildAgentSelectionSection(agents);
+  const decisionMatrix = buildDecisionMatrix(agents, userCategories);
+  const skillsSection = buildSkillsSection(skills);
+  const categorySkillsGuide = buildCategorySkillsDelegationGuide(
+    availableCategories,
+    skills,
+  );
 
   const agentIdentity = buildAgentIdentitySection(
     "Manager",
     "Orchestrator agent from HiaiOpenCode that coordinates specialized agents to complete todo lists",
-  )
-  const basePrompt = getDefaultManagerPrompt()
+  );
+  const basePrompt = getDefaultManagerPrompt();
 
-  return agentIdentity + "\n" + basePrompt
-    .replace("{CATEGORY_SECTION}", categorySection)
-    .replace("{AGENT_SECTION}", agentSection)
-    .replace("{DECISION_MATRIX}", decisionMatrix)
-    .replace("{SKILLS_SECTION}", skillsSection)
-    .replace("{{CATEGORY_SKILLS_DELEGATION_GUIDE}}", categorySkillsGuide)
+  return (
+    agentIdentity +
+    "\n" +
+    basePrompt
+      .replace("{CATEGORY_SECTION}", categorySection)
+      .replace("{AGENT_SECTION}", agentSection)
+      .replace("{DECISION_MATRIX}", decisionMatrix)
+      .replace("{SKILLS_SECTION}", skillsSection)
+      .replace("{{CATEGORY_SKILLS_DELEGATION_GUIDE}}", categorySkillsGuide)
+  );
 }
 
 export function createManagerAgent(ctx: OrchestratorContext): AgentConfig {
   const restrictions = createAgentToolRestrictions([
-      "write",
-      "edit",
-      "bash",
-      "apply_patch",
-    ])
+    "write",
+    "edit",
+    "bash",
+    "apply_patch",
+  ]);
 
   const baseConfig = {
     ...restrictions,
@@ -99,11 +115,11 @@ export function createManagerAgent(ctx: OrchestratorContext): AgentConfig {
       "vision",
       "sub",
     ],
-  }
+  };
 
-  return baseConfig as AgentConfig
+  return baseConfig as AgentConfig;
 }
-createManagerAgent.mode = MODE
+createManagerAgent.mode = MODE;
 
 export const managerPromptMetadata: AgentPromptMetadata = {
   category: "advisor",
@@ -131,4 +147,4 @@ export const managerPromptMetadata: AgentPromptMetadata = {
   ],
   keyTrigger:
     "Todo list path provided OR multiple tasks requiring multi-agent orchestration",
-}
+};

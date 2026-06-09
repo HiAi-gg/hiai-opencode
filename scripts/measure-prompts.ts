@@ -8,25 +8,25 @@
  *
  * Run: bun run prompts:measure
  */
-import { mkdirSync, writeFileSync } from "node:fs"
-import { join } from "node:path"
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 
-import { createBobAgent } from "../src/agents/bob"
-import { createCoderAgent } from "../src/agents/coder/agent"
-import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent"
-import { createManagerAgent } from "../src/agents/manager/agent"
-import { getStrategistPrompt } from "../src/agents/strategist/system-prompt"
-import { createResearcherAgent } from "../src/agents/researcher"
-import { createDesignerAgent } from "../src/agents/designer"
-import { createMultimodalLookerAgent } from "../src/agents/ui"
-import { createCriticAgent } from "../src/agents/critic/agent"
-import { createQualityGuardianAgent } from "../src/agents/quality-guardian"
-import { createWriterAgent } from "../src/agents/writer"
+import { createBobAgent } from "../src/agents/bob";
+import { createCoderAgent } from "../src/agents/coder/agent";
+import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent";
+import { createManagerAgent } from "../src/agents/manager/agent";
+import { getStrategistPrompt } from "../src/agents/strategist/system-prompt";
+import { createResearcherAgent } from "../src/agents/researcher";
+import { createDesignerAgent } from "../src/agents/designer";
+import { createMultimodalLookerAgent } from "../src/agents/ui";
+import { createCriticAgent } from "../src/agents/critic/agent";
+import { createQualityGuardianAgent } from "../src/agents/quality-guardian";
+import { createWriterAgent } from "../src/agents/writer";
 
 interface Snapshot {
-  agent: string
-  bytes: number
-  lines: number
+  agent: string;
+  bytes: number;
+  lines: number;
 }
 
 function snapshot(agent: string, prompt: string): Snapshot {
@@ -34,19 +34,22 @@ function snapshot(agent: string, prompt: string): Snapshot {
     agent,
     bytes: Buffer.byteLength(prompt, "utf8"),
     lines: prompt.split("\n").length,
-  }
+  };
 }
 
 function asPrompt(cfg: { prompt?: string }): string {
-  return cfg.prompt ?? ""
+  return cfg.prompt ?? "";
 }
 
-const stubModel = "openrouter/anthropic/claude-sonnet-4-20250514"
+const stubModel = "openrouter/anthropic/claude-sonnet-4-20250514";
 
 const snapshots: Snapshot[] = [
   snapshot("bob", asPrompt(createBobAgent(stubModel))),
   snapshot("coder", asPrompt(createCoderAgent(stubModel))),
-  snapshot("sub", asPrompt(createBobJuniorAgentWithOverrides(undefined, stubModel))),
+  snapshot(
+    "sub",
+    asPrompt(createBobJuniorAgentWithOverrides(undefined, stubModel)),
+  ),
   snapshot("manager", asPrompt(createManagerAgent({ model: stubModel }))),
   snapshot("strategist", getStrategistPrompt(stubModel)),
   snapshot("researcher", asPrompt(createResearcherAgent(stubModel))),
@@ -55,22 +58,25 @@ const snapshots: Snapshot[] = [
   snapshot("vision", asPrompt(createMultimodalLookerAgent(stubModel))),
   snapshot("critic", asPrompt(createCriticAgent(stubModel))),
   snapshot("quality-guardian", asPrompt(createQualityGuardianAgent(stubModel))),
-]
+];
 
-snapshots.sort((a, b) => a.agent.localeCompare(b.agent))
+snapshots.sort((a, b) => a.agent.localeCompare(b.agent));
 
-const outDir = join(process.cwd(), "dist", "prompt-snapshots")
-mkdirSync(outDir, { recursive: true })
+const outDir = join(process.cwd(), "dist", "prompt-snapshots");
+mkdirSync(outDir, { recursive: true });
 
 const summary = snapshots
-  .map((s) => `${s.agent.padEnd(20)} ${String(s.bytes).padStart(7)} bytes  ${String(s.lines).padStart(5)} lines`)
-  .join("\n")
+  .map(
+    (s) =>
+      `${s.agent.padEnd(20)} ${String(s.bytes).padStart(7)} bytes  ${String(s.lines).padStart(5)} lines`,
+  )
+  .join("\n");
 
-const total = snapshots.reduce((sum, s) => sum + s.bytes, 0)
-const totalLine = `\n${"TOTAL".padEnd(20)} ${String(total).padStart(7)} bytes`
+const total = snapshots.reduce((sum, s) => sum + s.bytes, 0);
+const totalLine = `\n${"TOTAL".padEnd(20)} ${String(total).padStart(7)} bytes`;
 
-writeFileSync(join(outDir, "summary.txt"), summary + totalLine + "\n", "utf8")
+writeFileSync(join(outDir, "summary.txt"), `${summary + totalLine}\n`, "utf8");
 
-console.log(summary)
-console.log(totalLine.trim())
-console.log(`\nWrote: ${join(outDir, "summary.txt")}`)
+console.log(summary);
+console.log(totalLine.trim());
+console.log(`\nWrote: ${join(outDir, "summary.txt")}`);

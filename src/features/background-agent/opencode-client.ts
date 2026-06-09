@@ -1,3 +1,3 @@
-import type { PluginInput } from "@opencode-ai/plugin"
+import type { PluginInput } from "@opencode-ai/plugin";
 
-export type OpencodeClient = PluginInput["client"]
+export type OpencodeClient = PluginInput["client"];

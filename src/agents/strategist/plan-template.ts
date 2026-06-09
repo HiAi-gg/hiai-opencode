@@ -337,4 +337,4 @@ command  # Expected: output
 \`\`\`
 
 ---
-`
+`;

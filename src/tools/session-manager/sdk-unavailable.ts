@@ -9,35 +9,33 @@ const SDK_UNAVAILABLE_PATTERNS = [
   "timed out",
   "timeout",
   "socket hang up",
-] as const
+] as const;
 
 function collectErrorTexts(value: unknown): string[] {
   if (value instanceof Error) {
-    return [value.message, value.name, ...collectErrorTexts(value.cause)]
+    return [value.message, value.name, ...collectErrorTexts(value.cause)];
   }
 
   if (typeof value === "string") {
-    return [value]
+    return [value];
   }
 
   if (!value || typeof value !== "object") {
-    return []
+    return [];
   }
 
-  const record = value as Record<string, unknown>
+  const record = value as Record<string, unknown>;
   return [
     typeof record.message === "string" ? record.message : "",
     typeof record.code === "string" ? record.code : "",
     typeof record.name === "string" ? record.name : "",
     ...collectErrorTexts(record.cause),
     ...collectErrorTexts(record.error),
-  ].filter(Boolean)
+  ].filter(Boolean);
 }
 
 export function isSessionSdkUnavailableError(value: unknown): boolean {
-  const haystack = collectErrorTexts(value)
-    .join(" ")
-    .toLowerCase()
+  const haystack = collectErrorTexts(value).join(" ").toLowerCase();
 
-  return SDK_UNAVAILABLE_PATTERNS.some((pattern) => haystack.includes(pattern))
+  return SDK_UNAVAILABLE_PATTERNS.some((pattern) => haystack.includes(pattern));
 }

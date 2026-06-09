@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const RuntimeFallbackConfigSchema = z.object({
   /** Enable runtime fallback (default: false) */
@@ -13,6 +13,6 @@ export const RuntimeFallbackConfigSchema = z.object({
   timeout_seconds: z.number().min(0).optional(),
   /** Show toast notification when switching to fallback model (default: true) */
   notify_on_fallback: z.boolean().optional(),
-})
+});
 
-export type RuntimeFallbackConfig = z.infer<typeof RuntimeFallbackConfigSchema>
+export type RuntimeFallbackConfig = z.infer<typeof RuntimeFallbackConfigSchema>;

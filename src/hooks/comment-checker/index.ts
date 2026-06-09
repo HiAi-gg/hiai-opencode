@@ -1,1 +1,1 @@
-export { createCommentCheckerHooks } from "./hook"
+export { createCommentCheckerHooks } from "./hook";

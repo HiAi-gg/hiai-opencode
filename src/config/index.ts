@@ -26,14 +26,21 @@ export type { HiaiOpenCodeConfig } from "./schema/hiai-opencode-config.js";
 
 // Agent types
 export type { AgentName } from "./schema/agent-names.js";
-export type { AgentOverrideConfig, AgentOverrides } from "./schema/agent-overrides.js";
+export type {
+  AgentOverrideConfig,
+  AgentOverrides,
+} from "./schema/agent-overrides.js";
 export type { BuiltinSkillName } from "./schema/agent-names.js";
 
 // Hook types
 export type { HookName } from "./schema/hooks.js";
 
 // Category types
-export type { CategoryConfig as OhMyCategoryConfig, CategoriesConfig, BuiltinCategoryName } from "./schema/categories.js";
+export type {
+  CategoryConfig as OhMyCategoryConfig,
+  CategoriesConfig,
+  BuiltinCategoryName,
+} from "./schema/categories.js";
 
 // MCP types
 export type { McpName, AnyMcpName } from "../mcp/types.js";
@@ -53,7 +60,10 @@ export type { BabysittingConfig } from "./schema/babysitting.js";
 export type { ExperimentalConfig } from "./schema/experimental.js";
 export type { NotificationConfig } from "./schema/notification.js";
 export type { RuntimeFallbackConfig } from "./schema/runtime-fallback.js";
-export type { FallbackModelObject, FallbackModels } from "./schema/fallback-models.js";
+export type {
+  FallbackModelObject,
+  FallbackModels,
+} from "./schema/fallback-models.js";
 export type { BobAgentConfig } from "./schema/bob-agent.js";
 export type { StartWorkConfig } from "./schema/start-work.js";
 export type { RalphLoopConfig } from "./schema/ralph-loop.js";

@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const SkillSourceSchema = z.union([
   z.string(),
@@ -7,7 +7,7 @@ export const SkillSourceSchema = z.union([
     recursive: z.boolean().optional(),
     glob: z.string().optional(),
   }),
-])
+]);
 
 export const SkillDefinitionSchema = z.object({
   description: z.string().optional(),
@@ -22,18 +22,20 @@ export const SkillDefinitionSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
   "allowed-tools": z.array(z.string()).optional(),
   disable: z.boolean().optional(),
-})
+});
 
-export const SkillEntrySchema = z.union([z.boolean(), SkillDefinitionSchema])
+export const SkillEntrySchema = z.union([z.boolean(), SkillDefinitionSchema]);
 
 export const SkillsConfigSchema = z.union([
   z.array(z.string()),
-  z.object({
-    sources: z.array(SkillSourceSchema).optional(),
-    enable: z.array(z.string()).optional(),
-    disable: z.array(z.string()).optional(),
-  }).catchall(SkillEntrySchema),
-])
+  z
+    .object({
+      sources: z.array(SkillSourceSchema).optional(),
+      enable: z.array(z.string()).optional(),
+      disable: z.array(z.string()).optional(),
+    })
+    .catchall(SkillEntrySchema),
+]);
 
-export type SkillsConfig = z.infer<typeof SkillsConfigSchema>
-export type SkillDefinition = z.infer<typeof SkillDefinitionSchema>
+export type SkillsConfig = z.infer<typeof SkillsConfigSchema>;
+export type SkillDefinition = z.infer<typeof SkillDefinitionSchema>;

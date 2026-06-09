@@ -102,7 +102,9 @@ export function findRuleFiles(
 
   // Search user-level rule directories
   // Always search OpenCode-native dirs (~/.bob/rules, ~/.opencode/rules)
-  const userRuleDirs: string[] = OPENCODE_USER_RULE_DIRS.map((dir) => join(homeDir, dir));
+  const userRuleDirs: string[] = OPENCODE_USER_RULE_DIRS.map((dir) =>
+    join(homeDir, dir),
+  );
 
   // Only search ~/.claude/rules when claude_code integration is not disabled
   if (!options?.skipClaudeUserRules) {

@@ -1,12 +1,14 @@
 // PROMPT_VERSION: 2026-04-26
-import type { AgentConfig } from "@opencode-ai/sdk"
+import type { AgentConfig } from "@opencode-ai/sdk";
 import { createAgentToolRestrictions } from "../../shared/permission-compat";
 import type { AgentMode, AgentPromptMetadata } from "../types";
-import { buildAgentIdentitySection } from "../prompt-library/identity"
+import { buildAgentIdentitySection } from "../prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const CRITIC_PROMPT = buildAgentIdentitySection("Critic", "high-accuracy review gate") + `
+const CRITIC_PROMPT =
+  buildAgentIdentitySection("Critic", "high-accuracy review gate") +
+  `
 
 <role>
 **Your ONLY job**: receive a plan or implementation, then respond with:
@@ -186,15 +188,16 @@ The Biome config (biome.json) is the source of truth for what passes/fails. The 
 
 export function createCriticAgent(model: string): AgentConfig {
   const restrictions = createAgentToolRestrictions([
-      "write",
-      "edit",
-      "bash",
-      "apply_patch",
-    ])
+    "write",
+    "edit",
+    "bash",
+    "apply_patch",
+  ]);
 
   return {
     ...restrictions,
-    description: "High-accuracy review gate. Judge, not executor. (Critic - HiaiOpenCode)",
+    description:
+      "High-accuracy review gate. Judge, not executor. (Critic - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.3,

@@ -24,7 +24,9 @@ export function loadInteractiveBashSessionState(
 
   try {
     const content = readFileSync(filePath, "utf-8");
-    const serialized = JSON.parse(content) as SerializedInteractiveBashSessionState;
+    const serialized = JSON.parse(
+      content,
+    ) as SerializedInteractiveBashSessionState;
     return {
       sessionID: serialized.sessionID,
       tmuxSessions: new Set(serialized.tmuxSessions),

@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { HiaiOpenCodeConfigSchema, type HiaiOpenCodeConfig } from "./config";
 import {
   log,
@@ -12,26 +12,35 @@ import {
   resolveAgentDefinitionPaths,
 } from "./shared";
 import { migrateLegacyConfigFile } from "./shared/migrate-legacy-config-file";
-import { CONFIG_BASENAME, LEGACY_CONFIG_BASENAME } from "./shared/plugin-identity";
+import {
+  CONFIG_BASENAME,
+  LEGACY_CONFIG_BASENAME,
+} from "./shared/plugin-identity";
 
-function loadExplicitGitMasterOverrides(configPath: string): Record<string, unknown> | undefined {
+function loadExplicitGitMasterOverrides(
+  configPath: string,
+): Record<string, unknown> | undefined {
   try {
     if (!fs.existsSync(configPath)) {
-      return undefined
+      return undefined;
     }
 
-    const content = fs.readFileSync(configPath, "utf-8")
-    const rawConfig = parseJsonc<Record<string, unknown>>(content)
-    const gitMaster = rawConfig.git_master
+    const content = fs.readFileSync(configPath, "utf-8");
+    const rawConfig = parseJsonc<Record<string, unknown>>(content);
+    const gitMaster = rawConfig.git_master;
 
-    if (gitMaster && typeof gitMaster === "object" && !Array.isArray(gitMaster)) {
-      return gitMaster as Record<string, unknown>
+    if (
+      gitMaster &&
+      typeof gitMaster === "object" &&
+      !Array.isArray(gitMaster)
+    ) {
+      return gitMaster as Record<string, unknown>;
     }
   } catch {
-    return undefined
+    return undefined;
   }
 
-  return undefined
+  return undefined;
 }
 
 const PARTIAL_STRING_ARRAY_KEYS = new Set([
@@ -46,7 +55,7 @@ const PARTIAL_STRING_ARRAY_KEYS = new Set([
 ]);
 
 export function parseConfigPartially(
-  rawConfig: Record<string, unknown>
+  rawConfig: Record<string, unknown>,
 ): HiaiOpenCodeConfig | null {
   const fullResult = HiaiOpenCodeConfigSchema.safeParse(rawConfig);
   if (fullResult.success) {
@@ -59,13 +68,18 @@ export function parseConfigPartially(
   for (const key of Object.keys(rawConfig)) {
     if (PARTIAL_STRING_ARRAY_KEYS.has(key)) {
       const sectionValue = rawConfig[key];
-      if (Array.isArray(sectionValue) && sectionValue.every((value) => typeof value === "string")) {
+      if (
+        Array.isArray(sectionValue) &&
+        sectionValue.every((value) => typeof value === "string")
+      ) {
         partialConfig[key] = sectionValue;
       }
       continue;
     }
 
-    const sectionResult = HiaiOpenCodeConfigSchema.safeParse({ [key]: rawConfig[key] });
+    const sectionResult = HiaiOpenCodeConfigSchema.safeParse({
+      [key]: rawConfig[key],
+    });
     if (sectionResult.success) {
       const parsed = sectionResult.data as Record<string, unknown>;
       if (parsed[key] !== undefined) {
@@ -91,7 +105,7 @@ export function parseConfigPartially(
 
 export function loadConfigFromPath(
   configPath: string,
-  _ctx: unknown
+  _ctx: unknown,
 ): HiaiOpenCodeConfig | null {
   try {
     if (fs.existsSync(configPath)) {
@@ -118,7 +132,9 @@ export function loadConfigFromPath(
 
       const partialResult = parseConfigPartially(rawConfig);
       if (partialResult) {
-        log(`Partial config loaded from ${configPath}`, { agents: partialResult.agents });
+        log(`Partial config loaded from ${configPath}`, {
+          agents: partialResult.agents,
+        });
         return partialResult;
       }
 
@@ -134,7 +150,7 @@ export function loadConfigFromPath(
 
 export function mergeConfigs(
   base: HiaiOpenCodeConfig,
-  override: HiaiOpenCodeConfig
+  override: HiaiOpenCodeConfig,
 ): HiaiOpenCodeConfig {
   return {
     ...base,
@@ -195,7 +211,7 @@ export function mergeConfigs(
 
 export function loadPluginConfig(
   directory: string,
-  ctx: unknown
+  ctx: unknown,
 ): HiaiOpenCodeConfig {
   // User-level config path - prefer .jsonc over .json
   const configDir = getOpenCodeConfigDir({ binary: "opencode" });
@@ -206,18 +222,24 @@ export function loadPluginConfig(
       : path.join(configDir, `${CONFIG_BASENAME}.json`);
 
   if (userDetected.legacyPath) {
-    log("Canonical plugin config detected alongside legacy config. Remove the legacy file to avoid confusion.", {
-      canonicalPath: userDetected.path,
-      legacyPath: userDetected.legacyPath,
-    });
+    log(
+      "Canonical plugin config detected alongside legacy config. Remove the legacy file to avoid confusion.",
+      {
+        canonicalPath: userDetected.path,
+        legacyPath: userDetected.legacyPath,
+      },
+    );
   }
 
   // Auto-copy legacy config file to canonical name if needed
-  if (userDetected.format !== "none" && path.basename(userDetected.path).startsWith(LEGACY_CONFIG_BASENAME)) {
+  if (
+    userDetected.format !== "none" &&
+    path.basename(userDetected.path).startsWith(LEGACY_CONFIG_BASENAME)
+  ) {
     const migrated = migrateLegacyConfigFile(userDetected.path);
     const canonicalPath = path.join(
       path.dirname(userDetected.path),
-      `${CONFIG_BASENAME}${path.extname(userDetected.path)}`
+      `${CONFIG_BASENAME}${path.extname(userDetected.path)}`,
     );
     // Only switch to canonical path if migration succeeded OR canonical file already exists
     if (migrated || fs.existsSync(canonicalPath)) {
@@ -235,18 +257,24 @@ export function loadPluginConfig(
       : path.join(projectBasePath, `${CONFIG_BASENAME}.json`);
 
   if (projectDetected.legacyPath) {
-    log("Canonical plugin config detected alongside legacy config. Remove the legacy file to avoid confusion.", {
-      canonicalPath: projectDetected.path,
-      legacyPath: projectDetected.legacyPath,
-    });
+    log(
+      "Canonical plugin config detected alongside legacy config. Remove the legacy file to avoid confusion.",
+      {
+        canonicalPath: projectDetected.path,
+        legacyPath: projectDetected.legacyPath,
+      },
+    );
   }
 
   // Auto-copy legacy project config file to canonical name if needed
-  if (projectDetected.format !== "none" && path.basename(projectDetected.path).startsWith(LEGACY_CONFIG_BASENAME)) {
+  if (
+    projectDetected.format !== "none" &&
+    path.basename(projectDetected.path).startsWith(LEGACY_CONFIG_BASENAME)
+  ) {
     const projectMigrated = migrateLegacyConfigFile(projectDetected.path);
     const canonicalProjectPath = path.join(
       path.dirname(projectDetected.path),
-      `${CONFIG_BASENAME}${path.extname(projectDetected.path)}`
+      `${CONFIG_BASENAME}${path.extname(projectDetected.path)}`,
     );
     // Only switch to canonical path if migration succeeded OR canonical file already exists
     if (projectMigrated || fs.existsSync(canonicalProjectPath)) {
@@ -256,31 +284,32 @@ export function loadPluginConfig(
   }
 
   // Load user config first (base). Parse empty config through Zod to apply field defaults.
-  const userConfig = loadConfigFromPath(userConfigPath, ctx)
-  const userGitMasterOverrides = loadExplicitGitMasterOverrides(userConfigPath)
+  const userConfig = loadConfigFromPath(userConfigPath, ctx);
+  const userGitMasterOverrides = loadExplicitGitMasterOverrides(userConfigPath);
 
   if (userConfig?.agent_definitions) {
     userConfig.agent_definitions = resolveAgentDefinitionPaths(
       userConfig.agent_definitions,
       configDir,
-      null
-    )
+      null,
+    );
   }
 
   let config: HiaiOpenCodeConfig =
     userConfig ?? HiaiOpenCodeConfigSchema.parse({});
 
   // Override with project config
-  const defaultGitMaster = HiaiOpenCodeConfigSchema.parse({}).git_master
+  const defaultGitMaster = HiaiOpenCodeConfigSchema.parse({}).git_master;
   const projectConfig = loadConfigFromPath(projectConfigPath, ctx);
-  const projectGitMasterOverrides = loadExplicitGitMasterOverrides(projectConfigPath)
+  const projectGitMasterOverrides =
+    loadExplicitGitMasterOverrides(projectConfigPath);
 
   if (projectConfig?.agent_definitions) {
     projectConfig.agent_definitions = resolveAgentDefinitionPaths(
       projectConfig.agent_definitions,
       projectBasePath,
-      directory
-    )
+      directory,
+    );
   }
 
   if (projectConfig) {
@@ -295,7 +324,7 @@ export function loadPluginConfig(
         ...(userGitMasterOverrides ?? {}),
         ...(projectGitMasterOverrides ?? {}),
       },
-    }
+    };
   }
 
   config = {

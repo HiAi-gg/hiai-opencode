@@ -2,7 +2,9 @@ import type { HiaiOpenCodeConfig } from "../../config";
 import type { CreatedHooks } from "../../create-hooks";
 import type { Managers } from "../../create-managers";
 
-export type EventInput = Parameters<NonNullable<NonNullable<CreatedHooks["writeExistingFileGuard"]>["event"]>>[0];
+export type EventInput = Parameters<
+  NonNullable<NonNullable<CreatedHooks["writeExistingFileGuard"]>["event"]>
+>[0];
 
 export type PluginContextTyped = {
   directory: string;
@@ -34,7 +36,13 @@ export type EventHandlerDeps = {
   lastKnownModelBySession: Map<string, { providerID: string; modelID: string }>;
   lastHandledModelErrorMessageID: Map<string, string>;
   lastHandledRetryStatusKey: Map<string, string>;
-  resolveFallbackProviderID: (sessionID: string, providerHint?: string) => string;
+  resolveFallbackProviderID: (
+    sessionID: string,
+    providerHint?: string,
+  ) => string;
   shouldAutoRetrySession: (sessionID: string) => boolean;
-  autoContinueAfterFallback: (sessionID: string, source: string) => Promise<void>;
+  autoContinueAfterFallback: (
+    sessionID: string,
+    source: string,
+  ) => Promise<void>;
 };

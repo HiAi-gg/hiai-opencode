@@ -1,6 +1,9 @@
 import type { CategoryConfig } from "../config/schema";
 import { buildAgentIdentitySection } from "../agents/prompt-library/identity";
-import { STRATEGIST_PERMISSION, getStrategistPrompt } from "../agents/strategist";
+import {
+  STRATEGIST_PERMISSION,
+  getStrategistPrompt,
+} from "../agents/strategist";
 import { resolvePromptAppend } from "../agents/builtin-agents/resolve-file-uri";
 import { AGENT_MODEL_REQUIREMENTS } from "../shared/model-requirements";
 import type { FallbackEntry } from "../shared/model-requirements";
@@ -33,7 +36,8 @@ function isModelInFallbackChain(
   }
 
   const modelParts = model.split("/");
-  const modelName = modelParts.length >= 2 ? modelParts.slice(1).join("/") : model;
+  const modelName =
+    modelParts.length >= 2 ? modelParts.slice(1).join("/") : model;
 
   return fallbackChain.some((entry) => entry.model === modelName);
 }
@@ -46,10 +50,13 @@ export async function buildStrategistAgentConfig(params: {
   disabledTools?: readonly string[];
 }): Promise<Record<string, unknown>> {
   const categoryConfig = params.pluginStrategistOverride?.category
-    ? resolveCategoryConfig(params.pluginStrategistOverride.category, params.userCategories)
+    ? resolveCategoryConfig(
+        params.pluginStrategistOverride.category,
+        params.userCategories,
+      )
     : undefined;
 
-  const requirement = AGENT_MODEL_REQUIREMENTS["strategist"];
+  const requirement = AGENT_MODEL_REQUIREMENTS.strategist;
   const connectedProviders = readConnectedProvidersCache();
   const availableModels = await fetchAvailableModels(undefined, {
     connectedProviders: connectedProviders ?? undefined,
@@ -83,15 +90,20 @@ export async function buildStrategistAgentConfig(params: {
   const resolvedModel = modelResolution?.model;
   const resolvedVariant = modelResolution?.variant;
 
-  const variantToUse = params.pluginStrategistOverride?.variant ?? resolvedVariant;
+  const variantToUse =
+    params.pluginStrategistOverride?.variant ?? resolvedVariant;
   const reasoningEffortToUse =
-    params.pluginStrategistOverride?.reasoningEffort ?? categoryConfig?.reasoningEffort;
+    params.pluginStrategistOverride?.reasoningEffort ??
+    categoryConfig?.reasoningEffort;
   const textVerbosityToUse =
-    params.pluginStrategistOverride?.textVerbosity ?? categoryConfig?.textVerbosity;
-  const thinkingToUse = params.pluginStrategistOverride?.thinking ?? categoryConfig?.thinking;
+    params.pluginStrategistOverride?.textVerbosity ??
+    categoryConfig?.textVerbosity;
+  const thinkingToUse =
+    params.pluginStrategistOverride?.thinking ?? categoryConfig?.thinking;
   const temperatureToUse =
     params.pluginStrategistOverride?.temperature ?? categoryConfig?.temperature;
-  const topPToUse = params.pluginStrategistOverride?.top_p ?? categoryConfig?.top_p;
+  const topPToUse =
+    params.pluginStrategistOverride?.top_p ?? categoryConfig?.top_p;
   const maxTokensToUse =
     params.pluginStrategistOverride?.maxTokens ?? categoryConfig?.maxTokens;
 
@@ -99,12 +111,17 @@ export async function buildStrategistAgentConfig(params: {
     ...(resolvedModel ? { model: resolvedModel } : {}),
     ...(variantToUse ? { variant: variantToUse } : {}),
     mode: "all",
-    prompt: buildAgentIdentitySection("Strategist", "strategic planning consultant") + "\n\n" + getStrategistPrompt(resolvedModel, params.disabledTools),
+    prompt:
+      buildAgentIdentitySection("Strategist", "strategic planning consultant") +
+      "\n\n" +
+      getStrategistPrompt(resolvedModel, params.disabledTools),
     permission: STRATEGIST_PERMISSION,
     description: `${(params.configAgentPlan?.description as string) ?? "Plan agent"} (Strategist - HiaiOpenCode)`,
     color: (params.configAgentPlan?.color as string) ?? "#FF5722",
     delegate_to: ["researcher", "manager", "critic", "writer"],
-    ...(temperatureToUse !== undefined ? { temperature: temperatureToUse } : {}),
+    ...(temperatureToUse !== undefined
+      ? { temperature: temperatureToUse }
+      : {}),
     ...(topPToUse !== undefined ? { top_p: topPToUse } : {}),
     ...(maxTokensToUse !== undefined ? { maxTokens: maxTokensToUse } : {}),
     ...(categoryConfig?.tools ? { tools: categoryConfig.tools } : {}),
@@ -123,7 +140,7 @@ export async function buildStrategistAgentConfig(params: {
   const { prompt_append, ...restOverride } = override;
   const merged = { ...base, ...restOverride };
   if (prompt_append && typeof merged.prompt === "string") {
-    merged.prompt = merged.prompt + "\n" + resolvePromptAppend(prompt_append);
+    merged.prompt = `${merged.prompt}\n${resolvePromptAppend(prompt_append)}`;
   }
   return merged;
 }

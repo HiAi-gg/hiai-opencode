@@ -1,39 +1,45 @@
-import type { AvailableCategory, AvailableSkill } from "./agents/dynamic-agent-prompt-builder"
-import type { HiaiOpenCodeConfig } from "./config"
-import type { HiaiOpencodeConfig } from "./config/types"
-import type { BrowserAutomationProvider } from "./config/schema/browser-automation"
-import type { LoadedSkill } from "./features/opencode-skill-loader/types"
-import type { PluginContext, ToolsRecord } from "./plugin/types"
-import type { Managers } from "./create-managers"
+import type {
+  AvailableCategory,
+  AvailableSkill,
+} from "./agents/dynamic-agent-prompt-builder";
+import type { HiaiOpenCodeConfig } from "./config";
+import type { HiaiOpencodeConfig } from "./config/types";
+import type { BrowserAutomationProvider } from "./config/schema/browser-automation";
+import type { LoadedSkill } from "./features/opencode-skill-loader/types";
+import type { PluginContext, ToolsRecord } from "./plugin/types";
+import type { Managers } from "./create-managers";
 
-import { createAvailableCategories } from "./plugin/available-categories"
-import { createSkillContext } from "./plugin/skill-context"
-import { createToolRegistry } from "./plugin/tool-registry"
+import { createAvailableCategories } from "./plugin/available-categories";
+import { createSkillContext } from "./plugin/skill-context";
+import { createToolRegistry } from "./plugin/tool-registry";
 
 type CreateToolsResult = {
-  filteredTools: ToolsRecord
-  mergedSkills: LoadedSkill[]
-  availableSkills: AvailableSkill[]
-  availableCategories: AvailableCategory[]
-  browserProvider: BrowserAutomationProvider
-  disabledSkills: Set<string>
-  taskSystemEnabled: boolean
-}
+  filteredTools: ToolsRecord;
+  mergedSkills: LoadedSkill[];
+  availableSkills: AvailableSkill[];
+  availableCategories: AvailableCategory[];
+  browserProvider: BrowserAutomationProvider;
+  disabledSkills: Set<string>;
+  taskSystemEnabled: boolean;
+};
 
 export async function createTools(args: {
-  ctx: PluginContext
-  pluginConfig: HiaiOpenCodeConfig
-  platformConfig?: HiaiOpencodeConfig
-  managers: Pick<Managers, "backgroundManager" | "tmuxSessionManager" | "skillMcpManager">
+  ctx: PluginContext;
+  pluginConfig: HiaiOpenCodeConfig;
+  platformConfig?: HiaiOpencodeConfig;
+  managers: Pick<
+    Managers,
+    "backgroundManager" | "tmuxSessionManager" | "skillMcpManager"
+  >;
 }): Promise<CreateToolsResult> {
-  const { ctx, pluginConfig, platformConfig, managers } = args
+  const { ctx, pluginConfig, platformConfig, managers } = args;
 
   const skillContext = await createSkillContext({
     directory: ctx.directory,
     pluginConfig,
-  })
+  });
 
-  const availableCategories = createAvailableCategories(pluginConfig)
+  const availableCategories = createAvailableCategories(pluginConfig);
 
   const { filteredTools, taskSystemEnabled } = createToolRegistry({
     ctx,
@@ -42,7 +48,7 @@ export async function createTools(args: {
     skillContext,
     availableCategories,
     builtinMcp: platformConfig?.mcp,
-  })
+  });
 
   return {
     filteredTools,
@@ -52,5 +58,5 @@ export async function createTools(args: {
     browserProvider: skillContext.browserProvider,
     disabledSkills: skillContext.disabledSkills,
     taskSystemEnabled,
-  }
+  };
 }

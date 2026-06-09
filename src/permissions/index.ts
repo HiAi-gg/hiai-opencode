@@ -14,7 +14,10 @@ export function buildPermissions(
 
   const mcpPerms = buildMcpPermissions(mcp);
   if (Object.keys(mcpPerms).length > 0) {
-    result.bash = { ...(result.bash as Record<string, string> || {}), ...mcpPerms };
+    result.bash = {
+      ...((result.bash as Record<string, string>) || {}),
+      ...mcpPerms,
+    };
   }
 
   if (perms.deny_paths && perms.deny_paths.length > 0) {

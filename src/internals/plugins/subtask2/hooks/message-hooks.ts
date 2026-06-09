@@ -1,8 +1,6 @@
 import {
   getClient,
   getReturnState,
-  deleteReturnState,
-  setReturnState,
   getPluginConfig,
   getAllPendingReturns,
   deletePendingReturn,
@@ -46,7 +44,7 @@ import {
 async function makePartVisible(
   part: any,
   msg: any,
-  newText: string
+  newText: string,
 ): Promise<void> {
   const client = getClient();
   if (!client) {
@@ -61,19 +59,22 @@ async function makePartVisible(
 
   if (!partID || !messageID || !sessionID) {
     log(
-      `makePartVisible: missing IDs - partID=${partID}, messageID=${messageID}, sessionID=${sessionID}`
+      `makePartVisible: missing IDs - partID=${partID}, messageID=${messageID}, sessionID=${sessionID}`,
     );
     return;
   }
 
   log(
-    `makePartVisible: updating part ${partID} in DB to be visible with text: "${newText.substring(0, 50)}..."`
+    `makePartVisible: updating part ${partID} in DB to be visible with text: "${newText.substring(0, 50)}..."`,
   );
 
   // Use the internal HTTP client from v1 SDK
   try {
     // SDK v1 exposes the inner HTTP client only via untyped internal fields.
-    const internal = client as unknown as { client?: { patch?: (...args: unknown[]) => unknown }; _client?: { patch?: (...args: unknown[]) => unknown } };
+    const internal = client as unknown as {
+      client?: { patch?: (...args: unknown[]) => unknown };
+      _client?: { patch?: (...args: unknown[]) => unknown };
+    };
     const httpClient = internal.client ?? internal._client;
     if (httpClient?.patch) {
       await httpClient.patch({
@@ -90,7 +91,7 @@ async function makePartVisible(
       log(`makePartVisible: success`);
     } else {
       log(
-        `makePartVisible: no internal HTTP client found - keys: ${Object.keys(client).join(", ")}`
+        `makePartVisible: no internal HTTP client found - keys: ${Object.keys(client).join(", ")}`,
       );
     }
   } catch (e) {
@@ -106,10 +107,10 @@ function replaceAndClear(
   msg: any,
   msgIndex: number,
   newText: string,
-  outputMessages: any[]
+  outputMessages: any[],
 ) {
   log(
-    `Replacing generic message at index ${msgIndex} with prompt: "${newText.substring(0, 50)}..."`
+    `Replacing generic message at index ${msgIndex} with prompt: "${newText.substring(0, 50)}..."`,
   );
 
   // Modify in place - don't create new objects (references matter)
@@ -117,8 +118,8 @@ function replaceAndClear(
   delete part.synthetic;
 
   // Update the DB to make the message visible in TUI
-  makePartVisible(part, msg, newText).catch(e =>
-    log(`makePartVisible failed: ${e}`)
+  makePartVisible(part, msg, newText).catch((e) =>
+    log(`makePartVisible failed: ${e}`),
   );
 
   // CRITICAL: Remove any assistant response that came after the replaced message
@@ -143,7 +144,7 @@ export async function chatMessagesTransform(input: any, output: any) {
     // Log every invocation with message count and session info
     const sessionIDs = [
       ...new Set(
-        output.messages.map((m: any) => m.info?.sessionID).filter(Boolean)
+        output.messages.map((m: any) => m.info?.sessionID).filter(Boolean),
       ),
     ];
 
@@ -168,7 +169,7 @@ export async function chatMessagesTransform(input: any, output: any) {
       .join(" | ");
 
     log(
-      `message-hooks: ENTRY msgCount=${output.messages.length}, sessions=${sessionIDs.join(",") || "none"}`
+      `message-hooks: ENTRY msgCount=${output.messages.length}, sessions=${sessionIDs.join(",") || "none"}`,
     );
     log(`message-hooks: MESSAGES: ${msgSummary}`);
 
@@ -191,16 +192,16 @@ export async function chatMessagesTransform(input: any, output: any) {
         if (textLower.startsWith("/subtask ")) {
           // If /subtask command exists, defer to command hook for instant execution
           const configs = getConfigs();
-          if (configs["subtask"]) {
+          if (configs.subtask) {
             log(
-              `/subtask detected but deferring to command hook (subtask command exists)`
+              `/subtask detected but deferring to command hook (subtask command exists)`,
             );
             continue;
           }
 
           // Fallback: handle via message transform when no placeholder command exists
           log(
-            `/subtask detected in message (no placeholder): "${text.substring(0, 60)}..."`
+            `/subtask detected in message (no placeholder): "${text.substring(0, 60)}..."`,
           );
 
           // Mark as processed BEFORE spawning
@@ -218,15 +219,15 @@ export async function chatMessagesTransform(input: any, output: any) {
             log(
               `/subtask inline subtask: prompt="${parsed.prompt.substring(
                 0,
-                50
-              )}...", overrides=${JSON.stringify(parsed.overrides)}`
+                50,
+              )}...", overrides=${JSON.stringify(parsed.overrides)}`,
             );
             // Replace with instruction to say minimal response
             part.text = S2_INLINE_INSTRUCTION;
             // Spawn the subtask - get sessionID from message info
             const sessionID =
-              (msg.info as { sessionID?: string } | undefined)?.sessionID
-              ?? (input as { sessionID?: string }).sessionID;
+              (msg.info as { sessionID?: string } | undefined)?.sessionID ??
+              (input as { sessionID?: string }).sessionID;
             log(`/subtask sessionID: ${sessionID}`);
             if (sessionID) {
               executeInlineSubtask(parsed, sessionID).catch(console.error);
@@ -274,7 +275,7 @@ export async function chatMessagesTransform(input: any, output: any) {
 
     if (filteredMessages.length !== output.messages.length) {
       log(
-        `message-hooks: filtered ${output.messages.length - filteredMessages.length} summary leak messages`
+        `message-hooks: filtered ${output.messages.length - filteredMessages.length} summary leak messages`,
       );
       // CRITICAL: Must mutate the array IN PLACE, not reassign!
       // Reassigning output.messages doesn't affect the original sessionMessages in OpenCode
@@ -295,7 +296,7 @@ export async function chatMessagesTransform(input: any, output: any) {
     let lastGenericMsgIndex: number = -1;
 
     log(
-      `message-hooks: searching ${output.messages.length} messages for OPENCODE_GENERIC`
+      `message-hooks: searching ${output.messages.length} messages for OPENCODE_GENERIC`,
     );
 
     for (let i = 0; i < output.messages.length; i++) {
@@ -305,7 +306,7 @@ export async function chatMessagesTransform(input: any, output: any) {
           const isGeneric = part.text === OPENCODE_GENERIC;
           if (part.synthetic) {
             log(
-              `message-hooks: found synthetic text at [${i}]: "${part.text?.substring(0, 50)}..." matches=${isGeneric}`
+              `message-hooks: found synthetic text at [${i}]: "${part.text?.substring(0, 50)}..." matches=${isGeneric}`,
             );
           }
           if (isGeneric) {
@@ -318,14 +319,14 @@ export async function chatMessagesTransform(input: any, output: any) {
     }
 
     log(
-      `message-hooks: generic search complete, found=${!!lastGenericPart}, index=${lastGenericMsgIndex}`
+      `message-hooks: generic search complete, found=${!!lastGenericPart}, index=${lastGenericMsgIndex}`,
     );
 
     // If no generic part found, check for pending prompt returns from inline subtasks
     // Inline subtasks don't get OPENCODE_GENERIC, so we inject the pending prompt directly
     if (!lastGenericPart) {
       log(
-        `message-hooks: no generic part found, checking for pending prompt return`
+        `message-hooks: no generic part found, checking for pending prompt return`,
       );
 
       for (const sid of sessionIDs) {
@@ -335,7 +336,7 @@ export async function chatMessagesTransform(input: any, output: any) {
 
           // Clone structure from an existing user message to ensure correct format
           const existingUserMsg = output.messages.find(
-            (m: any) => (m.info?.role ?? m.role) === "user"
+            (m: any) => (m.info?.role ?? m.role) === "user",
           );
 
           if (existingUserMsg) {
@@ -347,7 +348,7 @@ export async function chatMessagesTransform(input: any, output: any) {
             if (newMsg.info?.createdAt) delete newMsg.info.createdAt;
             output.messages.push(newMsg);
             log(
-              `message-hooks: injected pending prompt: "${pendingPrompt.substring(0, 40)}..."`
+              `message-hooks: injected pending prompt: "${pendingPrompt.substring(0, 40)}..."`,
             );
           } else {
             // Fallback: create minimal message
@@ -356,7 +357,7 @@ export async function chatMessagesTransform(input: any, output: any) {
               parts: [{ type: "text", text: pendingPrompt }],
             });
             log(
-              `message-hooks: injected pending prompt (fallback): "${pendingPrompt.substring(0, 40)}..."`
+              `message-hooks: injected pending prompt (fallback): "${pendingPrompt.substring(0, 40)}..."`,
             );
           }
           return; // Let the LLM respond to our injected message
@@ -364,7 +365,7 @@ export async function chatMessagesTransform(input: any, output: any) {
 
         if (hasReturnStack(sid as string)) {
           log(
-            `message-hooks: session ${sid} HAS returnStack but no generic part!`
+            `message-hooks: session ${sid} HAS returnStack but no generic part!`,
           );
         }
       }
@@ -380,13 +381,13 @@ export async function chatMessagesTransform(input: any, output: any) {
     const parentSessionID = resolvedParent || subtaskSessionID;
 
     log(
-      `message-hooks: subtaskSession=${subtaskSessionID}, resolvedParent=${resolvedParent || "NOT FOUND"}, using=${parentSessionID}`
+      `message-hooks: subtaskSession=${subtaskSessionID}, resolvedParent=${resolvedParent || "NOT FOUND"}, using=${parentSessionID}`,
     );
 
     // Check for deferred prompt return from session.idle
     // This handles prompt returns that were deferred to be substituted here
     log(
-      `message-hooks: checking pendingPromptReturn for session ${parentSessionID}`
+      `message-hooks: checking pendingPromptReturn for session ${parentSessionID}`,
     );
     if (parentSessionID) {
       const pendingPrompt = consumePendingPromptReturn(parentSessionID);
@@ -396,7 +397,7 @@ export async function chatMessagesTransform(input: any, output: any) {
           lastGenericMsg,
           lastGenericMsgIndex,
           pendingPrompt,
-          output.messages
+          output.messages,
         );
 
         // Mark that we're waiting for LLM response to this prompt
@@ -408,30 +409,30 @@ export async function chatMessagesTransform(input: any, output: any) {
 
     // Check for pending loop evaluation first (orchestrator-decides pattern)
     log(`message-hooks: checking loop evaluations`);
-    for (const [sessionID, retryState] of getAllPendingEvaluations()) {
+    for (const [_sessionID, retryState] of getAllPendingEvaluations()) {
       // Check if this is an unconditional loop (no until condition)
       if (!retryState.config.until) {
         // Unconditional loop: inject yield prompt, no evaluation needed
         const yieldPrompt = createYieldPrompt(
           retryState.iteration,
-          retryState.config.max
+          retryState.config.max,
         );
         // Unconditional loop: modify in place
         lastGenericPart.text = yieldPrompt;
         log(
-          `loop: injected yield prompt (unconditional loop ${retryState.iteration}/${retryState.config.max})`
+          `loop: injected yield prompt (unconditional loop ${retryState.iteration}/${retryState.config.max})`,
         );
       } else {
         // Conditional loop: inject evaluation prompt
         const evalPrompt = createEvaluationPrompt(
           retryState.config.until,
           retryState.iteration,
-          retryState.config.max
+          retryState.config.max,
         );
         // Modify in place
         lastGenericPart.text = evalPrompt;
         log(
-          `loop: injected evaluation prompt for "${retryState.config.until}"`
+          `loop: injected evaluation prompt for "${retryState.config.until}"`,
         );
       }
       // Don't delete yet - we need it when parsing the response
@@ -441,7 +442,7 @@ export async function chatMessagesTransform(input: any, output: any) {
     // Check for pending return
     const pendingReturnsEntries = [...getAllPendingReturns()];
     log(
-      `message-hooks: checking pendingReturns, count=${pendingReturnsEntries.length}`
+      `message-hooks: checking pendingReturns, count=${pendingReturnsEntries.length}`,
     );
     for (const [sessionID, returnPrompt] of pendingReturnsEntries) {
       deletePendingReturn(sessionID);
@@ -474,7 +475,7 @@ export async function chatMessagesTransform(input: any, output: any) {
           }
 
           log(
-            `Removed summarize message at index ${lastGenericMsgIndex} for command return`
+            `Removed summarize message at index ${lastGenericMsgIndex} for command return`,
           );
         }
         executeReturn(returnPrompt, sessionID).catch(console.error);
@@ -485,7 +486,7 @@ export async function chatMessagesTransform(input: any, output: any) {
           lastGenericMsg,
           lastGenericMsgIndex,
           returnPrompt,
-          output.messages
+          output.messages,
         );
       }
       return;
@@ -505,7 +506,7 @@ export async function chatMessagesTransform(input: any, output: any) {
           if (lastGenericMsgIndex >= 0) {
             output.messages.splice(lastGenericMsgIndex, 1);
             log(
-              `Removed summarize message - returnState command will be processed by session.idle`
+              `Removed summarize message - returnState command will be processed by session.idle`,
             );
           }
         } else {
@@ -519,7 +520,7 @@ export async function chatMessagesTransform(input: any, output: any) {
             remaining.push(...stackedReturns);
             popCurrentReturnChain(parentSessionID);
             log(
-              `Transferred ${stackedReturns.length} stacked returns to returnState for continued processing`
+              `Transferred ${stackedReturns.length} stacked returns to returnState for continued processing`,
             );
           }
 
@@ -531,7 +532,7 @@ export async function chatMessagesTransform(input: any, output: any) {
             lastGenericMsg,
             lastGenericMsgIndex,
             nextReturn,
-            output.messages
+            output.messages,
           );
 
           // Mark that we're waiting for LLM response to this prompt
@@ -564,7 +565,7 @@ export async function chatMessagesTransform(input: any, output: any) {
         if (lastGenericMsgIndex >= 0) {
           output.messages.splice(lastGenericMsgIndex, 1);
           log(
-            `Removed summarize message - stacked command return will be processed by session.idle`
+            `Removed summarize message - stacked command return will be processed by session.idle`,
           );
         }
       } else if (nextReturn) {
@@ -576,7 +577,7 @@ export async function chatMessagesTransform(input: any, output: any) {
             lastGenericMsg,
             lastGenericMsgIndex,
             returnPrompt,
-            output.messages
+            output.messages,
           );
 
           // Mark that we're waiting for LLM response to this prompt
@@ -595,7 +596,7 @@ export async function chatMessagesTransform(input: any, output: any) {
         lastGenericMsg,
         lastGenericMsgIndex,
         text,
-        output.messages
+        output.messages,
       );
       setHasActiveSubtask(false);
       return;

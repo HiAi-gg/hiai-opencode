@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const FastApplyConfigSchema = z.object({
   /** Enable fast-apply via Ollama (default: false) */
@@ -9,6 +9,6 @@ export const FastApplyConfigSchema = z.object({
   model: z.string().optional().default(""),
   /** Timeout in milliseconds for Ollama request (default: 30000) */
   timeout: z.number().int().positive().optional().default(30000),
-})
+});
 
-export type FastApplyConfig = z.infer<typeof FastApplyConfigSchema>
+export type FastApplyConfig = z.infer<typeof FastApplyConfigSchema>;

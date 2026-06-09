@@ -4,7 +4,10 @@ import { OMO_SESSION_PREFIX } from "./constants";
 import { spawnWithWindowsHide } from "../../shared/spawn-with-windows-hide";
 import { logWarn } from "../../shared/logger";
 
-export function getOrCreateState(sessionID: string, sessionStates: Map<string, InteractiveBashSessionState>): InteractiveBashSessionState {
+export function getOrCreateState(
+  sessionID: string,
+  sessionStates: Map<string, InteractiveBashSessionState>,
+): InteractiveBashSessionState {
   if (!sessionStates.has(sessionID)) {
     const persisted = loadInteractiveBashSessionState(sessionID);
     const state: InteractiveBashSessionState = persisted ?? {
@@ -18,7 +21,7 @@ export function getOrCreateState(sessionID: string, sessionStates: Map<string, I
 }
 
 export function isOmoSession(sessionName: string | null): boolean {
-  return sessionName !== null && sessionName.startsWith(OMO_SESSION_PREFIX);
+  return !!sessionName?.startsWith(OMO_SESSION_PREFIX);
 }
 
 export async function killAllTrackedSessions(
@@ -26,10 +29,13 @@ export async function killAllTrackedSessions(
 ): Promise<void> {
   for (const sessionName of state.tmuxSessions) {
     try {
-      const proc = spawnWithWindowsHide(["tmux", "kill-session", "-t", sessionName], {
-        stdout: "ignore",
-        stderr: "ignore",
-      });
+      const proc = spawnWithWindowsHide(
+        ["tmux", "kill-session", "-t", sessionName],
+        {
+          stdout: "ignore",
+          stderr: "ignore",
+        },
+      );
       await proc.exited;
     } catch (error) {
       // Best-effort teardown during session shutdown. tmux may already be

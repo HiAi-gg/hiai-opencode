@@ -1,7 +1,7 @@
 export interface DelegateTaskErrorPattern {
-  pattern: string
-  errorType: string
-  fixHint: string
+  pattern: string;
+  errorType: string;
+  fixHint: string;
 }
 
 export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
@@ -31,7 +31,8 @@ export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
   {
     pattern: "Unknown category",
     errorType: "unknown_category",
-    fixHint: "Use a valid category from the Available list in the error message",
+    fixHint:
+      "Use a valid category from the Available list in the error message",
   },
   {
     pattern: "Agent name cannot be empty",
@@ -41,7 +42,8 @@ export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
   {
     pattern: "Unknown agent",
     errorType: "unknown_agent",
-    fixHint: "Use a valid agent from the Available agents list in the error message",
+    fixHint:
+      "Use a valid agent from the Available agents list in the error message",
   },
   {
     pattern: "Cannot call primary agent",
@@ -52,26 +54,28 @@ export const DELEGATE_TASK_ERROR_PATTERNS: DelegateTaskErrorPattern[] = [
   {
     pattern: "Skills not found",
     errorType: "unknown_skills",
-    fixHint: "Use valid skill names from the Available list in the error message",
+    fixHint:
+      "Use valid skill names from the Available list in the error message",
   },
-]
+];
 
 export interface DetectedError {
-  errorType: string
-  originalOutput: string
+  errorType: string;
+  originalOutput: string;
 }
 
 export function detectDelegateTaskError(output: string): DetectedError | null {
-  if (!output.includes("[ERROR]") && !output.includes("Invalid arguments")) return null
+  if (!output.includes("[ERROR]") && !output.includes("Invalid arguments"))
+    return null;
 
   for (const errorPattern of DELEGATE_TASK_ERROR_PATTERNS) {
     if (output.includes(errorPattern.pattern)) {
       return {
         errorType: errorPattern.errorType,
         originalOutput: output,
-      }
+      };
     }
   }
 
-  return null
+  return null;
 }

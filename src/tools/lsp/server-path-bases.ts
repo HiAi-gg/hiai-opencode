@@ -1,10 +1,12 @@
-import { join } from "path"
+import { join } from "node:path";
 
-import { getDataDir, getOpenCodeConfigDir } from "../../shared"
+import { getDataDir, getOpenCodeConfigDir } from "../../shared";
 
-export function getLspServerAdditionalPathBases(workingDirectory: string): string[] {
-  const configDir = getOpenCodeConfigDir({ binary: "opencode" })
-  const dataDir = join(getDataDir(), "opencode")
+export function getLspServerAdditionalPathBases(
+  workingDirectory: string,
+): string[] {
+  const configDir = getOpenCodeConfigDir({ binary: "opencode" });
+  const dataDir = join(getDataDir(), "opencode");
 
   return [
     join(workingDirectory, "node_modules", ".bin"),
@@ -12,5 +14,5 @@ export function getLspServerAdditionalPathBases(workingDirectory: string): strin
     join(configDir, "node_modules", ".bin"),
     join(dataDir, "bin"),
     join(dataDir, "bin", "node_modules", ".bin"),
-  ]
+  ];
 }

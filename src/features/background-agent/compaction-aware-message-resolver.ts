@@ -1,56 +1,60 @@
-import { readdirSync, readFileSync } from "node:fs"
-import { join } from "node:path"
-import type { StoredMessage } from "../hook-message-injector"
-import { getCompactionAgentConfigCheckpoint } from "../../shared/compaction-agent-config-checkpoint"
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import type { StoredMessage } from "../hook-message-injector";
+import { getCompactionAgentConfigCheckpoint } from "../../shared/compaction-agent-config-checkpoint";
 import {
   hasCompactionPartInStorage,
   isCompactionAgent,
   isCompactionMessage,
-} from "../../shared/compaction-marker"
+} from "../../shared/compaction-marker";
 
-export { isCompactionAgent } from "../../shared/compaction-marker"
+export { isCompactionAgent } from "../../shared/compaction-marker";
 
 type SessionMessage = {
-  id?: string
+  id?: string;
   info?: {
-    agent?: string
+    agent?: string;
     model?: {
-      providerID?: string
-      modelID?: string
-      variant?: string
-    }
-    providerID?: string
-    modelID?: string
-    tools?: StoredMessage["tools"]
-  }
-  parts?: Array<{ type?: string }>
-}
+      providerID?: string;
+      modelID?: string;
+      variant?: string;
+    };
+    providerID?: string;
+    modelID?: string;
+    tools?: StoredMessage["tools"];
+  };
+  parts?: Array<{ type?: string }>;
+};
 
 function hasFullAgentAndModel(message: StoredMessage): boolean {
-  return !!message.agent &&
+  return (
+    !!message.agent &&
     !isCompactionAgent(message.agent) &&
     !!message.model?.providerID &&
     !!message.model?.modelID
+  );
 }
 
 function hasPartialAgentOrModel(message: StoredMessage): boolean {
-  const hasAgent = !!message.agent && !isCompactionAgent(message.agent)
-  const hasModel = !!message.model?.providerID && !!message.model?.modelID
-  return hasAgent || hasModel || !!message.tools
+  const hasAgent = !!message.agent && !isCompactionAgent(message.agent);
+  const hasModel = !!message.model?.providerID && !!message.model?.modelID;
+  return hasAgent || hasModel || !!message.tools;
 }
 
-function convertSessionMessageToStoredMessage(message: SessionMessage): StoredMessage | null {
+function convertSessionMessageToStoredMessage(
+  message: SessionMessage,
+): StoredMessage | null {
   if (isCompactionMessage(message)) {
-    return null
+    return null;
   }
 
-  const info = message.info
+  const info = message.info;
   if (!info) {
-    return null
+    return null;
   }
 
-  const providerID = info.model?.providerID ?? info.providerID
-  const modelID = info.model?.modelID ?? info.modelID
+  const providerID = info.model?.providerID ?? info.providerID;
+  const modelID = info.model?.modelID ?? info.modelID;
 
   return {
     ...(info.agent ? { agent: info.agent } : {}),
@@ -64,61 +68,65 @@ function convertSessionMessageToStoredMessage(message: SessionMessage): StoredMe
         }
       : {}),
     ...(info.tools ? { tools: info.tools } : {}),
-  }
+  };
 }
 
 function mergeStoredMessages(
   messages: Array<StoredMessage | null>,
   sessionID?: string,
 ): StoredMessage | null {
-  const merged: StoredMessage = {}
+  const merged: StoredMessage = {};
 
   for (const message of messages) {
     if (!message || isCompactionAgent(message.agent)) {
-      continue
+      continue;
     }
 
     if (!merged.agent && message.agent) {
-      merged.agent = message.agent
+      merged.agent = message.agent;
     }
 
-    if (!merged.model?.providerID && message.model?.providerID && message.model.modelID) {
+    if (
+      !merged.model?.providerID &&
+      message.model?.providerID &&
+      message.model.modelID
+    ) {
       merged.model = {
         providerID: message.model.providerID,
         modelID: message.model.modelID,
         ...(message.model.variant ? { variant: message.model.variant } : {}),
-      }
+      };
     }
 
     if (!merged.tools && message.tools) {
-      merged.tools = message.tools
+      merged.tools = message.tools;
     }
 
     if (hasFullAgentAndModel(merged) && merged.tools) {
-      break
+      break;
     }
   }
 
   const checkpoint = sessionID
     ? getCompactionAgentConfigCheckpoint(sessionID)
-    : undefined
+    : undefined;
 
   if (!merged.agent && checkpoint?.agent) {
-    merged.agent = checkpoint.agent
+    merged.agent = checkpoint.agent;
   }
 
   if (!merged.model && checkpoint?.model) {
     merged.model = {
       providerID: checkpoint.model.providerID,
       modelID: checkpoint.model.modelID,
-    }
+    };
   }
 
   if (!merged.tools && checkpoint?.tools) {
-    merged.tools = checkpoint.tools
+    merged.tools = checkpoint.tools;
   }
 
-  return hasPartialAgentOrModel(merged) ? merged : null
+  return hasPartialAgentOrModel(merged) ? merged : null;
 }
 
 export function resolvePromptContextFromSessionMessages(
@@ -127,9 +135,9 @@ export function resolvePromptContextFromSessionMessages(
 ): StoredMessage | null {
   const convertedMessages = messages
     .map(convertSessionMessageToStoredMessage)
-    .reverse()
+    .reverse();
 
-  return mergeStoredMessages(convertedMessages, sessionID)
+  return mergeStoredMessages(convertedMessages, sessionID);
 }
 
 export function findNearestMessageExcludingCompaction(
@@ -140,25 +148,26 @@ export function findNearestMessageExcludingCompaction(
     const files = readdirSync(messageDir)
       .filter((name: string) => name.endsWith(".json"))
       .sort()
-      .reverse()
+      .reverse();
 
-    const messages: Array<StoredMessage | null> = []
+    const messages: Array<StoredMessage | null> = [];
 
     for (const file of files) {
       try {
-        const content = readFileSync(join(messageDir, file), "utf-8")
-        const parsed = JSON.parse(content) as StoredMessage & { id?: string }
-        if (hasCompactionPartInStorage(parsed.id) || isCompactionAgent(parsed.agent)) {
-          continue
+        const content = readFileSync(join(messageDir, file), "utf-8");
+        const parsed = JSON.parse(content) as StoredMessage & { id?: string };
+        if (
+          hasCompactionPartInStorage(parsed.id) ||
+          isCompactionAgent(parsed.agent)
+        ) {
+          continue;
         }
-        messages.push(parsed)
-      } catch {
-        continue
-      }
+        messages.push(parsed);
+      } catch {}
     }
 
-    return mergeStoredMessages(messages, sessionID)
+    return mergeStoredMessages(messages, sessionID);
   } catch {
-    return null
+    return null;
   }
 }

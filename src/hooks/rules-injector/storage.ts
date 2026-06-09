@@ -35,7 +35,7 @@ export function loadInjectedRules(sessionID: string): {
 
 export function saveInjectedRules(
   sessionID: string,
-  data: { contentHashes: Set<string>; realPaths: Set<string> }
+  data: { contentHashes: Set<string>; realPaths: Set<string> },
 ): void {
   if (!existsSync(RULES_INJECTOR_STORAGE)) {
     mkdirSync(RULES_INJECTOR_STORAGE, { recursive: true });
@@ -48,7 +48,10 @@ export function saveInjectedRules(
     updatedAt: Date.now(),
   };
 
-  writeFileSync(getStoragePath(sessionID), JSON.stringify(storageData, null, 2));
+  writeFileSync(
+    getStoragePath(sessionID),
+    JSON.stringify(storageData, null, 2),
+  );
 }
 
 export function clearInjectedRules(sessionID: string): void {

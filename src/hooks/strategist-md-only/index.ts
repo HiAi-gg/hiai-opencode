@@ -1,2 +1,2 @@
-export * from "./constants"
-export { createStrategistMdOnlyHook } from "./hook"
+export * from "./constants";
+export { createStrategistMdOnlyHook } from "./hook";

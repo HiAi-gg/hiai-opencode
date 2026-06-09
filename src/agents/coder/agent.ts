@@ -7,7 +7,10 @@ import type {
   AvailableSkill,
   AvailableCategory,
 } from "../dynamic-agent-prompt-builder";
-import { categorizeTools, buildAgentIdentitySection } from "../dynamic-agent-prompt-builder";
+import {
+  categorizeTools,
+  buildAgentIdentitySection,
+} from "../dynamic-agent-prompt-builder";
 import { getGptApplyPatchPermission } from "../gpt-apply-patch-guard";
 
 import { buildCoderPrompt } from "./core";
@@ -29,10 +32,7 @@ export interface CoderContext {
   useTaskSystem?: boolean;
 }
 
-export function getCoderPrompt(
-  model?: string,
-  useTaskSystem = false,
-): string {
+export function getCoderPrompt(model?: string, useTaskSystem = false): string {
   return buildDynamicCoderPrompt({ model, useTaskSystem });
 }
 
@@ -97,7 +97,10 @@ export function createCoderAgent(
   if (isGptModel(model)) {
     return { ...base, reasoningEffort: "medium" } as AgentConfig;
   }
-  return { ...base, thinking: { type: "enabled", budgetTokens: 32000 } } as AgentConfig;
+  return {
+    ...base,
+    thinking: { type: "enabled", budgetTokens: 32000 },
+  } as AgentConfig;
 }
 createCoderAgent.mode = MODE;
 

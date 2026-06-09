@@ -1,35 +1,45 @@
-import { join } from "node:path"
-import { existsSync } from "node:fs"
-import type { McpServerConfig } from "../config/types.js"
+import { join } from "node:path";
+import { existsSync } from "node:fs";
+import type { McpServerConfig } from "../config/types.js";
 
 export type HiaiMcpName =
   | "stitch"
   | "sequential-thinking"
   | "context7"
   | "mempalace"
-  | "grep_app"
+  | "grep_app";
 
-export type HiaiMcpInstallKind = "bundled" | "npm" | "python" | "remote" | "user-service"
+export type HiaiMcpInstallKind =
+  | "bundled"
+  | "npm"
+  | "python"
+  | "remote"
+  | "user-service";
 
 export interface HiaiMcpRegistryEntry {
-  name: HiaiMcpName
-  enabledByDefault: boolean
-  install: HiaiMcpInstallKind
-  requiredEnv?: string[]
-  optionalEnv?: string[]
-  config: McpServerConfig
+  name: HiaiMcpName;
+  enabledByDefault: boolean;
+  install: HiaiMcpInstallKind;
+  requiredEnv?: string[];
+  optionalEnv?: string[];
+  config: McpServerConfig;
 }
 
 function resolveAssetScript(...segments: string[]): string {
   const candidates = [
     join(import.meta.dirname, "..", "assets", ...segments),
     join(import.meta.dirname, "..", "..", "assets", ...segments),
-  ]
-  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0]
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
 }
 
 function createNpmPackageCommand(pkg: string, ...args: string[]): string[] {
-  return ["node", resolveAssetScript("runtime", "npm-package-runner.mjs"), pkg, ...args]
+  return [
+    "node",
+    resolveAssetScript("runtime", "npm-package-runner.mjs"),
+    pkg,
+    ...args,
+  ];
 }
 
 export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
@@ -53,7 +63,9 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
     config: {
       enabled: true,
       type: "local",
-      command: createNpmPackageCommand("@modelcontextprotocol/server-sequential-thinking"),
+      command: createNpmPackageCommand(
+        "@modelcontextprotocol/server-sequential-thinking",
+      ),
       timeout: 600000,
     },
   },
@@ -74,11 +86,20 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
     name: "mempalace",
     enabledByDefault: true,
     install: "python",
-    optionalEnv: ["MEMPALACE_PYTHON", "MEMPALACE_PALACE_PATH", "HIAI_MCP_AUTO_INSTALL"],
+    optionalEnv: [
+      "MEMPALACE_PYTHON",
+      "MEMPALACE_PALACE_PATH",
+      "HIAI_MCP_AUTO_INSTALL",
+    ],
     config: {
       enabled: true,
       type: "local",
-      command: ["node", resolveAssetScript("mcp", "mempalace.mjs"), "--palace", "./.opencode/palace"],
+      command: [
+        "node",
+        resolveAssetScript("mcp", "mempalace.mjs"),
+        "--palace",
+        "./.opencode/palace",
+      ],
       timeout: 600000,
     },
   },
@@ -93,7 +114,7 @@ export const HIAI_MCP_REGISTRY: Record<HiaiMcpName, HiaiMcpRegistryEntry> = {
       timeout: 600000,
     },
   },
-}
+};
 
 export function createDefaultMcpConfig(): Record<HiaiMcpName, McpServerConfig> {
   return Object.fromEntries(
@@ -101,9 +122,9 @@ export function createDefaultMcpConfig(): Record<HiaiMcpName, McpServerConfig> {
       name,
       { ...entry.config, enabled: entry.enabledByDefault },
     ]),
-  ) as Record<HiaiMcpName, McpServerConfig>
+  ) as Record<HiaiMcpName, McpServerConfig>;
 }
 
 export function getKnownMcpNames(): HiaiMcpName[] {
-  return Object.keys(HIAI_MCP_REGISTRY) as HiaiMcpName[]
+  return Object.keys(HIAI_MCP_REGISTRY) as HiaiMcpName[];
 }

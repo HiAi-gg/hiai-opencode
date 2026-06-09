@@ -1,6 +1,6 @@
-import { z } from "zod"
-import { FallbackModelsSchema } from "./fallback-models"
-import { AgentPermissionSchema } from "./internal/permission"
+import { z } from "zod";
+import { FallbackModelsSchema } from "./fallback-models";
+import { AgentPermissionSchema } from "./internal/permission";
 
 export const AgentOverrideConfigSchema = z.object({
   /** @deprecated Use `category` instead. Model is inherited from category defaults. */
@@ -35,7 +35,9 @@ export const AgentOverrideConfigSchema = z.object({
     })
     .optional(),
   /** Reasoning effort level (OpenAI). Overrides category and default settings. */
-  reasoningEffort: z.enum(["none", "minimal", "low", "medium", "high", "xhigh"]).optional(),
+  reasoningEffort: z
+    .enum(["none", "minimal", "low", "medium", "high", "xhigh"])
+    .optional(),
   /** Text verbosity level. */
   textVerbosity: z.enum(["low", "medium", "high"]).optional(),
   /** Provider-specific options. Passed directly to OpenCode SDK. */
@@ -53,22 +55,22 @@ export const AgentOverrideConfigSchema = z.object({
       variant: z.string().optional(),
     })
     .optional(),
-})
+});
 
 export const AgentOverridesSchema = z.object({
   // Canonical 12 agents
-  "bob": AgentOverrideConfigSchema.optional(),
-  "manager": AgentOverrideConfigSchema.optional(),
-  "strategist": AgentOverrideConfigSchema.optional(),
-  "critic": AgentOverrideConfigSchema.optional(),
-  "coder": AgentOverrideConfigSchema.extend({
+  bob: AgentOverrideConfigSchema.optional(),
+  manager: AgentOverrideConfigSchema.optional(),
+  strategist: AgentOverrideConfigSchema.optional(),
+  critic: AgentOverrideConfigSchema.optional(),
+  coder: AgentOverrideConfigSchema.extend({
     allow_non_gpt_model: z.boolean().optional(),
   }).optional(),
-  "designer": AgentOverrideConfigSchema.optional(),
-  "sub": AgentOverrideConfigSchema.optional(),
+  designer: AgentOverrideConfigSchema.optional(),
+  sub: AgentOverrideConfigSchema.optional(),
   researcher: AgentOverrideConfigSchema.optional(),
   "quality-guardian": AgentOverrideConfigSchema.optional(),
-  "writer": AgentOverrideConfigSchema.optional(),
+  writer: AgentOverrideConfigSchema.optional(),
   "agent-skills": AgentOverrideConfigSchema.optional(),
   // Compatibility aliases
   build: AgentOverrideConfigSchema.optional(),
@@ -78,7 +80,7 @@ export const AgentOverridesSchema = z.object({
   zoe: AgentOverrideConfigSchema.optional(),
   "pre-plan": AgentOverrideConfigSchema.optional(),
   vision: AgentOverrideConfigSchema.optional(),
-  "logician": AgentOverrideConfigSchema.optional(),
+  logician: AgentOverrideConfigSchema.optional(),
   librarian: AgentOverrideConfigSchema.optional(),
   explore: AgentOverrideConfigSchema.optional(),
   ui: AgentOverrideConfigSchema.optional(),
@@ -88,7 +90,7 @@ export const AgentOverridesSchema = z.object({
   "ledger-creator": AgentOverrideConfigSchema.optional(),
   bootstrapper: AgentOverrideConfigSchema.optional(),
   "project-initializer": AgentOverrideConfigSchema.optional(),
-})
+});
 
-export type AgentOverrideConfig = z.infer<typeof AgentOverrideConfigSchema>
-export type AgentOverrides = z.infer<typeof AgentOverridesSchema>
+export type AgentOverrideConfig = z.infer<typeof AgentOverrideConfigSchema>;
+export type AgentOverrides = z.infer<typeof AgentOverridesSchema>;

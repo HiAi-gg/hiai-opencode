@@ -24,13 +24,11 @@ const AGENT_SKILLS_PROMPT = `${buildAgentIdentitySection("Agent Skills", "skill 
 `;
 
 export function createAgentSkillsAgent(model: string): AgentConfig {
-  const restrictions = createAgentToolRestrictions([
-    "apply_patch",
-    "task",
-  ]);
+  const restrictions = createAgentToolRestrictions(["apply_patch", "task"]);
 
   return {
-    description: "Specialist in agent skills discovery, configuration, and troubleshooting. (Agent Skills - HiaiOpenCode)",
+    description:
+      "Specialist in agent skills discovery, configuration, and troubleshooting. (Agent Skills - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.5,
@@ -44,7 +42,8 @@ export const agentSkillsPromptMetadata: AgentPromptMetadata = {
   category: "utility",
   cost: "CHEAP",
   promptAlias: "Agent Skills",
-  keyTrigger: "Skill discovery, configuration, or troubleshooting → use agent-skills.",
+  keyTrigger:
+    "Skill discovery, configuration, or troubleshooting → use agent-skills.",
   triggers: [
     {
       domain: "Skill Discovery",
@@ -60,8 +59,5 @@ export const agentSkillsPromptMetadata: AgentPromptMetadata = {
     "Configuring skill settings",
     "Troubleshooting skill issues",
   ],
-  avoidWhen: [
-    "Direct implementation tasks",
-    "Code changes or debugging",
-  ],
+  avoidWhen: ["Direct implementation tasks", "Code changes or debugging"],
 };

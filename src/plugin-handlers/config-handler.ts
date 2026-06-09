@@ -10,7 +10,7 @@ import { loadPluginComponents } from "./plugin-components-loader";
 import { applyToolConfig } from "./tool-config-handler";
 import { buildLspConfig } from "../lsp";
 import { getPlatformLspDefaults } from "../shared/runtime-plugin-config";
-import { clearFormatterCache } from "../tools/hashline-edit/formatter-trigger"
+import { clearFormatterCache } from "../tools/hashline-edit/formatter-trigger";
 
 export { resolveCategoryConfig } from "./category-config-resolver";
 
@@ -26,9 +26,9 @@ export function createConfigHandler(deps: ConfigHandlerDeps) {
   return async (config: Record<string, unknown>) => {
     const formatterConfig = config.formatter;
 
-    setAdditionalAllowedMcpEnvVars(pluginConfig.mcp_env_allowlist ?? [])
+    setAdditionalAllowedMcpEnvVars(pluginConfig.mcp_env_allowlist ?? []);
     applyProviderConfig({ config, modelCacheState });
-    clearFormatterCache()
+    clearFormatterCache();
 
     const pluginComponents = await loadPluginComponents({ pluginConfig });
 
@@ -54,8 +54,9 @@ export function createConfigHandler(deps: ConfigHandlerDeps) {
 
     log("[config-handler] config handler applied", {
       agentCount: Object.keys(agentResult).length,
-      commandCount: Object.keys((config.command as Record<string, unknown>) ?? {})
-        .length,
+      commandCount: Object.keys(
+        (config.command as Record<string, unknown>) ?? {},
+      ).length,
     });
   };
 }

@@ -1,17 +1,17 @@
-import type { DelegateTaskArgs, ToolContextWithMetadata } from "./types"
-import type { ExecutorContext, ParentContext } from "./executor-types"
-import { storeToolMetadata } from "../../features/tool-metadata-store"
-import { formatDetailedError } from "./error-formatting"
-import { getSessionTools } from "../../shared/session-tools-store"
-import { resolveCallID } from "./resolve-call-id"
+import type { DelegateTaskArgs, ToolContextWithMetadata } from "./types";
+import type { ExecutorContext, ParentContext } from "./executor-types";
+import { storeToolMetadata } from "../../features/tool-metadata-store";
+import { formatDetailedError } from "./error-formatting";
+import { getSessionTools } from "../../shared/session-tools-store";
+import { resolveCallID } from "./resolve-call-id";
 
 export async function executeBackgroundContinuation(
   args: DelegateTaskArgs,
   ctx: ToolContextWithMetadata,
   executorCtx: ExecutorContext,
-  parentContext: ParentContext
+  parentContext: ParentContext,
 ): Promise<string> {
-  const { manager } = executorCtx
+  const { manager } = executorCtx;
 
   try {
     const task = await manager.resume({
@@ -22,7 +22,7 @@ export async function executeBackgroundContinuation(
       parentModel: parentContext.model,
       parentAgent: parentContext.agent,
       parentTools: getSessionTools(parentContext.sessionID),
-    })
+    });
 
     const bgContMeta = {
       title: `Continue: ${task.description}`,
@@ -34,13 +34,15 @@ export async function executeBackgroundContinuation(
         run_in_background: args.run_in_background,
         sessionId: task.sessionID,
         command: args.command,
-        model: task.model ? { providerID: task.model.providerID, modelID: task.model.modelID } : undefined,
+        model: task.model
+          ? { providerID: task.model.providerID, modelID: task.model.modelID }
+          : undefined,
       },
-    }
-    await ctx.metadata?.(bgContMeta)
-    const callID = resolveCallID(ctx)
+    };
+    await ctx.metadata?.(bgContMeta);
+    const callID = resolveCallID(ctx);
     if (callID) {
-      storeToolMetadata(ctx.sessionID, callID, bgContMeta)
+      storeToolMetadata(ctx.sessionID, callID, bgContMeta);
     }
 
     return `Background task continued.
@@ -57,12 +59,12 @@ Do NOT call background_output now. Wait for <system-reminder> notification first
 
 <task_metadata>
 session_id: ${task.sessionID}
-${task.agent ? `subagent: ${task.agent}\n` : ""}</task_metadata>`
+${task.agent ? `subagent: ${task.agent}\n` : ""}</task_metadata>`;
   } catch (error) {
     return formatDetailedError(error, {
       operation: "Continue background task",
       args,
       sessionID: args.session_id,
-    })
+    });
   }
 }

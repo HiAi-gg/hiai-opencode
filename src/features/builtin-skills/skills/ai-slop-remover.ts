@@ -1,10 +1,10 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const aiSlopRemoverSkill: BuiltinSkill = {
-	name: "ai-slop-remover",
-	description:
-		"Removes AI-generated code smells from a SINGLE file while preserving functionality. For multiple files, call in PARALLEL per file.",
-	template: `You are an expert code refactorer specializing in removing AI-generated "slop" patterns while STRICTLY preserving functionality.
+  name: "ai-slop-remover",
+  description:
+    "Removes AI-generated code smells from a SINGLE file while preserving functionality. For multiple files, call in PARALLEL per file.",
+  template: `You are an expert code refactorer specializing in removing AI-generated "slop" patterns while STRICTLY preserving functionality.
 
 **INPUT**: Exactly ONE file path. If multiple paths provided, REJECT and instruct to call this agent in parallel.
 
@@ -142,4 +142,4 @@ This file is clean. Here's why:
 
 **Conclusion**: This code appears to be human-written or well-reviewed AI code. No changes needed.
 \`\`\``,
-}
+};

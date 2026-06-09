@@ -1,1 +1,1 @@
-export { createSubAgentReceiptHook } from "./hook"
+export { createSubAgentReceiptHook } from "./hook";

@@ -48,11 +48,12 @@ Subagent has full context preserved (saves 70%+ tokens on follow-ups). After EVE
 export function buildFailureRecoverySection(
   variant: "full" | "compact" = "full",
 ): string {
-  const core = variant === "full"
-    ? `1. Fix root causes (not symptoms). Re-verify after EVERY attempt.
+  const core =
+    variant === "full"
+      ? `1. Fix root causes (not symptoms). Re-verify after EVERY attempt.
 2. If first approach fails → try alternative.
 3. After 3 DIFFERENT approaches fail: STOP edits → REVERT (git checkout / undo) → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.`
-    : `1. Root causes, re-verify each attempt.
+      : `1. Root causes, re-verify each attempt.
 2. Try alternative on first failure.
 3. After 3 fails: STOP → REVERT → DOCUMENT → CONSULT Strategist → ESCALATE Critic → ASK USER.`;
 
@@ -85,9 +86,10 @@ Non-coder agents lack implementation permission — code changes must go through
 Mutation tools are BLOCKED at runtime for Bob and Strategist (see agent-tool-permission hook).
 `;
 
-  const close = variant === "full"
-    ? `Never: leave code broken, shotgun debug, delete failing tests to "pass".`
-    : `Never: leave broken, shotgun debug, delete tests.`;
+  const close =
+    variant === "full"
+      ? `Never: leave code broken, shotgun debug, delete failing tests to "pass".`
+      : `Never: leave broken, shotgun debug, delete tests.`;
 
   return `### Failure Recovery\n${core}${chain}\n${close}`;
 }

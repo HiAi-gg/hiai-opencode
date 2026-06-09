@@ -1,8 +1,8 @@
-export type GitFileStatus = "modified" | "added" | "deleted"
+export type GitFileStatus = "modified" | "added" | "deleted";
 
 export interface GitFileStat {
-  path: string
-  added: number
-  removed: number
-  status: GitFileStatus
+  path: string;
+  added: number;
+  removed: number;
+  status: GitFileStatus;
 }

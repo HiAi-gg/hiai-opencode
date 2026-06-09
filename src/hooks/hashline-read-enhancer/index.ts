@@ -1,1 +1,1 @@
-export { createHashlineReadEnhancerHook } from "./hook"
+export { createHashlineReadEnhancerHook } from "./hook";

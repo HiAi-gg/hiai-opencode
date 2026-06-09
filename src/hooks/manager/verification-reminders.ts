@@ -1,4 +1,4 @@
-import { VERIFICATION_REMINDER } from "./system-reminder-templates"
+import { VERIFICATION_REMINDER } from "./system-reminder-templates";
 
 function buildReuseHint(sessionId: string): string {
   return `
@@ -6,10 +6,13 @@ function buildReuseHint(sessionId: string): string {
 
 - Reuse \`${sessionId}\` first if verification fails or the result needs follow-up.
 - Start a fresh subagent session only when reuse is unavailable or would cross task boundaries.
-`
+`;
 }
 
-export function buildCompletionGate(planName: string, sessionId: string): string {
+export function buildCompletionGate(
+  planName: string,
+  sessionId: string,
+): string {
   return `
 **COMPLETION GATE - DO NOT PROCEED UNTIL THIS IS DONE**
 
@@ -35,7 +38,7 @@ task(session_id="${sessionId}", load_skills=[], prompt="fix: checkbox not record
 **Your completion is NOT tracked until the checkbox is marked in the plan file.**
 
 **VERIFICATION_REMINDER**
-${buildReuseHint(sessionId)}`
+${buildReuseHint(sessionId)}`;
 }
 
 function buildVerificationReminder(sessionId: string): string {
@@ -50,7 +53,7 @@ ${VERIFICATION_REMINDER}
 task(session_id="${sessionId}", load_skills=[], prompt="fix: [describe the specific failure]")
 \`\`\`
 
-${buildReuseHint(sessionId)}`
+${buildReuseHint(sessionId)}`;
 }
 
 export function buildOrchestratorReminder(
@@ -58,9 +61,9 @@ export function buildOrchestratorReminder(
   progress: { total: number; completed: number },
   sessionId: string,
   autoCommit: boolean = true,
-  includeCompletionGate: boolean = true
+  includeCompletionGate: boolean = true,
 ): string {
-  const remaining = progress.total - progress.completed
+  const remaining = progress.total - progress.completed;
 
   const commitStep = autoCommit
     ? `
@@ -69,9 +72,9 @@ export function buildOrchestratorReminder(
 - Stage ONLY the verified changes
 - Commit with clear message describing what was done
 `
-    : ""
+    : "";
 
-  const nextStepNumber = autoCommit ? 8 : 7
+  const nextStepNumber = autoCommit ? 8 : 7;
 
   return `
 ---
@@ -80,9 +83,13 @@ export function buildOrchestratorReminder(
 
 ---
 
-${includeCompletionGate ? `${buildCompletionGate(planName, sessionId)}
+${
+  includeCompletionGate
+    ? `${buildCompletionGate(planName, sessionId)}
 
-` : ""}${buildVerificationReminder(sessionId)}
+`
+    : ""
+}${buildVerificationReminder(sessionId)}
 
 **STEP 5: READ SUBAGENT NOTEPAD (LEARNINGS, ISSUES, PROBLEMS)**
 
@@ -117,15 +124,15 @@ ${commitStep}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**${remaining} tasks remain. Keep bouldering.**`
+**${remaining} tasks remain. Keep bouldering.**`;
 }
 
 export function buildFinalWaveApprovalReminder(
   planName: string,
   progress: { total: number; completed: number },
-  sessionId: string
+  sessionId: string,
 ): string {
-  const remaining = progress.total - progress.completed
+  const remaining = progress.total - progress.completed;
 
   return `
 ---
@@ -157,7 +164,7 @@ If the user rejects or requests changes:
 - present the updated results again
 - wait again for explicit user approval
 
-**DO NOT mark the final-wave checkbox complete until the user explicitly says okay.**`
+**DO NOT mark the final-wave checkbox complete until the user explicitly says okay.**`;
 }
 
 export function buildStandaloneVerificationReminder(sessionId: string): string {
@@ -193,5 +200,5 @@ If QA tasks exist in your todo list:
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-**NO TODO = NO TRACKING = INCOMPLETE WORK. Use todowrite aggressively.**`
+**NO TODO = NO TRACKING = INCOMPLETE WORK. Use todowrite aggressively.**`;
 }

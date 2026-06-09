@@ -1,4 +1,4 @@
 export interface SpawnPaneResult {
-  success: boolean
-  paneId?: string  // e.g., "%42"
+  success: boolean;
+  paneId?: string; // e.g., "%42"
 }

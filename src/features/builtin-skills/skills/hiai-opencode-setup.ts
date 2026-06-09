@@ -1,4 +1,4 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const hiaiOpencodeSetupSkill: BuiltinSkill = {
   name: "hiai-opencode-setup",
@@ -96,5 +96,12 @@ Use \`skill_mcp({ mcp_name: "mempalace", tool_name: "mempalace_add_drawer", argu
 - Do not edit unrelated OpenCode/Claude/Agents global skill folders unless the user opts in.
 - Keep DCP separate: it is an optional OpenCode plugin, not part of the hiai-opencode package.
 `,
-  allowedTools: ["Bash(*)", "Read(*)", "Edit(*)", "Glob(*)", "Grep(*)", "skill_mcp(*)"],
-}
+  allowedTools: [
+    "Bash(*)",
+    "Read(*)",
+    "Edit(*)",
+    "Glob(*)",
+    "Grep(*)",
+    "skill_mcp(*)",
+  ],
+};

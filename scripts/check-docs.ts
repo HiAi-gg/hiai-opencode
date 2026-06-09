@@ -23,7 +23,7 @@ const PRIVATE_PATTERNS = [
   /C:\\Users\\/,
   /C:\\hiai/,
   /\/mnt\/ai_data/,
-  /\.claude(?![\/\\])/,
+  /\.claude(?![/\\])/,
 ];
 
 const CYRILLIC_PATTERN = /[а-яА-ЯёЁ]/;
@@ -53,7 +53,9 @@ for (const doc of DOCS) {
 
     for (const pattern of PRIVATE_PATTERNS) {
       if (pattern.test(line)) {
-        console.log(`ERROR: ${doc}:${i + 1}: Private path found: ${line.trim().slice(0, 60)}`);
+        console.log(
+          `ERROR: ${doc}:${i + 1}: Private path found: ${line.trim().slice(0, 60)}`,
+        );
         hasError = true;
       }
     }

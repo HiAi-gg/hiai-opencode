@@ -4,7 +4,7 @@ export interface ToolExecuteOutputShape {
 }
 
 export function getRuleInjectionFilePath(
-  output: ToolExecuteOutputShape
+  output: ToolExecuteOutputShape,
 ): string | null {
   const metadata = output.metadata as Record<string, unknown> | null;
   const metadataFilePath =

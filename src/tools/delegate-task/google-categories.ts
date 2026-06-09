@@ -1,4 +1,4 @@
-import type { BuiltinCategoryDefinition } from "./builtin-category-definition"
+import type { BuiltinCategoryDefinition } from "./builtin-category-definition";
 
 const VISUAL_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on VISUAL/UI tasks.
@@ -91,7 +91,7 @@ Design-first mindset (AFTER design system is established):
 
 AVOID: Generic fonts, purple gradients on white, predictable layouts, cookie-cutter patterns.
 </DESIGN_QUALITY>
-</Category_Context>`
+</Category_Context>`;
 
 const ARTISTRY_CATEGORY_PROMPT_APPEND = `<Category_Context>
 You are working on HIGHLY CREATIVE / ARTISTIC tasks.
@@ -112,19 +112,21 @@ Approach:
 - Embrace ambiguity and wild experimentation
 - Balance novelty with coherence
 - This is for tasks requiring exceptional creativity
-</Category_Context>`
+</Category_Context>`;
 
 export const GOOGLE_CATEGORIES: BuiltinCategoryDefinition[] = [
   {
     name: "visual-engineering",
     config: {},
-    description: "Frontend and UI systems work with design-system discipline. Uses designer execution contour.",
+    description:
+      "Frontend and UI systems work with design-system discipline. Uses designer execution contour.",
     promptAppend: VISUAL_CATEGORY_PROMPT_APPEND,
   },
   {
     name: "artistry",
     config: {},
-    description: "High-effort creative problem solving beyond standard patterns. Uses designer execution contour.",
+    description:
+      "High-effort creative problem solving beyond standard patterns. Uses designer execution contour.",
     promptAppend: ARTISTRY_CATEGORY_PROMPT_APPEND,
   },
-]
+];

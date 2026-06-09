@@ -1,93 +1,93 @@
-import { spawn } from "bun"
+import { spawn } from "bun";
 
-import type { ArchiveEntry } from "../archive-entry-validator"
-import { log } from "../logger"
-
-
+import type { ArchiveEntry } from "../archive-entry-validator";
+import { log } from "../logger";
 
 function parseTarListedZipEntry(line: string): ArchiveEntry | null {
-	const match = line.match(
-		/^([^\s])\S*\s+\d+\s+\S+\s+\S+\s+\d+\s+\w+\s+\d+\s+(?:\d{2}:\d{2}|\d{4})\s+(.*)$/
-	)
-	if (!match) {
-		return null
-	}
+  const match = line.match(
+    /^([^\s])\S*\s+\d+\s+\S+\s+\S+\s+\d+\s+\w+\s+\d+\s+(?:\d{2}:\d{2}|\d{4})\s+(.*)$/,
+  );
+  if (!match) {
+    return null;
+  }
 
-	const [, rawType, rawEntryPath] = match
-	if (rawType === "l" || rawType === "h") {
-		const arrowIndex = rawEntryPath.lastIndexOf(" -> ")
-		return {
-			path: arrowIndex === -1 ? rawEntryPath : rawEntryPath.slice(0, arrowIndex),
-			type: rawType === "l" ? "symlink" : "hardlink",
-			linkPath: arrowIndex === -1 ? undefined : rawEntryPath.slice(arrowIndex + 4),
-		}
-	}
+  const [, rawType, rawEntryPath] = match;
+  if (rawType === "l" || rawType === "h") {
+    const arrowIndex = rawEntryPath.lastIndexOf(" -> ");
+    return {
+      path:
+        arrowIndex === -1 ? rawEntryPath : rawEntryPath.slice(0, arrowIndex),
+      type: rawType === "l" ? "symlink" : "hardlink",
+      linkPath:
+        arrowIndex === -1 ? undefined : rawEntryPath.slice(arrowIndex + 4),
+    };
+  }
 
-	return {
-		path: rawEntryPath,
-		type: rawType === "d" ? "directory" : "file",
-	}
+  return {
+    path: rawEntryPath,
+    type: rawType === "d" ? "directory" : "file",
+  };
 }
 
 function validateParsedTarListing(
-	totalLineCount: number,
-	unparsedLines: string[]
+  totalLineCount: number,
+  unparsedLines: string[],
 ): void {
-	if (unparsedLines.length === 0) {
-		return
-	}
+  if (unparsedLines.length === 0) {
+    return;
+  }
 
-	throw new Error(
-		`zip entry listing failed: ${unparsedLines.length}/${totalLineCount} tar listing lines could not be parsed (fail-closed)`
-	)
+  throw new Error(
+    `zip entry listing failed: ${unparsedLines.length}/${totalLineCount} tar listing lines could not be parsed (fail-closed)`,
+  );
 }
 
 export function parseTarListingOutput(stdout: string): ArchiveEntry[] {
-	const listingLines = stdout
-		.split(/\r?\n/)
-		.map(line => line.trim())
-		.filter(Boolean)
+  const listingLines = stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
 
-	if (listingLines.length === 0) {
-		return []
-	}
+  if (listingLines.length === 0) {
+    return [];
+  }
 
-	const parsedEntries: ArchiveEntry[] = []
-	const unparsedLines: string[] = []
+  const parsedEntries: ArchiveEntry[] = [];
+  const unparsedLines: string[] = [];
 
-	for (const listingLine of listingLines) {
-		const parsedEntry = parseTarListedZipEntry(listingLine)
-		if (parsedEntry === null) {
-			unparsedLines.push(listingLine)
-			log("warning: unparsed tar listing line", { line: listingLine })
-			continue
-		}
+  for (const listingLine of listingLines) {
+    const parsedEntry = parseTarListedZipEntry(listingLine);
+    if (parsedEntry === null) {
+      unparsedLines.push(listingLine);
+      log("warning: unparsed tar listing line", { line: listingLine });
+      continue;
+    }
 
-		parsedEntries.push(parsedEntry)
-	}
+    parsedEntries.push(parsedEntry);
+  }
 
-	validateParsedTarListing(listingLines.length, unparsedLines)
+  validateParsedTarListing(listingLines.length, unparsedLines);
 
-	return parsedEntries
+  return parsedEntries;
 }
 
 export async function listZipEntriesWithTar(
-	archivePath: string
+  archivePath: string,
 ): Promise<ArchiveEntry[]> {
-	const proc = spawn(["tar", "-tvf", archivePath], {
-		stdout: "pipe",
-		stderr: "pipe",
-	})
+  const proc = spawn(["tar", "-tvf", archivePath], {
+    stdout: "pipe",
+    stderr: "pipe",
+  });
 
-	const [exitCode, stdout, stderr] = await Promise.all([
-		proc.exited,
-		new Response(proc.stdout).text(),
-		new Response(proc.stderr).text(),
-	])
+  const [exitCode, stdout, stderr] = await Promise.all([
+    proc.exited,
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+  ]);
 
-	if (exitCode !== 0) {
-		throw new Error(`zip entry listing failed (exit ${exitCode}): ${stderr}`)
-	}
+  if (exitCode !== 0) {
+    throw new Error(`zip entry listing failed (exit ${exitCode}): ${stderr}`);
+  }
 
-	return parseTarListingOutput(stdout)
+  return parseTarListingOutput(stdout);
 }

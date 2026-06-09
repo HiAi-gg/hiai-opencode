@@ -1,7 +1,7 @@
 /// <reference types="bun-types" />
 
-import { mkdirSync } from "fs";
-import { dirname, join } from "path";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import { logWarn } from "../../../../shared/logger";
 import type { Subtask2Config } from "../types";
@@ -11,7 +11,7 @@ export { DEFAULT_RETURN_PROMPT as DEFAULT_PROMPT } from "./prompts";
 
 const CONFIG_PATH = join(
   getOpenCodeConfigDir({ binary: "opencode" }),
-  "subtask2.jsonc"
+  "subtask2.jsonc",
 );
 
 /**
@@ -100,9 +100,9 @@ export async function loadConfig(): Promise<Subtask2Config> {
   "replace_generic": true,
 
   // Custom prompt to use when replace_generic: true | optional
-  //\"generic_return\": \"Review, challenge and verify the task tool output above against the codebase. Then validate or revise it, before continuing with the next logical step.\"
+  //"generic_return": "Review, challenge and verify the task tool output above against the codebase. Then validate or revise it, before continuing with the next logical step."
 }
-`
+`,
   );
   return defaultConfig;
 }

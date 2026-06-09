@@ -1,3 +1,3 @@
 export interface NonInteractiveEnvConfig {
-  disabled?: boolean
+  disabled?: boolean;
 }

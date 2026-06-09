@@ -1,5 +1,5 @@
-import { execFileSync } from "node:child_process"
-import { createHash } from "node:crypto"
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   copyFileSync,
   existsSync,
@@ -9,8 +9,8 @@ import {
   rmdirSync,
   statSync,
   unlinkSync,
-} from "node:fs"
-import { join } from "node:path"
+} from "node:fs";
+import { join } from "node:path";
 import {
   BOULDER_DIR,
   WORKTREE_BASE_DIR,
@@ -18,17 +18,17 @@ import {
   WORKTREE_LOCK_POLL_MS,
   WORKTREE_LOCK_TTL_MS,
   WORKTREE_LOCK_WAIT_MS,
-} from "../../features/boulder-state/constants"
+} from "../../features/boulder-state/constants";
 import {
   copyBoulderEntryToWorktree,
   worktreeHasLiveSession,
-} from "../../features/boulder-state/storage"
+} from "../../features/boulder-state/storage";
 
 export type WorktreeEntry = {
-  path: string
-  branch: string | undefined
-  bare: boolean
-}
+  path: string;
+  branch: string | undefined;
+  bare: boolean;
+};
 
 /**
  * Compute a short, stable hash for a (planName, sessionID) pair so that:
@@ -42,9 +42,9 @@ export type WorktreeEntry = {
  * collision probability is <1e-9 for <100 active plans.
  */
 export function worktreePathHash(planName: string, sessionID?: string): string {
-  const session = sessionID ?? ""
-  const seed = `${planName}\u0000${session}`
-  return createHash("sha1").update(seed).digest("hex").slice(0, 8)
+  const session = sessionID ?? "";
+  const seed = `${planName}\u0000${session}`;
+  return createHash("sha1").update(seed).digest("hex").slice(0, 8);
 }
 
 /**
@@ -68,17 +68,17 @@ export function acquireWorktreeLock(
   planName: string,
   options?: { waitMs?: number; ttlMs?: number },
 ): string | null {
-  const waitMs = options?.waitMs ?? WORKTREE_LOCK_WAIT_MS
-  const ttlMs = options?.ttlMs ?? WORKTREE_LOCK_TTL_MS
-  const lockBase = join(rootDirectory, WORKTREE_LOCK_DIR)
-  const lockDir = join(lockBase, `${planName}.lock`)
-  const deadline = Date.now() + waitMs
+  const waitMs = options?.waitMs ?? WORKTREE_LOCK_WAIT_MS;
+  const ttlMs = options?.ttlMs ?? WORKTREE_LOCK_TTL_MS;
+  const lockBase = join(rootDirectory, WORKTREE_LOCK_DIR);
+  const lockDir = join(lockBase, `${planName}.lock`);
+  const deadline = Date.now() + waitMs;
 
   // Ensure the lock-base parent directory exists; this is one-time setup and
   // does not need to be inside the atomic-mkdir critical section.
   if (!existsSync(lockBase)) {
     try {
-      mkdirSync(lockBase, { recursive: true })
+      mkdirSync(lockBase, { recursive: true });
     } catch {
       // ignore — another process may have created it concurrently
     }
@@ -86,23 +86,23 @@ export function acquireWorktreeLock(
 
   while (Date.now() < deadline) {
     try {
-      mkdirSync(lockDir, { recursive: false })
-      return lockDir
+      mkdirSync(lockDir, { recursive: false });
+      return lockDir;
     } catch {
       // mkdir failed — either EEXIST (someone else holds the lock) or a real error.
       // Distinguish by checking the directory: if it exists and is stale, steal it.
       if (existsSync(lockDir)) {
         try {
-          const mtimeMs = statSync(lockDir).mtimeMs
+          const mtimeMs = statSync(lockDir).mtimeMs;
           if (Date.now() - mtimeMs > ttlMs) {
             // Stale — try to remove and retry. Best-effort: if removal fails,
             // fall through to the sleep and try again later.
             try {
-              rmdirSync(lockDir)
+              rmdirSync(lockDir);
             } catch {
               // ignore
             }
-            continue
+            continue;
           }
         } catch {
           // stat failed (e.g. disappeared between exists and stat) — treat as transient.
@@ -110,17 +110,15 @@ export function acquireWorktreeLock(
       }
     }
 
-    const sleepMs = Math.min(WORKTREE_LOCK_POLL_MS, deadline - Date.now())
-    if (sleepMs <= 0) break
+    const sleepMs = Math.min(WORKTREE_LOCK_POLL_MS, deadline - Date.now());
+    if (sleepMs <= 0) break;
     // Busy-wait sleep using Atomics.wait-style synchronous delay; avoid setTimeout
     // so callers don't have to make this function async.
-    const end = Date.now() + sleepMs
-    while (Date.now() < end) {
-      ;
-    }
+    const end = Date.now() + sleepMs;
+    while (Date.now() < end) {}
   }
 
-  return null
+  return null;
 }
 
 /**
@@ -129,18 +127,18 @@ export function acquireWorktreeLock(
  * the lock is also protected by TTL-based stale recovery.
  */
 export function releaseWorktreeLock(lockDir: string | null): void {
-  if (!lockDir) return
+  if (!lockDir) return;
   try {
-    rmdirSync(lockDir)
+    rmdirSync(lockDir);
   } catch {
     // ignore
   }
 }
 
 export function parseWorktreeListPorcelain(output: string): WorktreeEntry[] {
-  const lines = output.split("\n").map((line) => line.trim())
-  const entries: WorktreeEntry[] = []
-  let current: Partial<WorktreeEntry> | undefined
+  const lines = output.split("\n").map((line) => line.trim());
+  const entries: WorktreeEntry[] = [];
+  let current: Partial<WorktreeEntry> | undefined;
 
   for (const line of lines) {
     if (!line) {
@@ -149,23 +147,26 @@ export function parseWorktreeListPorcelain(output: string): WorktreeEntry[] {
           path: current.path,
           branch: current.branch,
           bare: current.bare ?? false,
-        })
+        });
       }
-      current = undefined
-      continue
+      current = undefined;
+      continue;
     }
 
     if (line.startsWith("worktree ")) {
-      current = { path: line.slice("worktree ".length).trim() }
-      continue
+      current = { path: line.slice("worktree ".length).trim() };
+      continue;
     }
 
-    if (!current) continue
+    if (!current) continue;
 
     if (line.startsWith("branch ")) {
-      current.branch = line.slice("branch ".length).trim().replace(/^refs\/heads\//, "")
+      current.branch = line
+        .slice("branch ".length)
+        .trim()
+        .replace(/^refs\/heads\//, "");
     } else if (line === "bare") {
-      current.bare = true
+      current.bare = true;
     }
   }
 
@@ -174,10 +175,10 @@ export function parseWorktreeListPorcelain(output: string): WorktreeEntry[] {
       path: current.path,
       branch: current.branch,
       bare: current.bare ?? false,
-    })
+    });
   }
 
-  return entries
+  return entries;
 }
 
 export function listWorktrees(directory: string): WorktreeEntry[] {
@@ -187,10 +188,10 @@ export function listWorktrees(directory: string): WorktreeEntry[] {
       encoding: "utf-8",
       timeout: 5000,
       stdio: ["pipe", "pipe", "pipe"],
-    })
-    return parseWorktreeListPorcelain(output)
+    });
+    return parseWorktreeListPorcelain(output);
   } catch {
-    return []
+    return [];
   }
 }
 
@@ -201,9 +202,9 @@ export function detectWorktreePath(directory: string): string | null {
       encoding: "utf-8",
       timeout: 5000,
       stdio: ["pipe", "pipe", "pipe"],
-    }).trim()
+    }).trim();
   } catch {
-    return null
+    return null;
   }
 }
 
@@ -234,60 +235,64 @@ export function createWorktreeForPlan(
   planName: string,
   sessionID?: string,
 ): string | null {
-  const hash = worktreePathHash(planName, sessionID ?? "")
-  const worktreePath = join(directory, WORKTREE_BASE_DIR, `${planName}-${hash}`)
-  const branchName = `boulder/${planName}-${hash}`
+  const hash = worktreePathHash(planName, sessionID ?? "");
+  const worktreePath = join(
+    directory,
+    WORKTREE_BASE_DIR,
+    `${planName}-${hash}`,
+  );
+  const branchName = `boulder/${planName}-${hash}`;
 
   // Per-plan lock — must be released in finally.
-  const lockDir = acquireWorktreeLock(directory, planName)
+  const lockDir = acquireWorktreeLock(directory, planName);
   if (!lockDir) {
-    return null
+    return null;
   }
   try {
     // Re-check existence under the lock; another caller may have just finished.
     if (existsSync(worktreePath)) {
-      const health = validateWorktreeHealth(worktreePath)
+      const health = validateWorktreeHealth(worktreePath);
       if (health.valid) {
         // Ensure the worktree-local registry/plans are present (idempotent
         // re-entries from a re-fired hook still get a usable worktree).
-        ensureBoulderDirInWorktree(worktreePath)
-        ensurePlansCopyInWorktree(worktreePath, directory)
-        copyBoulderEntryToWorktree(directory, worktreePath, planName)
-        return worktreePath
+        ensureBoulderDirInWorktree(worktreePath);
+        ensurePlansCopyInWorktree(worktreePath, directory);
+        copyBoulderEntryToWorktree(directory, worktreePath, planName);
+        return worktreePath;
       }
       // Stale worktree — remove it first, then recreate.
-      removeWorktree(worktreePath)
+      removeWorktree(worktreePath);
     }
 
     // Check if git repo
     execFileSync("git", ["rev-parse", "--show-toplevel"], {
       cwd: directory,
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     // Create worktree with new branch
     execFileSync("git", ["worktree", "add", "-b", branchName, worktreePath], {
       cwd: directory,
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     // Ensure .bob/ directory exists in worktree
-    ensureBoulderDirInWorktree(worktreePath)
+    ensureBoulderDirInWorktree(worktreePath);
 
     // Copy plans (do not symlink — symlinks would let worktree writes
     // mutate root plans, which is a data-loss risk).
-    ensurePlansCopyInWorktree(worktreePath, directory)
+    ensurePlansCopyInWorktree(worktreePath, directory);
 
     // Copy the matching boulder-registry entry into the worktree so the
     // running session has its own isolated state.
-    copyBoulderEntryToWorktree(directory, worktreePath, planName)
+    copyBoulderEntryToWorktree(directory, worktreePath, planName);
 
-    return worktreePath
+    return worktreePath;
   } catch {
     // Git command failed (not a git repo, worktree exists, etc.)
-    return null
+    return null;
   } finally {
-    releaseWorktreeLock(lockDir)
+    releaseWorktreeLock(lockDir);
   }
 }
 
@@ -296,10 +301,13 @@ export function createWorktreeForPlan(
  * @param worktreePath - Path to the worktree
  * @returns { valid: boolean, reason?: string }
  */
-export function validateWorktreeHealth(worktreePath: string): { valid: boolean; reason?: string } {
+export function validateWorktreeHealth(worktreePath: string): {
+  valid: boolean;
+  reason?: string;
+} {
   // Check directory exists
   if (!existsSync(worktreePath)) {
-    return { valid: false, reason: "Worktree directory does not exist" }
+    return { valid: false, reason: "Worktree directory does not exist" };
   }
 
   try {
@@ -307,22 +315,22 @@ export function validateWorktreeHealth(worktreePath: string): { valid: boolean; 
     execFileSync("git", ["rev-parse", "--show-toplevel"], {
       cwd: worktreePath,
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     // Check git worktree list confirms it
     const worktrees = execFileSync("git", ["worktree", "list", "--porcelain"], {
       cwd: worktreePath,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     if (!worktrees.includes(`worktree ${worktreePath}`)) {
-      return { valid: false, reason: "Worktree not registered in git" }
+      return { valid: false, reason: "Worktree not registered in git" };
     }
 
-    return { valid: true }
+    return { valid: true };
   } catch {
-    return { valid: false, reason: "Git validation failed" }
+    return { valid: false, reason: "Git validation failed" };
   }
 }
 
@@ -334,7 +342,7 @@ export function validateWorktreeHealth(worktreePath: string): { valid: boolean; 
 export function removeWorktree(worktreePath: string): boolean {
   try {
     if (!existsSync(worktreePath)) {
-      return true // Already removed
+      return true; // Already removed
     }
 
     // Get the branch name from worktree
@@ -342,42 +350,42 @@ export function removeWorktree(worktreePath: string): boolean {
       cwd: worktreePath,
       encoding: "utf-8",
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     // Find the branch for this worktree
-    const lines = worktrees.split("\n")
-    let branchName: string | null = null
-    let foundWorktree = false
+    const lines = worktrees.split("\n");
+    let branchName: string | null = null;
+    let foundWorktree = false;
 
     for (let i = 0; i < lines.length; i++) {
       if (lines[i].startsWith("worktree ")) {
-        foundWorktree = lines[i].includes(worktreePath)
+        foundWorktree = lines[i].includes(worktreePath);
       }
       if (foundWorktree && lines[i].startsWith("branch ")) {
-        branchName = lines[i].replace("branch ", "").trim()
-        break
+        branchName = lines[i].replace("branch ", "").trim();
+        break;
       }
     }
 
     // Remove worktree
     execFileSync("git", ["worktree", "remove", worktreePath, "--force"], {
       stdio: ["pipe", "pipe", "pipe"],
-    })
+    });
 
     // If we have a branch, delete it too
     if (branchName) {
       try {
         execFileSync("git", ["branch", "-D", branchName], {
           stdio: ["pipe", "pipe", "pipe"],
-        })
+        });
       } catch {
         // Branch deletion failed, but worktree removal succeeded
       }
     }
 
-    return true
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -386,9 +394,9 @@ export function removeWorktree(worktreePath: string): boolean {
  * @param worktreePath - Path to the worktree
  */
 export function ensureBoulderDirInWorktree(worktreePath: string): void {
-  const boulderDir = join(worktreePath, ".bob")
+  const boulderDir = join(worktreePath, ".bob");
   if (!existsSync(boulderDir)) {
-    mkdirSync(boulderDir, { recursive: true })
+    mkdirSync(boulderDir, { recursive: true });
   }
 }
 
@@ -410,33 +418,36 @@ export function ensureBoulderDirInWorktree(worktreePath: string): void {
  * @param rootDirectory - Root directory of the project (where .bob/plans exists)
  * @returns true on success, false when root plans dir is missing or copy failed
  */
-export function ensurePlansCopyInWorktree(worktreePath: string, rootDirectory: string): boolean {
-  const worktreePlansDir = join(worktreePath, BOULDER_DIR, "plans")
-  const rootPlansDir = join(rootDirectory, BOULDER_DIR, "plans")
+export function ensurePlansCopyInWorktree(
+  worktreePath: string,
+  rootDirectory: string,
+): boolean {
+  const worktreePlansDir = join(worktreePath, BOULDER_DIR, "plans");
+  const rootPlansDir = join(rootDirectory, BOULDER_DIR, "plans");
 
   if (!existsSync(rootPlansDir)) {
-    return false
+    return false;
   }
 
   if (existsSync(worktreePlansDir)) {
-    return true
+    return true;
   }
 
   try {
-    mkdirSync(worktreePlansDir, { recursive: true })
+    mkdirSync(worktreePlansDir, { recursive: true });
 
-    const rootFiles = readdirSync(rootPlansDir)
+    const rootFiles = readdirSync(rootPlansDir);
     for (const file of rootFiles) {
-      const src = join(rootPlansDir, file)
-      const dst = join(worktreePlansDir, file)
-      const srcStat = statSync(src)
+      const src = join(rootPlansDir, file);
+      const dst = join(worktreePlansDir, file);
+      const srcStat = statSync(src);
       if (srcStat.isFile()) {
-        copyFileSync(src, dst)
+        copyFileSync(src, dst);
       }
     }
-    return true
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
@@ -448,44 +459,44 @@ export function ensurePlansCopyInWorktree(worktreePath: string, rootDirectory: s
  * @returns true on success
  */
 export function removePlansFromWorktree(worktreePath: string): boolean {
-  const worktreePlansDir = join(worktreePath, BOULDER_DIR, "plans")
+  const worktreePlansDir = join(worktreePath, BOULDER_DIR, "plans");
 
   if (!existsSync(worktreePlansDir)) {
-    return true
+    return true;
   }
 
   try {
     // Use lstatSync, not statSync: a symlink to a directory must be detected
     // as a symlink (and removed), not followed into the target.
-    const stats = lstatSync(worktreePlansDir)
+    const stats = lstatSync(worktreePlansDir);
     if (stats.isSymbolicLink()) {
-      unlinkSync(worktreePlansDir)
-      return true
+      unlinkSync(worktreePlansDir);
+      return true;
     }
     if (stats.isDirectory()) {
-      const files = readdirSync(worktreePlansDir)
+      const files = readdirSync(worktreePlansDir);
       for (const file of files) {
         try {
-          unlinkSync(join(worktreePlansDir, file))
+          unlinkSync(join(worktreePlansDir, file));
         } catch {
           // ignore individual file removal errors
         }
       }
       try {
-        rmdirSync(worktreePlansDir)
+        rmdirSync(worktreePlansDir);
       } catch {
         // ignore
       }
     }
-    return true
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
 // Back-compat shims for callers still using the old symlink names.
-export const ensurePlansSymlinkInWorktree = ensurePlansCopyInWorktree
-export const removePlansSymlinkFromWorktree = removePlansFromWorktree
+export const ensurePlansSymlinkInWorktree = ensurePlansCopyInWorktree;
+export const removePlansSymlinkFromWorktree = removePlansFromWorktree;
 
 /**
  * Startup health check: validate all worktrees and clean up stale ones.
@@ -502,41 +513,41 @@ export const removePlansSymlinkFromWorktree = removePlansFromWorktree
  * @returns Array of removed stale worktree names
  */
 export function cleanupStaleWorktrees(directory: string): string[] {
-  const removed: string[] = []
-  const worktreeBase = join(directory, WORKTREE_BASE_DIR)
+  const removed: string[] = [];
+  const worktreeBase = join(directory, WORKTREE_BASE_DIR);
 
   if (!existsSync(worktreeBase)) {
-    return removed
+    return removed;
   }
 
   try {
-    const entries = readdirSync(worktreeBase)
+    const entries = readdirSync(worktreeBase);
 
     for (const entry of entries) {
       // Skip the lock directory itself — it isn't a worktree.
       if (entry === ".locks") {
-        continue
+        continue;
       }
 
-      const worktreePath = join(worktreeBase, entry)
+      const worktreePath = join(worktreeBase, entry);
 
       // Check if it's a directory
       if (!statSync(worktreePath).isDirectory()) {
-        continue
+        continue;
       }
 
       // Session-aware check: never remove a worktree that has a live session.
       if (worktreeHasLiveSession(worktreePath)) {
-        continue
+        continue;
       }
 
       // Validate health
-      const health = validateWorktreeHealth(worktreePath)
+      const health = validateWorktreeHealth(worktreePath);
 
       if (!health.valid) {
         // Stale worktree - remove it
         if (removeWorktree(worktreePath)) {
-          removed.push(entry)
+          removed.push(entry);
         }
       }
     }
@@ -544,5 +555,5 @@ export function cleanupStaleWorktrees(directory: string): string[] {
     // Ignore errors during cleanup
   }
 
-  return removed
+  return removed;
 }

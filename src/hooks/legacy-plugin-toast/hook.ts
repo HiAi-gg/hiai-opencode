@@ -1,41 +1,59 @@
-import type { PluginInput } from "@opencode-ai/plugin"
+import type { PluginInput } from "@opencode-ai/plugin";
 
-import { checkForLegacyPluginEntry } from "../../shared/legacy-plugin-warning"
-import { log } from "../../shared/logger"
-import { LEGACY_PLUGIN_NAME, PLUGIN_NAME, PUBLISHED_PACKAGE_NAME } from "../../shared/plugin-identity"
-import { autoMigrateLegacyPluginEntry } from "./auto-migrate-runner"
+import { checkForLegacyPluginEntry } from "../../shared/legacy-plugin-warning";
+import { log } from "../../shared/logger";
+import {
+  LEGACY_PLUGIN_NAME,
+  PLUGIN_NAME,
+  PUBLISHED_PACKAGE_NAME,
+} from "../../shared/plugin-identity";
+import { autoMigrateLegacyPluginEntry } from "./auto-migrate-runner";
 
 type LegacyPluginToastDeps = {
-  checkForLegacyPluginEntry?: typeof checkForLegacyPluginEntry
-  log?: typeof log
-  autoMigrateLegacyPluginEntry?: typeof autoMigrateLegacyPluginEntry
-}
+  checkForLegacyPluginEntry?: typeof checkForLegacyPluginEntry;
+  log?: typeof log;
+  autoMigrateLegacyPluginEntry?: typeof autoMigrateLegacyPluginEntry;
+};
 
-export function createLegacyPluginToastHook(ctx: PluginInput, deps: LegacyPluginToastDeps = {}) {
-  let fired = false
-  const checkForLegacyPluginEntryFn = deps.checkForLegacyPluginEntry ?? checkForLegacyPluginEntry
-  const logFn = deps.log ?? log
-  const autoMigrateLegacyPluginEntryFn = deps.autoMigrateLegacyPluginEntry ?? autoMigrateLegacyPluginEntry
+export function createLegacyPluginToastHook(
+  ctx: PluginInput,
+  deps: LegacyPluginToastDeps = {},
+) {
+  let fired = false;
+  const checkForLegacyPluginEntryFn =
+    deps.checkForLegacyPluginEntry ?? checkForLegacyPluginEntry;
+  const logFn = deps.log ?? log;
+  const autoMigrateLegacyPluginEntryFn =
+    deps.autoMigrateLegacyPluginEntry ?? autoMigrateLegacyPluginEntry;
 
   return {
-    event: async ({ event }: { event: { type: string; properties?: unknown } }) => {
-      if (event.type !== "session.created" || fired) return
+    event: async ({
+      event,
+    }: {
+      event: { type: string; properties?: unknown };
+    }) => {
+      if (event.type !== "session.created" || fired) return;
 
-      const props = event.properties as { info?: { parentID?: string } } | undefined
-      if (props?.info?.parentID) return
+      const props = event.properties as
+        | { info?: { parentID?: string } }
+        | undefined;
+      if (props?.info?.parentID) return;
 
-      fired = true
+      fired = true;
 
-      const result = checkForLegacyPluginEntryFn()
-      if (!result.hasLegacyEntry) return
+      const result = checkForLegacyPluginEntryFn();
+      if (!result.hasLegacyEntry) return;
 
-      const migration = autoMigrateLegacyPluginEntryFn()
+      const migration = autoMigrateLegacyPluginEntryFn();
 
       if (migration.migrated) {
-        logFn("[legacy-plugin-toast] Auto-migrated opencode.json plugin entry", {
-          from: migration.from,
-          to: migration.to,
-        })
+        logFn(
+          "[legacy-plugin-toast] Auto-migrated opencode.json plugin entry",
+          {
+            from: migration.from,
+            to: migration.to,
+          },
+        );
 
         await ctx.client.tui
           .showToast({
@@ -46,23 +64,30 @@ export function createLegacyPluginToastHook(ctx: PluginInput, deps: LegacyPlugin
               duration: 8000,
             },
           })
-          .catch(() => { /* intentionally ignored — toast is non-critical */ })
+          .catch(() => {
+            /* intentionally ignored — toast is non-critical */
+          });
       } else {
-        logFn("[legacy-plugin-toast] Legacy entry detected but migration failed", {
-          legacyEntries: result.legacyEntries,
-        })
+        logFn(
+          "[legacy-plugin-toast] Legacy entry detected but migration failed",
+          {
+            legacyEntries: result.legacyEntries,
+          },
+        );
 
         await ctx.client.tui
           .showToast({
             body: {
               title: "Legacy Plugin Name Detected",
-               message: `Update your opencode.json: "${LEGACY_PLUGIN_NAME}" has been renamed to "${PLUGIN_NAME}".\nRun: bunx ${PUBLISHED_PACKAGE_NAME} install`,
+              message: `Update your opencode.json: "${LEGACY_PLUGIN_NAME}" has been renamed to "${PLUGIN_NAME}".\nRun: bunx ${PUBLISHED_PACKAGE_NAME} install`,
               variant: "warning" as const,
               duration: 10000,
             },
           })
-          .catch(() => { /* intentionally ignored — toast is non-critical */ })
+          .catch(() => {
+            /* intentionally ignored — toast is non-critical */
+          });
       }
     },
-  }
+  };
 }

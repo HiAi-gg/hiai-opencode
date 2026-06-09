@@ -1,4 +1,4 @@
-import { getAgentListDisplayName } from "../shared/agent-display-names"
+import { getAgentListDisplayName } from "../shared/agent-display-names";
 
 /**
  * CRITICAL: This is the ONLY source of truth for core agent ordering.
@@ -15,49 +15,49 @@ export const CANONICAL_CORE_AGENT_ORDER = [
   "coder",
   "strategist",
   "manager",
-] as const
+] as const;
 
-type CoreAgentName = (typeof CANONICAL_CORE_AGENT_ORDER)[number]
+type CoreAgentName = (typeof CANONICAL_CORE_AGENT_ORDER)[number];
 
 const CORE_AGENT_ORDER: ReadonlyArray<{
-  configKey: CoreAgentName
-  displayName: string
-  order: number
+  configKey: CoreAgentName;
+  displayName: string;
+  order: number;
 }> = CANONICAL_CORE_AGENT_ORDER.map((configKey, index) => ({
   configKey,
   displayName: getAgentListDisplayName(configKey),
   order: index + 1,
-}))
+}));
 
-const CORE_DISPLAY_NAMES = new Set(CORE_AGENT_ORDER.map((a) => a.displayName))
+const _CORE_DISPLAY_NAMES = new Set(CORE_AGENT_ORDER.map((a) => a.displayName));
 
 function injectOrderField(agentConfig: unknown, order: number): unknown {
   if (typeof agentConfig === "object" && agentConfig !== null) {
-    return { ...agentConfig, order }
+    return { ...agentConfig, order };
   }
-  return agentConfig
+  return agentConfig;
 }
 
 export function reorderAgentsByPriority(
   agents: Record<string, unknown>,
 ): Record<string, unknown> {
-  const ordered: Record<string, unknown> = {}
-  const seen = new Set<string>()
+  const ordered: Record<string, unknown> = {};
+  const seen = new Set<string>();
 
   for (const { displayName, order } of CORE_AGENT_ORDER) {
-    if (Object.prototype.hasOwnProperty.call(agents, displayName)) {
-      ordered[displayName] = injectOrderField(agents[displayName], order)
-      seen.add(displayName)
+    if (Object.hasOwn(agents, displayName)) {
+      ordered[displayName] = injectOrderField(agents[displayName], order);
+      seen.add(displayName);
     }
   }
 
   const nonCoreKeys = Object.keys(agents)
     .filter((key) => !seen.has(key))
-    .sort((a, b) => a.localeCompare(b))
+    .sort((a, b) => a.localeCompare(b));
 
   for (const key of nonCoreKeys) {
-    ordered[key] = agents[key]
+    ordered[key] = agents[key];
   }
 
-  return ordered
+  return ordered;
 }

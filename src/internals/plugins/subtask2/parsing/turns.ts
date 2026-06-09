@@ -4,8 +4,8 @@
 
 // $TURN[n] - last n messages
 // $TURN[:n] or $TURN[:n:m:o] - specific messages at indices (1-based from end)
-const TURN_LAST_N_PATTERN = "\\$TURN\\[(\\d+)\\]";
-const TURN_SPECIFIC_PATTERN = "\\$TURN\\[([:\\d]+)\\]";
+const _TURN_LAST_N_PATTERN = "\\$TURN\\[(\\d+)\\]";
+const _TURN_SPECIFIC_PATTERN = "\\$TURN\\[([:\\d]+)\\]";
 
 export type TurnReference =
   | { type: "lastN"; match: string; count: number }
@@ -24,7 +24,8 @@ export function extractTurnReferences(text: string): TurnReference[] {
   const regex = /\$TURN\[([^\]]+)\]/g;
   let match: RegExpExecArray | null;
 
-  while ((match = regex.exec(text)) !== null) {
+  match = regex.exec(text);
+  while (match !== null) {
     const inner = match[1];
 
     if (inner === "*") {
@@ -35,14 +36,14 @@ export function extractTurnReferences(text: string): TurnReference[] {
       const indices = inner
         .split(":")
         .filter(Boolean)
-        .map(n => parseInt(n, 10));
-      if (indices.length > 0 && indices.every(n => !isNaN(n))) {
+        .map((n) => parseInt(n, 10));
+      if (indices.length > 0 && indices.every((n) => !Number.isNaN(n))) {
         refs.push({ type: "specific", match: match[0], indices });
       }
     } else {
       // Last N: $TURN[5]
       const count = parseInt(inner, 10);
-      if (!isNaN(count)) {
+      if (!Number.isNaN(count)) {
         refs.push({ type: "lastN", match: match[0], count });
       }
     }
@@ -62,7 +63,7 @@ export function hasTurnReferences(text: string): boolean {
  */
 export function replaceTurnReferences(
   text: string,
-  replacements: Map<string, string>
+  replacements: Map<string, string>,
 ): string {
   let result = text;
   for (const [pattern, replacement] of replacements) {

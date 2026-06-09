@@ -1,5 +1,5 @@
-export const HOOK_NAME = "tasks-todowrite-disabler"
-export const BLOCKED_TOOLS = ["TodoWrite", "TodoRead"]
+export const HOOK_NAME = "tasks-todowrite-disabler";
+export const BLOCKED_TOOLS = ["TodoWrite", "TodoRead"];
 export const REPLACEMENT_MESSAGE = `TodoRead/TodoWrite are DISABLED because experimental.task_system is enabled.
 
 **ACTION REQUIRED**: RE-REGISTER what you were about to write as Todo using Task tools NOW. Then ASSIGN yourself and START WORKING immediately.
@@ -27,4 +27,4 @@ Even if the task seems trivial (1 line fix, simple edit, quick change), you MUST
 
 **WHY?** Task tracking = visibility = accountability. Skipping registration = invisible work = chaos.
 
-DO NOT retry TodoWrite. Convert to TaskCreate NOW.`
+DO NOT retry TodoWrite. Convert to TaskCreate NOW.`;

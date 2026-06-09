@@ -1,7 +1,7 @@
 /** PROMPT_VERSION: 2026-04-26
  * Generic GPT Coder prompt - fallback for GPT models without a model-specific variant */
 
-import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard"
+import { GPT_APPLY_PATCH_GUIDANCE } from "../gpt-apply-patch-guard";
 import type {
   AvailableAgent,
   AvailableTool,
@@ -49,7 +49,8 @@ export function buildCoderPrompt(
     availableSkills,
   );
   const delegationTable = buildDelegationTable(availableAgents);
-  const strategistCriticSection = buildStrategistAndCriticSection(availableAgents);
+  const strategistCriticSection =
+    buildStrategistAndCriticSection(availableAgents);
   const hardRules = buildHardRulesSection();
   const todoDiscipline = buildTodoDisciplineSection(useTaskSystem);
 
@@ -67,7 +68,7 @@ ${hardRules}
 
 ${keyTriggers}
 
-${buildIntentGate('executor')}
+${buildIntentGate("executor")}
 
 ---
 

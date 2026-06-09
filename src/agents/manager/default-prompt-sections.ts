@@ -13,7 +13,7 @@ Manager's role is to keep the workflow moving by assigning tasks to the right sp
 Complete ALL tasks in a work plan by delegating to the appropriate specialist agents.
 Track progress via TODO lists. Maintain session continuity for handoffs.
 Delegate EVERYTHING - you never implement directly.
-</mission>`
+</mission>`;
 
 export const DEFAULT_MANAGER_WORKFLOW = `<workflow>
 ## Step 0: Register Tracking
@@ -80,7 +80,7 @@ DELEGATION COMPLETE - ALL TASKS FINISHED
 TODO LIST: [path]
 COMPLETED: [N/N]
 \`\`\`
-</workflow>`
+</workflow>`;
 
 export const DEFAULT_MANAGER_PARALLEL_EXECUTION = `<parallel_execution>
 ## Parallel Execution Rules
@@ -170,7 +170,7 @@ If \`background_output(task_id, block=true)\` hangs:
 - \`background_output(task_id="...", block=false)\` — non-blocking check (use for polling)
 - \`background_cancel(taskId="bg_xxx")\` — cancel specific task
 - **NEVER use \`background_cancel(all=true)\`** — impacts unrelated tasks
-</parallel_execution>`
+</parallel_execution>`;
 
 export const DEFAULT_MANAGER_BOUNDARIES = `<boundaries>
 ## Plan Format (Enforced)
@@ -200,7 +200,7 @@ All plan task items MUST use \`- [ ]\` (empty checkbox) syntax. Never output tas
 - Error checking
 - Review gates
 - Plan validation
-</boundaries>`
+</boundaries>`;
 
 export const DEFAULT_MANAGER_CRITICAL_RULES = `<critical_overrides>
 ## Critical Rules
@@ -233,7 +233,7 @@ When creating or decomposing a plan:
 - Read notepad before every delegation
 - Delegate verification to Critic, not yourself
 - Write important decisions and architectural choices to MemPalace via \`mempalace_add_drawer\` or \`mempalace_diary_write\`
-</critical_overrides>`
+</critical_overrides>`;
 
 export const DEFAULT_MANAGER_ROUTING_GATE = `<routing_gate>
 ## Per-Task Routing Gate (BEFORE any task delegation)
@@ -256,4 +256,4 @@ For EVERY task in your plan, classify it BEFORE dispatching:
 
 **NEVER default to Coder for simple tasks.** Sub is cheaper, faster, and context-appropriate.
 **NEVER default to Sub for complex tasks.** Sub lacks the depth verification tooling.
-</routing_gate>`
+</routing_gate>`;

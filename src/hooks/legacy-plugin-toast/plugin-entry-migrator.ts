@@ -1,1 +1,1 @@
-export { migrateLegacyPluginEntry } from "../../shared/migrate-legacy-plugin-entry"
+export { migrateLegacyPluginEntry } from "../../shared/migrate-legacy-plugin-entry";

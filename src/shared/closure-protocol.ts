@@ -35,7 +35,11 @@ You MUST end your final response with a structured <CLOSURE> block. This block s
 </CLOSURE_PROTOCOL>
 `;
 
-export function validateClosure(text: string): { isValid: boolean; error?: string; data?: ClosureBlock } {
+export function validateClosure(text: string): {
+  isValid: boolean;
+  error?: string;
+  data?: ClosureBlock;
+} {
   const match = text.match(/<CLOSURE>\s*([\s\S]*?)\s*<\/CLOSURE>/i);
   if (!match) {
     return { isValid: false, error: "Missing mandatory <CLOSURE> block." };
@@ -44,10 +48,17 @@ export function validateClosure(text: string): { isValid: boolean; error?: strin
   try {
     const data = JSON.parse(match[1]) as ClosureBlock;
     if (!data.reasoning || !data.evidence || !data.readiness) {
-      return { isValid: false, error: "Invalid <CLOSURE> schema: missing reasoning, evidence, or readiness fields." };
+      return {
+        isValid: false,
+        error:
+          "Invalid <CLOSURE> schema: missing reasoning, evidence, or readiness fields.",
+      };
     }
     return { isValid: true, data };
-  } catch (e) {
-    return { isValid: false, error: "Malformed <CLOSURE> block: must be a valid JSON object." };
+  } catch (_e) {
+    return {
+      isValid: false,
+      error: "Malformed <CLOSURE> block: must be a valid JSON object.",
+    };
   }
 }

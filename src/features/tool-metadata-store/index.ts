@@ -3,5 +3,5 @@ export {
   consumeToolMetadata,
   getPendingStoreSize,
   storeToolMetadata,
-} from "./store"
-export type { PendingToolMetadata } from "./store"
+} from "./store";
+export type { PendingToolMetadata } from "./store";

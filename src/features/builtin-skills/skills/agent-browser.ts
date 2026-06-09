@@ -1,8 +1,9 @@
-import type { BuiltinSkill } from "../types"
+import type { BuiltinSkill } from "../types";
 
 export const agentBrowserSkill: BuiltinSkill = {
   name: "agent-browser",
-  description: "MUST USE for any browser-related tasks. Browser automation via agent-browser CLI - verification, browsing, information gathering, web scraping, testing, screenshots, and all browser interactions.",
+  description:
+    "MUST USE for any browser-related tasks. Browser automation via agent-browser CLI - verification, browsing, information gathering, web scraping, testing, screenshots, and all browser interactions.",
   template: `# Browser Automation with agent-browser
 
 ## Quick start
@@ -449,4 +450,4 @@ agent-browser --native open example.com
 ---
 Install: \`bun add -g agent-browser && agent-browser install\`. Run \`agent-browser --help\` for all commands. Repo: https://github.com/vercel-labs/agent-browser`,
   allowedTools: ["Bash(agent-browser:*)"],
-}
+};

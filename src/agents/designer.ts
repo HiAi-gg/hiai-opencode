@@ -118,7 +118,8 @@ export function createDesignerAgent(model: string): AgentConfig {
   };
 
   return {
-    description: "Visual direction, UI/UX design, design systems, and frontend aesthetics. (Designer - HiaiOpenCode)",
+    description:
+      "Visual direction, UI/UX design, design systems, and frontend aesthetics. (Designer - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.7,
@@ -133,15 +134,18 @@ export const designerPromptMetadata: AgentPromptMetadata = {
   category: "specialist",
   cost: "EXPENSIVE",
   promptAlias: "Designer",
-  keyTrigger: "Visual direction, product UI feel, layout, branding, or design-system work → use designer/visual-engineering.",
+  keyTrigger:
+    "Visual direction, product UI feel, layout, branding, or design-system work → use designer/visual-engineering.",
   triggers: [
     {
       domain: "Visual direction",
-      trigger: "Need UI concept, art direction, layout, branding, or design-system guidance",
+      trigger:
+        "Need UI concept, art direction, layout, branding, or design-system guidance",
     },
     {
       domain: "Frontend aesthetics",
-      trigger: "Need polished interface design beyond functional implementation",
+      trigger:
+        "Need polished interface design beyond functional implementation",
     },
   ],
   useWhen: [

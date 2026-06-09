@@ -16,7 +16,7 @@
  * inconsistencies defensively while maintaining backwards compatibility.
  */
 
-import { normalizeModelID } from "../../shared"
+import { normalizeModelID } from "../../shared";
 
 /**
  * Extracts provider-specific prefix from model ID (if present).
@@ -29,16 +29,15 @@ import { normalizeModelID } from "../../shared"
  * extractModelPrefix("aws/anthropic/claude-sonnet-4") // { prefix: "aws/anthropic/", base: "claude-sonnet-4" }
  */
 function extractModelPrefix(modelID: string): { prefix: string; base: string } {
-  const slashIndex = modelID.lastIndexOf("/")
+  const slashIndex = modelID.lastIndexOf("/");
   if (slashIndex === -1) {
-    return { prefix: "", base: modelID }
+    return { prefix: "", base: modelID };
   }
   return {
     prefix: modelID.slice(0, slashIndex + 1),
     base: modelID.slice(slashIndex + 1),
-  }
+  };
 }
-
 
 // Maps model IDs to their "high reasoning" variant (internal convention)
 // For OpenAI models, this signals that reasoning_effort should be set to "high"
@@ -46,10 +45,10 @@ const HIGH_VARIANT_MAP: Record<string, string> = {
   // Claude
   "claude-sonnet-4-6": "claude-sonnet-4-6-high",
   "claude-opus-4-6": "claude-opus-4-6-high",
-   // Gemini
-   "gemini-3-1-pro": "gemini-3-1-pro-high",
-   "gemini-3-1-pro-low": "gemini-3-1-pro-high",
-   "gemini-3-flash": "gemini-3-flash-high",
+  // Gemini
+  "gemini-3-1-pro": "gemini-3-1-pro-high",
+  "gemini-3-1-pro-low": "gemini-3-1-pro-high",
+  "gemini-3-flash": "gemini-3-flash-high",
   // GPT-5
   "gpt-5": "gpt-5-high",
   "gpt-5-mini": "gpt-5-mini-high",
@@ -69,32 +68,31 @@ const HIGH_VARIANT_MAP: Record<string, string> = {
   // Antigravity (Google)
   "antigravity-gemini-3-1-pro": "antigravity-gemini-3-1-pro-high",
   "antigravity-gemini-3-flash": "antigravity-gemini-3-flash-high",
-}
+};
 
-const ALREADY_HIGH: Set<string> = new Set(Object.values(HIGH_VARIANT_MAP))
-
+const ALREADY_HIGH: Set<string> = new Set(Object.values(HIGH_VARIANT_MAP));
 
 export function getHighVariant(modelID: string): string | null {
-  const normalized = normalizeModelID(modelID)
-  const { prefix, base } = extractModelPrefix(normalized)
+  const normalized = normalizeModelID(modelID);
+  const { prefix, base } = extractModelPrefix(normalized);
 
   // Check if already high variant (with or without prefix)
   if (ALREADY_HIGH.has(base) || base.endsWith("-high")) {
-    return null
+    return null;
   }
 
   // Look up high variant for base model
-  const highBase = HIGH_VARIANT_MAP[base]
+  const highBase = HIGH_VARIANT_MAP[base];
   if (!highBase) {
-    return null
+    return null;
   }
 
   // Preserve prefix in the high variant
-  return prefix + highBase
+  return prefix + highBase;
 }
 
 export function isAlreadyHighVariant(modelID: string): boolean {
-  const normalized = normalizeModelID(modelID)
-  const { base } = extractModelPrefix(normalized)
-  return ALREADY_HIGH.has(base) || base.endsWith("-high")
+  const normalized = normalizeModelID(modelID);
+  const { base } = extractModelPrefix(normalized);
+  return ALREADY_HIGH.has(base) || base.endsWith("-high");
 }

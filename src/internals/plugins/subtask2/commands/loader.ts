@@ -1,6 +1,6 @@
 /// <reference types="bun-types" />
 
-import { join } from "path";
+import { join } from "node:path";
 import { getOpenCodeConfigDir } from "../../../../shared/opencode-config-dir";
 import { logWarn } from "../../../../shared/logger";
 
@@ -9,7 +9,7 @@ import { logWarn } from "../../../../shared/logger";
  */
 
 export async function loadCommandFile(
-  name: string
+  name: string,
 ): Promise<{ content: string; path: string } | null> {
   const dirs = [
     join(getOpenCodeConfigDir({ binary: "opencode" }), "command"),

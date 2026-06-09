@@ -1,6 +1,6 @@
-import type { BuiltinSkill } from "../../builtin-skills/types"
-import type { CommandDefinition } from "../../claude-code-command-loader/types"
-import type { LoadedSkill } from "../types"
+import type { BuiltinSkill } from "../../builtin-skills/types";
+import type { CommandDefinition } from "../../claude-code-command-loader/types";
+import type { LoadedSkill } from "../types";
 
 export function builtinToLoadedSkill(builtin: BuiltinSkill): LoadedSkill {
   const definition: CommandDefinition = {
@@ -11,7 +11,7 @@ export function builtinToLoadedSkill(builtin: BuiltinSkill): LoadedSkill {
     agent: builtin.agent,
     subtask: builtin.subtask,
     argumentHint: builtin.argumentHint,
-  }
+  };
 
   return {
     name: builtin.name,
@@ -22,5 +22,5 @@ export function builtinToLoadedSkill(builtin: BuiltinSkill): LoadedSkill {
     metadata: builtin.metadata as Record<string, string> | undefined,
     allowedTools: builtin.allowedTools,
     mcpConfig: builtin.mcpConfig,
-  }
+  };
 }

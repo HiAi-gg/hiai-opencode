@@ -1,6 +1,10 @@
 // @ts-nocheck Zod v3/v4 compat - agent-browser uses v3 Zod schemas, plugin uses v4
-import { tool, type ToolDefinition, type PluginInput } from "@opencode-ai/plugin"
-import type { z } from "zod"
+import {
+  tool,
+  type ToolDefinition,
+  type PluginInput,
+} from "@opencode-ai/plugin";
+import type { z } from "zod";
 import {
   AgentBrowserNavigateArgs,
   AgentBrowserSnapshotArgs,
@@ -16,39 +20,41 @@ import {
   AgentBrowserHoverArgs,
   AgentBrowserPressArgs,
   AgentBrowserBatchArgs,
-} from "./types"
+} from "./types";
 
-type AgentBrowserArgs = z.infer<typeof AgentBrowserNavigateArgs>
+type AgentBrowserArgs = z.infer<typeof AgentBrowserNavigateArgs>;
 
 function shellEscape(str: string): string {
-  return str.replace(/["\\$]/g, (c) => `\\${c}`)
+  return str.replace(/["\\$]/g, (c) => `\\${c}`);
 }
 
 function makeToolErrorHandler(toolName: string) {
   return (error: unknown): string => {
-    const message = error instanceof Error ? error.message : String(error)
+    const message = error instanceof Error ? error.message : String(error);
     if (message.includes("agent-browser: command not found")) {
-      return `agent-browser is not installed or not in PATH. Install it with: npm i -g agent-browser && agent-browser install`
+      return `agent-browser is not installed or not in PATH. Install it with: npm i -g agent-browser && agent-browser install`;
     }
-    return `Error in ${toolName}: ${message}`
-  }
+    return `Error in ${toolName}: ${message}`;
+  };
 }
 
 export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
-  const $ = ctx.$
+  const $ = ctx.$;
 
   return [
     tool({
       name: "agent_browser_navigate",
       description: "Navigate to a URL in the browser",
-      // @ts-ignore Zod v3/v4 compat - agent-browser schemas use v3 Zod, plugin uses v4 Zod
+      // @ts-expect-error Zod v3/v4 compat - agent-browser schemas use v3 Zod, plugin uses v4 Zod
       args: AgentBrowserNavigateArgs.shape,
       execute: async (args: AgentBrowserArgs) => {
         try {
-          const output = await $(`agent-browser open "${shellEscape(args.url)}"`).text()
-          return output
+          const output = await $(
+            `agent-browser open "${shellEscape(args.url)}"`,
+          ).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_navigate")(e)
+          return makeToolErrorHandler("agent_browser_navigate")(e);
         }
       },
     }),
@@ -59,15 +65,18 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserSnapshotArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserSnapshotArgs>) => {
         try {
-          let cmd = "agent-browser snapshot -i --json"
-          if (args.interactive !== undefined && !args.interactive) cmd += " --no-interactive"
-          if (args.compact !== undefined && !args.compact) cmd += " --no-compact"
-          if (args.selector) cmd += ` --selector "${shellEscape(args.selector)}"`
-          if (args.depth !== undefined) cmd += ` --depth ${args.depth}`
-          const output = await $(cmd).text()
-          return output
+          let cmd = "agent-browser snapshot -i --json";
+          if (args.interactive !== undefined && !args.interactive)
+            cmd += " --no-interactive";
+          if (args.compact !== undefined && !args.compact)
+            cmd += " --no-compact";
+          if (args.selector)
+            cmd += ` --selector "${shellEscape(args.selector)}"`;
+          if (args.depth !== undefined) cmd += ` --depth ${args.depth}`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_snapshot")(e)
+          return makeToolErrorHandler("agent_browser_snapshot")(e);
         }
       },
     }),
@@ -78,13 +87,14 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserClickArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserClickArgs>) => {
         try {
-          let cmd = `agent-browser click "${shellEscape(args.target)}"`
-          if (args.button && args.button !== "left") cmd += ` --button ${args.button}`
-          if (args.newTab) cmd += " --new-tab"
-          const output = await $(cmd).text()
-          return output
+          let cmd = `agent-browser click "${shellEscape(args.target)}"`;
+          if (args.button && args.button !== "left")
+            cmd += ` --button ${args.button}`;
+          if (args.newTab) cmd += " --new-tab";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_click")(e)
+          return makeToolErrorHandler("agent_browser_click")(e);
         }
       },
     }),
@@ -95,27 +105,28 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserFillArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserFillArgs>) => {
         try {
-          const cmd = `agent-browser fill "${shellEscape(args.target)}" "${shellEscape(args.text)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser fill "${shellEscape(args.target)}" "${shellEscape(args.text)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_fill")(e)
+          return makeToolErrorHandler("agent_browser_fill")(e);
         }
       },
     }),
 
     tool({
       name: "agent_browser_type",
-      description: "Type text into an element, optionally one character at a time",
+      description:
+        "Type text into an element, optionally one character at a time",
       args: AgentBrowserTypeArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserTypeArgs>) => {
         try {
-          let cmd = `agent-browser type "${shellEscape(args.target)}" "${shellEscape(args.text)}"`
-          if (args.slowly) cmd += " --slowly"
-          const output = await $(cmd).text()
-          return output
+          let cmd = `agent-browser type "${shellEscape(args.target)}" "${shellEscape(args.text)}"`;
+          if (args.slowly) cmd += " --slowly";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_type")(e)
+          return makeToolErrorHandler("agent_browser_type")(e);
         }
       },
     }),
@@ -126,14 +137,14 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserScreenshotArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserScreenshotArgs>) => {
         try {
-          let cmd = "agent-browser screenshot"
-          if (args.filename) cmd += ` "${shellEscape(args.filename)}"`
-          if (args.fullPage) cmd += " --full-page"
-          if (args.annotate) cmd += " --annotate"
-          const output = await $(cmd).text()
-          return output
+          let cmd = "agent-browser screenshot";
+          if (args.filename) cmd += ` "${shellEscape(args.filename)}"`;
+          if (args.fullPage) cmd += " --full-page";
+          if (args.annotate) cmd += " --annotate";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_screenshot")(e)
+          return makeToolErrorHandler("agent_browser_screenshot")(e);
         }
       },
     }),
@@ -144,11 +155,11 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserEvalArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserEvalArgs>) => {
         try {
-          const cmd = `agent-browser eval "${shellEscape(args.code)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser eval "${shellEscape(args.code)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_eval")(e)
+          return makeToolErrorHandler("agent_browser_eval")(e);
         }
       },
     }),
@@ -159,11 +170,11 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserWaitArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserWaitArgs>) => {
         try {
-          const cmd = `agent-browser wait "${shellEscape(args.condition)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser wait "${shellEscape(args.condition)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_wait")(e)
+          return makeToolErrorHandler("agent_browser_wait")(e);
         }
       },
     }),
@@ -174,12 +185,12 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserCloseArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserCloseArgs>) => {
         try {
-          let cmd = "agent-browser close"
-          if (args.all) cmd += " --all"
-          const output = await $(cmd).text()
-          return output
+          let cmd = "agent-browser close";
+          if (args.all) cmd += " --all";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_close")(e)
+          return makeToolErrorHandler("agent_browser_close")(e);
         }
       },
     }),
@@ -190,13 +201,13 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserConsoleArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserConsoleArgs>) => {
         try {
-          let cmd = "agent-browser console --json"
-          if (!args.json) cmd = "agent-browser console"
-          if (args.clear) cmd += " --clear"
-          const output = await $(cmd).text()
-          return output
+          let cmd = "agent-browser console --json";
+          if (!args.json) cmd = "agent-browser console";
+          if (args.clear) cmd += " --clear";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_console")(e)
+          return makeToolErrorHandler("agent_browser_console")(e);
         }
       },
     }),
@@ -207,11 +218,11 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserSelectArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserSelectArgs>) => {
         try {
-          const cmd = `agent-browser select "${shellEscape(args.target)}" "${shellEscape(args.value)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser select "${shellEscape(args.target)}" "${shellEscape(args.value)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_select")(e)
+          return makeToolErrorHandler("agent_browser_select")(e);
         }
       },
     }),
@@ -222,11 +233,11 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserHoverArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserHoverArgs>) => {
         try {
-          const cmd = `agent-browser hover "${shellEscape(args.target)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser hover "${shellEscape(args.target)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_hover")(e)
+          return makeToolErrorHandler("agent_browser_hover")(e);
         }
       },
     }),
@@ -237,11 +248,11 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserPressArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserPressArgs>) => {
         try {
-          const cmd = `agent-browser press "${shellEscape(args.key)}"`
-          const output = await $(cmd).text()
-          return output
+          const cmd = `agent-browser press "${shellEscape(args.key)}"`;
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_press")(e)
+          return makeToolErrorHandler("agent_browser_press")(e);
         }
       },
     }),
@@ -252,15 +263,17 @@ export function createAgentBrowserTool(ctx: PluginInput): ToolDefinition[] {
       args: AgentBrowserBatchArgs.shape,
       execute: async (args: z.infer<typeof AgentBrowserBatchArgs>) => {
         try {
-          const escapedCommands = args.commands.map((c: string) => shellEscape(c)).join(" ")
-          let cmd = `agent-browser batch ${escapedCommands}`
-          if (args.bail) cmd += " --bail"
-          const output = await $(cmd).text()
-          return output
+          const escapedCommands = args.commands
+            .map((c: string) => shellEscape(c))
+            .join(" ");
+          let cmd = `agent-browser batch ${escapedCommands}`;
+          if (args.bail) cmd += " --bail";
+          const output = await $(cmd).text();
+          return output;
         } catch (e) {
-          return makeToolErrorHandler("agent_browser_batch")(e)
+          return makeToolErrorHandler("agent_browser_batch")(e);
         }
       },
     }),
-  ]
+  ];
 }

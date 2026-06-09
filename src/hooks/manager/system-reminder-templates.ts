@@ -1,4 +1,7 @@
-import { createSystemDirective, SystemDirectiveTypes } from "../../shared/system-directive"
+import {
+  createSystemDirective,
+  SystemDirectiveTypes,
+} from "../../shared/system-directive";
 
 export const DIRECT_WORK_REMINDER = `
 
@@ -26,7 +29,7 @@ You should NOT:
 3. Verify the subagent's work after completion
 
 ---
-`
+`;
 
 export const BOULDER_CONTINUATION_PROMPT = `${createSystemDirective(SystemDirectiveTypes.BOULDER_CONTINUATION)}
 
@@ -37,7 +40,7 @@ RULES:
 - Proceed without asking for permission
 - Use the notepad at .bob/notepads/{PLAN_NAME}/ to record learnings
 - Do not stop until all tasks are complete
-- If blocked, document the blocker and move to the next task`
+- If blocked, document the blocker and move to the next task`;
 
 export const VERIFICATION_REMINDER = `**THE SUBAGENT JUST CLAIMED THIS TASK IS DONE. THEY ARE PROBABLY LYING.**
 
@@ -101,7 +104,7 @@ ALL three must be YES. "Probably" = NO. "I think so" = NO. Investigate until CER
 - **Any NO** - Reject: resume session with \`session_id\`, fix the specific issue.
 - **Unsure** - Reject: "unsure" = "no". Investigate until you have a definitive answer.
 
-**DO NOT proceed to the next task until all 4 phases are complete and the gate passes.**`
+**DO NOT proceed to the next task until all 4 phases are complete and the gate passes.**`;
 
 export const VERIFICATION_REMINDER_GEMINI = `**THE SUBAGENT HAS FINISHED. THEIR WORK IS EXTREMELY SUSPICIOUS.**
 
@@ -160,7 +163,7 @@ If Phase 1 found issues but Phase 2 passes: Phase 2 is WRONG. Fix the code.
 
 ALL three must be YES. "Probably" = NO. "I think so" = NO.
 
-**DO NOT proceed to the next task until all 4 phases are complete.**`
+**DO NOT proceed to the next task until all 4 phases are complete.**`;
 
 export const ORCHESTRATOR_DELEGATION_REQUIRED = `
 
@@ -211,7 +214,7 @@ task(
 DELEGATE. DON'T IMPLEMENT.
 
 ---
-`
+`;
 
 export const SINGLE_TASK_DIRECTIVE = `
 
@@ -246,4 +249,4 @@ If you were given **multiple genuinely independent goals** (unrelated tasks, par
 - Batch delegation of separate concerns = sloppy work = rework = wasted tokens
 
 **REFUSE genuinely multi-task requests. ALLOW single-goal multi-step workflows.**
-`
+`;

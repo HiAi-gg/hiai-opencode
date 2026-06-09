@@ -19,9 +19,9 @@ export async function executeCompact(
   client: Client,
   directory: string,
   pluginConfig: HiaiOpenCodeConfig,
-  _experimental?: ExperimentalConfig
+  _experimental?: ExperimentalConfig,
 ): Promise<void> {
-  void _experimental
+  void _experimental;
 
   if (autoCompactState.compactionInProgress.has(sessionID)) {
     await client.tui
@@ -34,7 +34,9 @@ export async function executeCompact(
           duration: 5000,
         },
       })
-      .catch(() => { /* intentionally ignored — toast is non-critical */ });
+      .catch(() => {
+        /* intentionally ignored — toast is non-critical */
+      });
     return;
   }
   autoCompactState.compactionInProgress.add(sessionID);
@@ -76,7 +78,7 @@ export async function executeCompact(
       pluginConfig,
       errorType: errorData?.errorType,
       messageIndex: errorData?.messageIndex,
-    })
+    });
   } finally {
     autoCompactState.compactionInProgress.delete(sessionID);
   }

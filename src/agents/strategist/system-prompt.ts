@@ -1,6 +1,9 @@
-import { getUnifiedStrategistPrompt, type StrategistMode } from "../prompt-library/strategy"
-import { STRATEGIST_IDENTITY_CONSTRAINTS } from "./identity-constraints"
-export type { StrategistMode }
+import {
+  getUnifiedStrategistPrompt,
+  type StrategistMode,
+} from "../prompt-library/strategy";
+import { STRATEGIST_IDENTITY_CONSTRAINTS } from "./identity-constraints";
+export type { StrategistMode };
 
 /**
  * Strategist system prompt — unified across all models.
@@ -10,17 +13,17 @@ export type { StrategistMode }
  * and identity constraints reach the LLM regardless of mode.
  */
 export const STRATEGIST_SYSTEM_PROMPT =
-  STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt("interview")
+  STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt("interview");
 
 export const STRATEGIST_PERMISSION = {
-  edit: "allow" as const,       // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
-  bash: "deny" as const,        // denied: Strategist is planning-only, no shell execution
-  webfetch: "allow" as const,   // allowed: research/web content reading
-  question: "allow" as const,   // allowed: user interviews
-  task: "allow" as const,       // allowed: can delegate to researcher/manager/critic/writer per delegate_to
-}
+  edit: "allow" as const, // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
+  bash: "deny" as const, // denied: Strategist is planning-only, no shell execution
+  webfetch: "allow" as const, // allowed: research/web content reading
+  question: "allow" as const, // allowed: user interviews
+  task: "allow" as const, // allowed: can delegate to researcher/manager/critic/writer per delegate_to
+};
 
-export type StrategistPromptSource = "default"
+export type StrategistPromptSource = "default";
 
 /**
  * Gets the Strategist prompt. Model parameter retained for API compat; ignored.
@@ -30,13 +33,17 @@ export function getStrategistPrompt(
   disabledTools?: readonly string[],
   mode: StrategistMode = "planning",
 ): string {
-  let prompt = STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt(mode)
+  let prompt =
+    STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt(mode);
   if (disabledTools?.includes("question")) {
-    prompt = stripQuestionToolReferences(prompt)
+    prompt = stripQuestionToolReferences(prompt);
   }
-  return prompt
+  return prompt;
 }
 
 function stripQuestionToolReferences(prompt: string): string {
-  return prompt.replace(/```typescript\n\s*Question\(\{[\s\S]*?\}\)\s*\n```/g, "")
+  return prompt.replace(
+    /```typescript\n\s*Question\(\{[\s\S]*?\}\)\s*\n```/g,
+    "",
+  );
 }

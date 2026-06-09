@@ -1,9 +1,14 @@
-import { join } from "node:path"
-import { getClaudeConfigDir } from "../../shared"
+import { join } from "node:path";
+import { getClaudeConfigDir } from "../../shared";
 
-export { OPENCODE_STORAGE, MESSAGE_STORAGE, PART_STORAGE, SESSION_STORAGE } from "../../shared"
-export const TODO_DIR = join(getClaudeConfigDir(), "todos")
-export const TRANSCRIPT_DIR = join(getClaudeConfigDir(), "transcripts")
+export {
+  OPENCODE_STORAGE,
+  MESSAGE_STORAGE,
+  PART_STORAGE,
+  SESSION_STORAGE,
+} from "../../shared";
+export const TODO_DIR = join(getClaudeConfigDir(), "todos");
+export const TRANSCRIPT_DIR = join(getClaudeConfigDir(), "transcripts");
 export const SESSION_LIST_DESCRIPTION = `List all OpenCode sessions with optional filtering.
 
 Returns a list of available session IDs with metadata including message count, date range, and agents used.
@@ -17,7 +22,7 @@ Example output:
 | Session ID | Messages | First | Last | Agents |
 |------------|----------|-------|------|--------|
 | ses_abc123 | 45 | 2025-12-20 | 2025-12-24 | bob, strategist |
-| ses_def456 | 12 | 2025-12-19 | 2025-12-19 | bob |`
+| ses_def456 | 12 | 2025-12-19 | 2025-12-19 | bob |`;
 
 export const SESSION_READ_DESCRIPTION = `Read messages and history from an OpenCode session.
 
@@ -38,7 +43,7 @@ Date Range: 2025-12-20 to 2025-12-24
 Hello, can you help me with...
 
 [Message 2] assistant (2025-12-20 10:30:15)
-Of course! Let me help you with...`
+Of course! Let me help you with...`;
 
 export const SESSION_SEARCH_DESCRIPTION = `Search for content within OpenCode session messages.
 
@@ -60,7 +65,7 @@ Found 3 matches across 2 sessions:
 ...I'll create a **session manager** with full search...
 
 [ses_def456] Message msg_012 (user)
-...use the **session manager** to find...`
+...use the **session manager** to find...`;
 
 export const SESSION_INFO_DESCRIPTION = `Get metadata and statistics about an OpenCode session.
 
@@ -76,7 +81,7 @@ Date Range: 2025-12-20 10:30:00 to 2025-12-24 15:45:30
 Duration: 4 days, 5 hours
 Agents Used: bob, strategist, researcher
 Has Todos: Yes (12 items, 8 completed)
-Has Transcript: Yes (234 entries)`
+Has Transcript: Yes (234 entries)`;
 
 export const SESSION_DELETE_DESCRIPTION = `Delete an OpenCode session and all associated data.
 
@@ -88,6 +93,6 @@ Arguments:
 
 Example:
 session_delete(session_id="ses_abc123", confirm=true)
-Successfully deleted session ses_abc123`
+Successfully deleted session ses_abc123`;
 
-export const TOOL_NAME_PREFIX = "session_"
+export const TOOL_NAME_PREFIX = "session_";

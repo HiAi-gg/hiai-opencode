@@ -3,44 +3,44 @@
  * Handles single/double quotes and backslash escapes.
  */
 function tokenizeCommand(cmd: string): string[] {
-  const tokens: string[] = []
-  let current = ""
-  let inQuote = false
-  let quoteChar = ""
-  let escaped = false
+  const tokens: string[] = [];
+  let current = "";
+  let inQuote = false;
+  let quoteChar = "";
+  let escaped = false;
 
   for (let i = 0; i < cmd.length; i++) {
-    const char = cmd[i]
+    const char = cmd[i];
 
     if (escaped) {
-      current += char
-      escaped = false
-      continue
+      current += char;
+      escaped = false;
+      continue;
     }
 
     if (char === "\\") {
-      escaped = true
-      continue
+      escaped = true;
+      continue;
     }
 
     if ((char === "'" || char === '"') && !inQuote) {
-      inQuote = true
-      quoteChar = char
+      inQuote = true;
+      quoteChar = char;
     } else if (char === quoteChar && inQuote) {
-      inQuote = false
-      quoteChar = ""
+      inQuote = false;
+      quoteChar = "";
     } else if (char === " " && !inQuote) {
       if (current) {
-        tokens.push(current)
-        current = ""
+        tokens.push(current);
+        current = "";
       }
     } else {
-      current += char
+      current += char;
     }
   }
 
-  if (current) tokens.push(current)
-  return tokens
+  if (current) tokens.push(current);
+  return tokens;
 }
 
 /**
@@ -48,14 +48,14 @@ function tokenizeCommand(cmd: string): string[] {
  * e.g., "omo-x:1" -> "omo-x", "omo-x:1.2" -> "omo-x"
  */
 function normalizeSessionName(name: string): string {
-  return name.split(":")[0].split(".")[0]
+  return name.split(":")[0].split(".")[0];
 }
 
 function findFlagValue(tokens: string[], flag: string): string | null {
   for (let i = 0; i < tokens.length - 1; i++) {
-    if (tokens[i] === flag) return tokens[i + 1]
+    if (tokens[i] === flag) return tokens[i + 1];
   }
-  return null
+  return null;
 }
 
 /**
@@ -63,17 +63,20 @@ function findFlagValue(tokens: string[], flag: string): string | null {
  * For new-session: prioritize -s over -t
  * For other commands: use -t
  */
-function extractSessionNameFromTokens(tokens: string[], subCommand: string): string | null {
+function extractSessionNameFromTokens(
+  tokens: string[],
+  subCommand: string,
+): string | null {
   if (subCommand === "new-session") {
-    const sFlag = findFlagValue(tokens, "-s")
-    if (sFlag) return normalizeSessionName(sFlag)
-    const tFlag = findFlagValue(tokens, "-t")
-    if (tFlag) return normalizeSessionName(tFlag)
+    const sFlag = findFlagValue(tokens, "-s");
+    if (sFlag) return normalizeSessionName(sFlag);
+    const tFlag = findFlagValue(tokens, "-t");
+    if (tFlag) return normalizeSessionName(tFlag);
   } else {
-    const tFlag = findFlagValue(tokens, "-t")
-    if (tFlag) return normalizeSessionName(tFlag)
+    const tFlag = findFlagValue(tokens, "-t");
+    if (tFlag) return normalizeSessionName(tFlag);
   }
-  return null
+  return null;
 }
 
 /**
@@ -83,43 +86,43 @@ function extractSessionNameFromTokens(tokens: string[], subCommand: string): str
  */
 function findSubcommand(tokens: string[]): string {
   // Options that require an argument: -L, -S, -f, -c, -T
-  const globalOptionsWithArgs = new Set<string>(["-L", "-S", "-f", "-c", "-T"])
+  const globalOptionsWithArgs = new Set<string>(["-L", "-S", "-f", "-c", "-T"]);
 
-  let i = 0
+  let i = 0;
   while (i < tokens.length) {
-    const token = tokens[i]
+    const token = tokens[i];
 
     // Handle end of options marker
     if (token === "--") {
       // Next token is the subcommand
-      return tokens[i + 1] ?? ""
+      return tokens[i + 1] ?? "";
     }
 
     if (globalOptionsWithArgs.has(token)) {
       // Skip the option and its argument
-      i += 2
-      continue
+      i += 2;
+      continue;
     }
 
     if (token.startsWith("-")) {
       // Skip standalone flags like -C, -v, -V
-      i++
-      continue
+      i++;
+      continue;
     }
 
     // Found the subcommand
-    return token
+    return token;
   }
 
-  return ""
+  return "";
 }
 
 export function parseTmuxCommand(tmuxCommand: string): {
-  subCommand: string
-  sessionName: string | null
+  subCommand: string;
+  sessionName: string | null;
 } {
-  const tokens = tokenizeCommand(tmuxCommand)
-  const subCommand = findSubcommand(tokens)
-  const sessionName = extractSessionNameFromTokens(tokens, subCommand)
-  return { subCommand, sessionName }
+  const tokens = tokenizeCommand(tmuxCommand);
+  const subCommand = findSubcommand(tokens);
+  const sessionName = extractSessionNameFromTokens(tokens, subCommand);
+  return { subCommand, sessionName };
 }

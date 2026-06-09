@@ -1,7 +1,7 @@
 import {
   createSystemDirective,
   SystemDirectiveTypes,
-} from "../../shared/system-directive"
+} from "../../shared/system-directive";
 
 export const COMPACTION_CONTEXT_PROMPT = `${createSystemDirective(SystemDirectiveTypes.COMPACTION_CONTEXT)}
 
@@ -53,4 +53,4 @@ This section is CRITICAL for reviewer agents (critic, strategist) to maintain co
 - **RESUME, DON'T RESTART.** Each listed session retains full context. After compaction, use \`session_id\` to continue existing agent sessions instead of spawning new ones. This saves tokens, preserves learned context, and prevents duplicate work.
 
 This context is critical for maintaining continuity after compaction.
-`
+`;

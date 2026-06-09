@@ -1,44 +1,52 @@
-import { existsSync, readFileSync } from "fs"
-import { parseJsoncSafe } from "../../shared/jsonc-parser"
-import { parseToolsConfig } from "../../shared/parse-tools-config"
-import { mapClaudeModelToOpenCode } from "./claude-model-mapper"
-import type { AgentScope, AgentJsonDefinition, ClaudeCodeAgentConfig, LoadedAgent } from "./types"
+import { existsSync, readFileSync } from "node:fs";
+import { parseJsoncSafe } from "../../shared/jsonc-parser";
+import { parseToolsConfig } from "../../shared/parse-tools-config";
+import { mapClaudeModelToOpenCode } from "./claude-model-mapper";
+import type {
+  AgentScope,
+  AgentJsonDefinition,
+  ClaudeCodeAgentConfig,
+  LoadedAgent,
+} from "./types";
 
-export function parseJsonAgentFile(filePath: string, scope: AgentScope): LoadedAgent | null {
+export function parseJsonAgentFile(
+  filePath: string,
+  scope: AgentScope,
+): LoadedAgent | null {
   try {
     if (!existsSync(filePath)) {
-      return null
+      return null;
     }
 
-    const content = readFileSync(filePath, "utf-8")
-    const { data } = parseJsoncSafe<AgentJsonDefinition>(content)
+    const content = readFileSync(filePath, "utf-8");
+    const { data } = parseJsoncSafe<AgentJsonDefinition>(content);
 
     if (!data) {
-      return null
+      return null;
     }
 
     if (!data.name || !data.prompt) {
-      return null
+      return null;
     }
 
-    const originalDescription = data.description ?? ""
-    const formattedDescription = `(${scope}) ${originalDescription}`
+    const originalDescription = data.description ?? "";
+    const formattedDescription = `(${scope}) ${originalDescription}`;
 
-    const mappedModelOverride = mapClaudeModelToOpenCode(data.model)
+    const mappedModelOverride = mapClaudeModelToOpenCode(data.model);
     const modelString = mappedModelOverride
       ? `${mappedModelOverride.providerID}/${mappedModelOverride.modelID}`
-      : undefined
+      : undefined;
 
     const config: ClaudeCodeAgentConfig = {
       description: formattedDescription,
       mode: data.mode ?? "subagent",
       prompt: data.prompt.trim(),
       ...(modelString ? { model: modelString } : {}),
-    }
+    };
 
-    const toolsConfig = parseToolsConfig(data.tools)
+    const toolsConfig = parseToolsConfig(data.tools);
     if (toolsConfig) {
-      config.tools = toolsConfig
+      config.tools = toolsConfig;
     }
 
     return {
@@ -46,8 +54,8 @@ export function parseJsonAgentFile(filePath: string, scope: AgentScope): LoadedA
       path: filePath,
       config,
       scope,
-    }
+    };
   } catch {
-    return null
+    return null;
   }
 }

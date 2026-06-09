@@ -1,65 +1,73 @@
-import type { PluginInput } from "@opencode-ai/plugin"
-import { log } from "../../shared"
-import { normalizeSDKResponse } from "../../shared"
+import type { PluginInput } from "@opencode-ai/plugin";
+import { log } from "../../shared";
+import { normalizeSDKResponse } from "../../shared";
 
 export async function waitForCompletion(
   sessionID: string,
   toolContext: {
-    sessionID: string
-    messageID: string
-    agent: string
-    abort: AbortSignal
-    metadata?: (input: { title?: string; metadata?: Record<string, unknown> }) => void
+    sessionID: string;
+    messageID: string;
+    agent: string;
+    abort: AbortSignal;
+    metadata?: (input: {
+      title?: string;
+      metadata?: Record<string, unknown>;
+    }) => void;
   },
-  ctx: PluginInput
+  ctx: PluginInput,
 ): Promise<void> {
-  log(`[call_hiai_agent] Polling for completion...`)
+  log(`[call_hiai_agent] Polling for completion...`);
 
-  const POLL_INTERVAL_MS = 500
-  const MAX_POLL_TIME_MS = 5 * 60 * 1000 // 5 minutes max
-  const pollStart = Date.now()
-  let lastMsgCount = 0
-  let stablePolls = 0
-  const STABILITY_REQUIRED = 3
+  const POLL_INTERVAL_MS = 500;
+  const MAX_POLL_TIME_MS = 5 * 60 * 1000; // 5 minutes max
+  const pollStart = Date.now();
+  let lastMsgCount = 0;
+  let stablePolls = 0;
+  const STABILITY_REQUIRED = 3;
 
   while (Date.now() - pollStart < MAX_POLL_TIME_MS) {
     if (toolContext.abort?.aborted) {
-      log(`[call_hiai_agent] Aborted by user`)
-      throw new Error("Task aborted.")
+      log(`[call_hiai_agent] Aborted by user`);
+      throw new Error("Task aborted.");
     }
 
-    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS))
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
-    const statusResult = await ctx.client.session.status()
-    const allStatuses = normalizeSDKResponse(statusResult, {} as Record<string, { type: string }>)
-    const sessionStatus = allStatuses[sessionID]
+    const statusResult = await ctx.client.session.status();
+    const allStatuses = normalizeSDKResponse(
+      statusResult,
+      {} as Record<string, { type: string }>,
+    );
+    const sessionStatus = allStatuses[sessionID];
 
     if (sessionStatus && sessionStatus.type !== "idle") {
-      stablePolls = 0
-      lastMsgCount = 0
-      continue
+      stablePolls = 0;
+      lastMsgCount = 0;
+      continue;
     }
 
-    const messagesCheck = await ctx.client.session.messages({ path: { id: sessionID } })
+    const messagesCheck = await ctx.client.session.messages({
+      path: { id: sessionID },
+    });
     const msgs = normalizeSDKResponse(messagesCheck, [] as Array<unknown>, {
       preferResponseOnMissingData: true,
-    })
-    const currentMsgCount = msgs.length
+    });
+    const currentMsgCount = msgs.length;
 
     if (currentMsgCount > 0 && currentMsgCount === lastMsgCount) {
-      stablePolls++
+      stablePolls++;
       if (stablePolls >= STABILITY_REQUIRED) {
-        log(`[call_hiai_agent] Session complete, ${currentMsgCount} messages`)
-        break
+        log(`[call_hiai_agent] Session complete, ${currentMsgCount} messages`);
+        break;
       }
     } else {
-      stablePolls = 0
-      lastMsgCount = currentMsgCount
+      stablePolls = 0;
+      lastMsgCount = currentMsgCount;
     }
   }
 
   if (Date.now() - pollStart >= MAX_POLL_TIME_MS) {
-    log(`[call_hiai_agent] Timeout reached`)
-    throw new Error("Agent task timed out after 5 minutes.")
+    log(`[call_hiai_agent] Timeout reached`);
+    throw new Error("Agent task timed out after 5 minutes.");
   }
 }

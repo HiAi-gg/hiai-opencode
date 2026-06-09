@@ -273,12 +273,12 @@ export async function applyAgentConfig(params: {
         getAgentRuntimeName(configuredDefaultAgent);
     } else {
       (params.config as { default_agent?: string }).default_agent =
-        getAgentRuntimeName("bob");
+        getAgentRuntimeName("Bob");
     }
 
     // Assembly order: Bob -> Coder -> Strategist -> Manager
     const agentConfig: Record<string, unknown> = {
-      "bob": builtinAgents.bob,
+      "Bob": builtinAgents.bob,
     };
 
     if (builtinAgents.coder) {
@@ -387,7 +387,7 @@ export async function applyAgentConfig(params: {
       ...agentConfig,
       ...Object.fromEntries(
         Object.entries(builtinAgents).filter(
-          ([key]) => key !== "bob" && key !== "coder" && key !== "manager" && key !== "strategist" && key !== "sub",
+          ([key]) => key !== "Bob" && key !== "Coder" && key !== "Manager" && key !== "Strategist" && key !== "sub",
         ),
       ),
       // Precedence: later entries override earlier (project > global > user > plugin)

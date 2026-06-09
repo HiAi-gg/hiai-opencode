@@ -1,12 +1,12 @@
-import { stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
-import type { CompactionAgentConfigCheckpoint } from "../../shared/compaction-agent-config-checkpoint"
+import { stripInvisibleAgentCharacters } from "../../shared/agent-display-names";
+import type { CompactionAgentConfigCheckpoint } from "../../shared/compaction-agent-config-checkpoint";
 
 export type RecoveryPromptConfig = CompactionAgentConfigCheckpoint & {
-  agent: string
-}
+  agent: string;
+};
 
 function isCompactionAgent(agent: string | undefined): boolean {
-  return agent?.trim().toLowerCase() === "compaction"
+  return agent?.trim().toLowerCase() === "compaction";
 }
 
 function matchesExpectedModel(
@@ -14,13 +14,13 @@ function matchesExpectedModel(
   expectedModel: CompactionAgentConfigCheckpoint["model"],
 ): boolean {
   if (!expectedModel) {
-    return true
+    return true;
   }
 
   return (
     actualModel?.providerID === expectedModel.providerID &&
     actualModel.modelID === expectedModel.modelID
-  )
+  );
 }
 
 function matchesExpectedTools(
@@ -28,50 +28,55 @@ function matchesExpectedTools(
   expectedTools: CompactionAgentConfigCheckpoint["tools"],
 ): boolean {
   if (!expectedTools) {
-    return true
+    return true;
   }
 
   if (!actualTools) {
-    return false
+    return false;
   }
 
-  const expectedEntries = Object.entries(expectedTools)
+  const expectedEntries = Object.entries(expectedTools);
   if (expectedEntries.length !== Object.keys(actualTools).length) {
-    return false
+    return false;
   }
 
   return expectedEntries.every(
     ([toolName, isAllowed]) => actualTools[toolName] === isAllowed,
-  )
+  );
 }
 
 export function createExpectedRecoveryPromptConfig(
-  checkpoint: Pick<RecoveryPromptConfig, "agent"> & CompactionAgentConfigCheckpoint,
+  checkpoint: Pick<RecoveryPromptConfig, "agent"> &
+    CompactionAgentConfigCheckpoint,
   currentPromptConfig: CompactionAgentConfigCheckpoint,
 ): RecoveryPromptConfig {
-  const model = checkpoint.model ?? currentPromptConfig.model
-  const tools = checkpoint.tools ?? currentPromptConfig.tools
+  const model = checkpoint.model ?? currentPromptConfig.model;
+  const tools = checkpoint.tools ?? currentPromptConfig.tools;
 
   return {
     agent: checkpoint.agent,
     ...(model ? { model } : {}),
     ...(tools ? { tools } : {}),
-  }
+  };
 }
 
 export function isPromptConfigRecovered(
   actualPromptConfig: CompactionAgentConfigCheckpoint,
   expectedPromptConfig: RecoveryPromptConfig,
 ): boolean {
-  const actualAgent = actualPromptConfig.agent
+  const actualAgent = actualPromptConfig.agent;
   const agentMatches =
     typeof actualAgent === "string" &&
     !isCompactionAgent(actualAgent) &&
-    stripInvisibleAgentCharacters(actualAgent).toLowerCase() === stripInvisibleAgentCharacters(expectedPromptConfig.agent).toLowerCase()
+    stripInvisibleAgentCharacters(actualAgent).toLowerCase() ===
+      stripInvisibleAgentCharacters(expectedPromptConfig.agent).toLowerCase();
 
   return (
     agentMatches &&
-    matchesExpectedModel(actualPromptConfig.model, expectedPromptConfig.model) &&
+    matchesExpectedModel(
+      actualPromptConfig.model,
+      expectedPromptConfig.model,
+    ) &&
     matchesExpectedTools(actualPromptConfig.tools, expectedPromptConfig.tools)
-  )
+  );
 }

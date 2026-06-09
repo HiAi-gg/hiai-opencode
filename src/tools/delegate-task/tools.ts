@@ -1,56 +1,72 @@
-import { tool, type ToolDefinition } from "@opencode-ai/plugin"
-import type { DelegateTaskArgs, DelegatedModelConfig, ToolContextWithMetadata, DelegateTaskToolOptions } from "./types"
-import { CATEGORY_DESCRIPTIONS } from "./constants"
-import { mergeCategories } from "../../shared/merge-categories"
-import { log } from "../../shared/logger"
-import { buildSystemContent } from "./prompt-builder"
+import { tool, type ToolDefinition } from "@opencode-ai/plugin";
+import type {
+  DelegateTaskArgs,
+  DelegatedModelConfig,
+  ToolContextWithMetadata,
+  DelegateTaskToolOptions,
+} from "./types";
+import { CATEGORY_DESCRIPTIONS } from "./constants";
+import { mergeCategories } from "../../shared/merge-categories";
+import { log } from "../../shared/logger";
+import { buildSystemContent } from "./prompt-builder";
 import type {
   AvailableCategory,
   AvailableSkill,
-} from "../../agents/dynamic-agent-prompt-builder"
-import { resolveSkillContent } from "./skill-resolver"
-import { resolveParentContext } from "./parent-context-resolver"
-import { executeBackgroundContinuation } from "./background-continuation"
-import { executeSyncContinuation } from "./sync-continuation"
-import { resolveCategoryExecution } from "./category-resolver"
-import { resolveSubagentExecution } from "./subagent-resolver"
-import { executeUnstableAgentTask } from "./unstable-agent-task"
-import { executeBackgroundTask } from "./background-task"
-import { executeSyncTask } from "./sync-task"
-import { validateDelegateTaskArgs, validateRequiredFields } from "./arg-validator"
-import { determineExecutionMode } from "./execution-router"
+} from "../../agents/dynamic-agent-prompt-builder";
+import { resolveSkillContent } from "./skill-resolver";
+import { resolveParentContext } from "./parent-context-resolver";
+import { executeBackgroundContinuation } from "./background-continuation";
+import { executeSyncContinuation } from "./sync-continuation";
+import { resolveCategoryExecution } from "./category-resolver";
+import { resolveSubagentExecution } from "./subagent-resolver";
+import { executeUnstableAgentTask } from "./unstable-agent-task";
+import { executeBackgroundTask } from "./background-task";
+import { executeSyncTask } from "./sync-task";
+import {
+  validateDelegateTaskArgs,
+  validateRequiredFields,
+} from "./arg-validator";
 
-export { resolveCategoryConfig } from "./categories"
-export type { SyncSessionCreatedEvent, DelegateTaskToolOptions, BuildSystemContentInput } from "./types"
-export { buildSystemContent, buildTaskPrompt } from "./prompt-builder"
+export { resolveCategoryConfig } from "./categories";
+export type {
+  SyncSessionCreatedEvent,
+  DelegateTaskToolOptions,
+  BuildSystemContentInput,
+} from "./types";
+export { buildSystemContent, buildTaskPrompt } from "./prompt-builder";
 
-export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefinition {
-  const { userCategories } = options
+export function createDelegateTask(
+  options: DelegateTaskToolOptions,
+): ToolDefinition {
+  const { userCategories } = options;
 
-  const allCategories = mergeCategories(userCategories)
-  const categoryNames = Object.keys(allCategories)
-  const categoryExamples = categoryNames.join(", ")
+  const allCategories = mergeCategories(userCategories);
+  const categoryNames = Object.keys(allCategories);
+  const categoryExamples = categoryNames.join(", ");
 
-  const availableCategories: AvailableCategory[] = options.availableCategories
-    ?? Object.entries(allCategories).map(([name, categoryConfig]) => {
-      const userDesc = userCategories?.[name]?.description
-      const builtinDesc = CATEGORY_DESCRIPTIONS[name]
-      const description = userDesc || builtinDesc || "General tasks"
+  const availableCategories: AvailableCategory[] =
+    options.availableCategories ??
+    Object.entries(allCategories).map(([name, categoryConfig]) => {
+      const userDesc = userCategories?.[name]?.description;
+      const builtinDesc = CATEGORY_DESCRIPTIONS[name];
+      const description = userDesc || builtinDesc || "General tasks";
       return {
         name,
         description,
         model: categoryConfig.model,
-      }
+      };
+    });
+
+  const availableSkills: AvailableSkill[] = options.availableSkills ?? [];
+
+  const categoryList = categoryNames
+    .map((name) => {
+      const userDesc = userCategories?.[name]?.description;
+      const builtinDesc = CATEGORY_DESCRIPTIONS[name];
+      const desc = userDesc || builtinDesc;
+      return desc ? `  - ${name}: ${desc}` : `  - ${name}`;
     })
-
-  const availableSkills: AvailableSkill[] = options.availableSkills ?? []
-
-  const categoryList = categoryNames.map(name => {
-    const userDesc = userCategories?.[name]?.description
-    const builtinDesc = CATEGORY_DESCRIPTIONS[name]
-    const desc = userDesc || builtinDesc
-    return desc ? `  - ${name}: ${desc}` : `  - ${name}`
-  }).join("\n")
+    .join("\n");
 
   const description = `Spawn agent task with category-based or direct agent selection.
   
@@ -91,122 +107,179 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
   - Need follow-up on previous result → session_id with additional question
   - Multi-turn conversation with same agent → always session_id instead of new task
   
-  Prompts MUST be in English.`
+  Prompts MUST be in English.`;
 
   return tool({
     description,
     args: {
-      load_skills: tool.schema.array(tool.schema.string()).describe("Skill names to inject. REQUIRED - pass [] if no skills needed."),
-      description: tool.schema.string().describe("Short task description (3-5 words). REQUIRED for new tasks."),
-      prompt: tool.schema.string().describe("Full detailed prompt for the agent"),
-      run_in_background: tool.schema.boolean().describe("REQUIRED. true=async (returns task_id), false=sync (waits). Use false for task delegation, true ONLY for parallel exploration."),
-      category: tool.schema.string().optional().describe(`REQUIRED if subagent_type not provided. Do NOT provide both category and subagent_type.`),
-      subagent_type: tool.schema.string().optional().describe("REQUIRED if category not provided. Do NOT provide both category and subagent_type."),
-      session_id: tool.schema.string().optional().describe("Existing Task session to continue"),
-      command: tool.schema.string().optional().describe("The command that triggered this task"),
+      load_skills: tool.schema
+        .array(tool.schema.string())
+        .describe(
+          "Skill names to inject. REQUIRED - pass [] if no skills needed.",
+        ),
+      description: tool.schema
+        .string()
+        .describe(
+          "Short task description (3-5 words). REQUIRED for new tasks.",
+        ),
+      prompt: tool.schema
+        .string()
+        .describe("Full detailed prompt for the agent"),
+      run_in_background: tool.schema
+        .boolean()
+        .describe(
+          "REQUIRED. true=async (returns task_id), false=sync (waits). Use false for task delegation, true ONLY for parallel exploration.",
+        ),
+      category: tool.schema
+        .string()
+        .optional()
+        .describe(
+          `REQUIRED if subagent_type not provided. Do NOT provide both category and subagent_type.`,
+        ),
+      subagent_type: tool.schema
+        .string()
+        .optional()
+        .describe(
+          "REQUIRED if category not provided. Do NOT provide both category and subagent_type.",
+        ),
+      session_id: tool.schema
+        .string()
+        .optional()
+        .describe("Existing Task session to continue"),
+      command: tool.schema
+        .string()
+        .optional()
+        .describe("The command that triggered this task"),
     },
     async execute(args: DelegateTaskArgs, toolContext) {
-      const ctx = toolContext as ToolContextWithMetadata
+      const ctx = toolContext as ToolContextWithMetadata;
 
       if (!validateDelegateTaskArgs(args)) {
-        return "Invalid task arguments"
+        return "Invalid task arguments";
       }
 
-      const validationErrors = validateRequiredFields(args)
+      const validationErrors = validateRequiredFields(args);
       if (validationErrors.length > 0) {
-        return validationErrors.join("; ")
+        return validationErrors.join("; ");
       }
 
       if (args.category && args.subagent_type) {
         log("[task] category provided - ignoring explicit subagent_type", {
           category: args.category,
           subagent_type: args.subagent_type,
-        })
-        args.subagent_type = undefined
+        });
+        args.subagent_type = undefined;
       }
 
       await ctx.metadata?.({
         title: args.description,
-      })
+      });
 
       if (args.run_in_background === undefined) {
-        throw new Error(`Invalid arguments: 'run_in_background' parameter is REQUIRED. Specify run_in_background=false for task delegation, or run_in_background=true for parallel exploration.`)
+        throw new Error(
+          `Invalid arguments: 'run_in_background' parameter is REQUIRED. Specify run_in_background=false for task delegation, or run_in_background=true for parallel exploration.`,
+        );
       }
 
       if (typeof args.load_skills === "string") {
         try {
-          const parsed = JSON.parse(args.load_skills)
-          args.load_skills = Array.isArray(parsed) ? parsed : []
+          const parsed = JSON.parse(args.load_skills);
+          args.load_skills = Array.isArray(parsed) ? parsed : [];
         } catch {
-          args.load_skills = []
+          args.load_skills = [];
         }
       }
 
       if (args.load_skills === undefined) {
-        throw new Error(`Invalid arguments: 'load_skills' parameter is REQUIRED. Pass [] if no skills needed.`)
+        throw new Error(
+          `Invalid arguments: 'load_skills' parameter is REQUIRED. Pass [] if no skills needed.`,
+        );
       }
 
       if (args.load_skills === null) {
-        throw new Error(`Invalid arguments: load_skills=null is not allowed. Pass [] if no skills needed.`)
+        throw new Error(
+          `Invalid arguments: load_skills=null is not allowed. Pass [] if no skills needed.`,
+        );
       }
 
-      const runInBackground = args.run_in_background === true
+      const runInBackground = args.run_in_background === true;
 
-      const { content: skillContent, contents: skillContents, error: skillError } = await resolveSkillContent(args.load_skills, {
+      const {
+        content: skillContent,
+        contents: skillContents,
+        error: skillError,
+      } = await resolveSkillContent(args.load_skills, {
         gitMasterConfig: options.gitMasterConfig,
         browserProvider: options.browserProvider,
         disabledSkills: options.disabledSkills,
         directory: options.directory,
-      })
+      });
       if (skillError) {
-        return skillError
+        return skillError;
       }
 
-      const parentContext = await resolveParentContext(ctx, options.client)
+      const parentContext = await resolveParentContext(ctx, options.client);
 
       if (args.session_id) {
         if (runInBackground) {
-          return executeBackgroundContinuation(args, ctx, options, parentContext)
+          return executeBackgroundContinuation(
+            args,
+            ctx,
+            options,
+            parentContext,
+          );
         }
-        return executeSyncContinuation(args, ctx, options)
+        return executeSyncContinuation(args, ctx, options);
       }
 
-      let systemDefaultModel: string | undefined
+      let systemDefaultModel: string | undefined;
       try {
-        const openCodeConfig = await options.client.config.get()
-        systemDefaultModel = (openCodeConfig as { data?: { model?: string } })?.data?.model
+        const openCodeConfig = await options.client.config.get();
+        systemDefaultModel = (openCodeConfig as { data?: { model?: string } })
+          ?.data?.model;
       } catch {
-        systemDefaultModel = undefined
+        systemDefaultModel = undefined;
       }
 
       const inheritedModel = parentContext.model
         ? `${parentContext.model.providerID}/${parentContext.model.modelID}`
-        : undefined
+        : undefined;
 
-      let agentToUse: string
-      let categoryModel: DelegatedModelConfig | undefined
-      let categoryPromptAppend: string | undefined
-      let modelInfo: import("../../features/task-toast-manager/types").ModelFallbackInfo | undefined
-      let actualModel: string | undefined
-      let isUnstableAgent = false
-      let fallbackChain: import("../../shared/model-requirements").FallbackEntry[] | undefined
-      let maxPromptTokens: number | undefined
+      let agentToUse: string;
+      let categoryModel: DelegatedModelConfig | undefined;
+      let categoryPromptAppend: string | undefined;
+      let modelInfo:
+        | import("../../features/task-toast-manager/types").ModelFallbackInfo
+        | undefined;
+      let actualModel: string | undefined;
+      let isUnstableAgent = false;
+      let fallbackChain:
+        | import("../../shared/model-requirements").FallbackEntry[]
+        | undefined;
+      let maxPromptTokens: number | undefined;
 
       if (args.category) {
-        const resolution = await resolveCategoryExecution(args, options, inheritedModel, systemDefaultModel)
+        const resolution = await resolveCategoryExecution(
+          args,
+          options,
+          inheritedModel,
+          systemDefaultModel,
+        );
         if (resolution.error) {
-          return resolution.error
+          return resolution.error;
         }
-        agentToUse = resolution.agentToUse
-        categoryModel = resolution.categoryModel
-        categoryPromptAppend = resolution.categoryPromptAppend
-        modelInfo = resolution.modelInfo
-        actualModel = resolution.actualModel
-        isUnstableAgent = resolution.isUnstableAgent
-        fallbackChain = resolution.fallbackChain
-        maxPromptTokens = resolution.maxPromptTokens
+        agentToUse = resolution.agentToUse;
+        categoryModel = resolution.categoryModel;
+        categoryPromptAppend = resolution.categoryPromptAppend;
+        modelInfo = resolution.modelInfo;
+        actualModel = resolution.actualModel;
+        isUnstableAgent = resolution.isUnstableAgent;
+        fallbackChain = resolution.fallbackChain;
+        maxPromptTokens = resolution.maxPromptTokens;
 
-        const isRunInBackgroundExplicitlyFalse = args.run_in_background === false || args.run_in_background === "false" as unknown as boolean
+        const isRunInBackgroundExplicitlyFalse =
+          args.run_in_background === false ||
+          args.run_in_background === ("false" as unknown as boolean);
 
         log("[task] unstable agent detection", {
           category: args.category,
@@ -215,8 +288,9 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
           run_in_background_value: args.run_in_background,
           run_in_background_type: typeof args.run_in_background,
           isRunInBackgroundExplicitlyFalse,
-          willForceBackground: isUnstableAgent && isRunInBackgroundExplicitlyFalse,
-        })
+          willForceBackground:
+            isUnstableAgent && isRunInBackgroundExplicitlyFalse,
+        });
 
         if (isUnstableAgent && isRunInBackgroundExplicitlyFalse) {
           const systemContent = buildSystemContent({
@@ -228,17 +302,31 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
             model: categoryModel,
             availableCategories,
             availableSkills,
-          })
-          return executeUnstableAgentTask(args, ctx, options, parentContext, agentToUse, categoryModel, systemContent, actualModel)
+          });
+          return executeUnstableAgentTask(
+            args,
+            ctx,
+            options,
+            parentContext,
+            agentToUse,
+            categoryModel,
+            systemContent,
+            actualModel,
+          );
         }
       } else {
-        const resolution = await resolveSubagentExecution(args, options, parentContext.agent, categoryExamples)
+        const resolution = await resolveSubagentExecution(
+          args,
+          options,
+          parentContext.agent,
+          categoryExamples,
+        );
         if (resolution.error) {
-          return resolution.error
+          return resolution.error;
         }
-        agentToUse = resolution.agentToUse
-        categoryModel = resolution.categoryModel
-        fallbackChain = resolution.fallbackChain
+        agentToUse = resolution.agentToUse;
+        categoryModel = resolution.categoryModel;
+        fallbackChain = resolution.fallbackChain;
       }
 
       const systemContent = buildSystemContent({
@@ -250,13 +338,32 @@ export function createDelegateTask(options: DelegateTaskToolOptions): ToolDefini
         model: categoryModel,
         availableCategories,
         availableSkills,
-      })
+      });
 
       if (runInBackground) {
-        return executeBackgroundTask(args, ctx, options, parentContext, agentToUse, categoryModel, systemContent, fallbackChain)
+        return executeBackgroundTask(
+          args,
+          ctx,
+          options,
+          parentContext,
+          agentToUse,
+          categoryModel,
+          systemContent,
+          fallbackChain,
+        );
       }
 
-      return executeSyncTask(args, ctx, options, parentContext, agentToUse, categoryModel, systemContent, modelInfo, fallbackChain)
+      return executeSyncTask(
+        args,
+        ctx,
+        options,
+        parentContext,
+        agentToUse,
+        categoryModel,
+        systemContent,
+        modelInfo,
+        fallbackChain,
+      );
     },
-  })
+  });
 }

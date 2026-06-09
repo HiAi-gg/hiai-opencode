@@ -6,4 +6,4 @@ export const context7 = {
     ? { Authorization: `Bearer ${process.env.CONTEXT7_API_KEY}` }
     : undefined,
   oauth: false as const,
-}
+};

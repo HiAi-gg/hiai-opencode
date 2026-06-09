@@ -1,17 +1,21 @@
-export const CODE_BLOCK_PATTERN = /```[\s\S]*?```/g
-export const INLINE_CODE_PATTERN = /`[^`]+`/g
+export const CODE_BLOCK_PATTERN = /```[\s\S]*?```/g;
+export const INLINE_CODE_PATTERN = /`[^`]+`/g;
 
-export { isPlannerAgent, isNonOmoAgent, getUltraworkMessage } from "./ultrawork"
-export { SEARCH_PATTERN, SEARCH_MESSAGE } from "./search"
-export { ANALYZE_PATTERN, ANALYZE_MESSAGE } from "./analyze"
+export {
+  isPlannerAgent,
+  isNonOmoAgent,
+  getUltraworkMessage,
+} from "./ultrawork";
+export { SEARCH_PATTERN, SEARCH_MESSAGE } from "./search";
+export { ANALYZE_PATTERN, ANALYZE_MESSAGE } from "./analyze";
 
-import { getUltraworkMessage } from "./ultrawork"
-import { SEARCH_PATTERN, SEARCH_MESSAGE } from "./search"
+import { getUltraworkMessage } from "./ultrawork";
+import { SEARCH_PATTERN, SEARCH_MESSAGE } from "./search";
 
 export type KeywordDetector = {
-  pattern: RegExp
-  message: string | ((agentName?: string, modelID?: string) => string)
-}
+  pattern: RegExp;
+  message: string | ((agentName?: string, modelID?: string) => string);
+};
 
 export const KEYWORD_DETECTORS: KeywordDetector[] = [
   {
@@ -43,7 +47,8 @@ MANDATORY delegate_task params: ALWAYS include load_skills=[] and run_in_backgro
 Example: delegate_task(subagent_type="researcher", prompt="...", run_in_background=true, load_skills=[])`,
   },
   {
-    pattern: /\b(design|ui|ux|visual|frontend|layout|brand(ing)?|design.system|style|beautiful|aesthetic|polish|look.and.feel|user.interface|user.experience|css|styling|theme|color.palette|typography.scale|responsive|animation|transition|hover.effect|shadow|border.radius|spacing|grid|flexbox)\b/i,
+    pattern:
+      /\b(design|ui|ux|visual|frontend|layout|brand(ing)?|design.system|style|beautiful|aesthetic|polish|look.and.feel|user.interface|user.experience|css|styling|theme|color.palette|typography.scale|responsive|animation|transition|hover.effect|shadow|border.radius|spacing|grid|flexbox)\b/i,
     message: `[search-mode]
 MAXIMIZE SEARCH EFFORT. Launch multiple background researcher agents IN PARALLEL:
 - researcher agents (codebase patterns, file structures, ast-grep)
@@ -56,11 +61,12 @@ VISUAL/UI WORK. Use task(category="visual-engineering", load_skills=["frontend-u
 For exploration: research existing patterns before building.`,
   },
   {
-    pattern: /\b(architecture|system.design|dependency.(map|graph)|boundar(y|ies)|integration.(point|pattern)|module.boundary|API.design|contract|data.flow|component.tree)\b/i,
+    pattern:
+      /\b(architecture|system.design|dependency.(map|graph)|boundar(y|ies)|integration.(point|pattern)|module.boundary|API.design|contract|data.flow|component.tree)\b/i,
     message: `[search-mode]
 → Use task(subagent_type='manager', load_skills=['api-and-interface-design'], ...)
 
 [guard-mode]
 → Consult Guard for system architecture review`,
   },
-]
+];

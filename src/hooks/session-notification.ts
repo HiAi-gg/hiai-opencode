@@ -1,41 +1,41 @@
-import type { PluginInput } from "@opencode-ai/plugin"
-import { subagentSessions, getMainSessionID } from "../features/claude-code-session-state"
+import type { PluginInput } from "@opencode-ai/plugin";
 import {
-  startBackgroundCheck,
-} from "./session-notification-utils"
-import { buildReadyNotificationContent } from "./session-notification-content"
-import {
-  type Platform,
-} from "./session-notification-sender"
-import * as sessionNotificationSender from "./session-notification-sender"
-import { hasIncompleteTodos } from "./session-todo-status"
-import { createIdleNotificationScheduler } from "./session-notification-scheduler"
+  subagentSessions,
+  getMainSessionID,
+} from "../features/claude-code-session-state";
+import { startBackgroundCheck } from "./session-notification-utils";
+import { buildReadyNotificationContent } from "./session-notification-content";
+import type { Platform } from "./session-notification-sender";
+import * as sessionNotificationSender from "./session-notification-sender";
+import { hasIncompleteTodos } from "./session-todo-status";
+import { createIdleNotificationScheduler } from "./session-notification-scheduler";
 
 interface SessionNotificationConfig {
-  title?: string
-  message?: string
-  questionMessage?: string
-  permissionMessage?: string
-  playSound?: boolean
-  soundPath?: string
+  title?: string;
+  message?: string;
+  questionMessage?: string;
+  permissionMessage?: string;
+  playSound?: boolean;
+  soundPath?: string;
   /** Delay in ms before sending notification to confirm session is still idle (default: 1500) */
-  idleConfirmationDelay?: number
+  idleConfirmationDelay?: number;
   /** Skip notification if there are incomplete todos (default: true) */
-  skipIfIncompleteTodos?: boolean
+  skipIfIncompleteTodos?: boolean;
   /** Maximum number of sessions to track before cleanup (default: 100) */
-  maxTrackedSessions?: number
-  enforceMainSessionFilter?: boolean
+  maxTrackedSessions?: number;
+  enforceMainSessionFilter?: boolean;
   /** Grace period in ms to ignore late-arriving activity events after scheduling (default: 100) */
-  activityGracePeriodMs?: number
+  activityGracePeriodMs?: number;
 }
 export function createSessionNotification(
   ctx: PluginInput,
-  config: SessionNotificationConfig = {}
+  config: SessionNotificationConfig = {},
 ) {
-  const currentPlatform: Platform = sessionNotificationSender.detectPlatform()
-  const defaultSoundPath = sessionNotificationSender.getDefaultSoundPath(currentPlatform)
+  const currentPlatform: Platform = sessionNotificationSender.detectPlatform();
+  const defaultSoundPath =
+    sessionNotificationSender.getDefaultSoundPath(currentPlatform);
 
-  startBackgroundCheck(currentPlatform)
+  startBackgroundCheck(currentPlatform);
 
   const mergedConfig = {
     title: "OpenCode",
@@ -49,7 +49,7 @@ export function createSessionNotification(
     maxTrackedSessions: 100,
     enforceMainSessionFilter: true,
     ...config,
-  }
+  };
 
   const scheduler = createIdleNotificationScheduler({
     ctx,
@@ -58,162 +58,205 @@ export function createSessionNotification(
     hasIncompleteTodos,
     send: async (hookCtx, platform, sessionID) => {
       if (
-        typeof hookCtx.client.session.get !== "function"
-        && typeof hookCtx.client.session.messages !== "function"
+        typeof hookCtx.client.session.get !== "function" &&
+        typeof hookCtx.client.session.messages !== "function"
       ) {
         await sessionNotificationSender.sendSessionNotification(
           hookCtx,
           platform,
           mergedConfig.title,
           mergedConfig.message,
-        )
-        return
+        );
+        return;
       }
 
       const content = await buildReadyNotificationContent(hookCtx, {
         sessionID,
         baseTitle: mergedConfig.title,
         baseMessage: mergedConfig.message,
-      })
+      });
 
-      await sessionNotificationSender.sendSessionNotification(hookCtx, platform, content.title, content.message)
+      await sessionNotificationSender.sendSessionNotification(
+        hookCtx,
+        platform,
+        content.title,
+        content.message,
+      );
     },
     playSound: sessionNotificationSender.playSessionNotificationSound,
-  })
+  });
 
-  const QUESTION_TOOLS = new Set(["question", "ask_user_question", "askuserquestion"])
-  const PERMISSION_EVENTS = new Set(["permission.ask", "permission.asked", "permission.updated", "permission.requested"])
-  const PERMISSION_HINT_PATTERN = /\b(permission|approve|approval|allow|deny|consent)\b/i
+  const QUESTION_TOOLS = new Set([
+    "question",
+    "ask_user_question",
+    "askuserquestion",
+  ]);
+  const PERMISSION_EVENTS = new Set([
+    "permission.ask",
+    "permission.asked",
+    "permission.updated",
+    "permission.requested",
+  ]);
+  const PERMISSION_HINT_PATTERN =
+    /\b(permission|approve|approval|allow|deny|consent)\b/i;
 
-  const getSessionID = (properties: Record<string, unknown> | undefined): string | undefined => {
-    const sessionID = properties?.sessionID
-    if (typeof sessionID === "string" && sessionID.length > 0) return sessionID
+  const getSessionID = (
+    properties: Record<string, unknown> | undefined,
+  ): string | undefined => {
+    const sessionID = properties?.sessionID;
+    if (typeof sessionID === "string" && sessionID.length > 0) return sessionID;
 
-    const sessionId = properties?.sessionId
-    if (typeof sessionId === "string" && sessionId.length > 0) return sessionId
+    const sessionId = properties?.sessionId;
+    if (typeof sessionId === "string" && sessionId.length > 0) return sessionId;
 
-    const info = properties?.info as Record<string, unknown> | undefined
-    const infoSessionID = info?.sessionID
-    if (typeof infoSessionID === "string" && infoSessionID.length > 0) return infoSessionID
+    const info = properties?.info as Record<string, unknown> | undefined;
+    const infoSessionID = info?.sessionID;
+    if (typeof infoSessionID === "string" && infoSessionID.length > 0)
+      return infoSessionID;
 
-    const infoSessionId = info?.sessionId
-    if (typeof infoSessionId === "string" && infoSessionId.length > 0) return infoSessionId
+    const infoSessionId = info?.sessionId;
+    if (typeof infoSessionId === "string" && infoSessionId.length > 0)
+      return infoSessionId;
 
-    return undefined
-  }
+    return undefined;
+  };
 
   const shouldNotifyForSession = (sessionID: string): boolean => {
-    if (subagentSessions.has(sessionID)) return false
+    if (subagentSessions.has(sessionID)) return false;
 
     if (mergedConfig.enforceMainSessionFilter) {
-      const mainSessionID = getMainSessionID()
-      if (mainSessionID && sessionID !== mainSessionID) return false
+      const mainSessionID = getMainSessionID();
+      if (mainSessionID && sessionID !== mainSessionID) return false;
     }
 
-    return true
-  }
+    return true;
+  };
 
-  const getEventToolName = (properties: Record<string, unknown> | undefined): string | undefined => {
-    const tool = properties?.tool
-    if (typeof tool === "string" && tool.length > 0) return tool
+  const getEventToolName = (
+    properties: Record<string, unknown> | undefined,
+  ): string | undefined => {
+    const tool = properties?.tool;
+    if (typeof tool === "string" && tool.length > 0) return tool;
 
-    const name = properties?.name
-    if (typeof name === "string" && name.length > 0) return name
+    const name = properties?.name;
+    if (typeof name === "string" && name.length > 0) return name;
 
-    return undefined
-  }
+    return undefined;
+  };
 
-  const getQuestionText = (properties: Record<string, unknown> | undefined): string => {
-    const args = properties?.args as Record<string, unknown> | undefined
-    const questions = args?.questions
-    if (!Array.isArray(questions) || questions.length === 0) return ""
+  const getQuestionText = (
+    properties: Record<string, unknown> | undefined,
+  ): string => {
+    const args = properties?.args as Record<string, unknown> | undefined;
+    const questions = args?.questions;
+    if (!Array.isArray(questions) || questions.length === 0) return "";
 
-    const firstQuestion = questions[0] as Record<string, unknown> | undefined
-    const questionText = firstQuestion?.question
-    return typeof questionText === "string" ? questionText : ""
-  }
+    const firstQuestion = questions[0] as Record<string, unknown> | undefined;
+    const questionText = firstQuestion?.question;
+    return typeof questionText === "string" ? questionText : "";
+  };
 
-  return async ({ event }: { event: { type: string; properties?: unknown } }) => {
-    if (currentPlatform === "unsupported") return
+  return async ({
+    event,
+  }: {
+    event: { type: string; properties?: unknown };
+  }) => {
+    if (currentPlatform === "unsupported") return;
 
-    const props = event.properties as Record<string, unknown> | undefined
+    const props = event.properties as Record<string, unknown> | undefined;
 
     if (event.type === "session.created") {
-      const info = props?.info as Record<string, unknown> | undefined
-      const sessionID = info?.id as string | undefined
+      const info = props?.info as Record<string, unknown> | undefined;
+      const sessionID = info?.id as string | undefined;
       if (sessionID) {
-        scheduler.markSessionActivity(sessionID)
+        scheduler.markSessionActivity(sessionID);
       }
-      return
+      return;
     }
 
     if (event.type === "session.idle") {
-      const sessionID = getSessionID(props)
-      if (!sessionID) return
+      const sessionID = getSessionID(props);
+      if (!sessionID) return;
 
-      if (!shouldNotifyForSession(sessionID)) return
+      if (!shouldNotifyForSession(sessionID)) return;
 
-      scheduler.scheduleIdleNotification(sessionID)
-      return
+      scheduler.scheduleIdleNotification(sessionID);
+      return;
     }
 
     if (event.type === "message.updated") {
-      const info = props?.info as Record<string, unknown> | undefined
-      const sessionID = getSessionID({ ...props, info })
+      const info = props?.info as Record<string, unknown> | undefined;
+      const sessionID = getSessionID({ ...props, info });
       if (sessionID) {
-        scheduler.markSessionActivity(sessionID)
+        scheduler.markSessionActivity(sessionID);
       }
-      return
+      return;
     }
 
     if (PERMISSION_EVENTS.has(event.type)) {
-      const sessionID = getSessionID(props)
-      if (!sessionID) return
-      if (!shouldNotifyForSession(sessionID)) return
+      const sessionID = getSessionID(props);
+      if (!sessionID) return;
+      if (!shouldNotifyForSession(sessionID)) return;
 
-      scheduler.markSessionActivity(sessionID)
+      scheduler.markSessionActivity(sessionID);
       await sessionNotificationSender.sendSessionNotification(
         ctx,
         currentPlatform,
         mergedConfig.title,
         mergedConfig.permissionMessage,
-      )
+      );
       if (mergedConfig.playSound && mergedConfig.soundPath) {
-        await sessionNotificationSender.playSessionNotificationSound(ctx, currentPlatform, mergedConfig.soundPath)
+        await sessionNotificationSender.playSessionNotificationSound(
+          ctx,
+          currentPlatform,
+          mergedConfig.soundPath,
+        );
       }
-      return
+      return;
     }
 
-    if (event.type === "tool.execute.before" || event.type === "tool.execute.after") {
-      const sessionID = getSessionID(props)
+    if (
+      event.type === "tool.execute.before" ||
+      event.type === "tool.execute.after"
+    ) {
+      const sessionID = getSessionID(props);
       if (sessionID) {
-        scheduler.markSessionActivity(sessionID)
+        scheduler.markSessionActivity(sessionID);
 
         if (event.type === "tool.execute.before") {
-          const toolName = getEventToolName(props)?.toLowerCase()
+          const toolName = getEventToolName(props)?.toLowerCase();
           if (toolName && QUESTION_TOOLS.has(toolName)) {
-            if (!shouldNotifyForSession(sessionID)) return
+            if (!shouldNotifyForSession(sessionID)) return;
 
-            const questionText = getQuestionText(props)
+            const questionText = getQuestionText(props);
             const message = PERMISSION_HINT_PATTERN.test(questionText)
               ? mergedConfig.permissionMessage
-              : mergedConfig.questionMessage
+              : mergedConfig.questionMessage;
 
-            await sessionNotificationSender.sendSessionNotification(ctx, currentPlatform, mergedConfig.title, message)
+            await sessionNotificationSender.sendSessionNotification(
+              ctx,
+              currentPlatform,
+              mergedConfig.title,
+              message,
+            );
             if (mergedConfig.playSound && mergedConfig.soundPath) {
-              await sessionNotificationSender.playSessionNotificationSound(ctx, currentPlatform, mergedConfig.soundPath)
+              await sessionNotificationSender.playSessionNotificationSound(
+                ctx,
+                currentPlatform,
+                mergedConfig.soundPath,
+              );
             }
           }
         }
       }
-      return
+      return;
     }
 
     if (event.type === "session.deleted") {
-      const sessionInfo = props?.info as { id?: string } | undefined
+      const sessionInfo = props?.info as { id?: string } | undefined;
       if (sessionInfo?.id) {
-        scheduler.deleteSession(sessionInfo.id)
+        scheduler.deleteSession(sessionInfo.id);
       }
     }
-  }
+  };
 }

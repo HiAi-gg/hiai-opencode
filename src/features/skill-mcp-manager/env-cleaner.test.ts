@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test"
-import { createCleanMcpEnvironment } from "./env-cleaner"
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { createCleanMcpEnvironment } from "./env-cleaner";
 
 const TEST_VARS = [
   "FIRECRAWL_API_KEY",
@@ -8,38 +8,38 @@ const TEST_VARS = [
   "NPM_CONFIG_REGISTRY",
   "MY_NORMAL_VAR",
   "PATH_TO_NOWHERE",
-] as const
+] as const;
 
-const originalValues: Record<string, string | undefined> = {}
+const originalValues: Record<string, string | undefined> = {};
 
 beforeEach(() => {
   for (const key of TEST_VARS) {
-    originalValues[key] = process.env[key]
-    delete process.env[key]
+    originalValues[key] = process.env[key];
+    delete process.env[key];
   }
-})
+});
 
 afterEach(() => {
   for (const key of TEST_VARS) {
-    if (originalValues[key] === undefined) delete process.env[key]
-    else process.env[key] = originalValues[key]
+    if (originalValues[key] === undefined) delete process.env[key];
+    else process.env[key] = originalValues[key];
   }
-})
+});
 
 describe("createCleanMcpEnvironment", () => {
   test("filters npm/pnpm config vars from process.env", () => {
-    process.env.NPM_CONFIG_REGISTRY = "https://registry.npmjs.org/"
-    process.env.MY_NORMAL_VAR = "keepme"
-    const env = createCleanMcpEnvironment()
-    expect(env.NPM_CONFIG_REGISTRY).toBeUndefined()
-    expect(env.MY_NORMAL_VAR).toBe("keepme")
-  })
+    process.env.NPM_CONFIG_REGISTRY = "https://registry.npmjs.org/";
+    process.env.MY_NORMAL_VAR = "keepme";
+    const env = createCleanMcpEnvironment();
+    expect(env.NPM_CONFIG_REGISTRY).toBeUndefined();
+    expect(env.MY_NORMAL_VAR).toBe("keepme");
+  });
 
   test("filters secret-shaped names from process.env when not explicitly allowed", () => {
-    process.env.FIRECRAWL_API_KEY = "leaked-from-process-env"
-    const env = createCleanMcpEnvironment()
-    expect(env.FIRECRAWL_API_KEY).toBeUndefined()
-  })
+    process.env.FIRECRAWL_API_KEY = "leaked-from-process-env";
+    const env = createCleanMcpEnvironment();
+    expect(env.FIRECRAWL_API_KEY).toBeUndefined();
+  });
 
   test("customEnv overrides the secret filter (explicit allowlist)", () => {
     // Regression test: previously customEnv was assigned before filtering,
@@ -47,21 +47,21 @@ describe("createCleanMcpEnvironment", () => {
     // the generic /_API_KEY$/i pattern.
     const env = createCleanMcpEnvironment({
       FIRECRAWL_API_KEY: "user-configured-value",
-    })
-    expect(env.FIRECRAWL_API_KEY).toBe("user-configured-value")
-  })
+    });
+    expect(env.FIRECRAWL_API_KEY).toBe("user-configured-value");
+  });
 
   test("customEnv beats both process.env value and the secret filter", () => {
-    process.env.FIRECRAWL_API_KEY = "ambient-value"
+    process.env.FIRECRAWL_API_KEY = "ambient-value";
     const env = createCleanMcpEnvironment({
       FIRECRAWL_API_KEY: "explicit-value",
-    })
-    expect(env.FIRECRAWL_API_KEY).toBe("explicit-value")
-  })
+    });
+    expect(env.FIRECRAWL_API_KEY).toBe("explicit-value");
+  });
 
   test("ANTHROPIC_API_KEY in process.env is still filtered", () => {
-    process.env.ANTHROPIC_API_KEY = "sk-ant-leaked"
-    const env = createCleanMcpEnvironment()
-    expect(env.ANTHROPIC_API_KEY).toBeUndefined()
-  })
-})
+    process.env.ANTHROPIC_API_KEY = "sk-ant-leaked";
+    const env = createCleanMcpEnvironment();
+    expect(env.ANTHROPIC_API_KEY).toBeUndefined();
+  });
+});

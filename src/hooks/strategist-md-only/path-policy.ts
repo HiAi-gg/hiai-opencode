@@ -1,6 +1,6 @@
-import { relative, resolve, isAbsolute } from "node:path"
+import { relative, resolve, isAbsolute } from "node:path";
 
-import { ALLOWED_EXTENSIONS } from "./constants"
+import { ALLOWED_EXTENSIONS } from "./constants";
 
 /**
  * Cross-platform path validator for Strategist file writes.
@@ -11,31 +11,34 @@ import { ALLOWED_EXTENSIONS } from "./constants"
  * - Workspace confinement (blocks paths outside root or via traversal)
  * - Nested project paths (e.g., parent/.bob/... when ctx.directory is parent)
  */
-export function isAllowedFile(filePath: string, workspaceRoot: string): boolean {
+export function isAllowedFile(
+  filePath: string,
+  workspaceRoot: string,
+): boolean {
   // 1. Resolve to absolute path
-  const resolved = resolve(workspaceRoot, filePath)
+  const resolved = resolve(workspaceRoot, filePath);
 
   // 2. Get relative path from workspace root
-  const rel = relative(workspaceRoot, resolved)
+  const rel = relative(workspaceRoot, resolved);
 
   // 3. Reject if escapes root (starts with ".." or is absolute)
   if (rel.startsWith("..") || isAbsolute(rel)) {
-    return false
+    return false;
   }
 
   // 4. Check if .bob/ or .bob\ exists anywhere in the path (case-insensitive)
   // This handles both direct paths (.bob/x.md) and nested paths (project/.bob/x.md)
   if (!/\.bob[/\\]/i.test(rel)) {
-    return false
+    return false;
   }
 
   // 5. Check extension matches one of ALLOWED_EXTENSIONS (case-insensitive)
-  const hasAllowedExtension = ALLOWED_EXTENSIONS.some(
-    ext => resolved.toLowerCase().endsWith(ext.toLowerCase())
-  )
+  const hasAllowedExtension = ALLOWED_EXTENSIONS.some((ext) =>
+    resolved.toLowerCase().endsWith(ext.toLowerCase()),
+  );
   if (!hasAllowedExtension) {
-    return false
+    return false;
   }
 
-  return true
+  return true;
 }

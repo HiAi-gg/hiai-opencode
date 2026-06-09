@@ -21,7 +21,7 @@ export async function flattenParallels(
   sessionID: string,
   visited: Set<string> = new Set(),
   depth: number = 0,
-  maxDepth: number = 5
+  maxDepth: number = 5,
 ): Promise<SubtaskPart[]> {
   if (depth > maxDepth) return [];
 
@@ -29,7 +29,7 @@ export async function flattenParallels(
   log(`flattenParallels called:`, {
     depth,
     parallels: parallels.map(
-      p => `${p.command}${p.arguments ? ` (args: ${p.arguments})` : ""}`
+      (p) => `${p.command}${p.arguments ? ` (args: ${p.arguments})` : ""}`,
     ),
     mainArgs,
     queueRemaining: [...queue],
@@ -48,7 +48,7 @@ export async function flattenParallels(
 
       let model: { providerID: string; modelID: string } | undefined;
       const modelStr = parallelCmd.model;
-      if (modelStr && modelStr.includes("/")) {
+      if (modelStr?.includes("/")) {
         const [providerID, ...rest] = modelStr.split("/");
         model = { providerID, modelID: rest.join("/") };
       }
@@ -82,7 +82,7 @@ export async function flattenParallels(
     const pipeArg = queue.shift();
     const args = pipeArg ?? parallelCmd.arguments ?? mainArgs;
     log(
-      `Parallel ${parallelCmd.command}: using args="${args}" (pipeArg=${pipeArg}, fmArg=${parallelCmd.arguments}, mainArgs=${mainArgs})`
+      `Parallel ${parallelCmd.command}: using args="${args}" (pipeArg=${pipeArg}, fmArg=${parallelCmd.arguments}, mainArgs=${mainArgs})`,
     );
     template = template.replace(/\$ARGUMENTS/g, args);
 
@@ -98,7 +98,7 @@ export async function flattenParallels(
     const modelStr =
       parallelCmd.model ||
       (typeof fm.model === "string" ? fm.model : undefined);
-    if (modelStr && modelStr.includes("/")) {
+    if (modelStr?.includes("/")) {
       const [providerID, ...rest] = modelStr.split("/");
       model = { providerID, modelID: rest.join("/") };
     }
@@ -121,7 +121,7 @@ export async function flattenParallels(
 
       if (nestedArr.length) {
         // Filter out commands already in visited (cycle detection)
-        const filteredNested = nestedArr.filter(nested => {
+        const filteredNested = nestedArr.filter((nested) => {
           if (!nested.inline && visited.has(nested.command)) {
             log(`Skipping nested parallel ${nested.command}: already visited`);
             return false;
@@ -136,7 +136,7 @@ export async function flattenParallels(
             sessionID,
             visited,
             depth + 1,
-            maxDepth
+            maxDepth,
           );
           parts.push(...nestedParts);
         }

@@ -2,46 +2,49 @@ import type {
   UserPromptSubmitInput,
   PostToolUseOutput,
   ClaudeHooksConfig,
-} from "./types"
-import { findMatchingHooks, log } from "../../shared"
-import { dispatchHook, getHookIdentifier } from "./dispatch-hook"
-import { isHookCommandDisabled, type PluginExtendedConfig } from "./config-loader"
+} from "./types";
+import { findMatchingHooks, log } from "../../shared";
+import { dispatchHook, getHookIdentifier } from "./dispatch-hook";
+import {
+  isHookCommandDisabled,
+  type PluginExtendedConfig,
+} from "./config-loader";
 
-const USER_PROMPT_SUBMIT_TAG_OPEN = "<user-prompt-submit-hook>"
-const USER_PROMPT_SUBMIT_TAG_CLOSE = "</user-prompt-submit-hook>"
+const USER_PROMPT_SUBMIT_TAG_OPEN = "<user-prompt-submit-hook>";
+const USER_PROMPT_SUBMIT_TAG_CLOSE = "</user-prompt-submit-hook>";
 
 export interface MessagePart {
-  type: "text" | "tool_use" | "tool_result"
-  text?: string
-  [key: string]: unknown
+  type: "text" | "tool_use" | "tool_result";
+  text?: string;
+  [key: string]: unknown;
 }
 
 export interface UserPromptSubmitContext {
-  sessionId: string
-  parentSessionId?: string
-  prompt: string
-  parts: MessagePart[]
-  cwd: string
-  permissionMode?: "default" | "acceptEdits" | "bypassPermissions"
+  sessionId: string;
+  parentSessionId?: string;
+  prompt: string;
+  parts: MessagePart[];
+  cwd: string;
+  permissionMode?: "default" | "acceptEdits" | "bypassPermissions";
 }
 
 export interface UserPromptSubmitResult {
-  block: boolean
-  reason?: string
-  modifiedParts: MessagePart[]
-  messages: string[]
+  block: boolean;
+  reason?: string;
+  modifiedParts: MessagePart[];
+  messages: string[];
 }
 
 export async function executeUserPromptSubmitHooks(
   ctx: UserPromptSubmitContext,
   config: ClaudeHooksConfig | null,
-  extendedConfig?: PluginExtendedConfig | null
+  extendedConfig?: PluginExtendedConfig | null,
 ): Promise<UserPromptSubmitResult> {
-  const modifiedParts = ctx.parts
-  const messages: string[] = []
+  const modifiedParts = ctx.parts;
+  const messages: string[] = [];
 
   if (ctx.parentSessionId) {
-    return { block: false, modifiedParts, messages }
+    return { block: false, modifiedParts, messages };
   }
 
   // Check if hook tags are in the current user input only (not in injected context)
@@ -49,22 +52,22 @@ export async function executeUserPromptSubmitHooks(
   const userInputText = ctx.parts
     .filter((p) => p.type === "text" && p.text)
     .map((p) => p.text ?? "")
-    .join("\n")
+    .join("\n");
 
   if (
     userInputText.includes(USER_PROMPT_SUBMIT_TAG_OPEN) &&
     userInputText.includes(USER_PROMPT_SUBMIT_TAG_CLOSE)
   ) {
-    return { block: false, modifiedParts, messages }
+    return { block: false, modifiedParts, messages };
   }
 
   if (!config) {
-    return { block: false, modifiedParts, messages }
+    return { block: false, modifiedParts, messages };
   }
 
-  const matchers = findMatchingHooks(config, "UserPromptSubmit")
+  const matchers = findMatchingHooks(config, "UserPromptSubmit");
   if (matchers.length === 0) {
-    return { block: false, modifiedParts, messages }
+    return { block: false, modifiedParts, messages };
   }
 
   const stdinData: UserPromptSubmitInput = {
@@ -75,47 +78,61 @@ export async function executeUserPromptSubmitHooks(
     prompt: ctx.prompt,
     session: { id: ctx.sessionId },
     hook_source: "opencode-plugin",
-  }
+  };
 
-   for (const matcher of matchers) {
-     if (!matcher.hooks || matcher.hooks.length === 0) continue
-     for (const hook of matcher.hooks) {
-       if (hook.type !== "command" && hook.type !== "http") continue
+  for (const matcher of matchers) {
+    if (!matcher.hooks || matcher.hooks.length === 0) continue;
+    for (const hook of matcher.hooks) {
+      if (hook.type !== "command" && hook.type !== "http") continue;
 
-      const hookName = getHookIdentifier(hook)
-      if (isHookCommandDisabled("UserPromptSubmit", hookName, extendedConfig ?? null)) {
-        log("UserPromptSubmit hook command skipped (disabled by config)", { command: hookName })
-        continue
+      const hookName = getHookIdentifier(hook);
+      if (
+        isHookCommandDisabled(
+          "UserPromptSubmit",
+          hookName,
+          extendedConfig ?? null,
+        )
+      ) {
+        log("UserPromptSubmit hook command skipped (disabled by config)", {
+          command: hookName,
+        });
+        continue;
       }
 
-      const result = await dispatchHook(hook, JSON.stringify(stdinData), ctx.cwd)
+      const result = await dispatchHook(
+        hook,
+        JSON.stringify(stdinData),
+        ctx.cwd,
+      );
 
       if (result.stdout) {
-        const output = result.stdout.trim()
+        const output = result.stdout.trim();
         if (output.startsWith(USER_PROMPT_SUBMIT_TAG_OPEN)) {
-          messages.push(output)
+          messages.push(output);
         } else {
-          messages.push(`${USER_PROMPT_SUBMIT_TAG_OPEN}\n${output}\n${USER_PROMPT_SUBMIT_TAG_CLOSE}`)
+          messages.push(
+            `${USER_PROMPT_SUBMIT_TAG_OPEN}\n${output}\n${USER_PROMPT_SUBMIT_TAG_CLOSE}`,
+          );
         }
       }
 
       if (result.exitCode !== 0) {
         try {
-          const output = JSON.parse(result.stdout || "{}") as PostToolUseOutput
+          const output = JSON.parse(result.stdout || "{}") as PostToolUseOutput;
           if (output.decision === "block") {
             return {
               block: true,
               reason: output.reason || result.stderr,
               modifiedParts,
               messages,
-            }
+            };
           }
-         } catch {
+        } catch {
           // Ignore JSON parse errors
-         }
+        }
       }
     }
   }
 
-  return { block: false, modifiedParts, messages }
+  return { block: false, modifiedParts, messages };
 }

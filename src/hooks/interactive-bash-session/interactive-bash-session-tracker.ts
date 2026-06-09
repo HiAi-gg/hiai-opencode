@@ -8,10 +8,10 @@ import type { InteractiveBashSessionState } from "./types";
 import { subagentSessions } from "../../features/claude-code-session-state";
 import { spawnWithWindowsHide } from "../../shared/spawn-with-windows-hide";
 
-type AbortSession = (args: { path: { id: string } }) => Promise<unknown>
+type AbortSession = (args: { path: { id: string } }) => Promise<unknown>;
 
 function isOmoSession(sessionName: string | null): sessionName is string {
-  return sessionName !== null && sessionName.startsWith(OMO_SESSION_PREFIX)
+  return !!sessionName?.startsWith(OMO_SESSION_PREFIX);
 }
 
 async function killAllTrackedSessions(
@@ -20,100 +20,107 @@ async function killAllTrackedSessions(
 ): Promise<void> {
   for (const sessionName of state.tmuxSessions) {
     try {
-      const proc = spawnWithWindowsHide(["tmux", "kill-session", "-t", sessionName], {
-        stdout: "ignore",
-        stderr: "ignore",
-      })
-      await proc.exited
+      const proc = spawnWithWindowsHide(
+        ["tmux", "kill-session", "-t", sessionName],
+        {
+          stdout: "ignore",
+          stderr: "ignore",
+        },
+      );
+      await proc.exited;
     } catch {
       // best-effort cleanup
     }
   }
 
   for (const sessionId of subagentSessions) {
-    abortSession({ path: { id: sessionId } }).catch(() => { /* intentionally ignored — subagent session may already be terminated */ })
+    abortSession({ path: { id: sessionId } }).catch(() => {
+      /* intentionally ignored — subagent session may already be terminated */
+    });
   }
 }
 
 export function createInteractiveBashSessionTracker(options: {
-  abortSession: AbortSession
+  abortSession: AbortSession;
 }): {
-  getOrCreateState: (sessionID: string) => InteractiveBashSessionState
-  handleSessionDeleted: (sessionID: string) => Promise<void>
+  getOrCreateState: (sessionID: string) => InteractiveBashSessionState;
+  handleSessionDeleted: (sessionID: string) => Promise<void>;
   handleTmuxCommand: (input: {
-    sessionID: string
-    subCommand: string
-    sessionName: string | null
-    toolOutput: string
-  }) => { reminderToAppend: string | null }
+    sessionID: string;
+    subCommand: string;
+    sessionName: string | null;
+    toolOutput: string;
+  }) => { reminderToAppend: string | null };
 } {
-  const { abortSession } = options
-  const sessionStates = new Map<string, InteractiveBashSessionState>()
+  const { abortSession } = options;
+  const sessionStates = new Map<string, InteractiveBashSessionState>();
 
   function getOrCreateState(sessionID: string): InteractiveBashSessionState {
-    const existing = sessionStates.get(sessionID)
-    if (existing) return existing
+    const existing = sessionStates.get(sessionID);
+    if (existing) return existing;
 
-    const persisted = loadInteractiveBashSessionState(sessionID)
+    const persisted = loadInteractiveBashSessionState(sessionID);
     const state: InteractiveBashSessionState = persisted ?? {
       sessionID,
       tmuxSessions: new Set<string>(),
       updatedAt: Date.now(),
-    }
-    sessionStates.set(sessionID, state)
-    return state
+    };
+    sessionStates.set(sessionID, state);
+    return state;
   }
 
   async function handleSessionDeleted(sessionID: string): Promise<void> {
-    const state = getOrCreateState(sessionID)
-    await killAllTrackedSessions(abortSession, state)
-    sessionStates.delete(sessionID)
-    clearInteractiveBashSessionState(sessionID)
+    const state = getOrCreateState(sessionID);
+    await killAllTrackedSessions(abortSession, state);
+    sessionStates.delete(sessionID);
+    clearInteractiveBashSessionState(sessionID);
   }
 
   function handleTmuxCommand(input: {
-    sessionID: string
-    subCommand: string
-    sessionName: string | null
-    toolOutput: string
+    sessionID: string;
+    subCommand: string;
+    sessionName: string | null;
+    toolOutput: string;
   }): { reminderToAppend: string | null } {
-    const { sessionID, subCommand, sessionName, toolOutput } = input
+    const { sessionID, subCommand, sessionName, toolOutput } = input;
 
-    const state = getOrCreateState(sessionID)
-    let stateChanged = false
+    const state = getOrCreateState(sessionID);
+    let stateChanged = false;
 
     if (toolOutput.startsWith("Error:")) {
-      return { reminderToAppend: null }
+      return { reminderToAppend: null };
     }
 
-    const isNewSession = subCommand === "new-session"
-    const isKillSession = subCommand === "kill-session"
-    const isKillServer = subCommand === "kill-server"
+    const isNewSession = subCommand === "new-session";
+    const isKillSession = subCommand === "kill-session";
+    const isKillServer = subCommand === "kill-server";
 
     if (isNewSession && isOmoSession(sessionName)) {
-      state.tmuxSessions.add(sessionName)
-      stateChanged = true
+      state.tmuxSessions.add(sessionName);
+      stateChanged = true;
     } else if (isKillSession && isOmoSession(sessionName)) {
-      state.tmuxSessions.delete(sessionName)
-      stateChanged = true
+      state.tmuxSessions.delete(sessionName);
+      stateChanged = true;
     } else if (isKillServer) {
-      state.tmuxSessions.clear()
-      stateChanged = true
+      state.tmuxSessions.clear();
+      stateChanged = true;
     }
 
     if (stateChanged) {
-      state.updatedAt = Date.now()
-      saveInteractiveBashSessionState(state)
+      state.updatedAt = Date.now();
+      saveInteractiveBashSessionState(state);
     }
 
-    const isSessionOperation = isNewSession || isKillSession || isKillServer
+    const isSessionOperation = isNewSession || isKillSession || isKillServer;
     if (!isSessionOperation) {
-      return { reminderToAppend: null }
+      return { reminderToAppend: null };
     }
 
-    const reminder = buildSessionReminderMessage(Array.from(state.tmuxSessions))
-    return { reminderToAppend: reminder || null }
+    const reminder = buildSessionReminderMessage(
+      Array.from(state.tmuxSessions),
+    );
+    return { reminderToAppend: reminder || null };
   }
 
-  return { getOrCreateState, handleSessionDeleted, handleTmuxCommand }
+  return { getOrCreateState, handleSessionDeleted, handleTmuxCommand };
 }

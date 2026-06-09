@@ -1,1 +1,1 @@
-export { createClaudeCodeHooksHook } from "./claude-code-hooks-hook"
+export { createClaudeCodeHooksHook } from "./claude-code-hooks-hook";

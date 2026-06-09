@@ -1,60 +1,63 @@
-import type { ModelFallbackInfo } from "../../features/task-toast-manager/types"
-import type { DelegateTaskArgs } from "./types"
-import type { ExecutorContext } from "./executor-types"
-import type { FallbackEntry } from "../../shared/model-requirements"
-import { mergeCategories } from "../../shared/merge-categories"
-import { log } from "../../shared/logger"
-import { resolveCategoryConfig } from "./categories"
-import { parseModelString } from "./model-string-parser"
-import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
-import { normalizeFallbackModels, flattenToFallbackModelStrings } from "../../shared/model-resolver"
-import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models"
-import { CONFIG_BASENAME } from "../../shared/plugin-identity"
-import { getAvailableModelsForDelegateTask } from "./available-models"
-import { resolveModelForDelegateTask } from "./model-selection"
-import { getAgentDisplayName } from "../../shared/agent-display-names"
-import { resolveModeAgent } from "../../shared/mode-routing"
-import { applyCategoryParams } from "./delegated-model-config"
-import { resolveEffectiveFallbackEntry } from "./fallback-entry-resolution"
-import { applyFallbackEntrySettings } from "./fallback-entry-settings"
+import type { ModelFallbackInfo } from "../../features/task-toast-manager/types";
+import type { DelegateTaskArgs } from "./types";
+import type { ExecutorContext } from "./executor-types";
+import type { FallbackEntry } from "../../shared/model-requirements";
+import { mergeCategories } from "../../shared/merge-categories";
+import { log } from "../../shared/logger";
+import { resolveCategoryConfig } from "./categories";
+import { parseModelString } from "./model-string-parser";
+import { CATEGORY_MODEL_REQUIREMENTS } from "../../shared/model-requirements";
+import {
+  normalizeFallbackModels,
+  flattenToFallbackModelStrings,
+} from "../../shared/model-resolver";
+import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models";
+import { CONFIG_BASENAME } from "../../shared/plugin-identity";
+import { getAvailableModelsForDelegateTask } from "./available-models";
+import { resolveModelForDelegateTask } from "./model-selection";
+import { getAgentDisplayName } from "../../shared/agent-display-names";
+import { resolveModeAgent } from "../../shared/mode-routing";
+import { applyCategoryParams } from "./delegated-model-config";
+import { resolveEffectiveFallbackEntry } from "./fallback-entry-resolution";
+import { applyFallbackEntrySettings } from "./fallback-entry-settings";
 
-import type { CategoryConfig } from "../../config/schema"
-import type { DelegatedModelConfig } from "./types"
+import type { CategoryConfig } from "../../config/schema";
+import type { DelegatedModelConfig } from "./types";
 
 export interface CategoryResolutionResult {
-  agentToUse: string
-  categoryModel: DelegatedModelConfig | undefined
-  categoryPromptAppend: string | undefined
-  maxPromptTokens?: number
-  modelInfo: ModelFallbackInfo | undefined
-  actualModel: string | undefined
-  isUnstableAgent: boolean
-  fallbackChain?: FallbackEntry[]  // For runtime retry on model errors
-  error?: string
+  agentToUse: string;
+  categoryModel: DelegatedModelConfig | undefined;
+  categoryPromptAppend: string | undefined;
+  maxPromptTokens?: number;
+  modelInfo: ModelFallbackInfo | undefined;
+  actualModel: string | undefined;
+  isUnstableAgent: boolean;
+  fallbackChain?: FallbackEntry[]; // For runtime retry on model errors
+  error?: string;
 }
 
 function resolveCategoryExecutorAgentKey(
   categoryName: string,
   config: CategoryConfig,
 ): string {
-  void config
-  return resolveModeAgent(categoryName)
+  void config;
+  return resolveModeAgent(categoryName);
 }
 
 export async function resolveCategoryExecution(
   args: DelegateTaskArgs,
   executorCtx: ExecutorContext,
   inheritedModel: string | undefined,
-  systemDefaultModel: string | undefined
+  systemDefaultModel: string | undefined,
 ): Promise<CategoryResolutionResult> {
-  const { client, userCategories, agentOverrides } = executorCtx
+  const { client, userCategories, agentOverrides } = executorCtx;
 
-  const categoryName = args.category!
-  const enabledCategories = mergeCategories(userCategories)
-  const categoryExists = enabledCategories[categoryName] !== undefined
+  const categoryName = args.category!;
+  const enabledCategories = mergeCategories(userCategories);
+  const categoryExists = enabledCategories[categoryName] !== undefined;
 
   if (!categoryExists) {
-    const allCategoryNames = Object.keys(enabledCategories).join(", ")
+    const allCategoryNames = Object.keys(enabledCategories).join(", ");
     return {
       agentToUse: "",
       categoryModel: undefined,
@@ -64,21 +67,21 @@ export async function resolveCategoryExecution(
       actualModel: undefined,
       isUnstableAgent: false,
       error: `Unknown category: "${categoryName}". Available: ${allCategoryNames}`,
-    }
+    };
   }
 
-  const availableModels = await getAvailableModelsForDelegateTask(client)
+  const availableModels = await getAvailableModelsForDelegateTask(client);
 
   const resolved = resolveCategoryConfig(categoryName, {
     userCategories,
     inheritedModel,
     systemDefaultModel,
     availableModels,
-  })
+  });
 
   if (!resolved) {
-    const requirement = CATEGORY_MODEL_REQUIREMENTS[categoryName]
-    const allCategoryNames = Object.keys(enabledCategories).join(", ")
+    const requirement = CATEGORY_MODEL_REQUIREMENTS[categoryName];
+    const allCategoryNames = Object.keys(enabledCategories).join(", ");
 
     if (categoryExists && requirement?.requiresModel) {
       return {
@@ -96,7 +99,7 @@ To use this category:
 2. Or configure an alternative model in your ${CONFIG_BASENAME}.json for this category
 
 Available categories: ${allCategoryNames}`,
-      }
+      };
     }
 
     return {
@@ -108,74 +111,108 @@ Available categories: ${allCategoryNames}`,
       actualModel: undefined,
       isUnstableAgent: false,
       error: `Unknown category: "${categoryName}". Available: ${allCategoryNames}`,
-    }
+    };
   }
 
-  const categoryExecutorAgentKey = resolveCategoryExecutorAgentKey(categoryName, resolved.config)
-  const categoryExecutorAgentName = getAgentDisplayName(categoryExecutorAgentKey)
-  const categoryExecutorOverride = agentOverrides?.[categoryExecutorAgentKey as keyof typeof agentOverrides]
-    ?? (agentOverrides
-      ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === categoryExecutorAgentKey)?.[1]
-      : undefined)
+  const categoryExecutorAgentKey = resolveCategoryExecutorAgentKey(
+    categoryName,
+    resolved.config,
+  );
+  const categoryExecutorAgentName = getAgentDisplayName(
+    categoryExecutorAgentKey,
+  );
+  const categoryExecutorOverride =
+    agentOverrides?.[categoryExecutorAgentKey as keyof typeof agentOverrides] ??
+    (agentOverrides
+      ? Object.entries(agentOverrides).find(
+          ([key]) => key.toLowerCase() === categoryExecutorAgentKey,
+        )?.[1]
+      : undefined);
 
-  const requirement = CATEGORY_MODEL_REQUIREMENTS[args.category!]
+  const requirement = CATEGORY_MODEL_REQUIREMENTS[args.category!];
   const normalizedConfiguredFallbackModels = normalizeFallbackModels(
-    categoryExecutorOverride?.fallback_models ?? resolved.config.fallback_models
-  )
-  let actualModel: string | undefined
-  let modelInfo: ModelFallbackInfo | undefined
-  let categoryModel: DelegatedModelConfig | undefined
-  let isModelResolutionSkipped = false
-  let fallbackEntry: FallbackEntry | undefined
-  let matchedFallback = false
+    categoryExecutorOverride?.fallback_models ??
+      resolved.config.fallback_models,
+  );
+  let actualModel: string | undefined;
+  let modelInfo: ModelFallbackInfo | undefined;
+  let categoryModel: DelegatedModelConfig | undefined;
+  let isModelResolutionSkipped = false;
+  let fallbackEntry: FallbackEntry | undefined;
+  let matchedFallback = false;
 
-  const overrideModel = categoryExecutorOverride?.model
-  const explicitCategoryModel = userCategories?.[args.category!]?.model
+  const overrideModel = categoryExecutorOverride?.model;
+  const explicitCategoryModel = userCategories?.[args.category!]?.model;
 
   if (!requirement) {
     // Precedence: explicit category model > routed executor agent's override model > category resolved model > system default.
     // The routed executor agent is selected per-mode via resolveModeAgent (see shared/mode-routing.ts);
     // its agentOverrides[<agent>].model serves as the fallback when no explicit category model is set.
-    actualModel = explicitCategoryModel ?? overrideModel ?? resolved.model ?? systemDefaultModel
+    actualModel =
+      explicitCategoryModel ??
+      overrideModel ??
+      resolved.model ??
+      systemDefaultModel;
     if (!actualModel) {
-      log(`[resolveCategoryExecution] WARNING: Category "${categoryName}" has no model from any source. Executor: "${categoryExecutorAgentKey}". Check agentOverrides, userCategories, or OpenCode default model.`)
+      log(
+        `[resolveCategoryExecution] WARNING: Category "${categoryName}" has no model from any source. Executor: "${categoryExecutorAgentKey}". Check agentOverrides, userCategories, or OpenCode default model.`,
+      );
     }
     if (actualModel) {
-      modelInfo = explicitCategoryModel || overrideModel
-        ? { model: actualModel, type: "user-defined", source: "override" }
-        : { model: actualModel, type: "system-default", source: "system-default" }
-      const parsedModel = parseModelString(actualModel)
-      const variantToUse = userCategories?.[args.category!]?.variant
-        ?? categoryExecutorOverride?.variant
-        ?? resolved.config.variant
+      modelInfo =
+        explicitCategoryModel || overrideModel
+          ? { model: actualModel, type: "user-defined", source: "override" }
+          : {
+              model: actualModel,
+              type: "system-default",
+              source: "system-default",
+            };
+      const parsedModel = parseModelString(actualModel);
+      const variantToUse =
+        userCategories?.[args.category!]?.variant ??
+        categoryExecutorOverride?.variant ??
+        resolved.config.variant;
       categoryModel = parsedModel
-        ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
-        : undefined
+        ? applyCategoryParams(
+            { ...parsedModel, variant: variantToUse ?? parsedModel.variant },
+            resolved.config,
+          )
+        : undefined;
     }
   } else {
     const resolution = resolveModelForDelegateTask({
       userModel: explicitCategoryModel ?? overrideModel,
-      userFallbackModels: flattenToFallbackModelStrings(normalizedConfiguredFallbackModels),
+      userFallbackModels: flattenToFallbackModelStrings(
+        normalizedConfiguredFallbackModels,
+      ),
       categoryDefaultModel: resolved.model,
       isUserConfiguredCategoryModel: resolved.isUserConfiguredModel,
       fallbackChain: requirement.fallbackChain,
       availableModels,
       systemDefaultModel,
-    })
+    });
 
     if (resolution && "skipped" in resolution) {
-      isModelResolutionSkipped = true
-      const userModelOverride = explicitCategoryModel ?? overrideModel
+      isModelResolutionSkipped = true;
+      const userModelOverride = explicitCategoryModel ?? overrideModel;
       if (userModelOverride) {
-        actualModel = userModelOverride
-        const parsedModel = parseModelString(userModelOverride)
-        const variantToUse = userCategories?.[args.category!]?.variant
-          ?? categoryExecutorOverride?.variant
-          ?? resolved.config.variant
+        actualModel = userModelOverride;
+        const parsedModel = parseModelString(userModelOverride);
+        const variantToUse =
+          userCategories?.[args.category!]?.variant ??
+          categoryExecutorOverride?.variant ??
+          resolved.config.variant;
         categoryModel = parsedModel
-          ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
-          : undefined
-        modelInfo = { model: userModelOverride, type: "user-defined", source: "override" }
+          ? applyCategoryParams(
+              { ...parsedModel, variant: variantToUse ?? parsedModel.variant },
+              resolved.config,
+            )
+          : undefined;
+        modelInfo = {
+          model: userModelOverride,
+          type: "user-defined",
+          source: "override",
+        };
       }
     } else if (resolution) {
       const {
@@ -183,10 +220,10 @@ Available categories: ${allCategoryNames}`,
         variant: resolvedVariant,
         fallbackEntry: resolvedFallbackEntry,
         matchedFallback: resolvedMatchedFallback,
-      } = resolution
-      fallbackEntry = resolvedFallbackEntry
-      matchedFallback = resolvedMatchedFallback === true
-      actualModel = resolvedModel
+      } = resolution;
+      fallbackEntry = resolvedFallbackEntry;
+      matchedFallback = resolvedMatchedFallback === true;
+      actualModel = resolvedModel;
 
       if (!parseModelString(actualModel)) {
         return {
@@ -198,44 +235,52 @@ Available categories: ${allCategoryNames}`,
           actualModel: undefined,
           isUnstableAgent: false,
           error: `Invalid model format "${actualModel}". Expected "provider/model" format (e.g., "anthropic/claude-3-5-sonnet-latest").`,
-        }
+        };
       }
 
-      const type: "user-defined" | "inherited" | "category-default" | "system-default" =
-        (explicitCategoryModel || overrideModel)
+      const type:
+        | "user-defined"
+        | "inherited"
+        | "category-default"
+        | "system-default" =
+        explicitCategoryModel || overrideModel
           ? "user-defined"
-          : (systemDefaultModel && actualModel === systemDefaultModel)
-              ? "system-default"
-              : "category-default"
+          : systemDefaultModel && actualModel === systemDefaultModel
+            ? "system-default"
+            : "category-default";
 
       const source: "override" | "category-default" | "system-default" =
         type === "user-defined"
           ? "override"
           : type === "system-default"
-              ? "system-default"
-              : "category-default"
+            ? "system-default"
+            : "category-default";
 
-      modelInfo = { model: actualModel, type, source }
+      modelInfo = { model: actualModel, type, source };
 
-      const parsedModel = parseModelString(actualModel)
-      const variantToUse = userCategories?.[args.category!]?.variant
-        ?? categoryExecutorOverride?.variant
-        ?? resolvedVariant
-        ?? resolved.config.variant
+      const parsedModel = parseModelString(actualModel);
+      const variantToUse =
+        userCategories?.[args.category!]?.variant ??
+        categoryExecutorOverride?.variant ??
+        resolvedVariant ??
+        resolved.config.variant;
       categoryModel = parsedModel
-        ? applyCategoryParams({ ...parsedModel, variant: variantToUse ?? parsedModel.variant }, resolved.config)
-        : undefined
+        ? applyCategoryParams(
+            { ...parsedModel, variant: variantToUse ?? parsedModel.variant },
+            resolved.config,
+          )
+        : undefined;
     }
   }
 
   if (!categoryModel && actualModel) {
-    const parsedModel = parseModelString(actualModel)
-    categoryModel = parsedModel ?? undefined
+    const parsedModel = parseModelString(actualModel);
+    categoryModel = parsedModel ?? undefined;
   }
-  const categoryPromptAppend = resolved.promptAppend || undefined
+  const categoryPromptAppend = resolved.promptAppend || undefined;
 
   if (!categoryModel && !actualModel && !isModelResolutionSkipped) {
-    const categoryNames = Object.keys(enabledCategories)
+    const categoryNames = Object.keys(enabledCategories);
     return {
       agentToUse: "",
       categoryModel: undefined,
@@ -253,32 +298,41 @@ Configure in one of:
 
 Current category: ${args.category}
 Available categories: ${categoryNames.join(", ")}`,
-    }
+    };
   }
 
-  const resolvedModel = actualModel?.toLowerCase()
-  const isUnstableAgent = resolved.config.is_unstable_agent ?? (resolvedModel ? resolvedModel.includes("gemini") || resolvedModel.includes("minimax") : false)
+  const resolvedModel = actualModel?.toLowerCase();
+  const isUnstableAgent =
+    resolved.config.is_unstable_agent ??
+    (resolvedModel
+      ? resolvedModel.includes("gemini") || resolvedModel.includes("minimax")
+      : false);
 
-  const defaultProviderID = categoryModel?.providerID
-    ?? parseModelString(actualModel ?? "")?.providerID
-    ?? "opencode"
+  const defaultProviderID =
+    categoryModel?.providerID ??
+    parseModelString(actualModel ?? "")?.providerID ??
+    "opencode";
   const configuredFallbackChain = buildFallbackChainFromModels(
     normalizedConfiguredFallbackModels,
     defaultProviderID,
-  )
+  );
 
   const effectiveEntry = resolveEffectiveFallbackEntry({
     categoryModel,
     configuredFallbackChain,
-    resolution: isModelResolutionSkipped ? { skipped: true } : { fallbackEntry, matchedFallback },
-  })
+    resolution: isModelResolutionSkipped
+      ? { skipped: true }
+      : { fallbackEntry, matchedFallback },
+  });
 
   if (categoryModel && effectiveEntry) {
     categoryModel = applyFallbackEntrySettings({
       categoryModel,
       effectiveEntry,
-      variantOverride: userCategories?.[args.category!]?.variant ?? categoryExecutorOverride?.variant,
-    })
+      variantOverride:
+        userCategories?.[args.category!]?.variant ??
+        categoryExecutorOverride?.variant,
+    });
   }
 
   return {
@@ -290,6 +344,10 @@ Available categories: ${categoryNames.join(", ")}`,
     actualModel,
     isUnstableAgent,
     // Don't use hardcoded fallback chain when resolution was skipped (cold cache)
-    fallbackChain: configuredFallbackChain ?? ((isModelResolutionSkipped || explicitCategoryModel || overrideModel) ? undefined : requirement?.fallbackChain),
-  }
+    fallbackChain:
+      configuredFallbackChain ??
+      (isModelResolutionSkipped || explicitCategoryModel || overrideModel
+        ? undefined
+        : requirement?.fallbackChain),
+  };
 }

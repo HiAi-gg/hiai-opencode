@@ -1,30 +1,30 @@
-import type { AutoCompactState } from "./types"
-import { TRUNCATE_CONFIG } from "./types"
-import { truncateUntilTargetTokens } from "./storage"
-import type { Client } from "./client"
-import { clearSessionState } from "./state"
-import { formatBytes } from "./message-builder"
-import { log } from "../../shared/logger"
-import { resolveInheritedPromptTools } from "../../shared"
+import type { AutoCompactState } from "./types";
+import { TRUNCATE_CONFIG } from "./types";
+import { truncateUntilTargetTokens } from "./storage";
+import type { Client } from "./client";
+import { clearSessionState } from "./state";
+import { formatBytes } from "./message-builder";
+import { log } from "../../shared/logger";
+import { resolveInheritedPromptTools } from "../../shared";
 
 export async function runAggressiveTruncationStrategy(params: {
-  sessionID: string
-  autoCompactState: AutoCompactState
-  client: Client
-  directory: string
-  truncateAttempt: number
-  currentTokens: number
-  maxTokens: number
+  sessionID: string;
+  autoCompactState: AutoCompactState;
+  client: Client;
+  directory: string;
+  truncateAttempt: number;
+  currentTokens: number;
+  maxTokens: number;
 }): Promise<{ handled: boolean; nextTruncateAttempt: number }> {
   if (params.truncateAttempt >= TRUNCATE_CONFIG.maxTruncateAttempts) {
-    return { handled: false, nextTruncateAttempt: params.truncateAttempt }
+    return { handled: false, nextTruncateAttempt: params.truncateAttempt };
   }
 
   log("[auto-compact] PHASE 2: aggressive truncation triggered", {
     currentTokens: params.currentTokens,
     maxTokens: params.maxTokens,
     targetRatio: TRUNCATE_CONFIG.targetTokenRatio,
-  })
+  });
 
   const aggressiveResult = await truncateUntilTargetTokens(
     params.sessionID,
@@ -33,36 +33,43 @@ export async function runAggressiveTruncationStrategy(params: {
     TRUNCATE_CONFIG.targetTokenRatio,
     TRUNCATE_CONFIG.charsPerToken,
     params.client,
-  )
+  );
 
   if (aggressiveResult.truncatedCount <= 0) {
-    return { handled: false, nextTruncateAttempt: params.truncateAttempt }
+    return { handled: false, nextTruncateAttempt: params.truncateAttempt };
   }
 
-  const nextTruncateAttempt = params.truncateAttempt + aggressiveResult.truncatedCount
-  const toolNames = aggressiveResult.truncatedTools.map((t) => t.toolName).join(", ")
+  const nextTruncateAttempt =
+    params.truncateAttempt + aggressiveResult.truncatedCount;
+  const toolNames = aggressiveResult.truncatedTools
+    .map((t) => t.toolName)
+    .join(", ");
   const statusMsg = aggressiveResult.sufficient
     ? `Truncated ${aggressiveResult.truncatedCount} outputs (${formatBytes(aggressiveResult.totalBytesRemoved)})`
-    : `Truncated ${aggressiveResult.truncatedCount} outputs (${formatBytes(aggressiveResult.totalBytesRemoved)}) - continuing to summarize...`
+    : `Truncated ${aggressiveResult.truncatedCount} outputs (${formatBytes(aggressiveResult.totalBytesRemoved)}) - continuing to summarize...`;
 
   await params.client.tui
     .showToast({
       body: {
-        title: aggressiveResult.sufficient ? "Truncation Complete" : "Partial Truncation",
+        title: aggressiveResult.sufficient
+          ? "Truncation Complete"
+          : "Partial Truncation",
         message: `${statusMsg}: ${toolNames}`,
         variant: aggressiveResult.sufficient ? "success" : "warning",
         duration: 4000,
       },
     })
-    .catch(() => { /* intentionally ignored — toast is non-critical */ })
+    .catch(() => {
+      /* intentionally ignored — toast is non-critical */
+    });
 
-  log("[auto-compact] aggressive truncation completed", aggressiveResult)
+  log("[auto-compact] aggressive truncation completed", aggressiveResult);
 
   if (aggressiveResult.sufficient) {
-    clearSessionState(params.autoCompactState, params.sessionID)
+    clearSessionState(params.autoCompactState, params.sessionID);
     setTimeout(async () => {
       try {
-        const inheritedTools = resolveInheritedPromptTools(params.sessionID)
+        const inheritedTools = resolveInheritedPromptTools(params.sessionID);
         await params.client.session.promptAsync({
           path: { id: params.sessionID },
           body: {
@@ -70,7 +77,7 @@ export async function runAggressiveTruncationStrategy(params: {
             ...(inheritedTools ? { tools: inheritedTools } : {}),
           } as never,
           query: { directory: params.directory },
-        })
+        });
       } catch (error) {
         // Fire-and-forget retry prompt after truncation. The user already has
         // a successful truncation result; this is just a continuation nudge.
@@ -79,18 +86,18 @@ export async function runAggressiveTruncationStrategy(params: {
         log("[auto-compact] post-truncation promptAsync failed", {
           sessionID: params.sessionID,
           error: String(error),
-        })
+        });
       }
-    }, 500)
+    }, 500);
 
-    return { handled: true, nextTruncateAttempt }
+    return { handled: true, nextTruncateAttempt };
   }
 
   log("[auto-compact] truncation insufficient, falling through to summarize", {
     sessionID: params.sessionID,
     truncatedCount: aggressiveResult.truncatedCount,
     sufficient: aggressiveResult.sufficient,
-  })
+  });
 
-  return { handled: false, nextTruncateAttempt }
+  return { handled: false, nextTruncateAttempt };
 }

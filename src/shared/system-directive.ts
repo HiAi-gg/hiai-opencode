@@ -5,9 +5,9 @@
  * Format: [SYSTEM DIRECTIVE: OH-MY-OPENCODE - {TYPE}]
  */
 
-export const SYSTEM_DIRECTIVE_PREFIX = "[SYSTEM DIRECTIVE: HIAI-OPENCODE"
+export const SYSTEM_DIRECTIVE_PREFIX = "[SYSTEM DIRECTIVE: HIAI-OPENCODE";
 
-const SYSTEM_DIRECTIVE_LEADING_KEYWORD_PATTERN = /^\s*(?:ultrawork|ulw)\s+/i
+const SYSTEM_DIRECTIVE_LEADING_KEYWORD_PATTERN = /^\s*(?:ultrawork|ulw)\s+/i;
 
 /**
  * Creates a system directive header with the given type.
@@ -15,7 +15,7 @@ const SYSTEM_DIRECTIVE_LEADING_KEYWORD_PATTERN = /^\s*(?:ultrawork|ulw)\s+/i
  * @returns Formatted directive string like "[SYSTEM DIRECTIVE: OH-MY-OPENCODE - TODO CONTINUATION]"
  */
 export function createSystemDirective(type: string): string {
-  return `${SYSTEM_DIRECTIVE_PREFIX} - ${type}]`
+  return `${SYSTEM_DIRECTIVE_PREFIX} - ${type}]`;
 }
 
 /**
@@ -25,12 +25,15 @@ export function createSystemDirective(type: string): string {
  * @returns true if the message is a system directive
  */
 export function isSystemDirective(text: string): boolean {
-  const trimmed = text.trimStart()
+  const trimmed = text.trimStart();
   if (trimmed.startsWith(SYSTEM_DIRECTIVE_PREFIX)) {
-    return true
+    return true;
   }
-  const withoutLeadingKeyword = trimmed.replace(SYSTEM_DIRECTIVE_LEADING_KEYWORD_PATTERN, "")
-  return withoutLeadingKeyword.startsWith(SYSTEM_DIRECTIVE_PREFIX)
+  const withoutLeadingKeyword = trimmed.replace(
+    SYSTEM_DIRECTIVE_LEADING_KEYWORD_PATTERN,
+    "",
+  );
+  return withoutLeadingKeyword.startsWith(SYSTEM_DIRECTIVE_PREFIX);
 }
 
 /**
@@ -40,7 +43,7 @@ export function isSystemDirective(text: string): boolean {
  * @returns true if the message contains system-reminder tags
  */
 export function hasSystemReminder(text: string): boolean {
-  return /<system-reminder>[\s\S]*?<\/system-reminder>/i.test(text)
+  return /<system-reminder>[\s\S]*?<\/system-reminder>/i.test(text);
 }
 
 /**
@@ -50,7 +53,9 @@ export function hasSystemReminder(text: string): boolean {
  * @returns text with system-reminder content removed
  */
 export function removeSystemReminders(text: string): string {
-  return text.replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "").trim()
+  return text
+    .replace(/<system-reminder>[\s\S]*?<\/system-reminder>/gi, "")
+    .trim();
 }
 
 export const SystemDirectiveTypes = {
@@ -62,6 +67,7 @@ export const SystemDirectiveTypes = {
   COMPACTION_CONTEXT: "COMPACTION CONTEXT",
   CONTEXT_WINDOW_MONITOR: "CONTEXT WINDOW MONITOR",
   STRATEGIST_READ_ONLY: "STRATEGIST READ-ONLY",
-} as const
+} as const;
 
-export type SystemDirectiveType = (typeof SystemDirectiveTypes)[keyof typeof SystemDirectiveTypes]
+export type SystemDirectiveType =
+  (typeof SystemDirectiveTypes)[keyof typeof SystemDirectiveTypes];

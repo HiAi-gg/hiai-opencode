@@ -1,44 +1,55 @@
-import { checkForLegacyPluginEntry } from "./legacy-plugin-warning"
-import { log, logWarn } from "./logger"
-import { migrateLegacyPluginEntry } from "./migrate-legacy-plugin-entry"
-import { toCanonicalEntry } from "./plugin-entry-migrator"
-import { LEGACY_PLUGIN_NAME, PLUGIN_NAME } from "./plugin-identity"
+import { checkForLegacyPluginEntry } from "./legacy-plugin-warning";
+import { log, logWarn } from "./logger";
+import { migrateLegacyPluginEntry } from "./migrate-legacy-plugin-entry";
+import { toCanonicalEntry } from "./plugin-entry-migrator";
+import { LEGACY_PLUGIN_NAME, PLUGIN_NAME } from "./plugin-identity";
 
 type LogLegacyPluginStartupWarningDeps = {
-  checkForLegacyPluginEntry?: typeof checkForLegacyPluginEntry
-  log?: typeof log
-  migrateLegacyPluginEntry?: typeof migrateLegacyPluginEntry
-}
+  checkForLegacyPluginEntry?: typeof checkForLegacyPluginEntry;
+  log?: typeof log;
+  migrateLegacyPluginEntry?: typeof migrateLegacyPluginEntry;
+};
 
-export function logLegacyPluginStartupWarning(deps: LogLegacyPluginStartupWarningDeps = {}): void {
-  const checkForLegacyPluginEntryFn = deps.checkForLegacyPluginEntry ?? checkForLegacyPluginEntry
-  const logFn = deps.log ?? log
-  const migrateLegacyPluginEntryFn = deps.migrateLegacyPluginEntry ?? migrateLegacyPluginEntry
+export function logLegacyPluginStartupWarning(
+  deps: LogLegacyPluginStartupWarningDeps = {},
+): void {
+  const checkForLegacyPluginEntryFn =
+    deps.checkForLegacyPluginEntry ?? checkForLegacyPluginEntry;
+  const logFn = deps.log ?? log;
+  const migrateLegacyPluginEntryFn =
+    deps.migrateLegacyPluginEntry ?? migrateLegacyPluginEntry;
 
-  const result = checkForLegacyPluginEntryFn()
+  const result = checkForLegacyPluginEntryFn();
   if (!result.hasLegacyEntry) {
-    return
+    return;
   }
 
-  const suggestedEntries = result.legacyEntries.map(toCanonicalEntry)
+  const suggestedEntries = result.legacyEntries.map(toCanonicalEntry);
 
-  logFn("[HiaiOpenCodePlugin] Legacy plugin entry detected in OpenCode config", {
-    legacyEntries: result.legacyEntries,
-    suggestedEntries,
-    hasCanonicalEntry: result.hasCanonicalEntry,
-  })
+  logFn(
+    "[HiaiOpenCodePlugin] Legacy plugin entry detected in OpenCode config",
+    {
+      legacyEntries: result.legacyEntries,
+      suggestedEntries,
+      hasCanonicalEntry: result.hasCanonicalEntry,
+    },
+  );
 
-  logWarn(`Your opencode.json uses the legacy package name "${LEGACY_PLUGIN_NAME}".`
-    + ` The package has been renamed to "${PLUGIN_NAME}".`
-    + ` Attempting auto-migration...`)
+  logWarn(
+    `Your opencode.json uses the legacy package name "${LEGACY_PLUGIN_NAME}".` +
+      ` The package has been renamed to "${PLUGIN_NAME}".` +
+      ` Attempting auto-migration...`,
+  );
 
-  const migrated = migrateLegacyPluginEntryFn(result.configPath!)
+  const migrated = migrateLegacyPluginEntryFn(result.configPath!);
   if (migrated) {
-    logWarn(`Auto-migrated opencode.json: ${result.legacyEntries.join(", ")} -> ${suggestedEntries.join(", ")}`)
+    logWarn(
+      `Auto-migrated opencode.json: ${result.legacyEntries.join(", ")} -> ${suggestedEntries.join(", ")}`,
+    );
   } else {
     logWarn(
-      `Could not auto-migrate. Please manually update your opencode.json:`
-      + ` ${result.legacyEntries.map((e, i) => `"${e}" -> "${suggestedEntries[i]}"`).join(", ")}`,
-    )
+      `Could not auto-migrate. Please manually update your opencode.json:` +
+        ` ${result.legacyEntries.map((e, i) => `"${e}" -> "${suggestedEntries[i]}"`).join(", ")}`,
+    );
   }
 }

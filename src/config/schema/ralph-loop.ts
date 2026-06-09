@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z } from "zod";
 
 export const RalphLoopConfigSchema = z.object({
   enabled: z.boolean().default(false),
@@ -27,6 +27,6 @@ export const RalphLoopConfigSchema = z.object({
    * 0 disables the delay (legacy behavior).
    */
   minimum_idle_ms: z.number().min(0).max(600_000).default(120_000),
-})
+});
 
-export type RalphLoopConfig = z.infer<typeof RalphLoopConfigSchema>
+export type RalphLoopConfig = z.infer<typeof RalphLoopConfigSchema>;

@@ -1,34 +1,43 @@
-import { lstatSync, realpathSync } from "fs"
-import { promises as fs } from "fs"
+import { lstatSync, realpathSync } from "node:fs";
+import { promises as fs } from "node:fs";
 
 function normalizeDarwinRealpath(filePath: string): string {
-  return filePath.startsWith("/private/var/") ? filePath.slice("/private".length) : filePath
+  return filePath.startsWith("/private/var/")
+    ? filePath.slice("/private".length)
+    : filePath;
 }
 
-export function isMarkdownFile(entry: { name: string; isFile: () => boolean }): boolean {
-  return !entry.name.startsWith(".") && entry.name.endsWith(".md") && entry.isFile()
+export function isMarkdownFile(entry: {
+  name: string;
+  isFile: () => boolean;
+}): boolean {
+  return (
+    !entry.name.startsWith(".") && entry.name.endsWith(".md") && entry.isFile()
+  );
 }
 
 export function isSymbolicLink(filePath: string): boolean {
   try {
-    return lstatSync(filePath, { throwIfNoEntry: false })?.isSymbolicLink() ?? false
+    return (
+      lstatSync(filePath, { throwIfNoEntry: false })?.isSymbolicLink() ?? false
+    );
   } catch {
-    return false
+    return false;
   }
 }
 
 export function resolveSymlink(filePath: string): string {
   try {
-    return normalizeDarwinRealpath(realpathSync(filePath))
+    return normalizeDarwinRealpath(realpathSync(filePath));
   } catch {
-    return filePath
+    return filePath;
   }
 }
 
 export async function resolveSymlinkAsync(filePath: string): Promise<string> {
   try {
-    return normalizeDarwinRealpath(await fs.realpath(filePath))
+    return normalizeDarwinRealpath(await fs.realpath(filePath));
   } catch {
-    return filePath
+    return filePath;
   }
 }

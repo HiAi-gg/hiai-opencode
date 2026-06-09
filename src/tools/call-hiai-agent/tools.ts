@@ -1,83 +1,107 @@
-import { tool, type PluginInput, type ToolDefinition } from "@opencode-ai/plugin"
+import {
+  tool,
+  type PluginInput,
+  type ToolDefinition,
+} from "@opencode-ai/plugin";
 import {
   CALL_HIAI_AGENT_DESCRIPTION,
   PRIMARY_ALLOWED_AGENTS,
-} from "./constants"
-import type { AllowedAgentType, CallHiaiAgentArgs, ToolContextWithMetadata } from "./types"
-import type { BackgroundManager } from "../../features/background-agent"
-import type { CategoriesConfig, AgentOverrides } from "../../config/schema"
-import type { DelegatedModelConfig } from "../../shared/model-resolution-types"
-import type { FallbackEntry } from "../../shared/model-requirements"
-import { AGENT_MODEL_REQUIREMENTS } from "../../shared/model-requirements"
-import { getAgentConfigKey, getAgentDisplayName, stripInvisibleAgentCharacters } from "../../shared/agent-display-names"
-import { resolveCanonicalDelegateAgentKey } from "../delegate-task/sub-agent"
-import { normalizeFallbackModels } from "../../shared/model-resolver"
-import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models"
-import { log } from "../../shared"
-import { CONFIG_BASENAME } from "../../shared/plugin-identity"
-import { parseModelString } from "../delegate-task/model-string-parser"
-import { executeBackground } from "./background-executor"
-import { executeSync } from "./sync-executor"
-import { resolveCallableAgents } from "./agent-resolver"
+} from "./constants";
+import type { CallHiaiAgentArgs, ToolContextWithMetadata } from "./types";
+import type { BackgroundManager } from "../../features/background-agent";
+import type { CategoriesConfig, AgentOverrides } from "../../config/schema";
+import type { DelegatedModelConfig } from "../../shared/model-resolution-types";
+import type { FallbackEntry } from "../../shared/model-requirements";
+import { AGENT_MODEL_REQUIREMENTS } from "../../shared/model-requirements";
+import {
+  getAgentConfigKey,
+  getAgentDisplayName,
+  stripInvisibleAgentCharacters,
+} from "../../shared/agent-display-names";
+import { resolveCanonicalDelegateAgentKey } from "../delegate-task/sub-agent";
+import { normalizeFallbackModels } from "../../shared/model-resolver";
+import { buildFallbackChainFromModels } from "../../shared/fallback-chain-from-models";
+import { log } from "../../shared";
+import { CONFIG_BASENAME } from "../../shared/plugin-identity";
+import { parseModelString } from "../delegate-task/model-string-parser";
+import { executeBackground } from "./background-executor";
+import { executeSync } from "./sync-executor";
+import { resolveCallableAgents } from "./agent-resolver";
 
 function resolveModelAndFallbackChain(args: {
-  subagentType: string
-  agentOverrides?: AgentOverrides
-  userCategories?: CategoriesConfig
-}): { model: DelegatedModelConfig | undefined; fallbackChain: FallbackEntry[] | undefined } {
-  const { subagentType, agentOverrides, userCategories } = args
-  const agentConfigKey = getAgentConfigKey(subagentType)
-  const agentRequirement = AGENT_MODEL_REQUIREMENTS[agentConfigKey]
+  subagentType: string;
+  agentOverrides?: AgentOverrides;
+  userCategories?: CategoriesConfig;
+}): {
+  model: DelegatedModelConfig | undefined;
+  fallbackChain: FallbackEntry[] | undefined;
+} {
+  const { subagentType, agentOverrides, userCategories } = args;
+  const agentConfigKey = getAgentConfigKey(subagentType);
+  const agentRequirement = AGENT_MODEL_REQUIREMENTS[agentConfigKey];
 
-  const agentOverride = agentOverrides?.[agentConfigKey as keyof AgentOverrides]
-    ?? (agentOverrides
-      ? Object.entries(agentOverrides).find(([key]) => key.toLowerCase() === agentConfigKey)?.[1]
-      : undefined)
+  const agentOverride =
+    agentOverrides?.[agentConfigKey as keyof AgentOverrides] ??
+    (agentOverrides
+      ? Object.entries(agentOverrides).find(
+          ([key]) => key.toLowerCase() === agentConfigKey,
+        )?.[1]
+      : undefined);
   const agentCategoryModel = agentOverride?.category
     ? userCategories?.[agentOverride.category]?.model
-    : undefined
+    : undefined;
   const agentCategoryVariant = agentOverride?.category
     ? userCategories?.[agentOverride.category]?.variant
-    : undefined
+    : undefined;
 
-  let model: DelegatedModelConfig | undefined
+  let model: DelegatedModelConfig | undefined;
   if (agentOverride?.model) {
-    const normalized = parseModelString(agentOverride.model)
+    const normalized = parseModelString(agentOverride.model);
     if (normalized) {
-      model = agentOverride.variant ? { ...normalized, variant: agentOverride.variant } : normalized
+      model = agentOverride.variant
+        ? { ...normalized, variant: agentOverride.variant }
+        : normalized;
       log("[call_hiai_agent] Resolved model override from agent config", {
         agent: subagentType,
         model: agentOverride.model,
         variant: agentOverride.variant,
-      })
+      });
     }
   } else if (agentCategoryModel) {
-    const normalized = parseModelString(agentCategoryModel)
+    const normalized = parseModelString(agentCategoryModel);
     if (normalized) {
-      const variantToUse = agentOverride?.variant ?? agentCategoryVariant
-      model = variantToUse ? { ...normalized, variant: variantToUse } : normalized
+      const variantToUse = agentOverride?.variant ?? agentCategoryVariant;
+      model = variantToUse
+        ? { ...normalized, variant: variantToUse }
+        : normalized;
       log("[call_hiai_agent] Resolved model override from agent category", {
         agent: subagentType,
         category: agentOverride?.category,
         model: agentCategoryModel,
         variant: variantToUse,
-      })
+      });
     }
   }
 
   const normalizedFallbackModels = normalizeFallbackModels(
-    agentOverride?.fallback_models
-    ?? (agentOverride?.category ? userCategories?.[agentOverride.category]?.fallback_models : undefined)
-  )
-  const defaultProviderID = model?.providerID
-    ?? agentRequirement?.fallbackChain?.[0]?.providers?.[0]
-    ?? "opencode"
-  const configuredFallbackChain = buildFallbackChainFromModels(normalizedFallbackModels, defaultProviderID)
+    agentOverride?.fallback_models ??
+      (agentOverride?.category
+        ? userCategories?.[agentOverride.category]?.fallback_models
+        : undefined),
+  );
+  const defaultProviderID =
+    model?.providerID ??
+    agentRequirement?.fallbackChain?.[0]?.providers?.[0] ??
+    "opencode";
+  const configuredFallbackChain = buildFallbackChainFromModels(
+    normalizedFallbackModels,
+    defaultProviderID,
+  );
 
   return {
     model,
     fallbackChain: configuredFallbackChain ?? agentRequirement?.fallbackChain,
-  }
+  };
 }
 
 export function createCallHiaiAgent(
@@ -87,24 +111,25 @@ export function createCallHiaiAgent(
   agentOverrides?: AgentOverrides,
   userCategories?: CategoriesConfig,
 ): ToolDefinition {
-  const primaryAgentDescriptions = PRIMARY_ALLOWED_AGENTS.map((name) => {
-    switch (name) {
-      case "researcher":
-        return "- researcher: Canonical agent for codebase exploration and research";
-      case "strategist":
-        return "- strategist: Canonical agent for planning and reasoning";
-      case "coder":
-        return "- coder: Canonical agent for implementation work";
-      case "critic":
-        return "- critic: Canonical agent for review and verification";
-      case "designer":
-        return "- designer: Canonical agent for visual direction, interface design, and creative execution";
-      case "writer":
-        return "- writer: Writing and ideation agent for website copy, positioning, naming, messaging, and option generation";
-      case "vision":
-        return "- multimodal: Canonical agent for visual and multimodal tasks (runtime display name: Vision)";
-    }
-  }).join("\n");
+  const PRIMARY_AGENT_DESCRIPTIONS: Record<
+    (typeof PRIMARY_ALLOWED_AGENTS)[number],
+    string
+  > = {
+    researcher:
+      "- researcher: Canonical agent for codebase exploration and research",
+    strategist: "- strategist: Canonical agent for planning and reasoning",
+    coder: "- coder: Canonical agent for implementation work",
+    critic: "- critic: Canonical agent for review and verification",
+    designer:
+      "- designer: Canonical agent for visual direction, interface design, and creative execution",
+    writer:
+      "- writer: Writing and ideation agent for website copy, positioning, naming, messaging, and option generation",
+    vision:
+      "- multimodal: Canonical agent for visual and multimodal tasks (runtime display name: Vision)",
+  };
+  const primaryAgentDescriptions = PRIMARY_ALLOWED_AGENTS.map(
+    (name) => PRIMARY_AGENT_DESCRIPTIONS[name],
+  ).join("\n");
 
   const description = CALL_HIAI_AGENT_DESCRIPTION.replace(
     "{primary_agents}",
@@ -144,12 +169,20 @@ export function createCallHiaiAgent(
       const callableAgents = await resolveCallableAgents(ctx.client);
 
       // Strip ZWSP and case-insensitive agent validation - allows canonical names and compatibility aliases.
-      const strippedAgentType = stripInvisibleAgentCharacters(args.subagent_type)
-      const preCanonicalAgentType = getAgentConfigKey(strippedAgentType)
-      const canonicalAgentType = resolveCanonicalDelegateAgentKey(preCanonicalAgentType)
-      const wasLegacyAlias = canonicalAgentType !== preCanonicalAgentType.toLowerCase()
+      const strippedAgentType = stripInvisibleAgentCharacters(
+        args.subagent_type,
+      );
+      const preCanonicalAgentType = getAgentConfigKey(strippedAgentType);
+      const canonicalAgentType = resolveCanonicalDelegateAgentKey(
+        preCanonicalAgentType,
+      );
+      const wasLegacyAlias =
+        canonicalAgentType !== preCanonicalAgentType.toLowerCase();
       if (wasLegacyAlias) {
-        log("[call_hiai_agent] Legacy agent alias resolved", { from: preCanonicalAgentType, to: canonicalAgentType })
+        log("[call_hiai_agent] Legacy agent alias resolved", {
+          from: preCanonicalAgentType,
+          to: canonicalAgentType,
+        });
       }
       if (
         !callableAgents.some(
@@ -171,35 +204,69 @@ export function createCallHiaiAgent(
       args = { ...args, subagent_type: canonicalAgentName };
 
       // Check if agent is disabled
-      if (disabledAgents.some((disabled) => stripInvisibleAgentCharacters(disabled).toLowerCase() === normalizedAgent)) {
-        return `Error: Agent "${normalizedAgent}" is disabled via disabled_agents configuration. Remove it from disabled_agents in your ${CONFIG_BASENAME}.json to use it.`
+      if (
+        disabledAgents.some(
+          (disabled) =>
+            stripInvisibleAgentCharacters(disabled).toLowerCase() ===
+            normalizedAgent,
+        )
+      ) {
+        return `Error: Agent "${normalizedAgent}" is disabled via disabled_agents configuration. Remove it from disabled_agents in your ${CONFIG_BASENAME}.json to use it.`;
       }
 
-      const { model: resolvedModel, fallbackChain } = resolveModelAndFallbackChain({
-        subagentType: args.subagent_type,
-        agentOverrides,
-        userCategories,
-      })
+      const { model: resolvedModel, fallbackChain } =
+        resolveModelAndFallbackChain({
+          subagentType: args.subagent_type,
+          agentOverrides,
+          userCategories,
+        });
 
       if (args.run_in_background) {
         if (args.session_id) {
           return `Error: session_id is not supported in background mode. Use run_in_background=false to continue an existing session.`;
         }
-        return await executeBackground(args, toolCtx, backgroundManager, ctx.client, fallbackChain, resolvedModel)
+        return await executeBackground(
+          args,
+          toolCtx,
+          backgroundManager,
+          ctx.client,
+          fallbackChain,
+          resolvedModel,
+        );
       }
 
       if (!args.session_id) {
-        let spawnReservation: Awaited<ReturnType<BackgroundManager["reserveSubagentSpawn"]>> | undefined
+        let spawnReservation:
+          | Awaited<ReturnType<BackgroundManager["reserveSubagentSpawn"]>>
+          | undefined;
         try {
-          spawnReservation = await backgroundManager.reserveSubagentSpawn(toolCtx.sessionID)
-          return await executeSync(args, toolCtx, ctx, undefined, fallbackChain, spawnReservation, resolvedModel)
+          spawnReservation = await backgroundManager.reserveSubagentSpawn(
+            toolCtx.sessionID,
+          );
+          return await executeSync(
+            args,
+            toolCtx,
+            ctx,
+            undefined,
+            fallbackChain,
+            spawnReservation,
+            resolvedModel,
+          );
         } catch (error) {
-          spawnReservation?.rollback()
-          return `Error: ${error instanceof Error ? error.message : String(error)}`
+          spawnReservation?.rollback();
+          return `Error: ${error instanceof Error ? error.message : String(error)}`;
         }
       }
 
-      return await executeSync(args, toolCtx, ctx, undefined, fallbackChain, undefined, resolvedModel)
+      return await executeSync(
+        args,
+        toolCtx,
+        ctx,
+        undefined,
+        fallbackChain,
+        undefined,
+        resolvedModel,
+      );
     },
   });
 }

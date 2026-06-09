@@ -1,65 +1,72 @@
-import { readdirSync, lstatSync } from "fs"
-import { extname, join } from "path"
+import { readdirSync, lstatSync } from "node:fs";
+import { extname, join } from "node:path";
 
-import { EXT_TO_LANG } from "./language-mappings"
+import { EXT_TO_LANG } from "./language-mappings";
 
-const SKIP_DIRECTORIES = new Set(["node_modules", ".git", "dist", "build", ".next", "out"])
-const MAX_SCAN_ENTRIES = 500
+const SKIP_DIRECTORIES = new Set([
+  "node_modules",
+  ".git",
+  "dist",
+  "build",
+  ".next",
+  "out",
+]);
+const MAX_SCAN_ENTRIES = 500;
 
 export function inferExtensionFromDirectory(directory: string): string | null {
-  const extensionCounts = new Map<string, number>()
-  let scanned = 0
+  const extensionCounts = new Map<string, number>();
+  let scanned = 0;
 
   function walk(dir: string): void {
-    if (scanned >= MAX_SCAN_ENTRIES) return
+    if (scanned >= MAX_SCAN_ENTRIES) return;
 
-    let entries: string[]
+    let entries: string[];
     try {
-      entries = readdirSync(dir)
+      entries = readdirSync(dir);
     } catch {
-      return
+      return;
     }
 
     for (const entry of entries) {
-      if (scanned >= MAX_SCAN_ENTRIES) return
+      if (scanned >= MAX_SCAN_ENTRIES) return;
 
-      const fullPath = join(dir, entry)
+      const fullPath = join(dir, entry);
 
-      let stat: ReturnType<typeof lstatSync> | undefined
+      let stat: ReturnType<typeof lstatSync> | undefined;
       try {
-        stat = lstatSync(fullPath)
+        stat = lstatSync(fullPath);
       } catch {
-        continue
+        continue;
       }
 
-      if (stat.isSymbolicLink()) continue
-      scanned++
+      if (stat.isSymbolicLink()) continue;
+      scanned++;
 
       if (stat.isDirectory()) {
         if (!SKIP_DIRECTORIES.has(entry)) {
-          walk(fullPath)
+          walk(fullPath);
         }
       } else if (stat.isFile()) {
-        const ext = extname(fullPath)
+        const ext = extname(fullPath);
         if (ext && ext in EXT_TO_LANG) {
-          extensionCounts.set(ext, (extensionCounts.get(ext) ?? 0) + 1)
+          extensionCounts.set(ext, (extensionCounts.get(ext) ?? 0) + 1);
         }
       }
     }
   }
 
-  walk(directory)
+  walk(directory);
 
-  if (extensionCounts.size === 0) return null
+  if (extensionCounts.size === 0) return null;
 
-  let maxExt = ""
-  let maxCount = 0
+  let maxExt = "";
+  let maxCount = 0;
   for (const [ext, count] of extensionCounts) {
     if (count > maxCount) {
-      maxCount = count
-      maxExt = ext
+      maxCount = count;
+      maxExt = ext;
     }
   }
 
-  return maxExt || null
+  return maxExt || null;
 }

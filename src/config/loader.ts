@@ -18,12 +18,12 @@ const LEGACY_AGENT_ALIAS_LOOKUP = new Map<string, CanonicalAgentName>(
 
 const BASE_CONFIG = normalizeAgentAliases(defaultConfig);
 
-const CONFIG_FILENAMES = [
-  "hiai-opencode.json",
-  "hiai-opencode.jsonc",
-];
+const CONFIG_FILENAMES = ["hiai-opencode.json", "hiai-opencode.jsonc"];
 
-function deepMerge<T extends Record<string, unknown>>(base: T, override: Partial<T>): T {
+function deepMerge<T extends Record<string, unknown>>(
+  base: T,
+  override: Partial<T>,
+): T {
   const result = { ...base };
   for (const key of Object.keys(override) as Array<keyof T>) {
     const val = override[key];
@@ -129,7 +129,10 @@ function normalizeCompactLspConfig(rawConfig: unknown): unknown {
       normalizedEntry.extensions = [...baseEntry.extensions];
     }
 
-    if (Array.isArray(normalizedEntry.command) && Array.isArray(normalizedEntry.extensions)) {
+    if (
+      Array.isArray(normalizedEntry.command) &&
+      Array.isArray(normalizedEntry.extensions)
+    ) {
       normalizedLsp[serverId] = normalizedEntry;
     }
   }

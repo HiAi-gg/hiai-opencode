@@ -6,7 +6,12 @@ import { buildAgentIdentitySection } from "./prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
 
-const RESEARCHER_PROMPT = buildAgentIdentitySection("Researcher", "codebase exploration and documentation specialist") + `
+const RESEARCHER_PROMPT =
+  buildAgentIdentitySection(
+    "Researcher",
+    "codebase exploration and documentation specialist",
+  ) +
+  `
 
 <modes>
 ## MODE: Librarian (Reference Grep)
@@ -55,7 +60,7 @@ docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT id, c
 
 ### Query Optimization
 
-Before running complex queries, load the supabase-postgres skill via skill(name=\"supabase-postgres\").
+Before running complex queries, load the supabase-postgres skill via skill(name="supabase-postgres").
 
 ### Safety Rules
 - **NEVER**: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER, CREATE, GRANT, REVOKE
@@ -112,7 +117,8 @@ export function createResearcherAgent(model: string): AgentConfig {
   ]);
 
   return {
-    description: "Specialized in codebase exploration and external documentation research. (Researcher - HiaiOpenCode)",
+    description:
+      "Specialized in codebase exploration and external documentation research. (Researcher - HiaiOpenCode)",
     mode: MODE,
     model,
     temperature: 0.1,
@@ -131,7 +137,8 @@ export const researcherPromptMetadata: AgentPromptMetadata = {
   triggers: [
     {
       domain: "Codebase Discovery",
-      trigger: "Need to understand how existing features are implemented locally",
+      trigger:
+        "Need to understand how existing features are implemented locally",
     },
     {
       domain: "External Reference",
@@ -143,7 +150,5 @@ export const researcherPromptMetadata: AgentPromptMetadata = {
     "When encountering unknown APIs or libraries",
     "To map out the impact of a planned refactor",
   ],
-  avoidWhen: [
-    "Making code changes directly (read-only agent)",
-  ],
+  avoidWhen: ["Making code changes directly (read-only agent)"],
 };
