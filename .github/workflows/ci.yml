@@ -59,4 +59,4 @@ jobs:
         with:
           bun-version: '1.3.x'
       - run: bun install --frozen-lockfile
-      - run: bun run lint || echo "No lint script configured"
+      - run: bun run lint
