@@ -21,19 +21,26 @@ User input
 ┌─────────┐
 │   Bob    │ ← orchestrator / router
 └────┬────┘
-     │ delegates
+     │ routes by complexity
      ▼
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
-│  researcher ◄── background (facts, docs)             │
-│  strategist ◄── planning (plan before action)        │
+│  Simple / small (<5 todos, no parallelism)            │
+│    └─► coder  (deep/bounded)                          │
+│    └─► sub    (quick)                                 │
 │                                                      │
-│  category routes to:                                  │
-│    deep/ultrabrain → coder (implementation)           │
-│    quick/bounded    → sub (cheap bounded)            │
-│    writing         → writer (copy)            │
-│    visual-engineering → designer (Stitch MCP)       │
-│    artistry       → designer (creative)             │
+│  Complex / wave-based (5+ todos, 3+ parallel)         │
+│    └─► manager ── wave dispatch ──► coder / sub       │
+│                                                      │
+│  Planning / architecture                              │
+│    └─► strategist ── plan, then route                 │
+│                                                      │
+│  Specialist tiers (always delegated, not routed):     │
+│    researcher  ◄── background (facts, docs)           │
+│    writer      ◄── copy / SEO / messaging            │
+│    designer    ◄── visual / Stitch MCP                │
+│    critic      ◄── review gate                        │
+│    quality-guardian ◄── post-impl review              │
 │                                                      │
 └──────────────────────────────────────────────────────┘
      │
@@ -279,6 +286,7 @@ Current defaults cover:
 - TypeScript
 - Svelte
 - ESLint
+- Biome
 - Bash
 - Pyright
 
