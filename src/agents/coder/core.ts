@@ -20,6 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
+import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules";
 import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,
@@ -195,6 +196,8 @@ ${buildSaveChecklist()}
 
 ## RAG / PostgreSQL
 \`docker exec ai-core-postgres psql -U aiuser -d ai_orchestration -c "SELECT name, status FROM project_registry ORDER BY created_at DESC LIMIT 10"\` — Know which projects exist and their status.
+
+${POSTGRES_CONTENT_RULES}
 
 ## Tooling Integrations
 - **LSP**: \`lsp_diagnostics\` after every edit (mandatory). \`lsp_hover\`/\`lsp_definition\`/\`lsp_references\` before type changes.
