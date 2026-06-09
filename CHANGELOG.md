@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.5] — 2026-06-09
+
+### Added
+- **MemPalace canonical taxonomy** — single source of truth (14 structured rooms + diary). File: `src/agents/prompt-library/mempalace-taxonomy.ts`. All agent prompts updated.
+- **Manager complexity routing** — Bob dispatch threshold (5+ todos OR 3+ parallel units) MUST DELEGATE to Manager. Pre-Implementation Trigger section added to Bob prompt. Routing Gate section in Manager prompt distinguishes Sub (1-2 files, simple) from Coder (3+ files, complex).
+- **Critic mandatory completion gate** — Critic verification REQUIRED before completion (both inline + shared-execution copies).
+- **Postgres content-update rules** — agents use direct psql via `scripts/db-content-update.sh` wrapper. NEVER create new `.sql` migration files for content.
+- **Biome lint+format rules** in Coder and Critic prompts — Coder must run `bun run lint && bun run format:check` before completion; Critic REJECTS on gate failure.
+- **agent-tool-permission hook** — runtime enforcement of `CANONICAL_AGENT_RESTRICTIONS` for primary sessions (closes gap where restrictions only applied to subagent sessions).
+- **Session work accumulation** — progressive work-in-progress tracking across agent sessions.
+- **`minimum_idle_ms` config** for ralph_loop to prevent premature continuation.
+- **CODEOWNERS file** for PR routing.
+- **commitlint + husky** for conventional commit enforcement.
+
+### Fixed
+- **CRITICAL: MemPalace auto-save hook** — switched from `mempalace_diary_write` to `mempalace_add_drawer` so room routing works correctly (was silently dropping room categorization).
+- **MemPalace `kg_add` syntax** in Researcher prompt — was non-functional (missing `skill_mcp()` wrapper).
+- **MemPalace `add_drawer` syntax** in save checklist — was non-functional.
+- **Critic verification** made a MANDATORY completion gate (both prompt copies updated).
+- **Bob plan-writing prohibition** — explicit rule preventing Bob from writing plan files.
+- **Bob self-delegation enforcement** — re-enabled dead `plannerSection`, strengthened Manager threshold to MUST-DELEGATE.
+- **Manager dispatch threshold** — strengthened from advisory to MUST.
+- **Background agent notification** — switched from `promptAsync` to `prompt` with timeout.
+- **hiia-opencode-setup skill taxonomy** — replaced 6 wrong `project-aspect` room names with canonical 15-room taxonomy (prevents data loss).
+- **Several lint/format issues** — biome gates now clean.
+
+### Changed
+- **4 dead exports** removed from `dynamic-agent-policy-sections` (`buildMemorySection`, `buildToolCallFormatSection`, `buildUltraworkSection`, `buildToolUsageRulesSection`).
+- **`UNIFIED_STRATEGIST_PROMPT` const + `prompt-library/index.ts` barrel** removed (dead code, 0 imports).
+- **51 dead source files** removed (knip-detected).
+- **6 production `console.log` debug statements** removed from `dev-browser.ts` skill.
+- **README.md, ARCHITECTURE.md, src/AGENTS.md** updated with 0.2.5 features.
+- **Hook counts** corrected across all docs (actual: 51, was: 52-53).
+- **CI lint check** made fatal (removed `||` fallback).
+- **e2e-smoke-test.sh thresholds** updated to 120% of measured actual prompt sizes.
+
+### Removed
+- 51 dead source files
+- 4 dead exports from `dynamic-agent-policy-sections`
+- 1 dead const (`UNIFIED_STRATEGIST_PROMPT`)
+- 1 dead barrel file (`prompt-library/index.ts`)
+
+### Security
+- **15 npm vulnerabilities** addressed: 2 high (jsdiff DoS), 11 moderate (hono, ip-address, uuid). Mostly transitive deps resolved via `bun update @opencode-ai/*` to 1.16.2.
+
+### Infrastructure
+- **`.github/workflows/release.yml`** added for tag-triggered release pipeline.
+- **`.gitignore`** updated to exclude `.runtime-cache/` and `.npm-cache/`.
+- **Snapshot tests** regenerated and CI-strict mode passes.
+
+### Contributors
+- 44 commits since 0.2.4
+- 78 files changed
+- +2,969 / -417 lines
+
 ## [0.2.4] — 2026-06-07
 
 ### Changed
