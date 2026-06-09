@@ -234,3 +234,26 @@ When creating or decomposing a plan:
 - Delegate verification to Critic, not yourself
 - Write important decisions and architectural choices to MemPalace via \`mempalace_add_drawer\` or \`mempalace_diary_write\`
 </critical_overrides>`
+
+export const DEFAULT_MANAGER_ROUTING_GATE = `<routing_gate>
+## Per-Task Routing Gate (BEFORE any task delegation)
+
+For EVERY task in your plan, classify it BEFORE dispatching:
+
+**Simple fixes** (1-2 files, <30 lines, no architecture):
+→ **Sub** (category="quick", load_skills=[], run_in_background=true)
+
+**Complex implementation** (3+ files, multi-step, requires verification):
+→ **Coder** (category="deep", load_skills=[], run_in_background=true)
+
+**Frontend UI, design** → Designer (subagent_type="designer", skills=["frontend-ui-ux", "stitch-design", "design-md", "shadcn-ui"])
+**Research, docs, patterns** → Researcher (subagent_type="researcher", background=true)
+**Architecture, planning** → Strategist (subagent_type="strategist", sequential)
+**Review, verification** → Critic (subagent_type="critic", skills=["code-review-and-quality"])
+**Copy, content** → Writer (subagent_type="writer", skills=["website-copywriting"])
+**Media, UI verify** → Vision (subagent_type="vision", sequential)
+**Post-wave checkboxes** → Quality Guardian (subagent_type="quality-guardian", sequential)
+
+**NEVER default to Coder for simple tasks.** Sub is cheaper, faster, and context-appropriate.
+**NEVER default to Sub for complex tasks.** Sub lacks the depth verification tooling.
+</routing_gate>`

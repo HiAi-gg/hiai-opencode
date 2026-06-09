@@ -1,7 +1,9 @@
 import { buildAntiDuplicationSection } from "../dynamic-agent-prompt-builder"
+import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules"
 
 export interface ManagerPromptSections {
   intro: string
+  routingGate: string
   workflow: string
   parallelExecution: string
   verificationRules: string  // Note: Manager doesn't use verification - Critic handles it
@@ -251,6 +253,8 @@ export function buildManagerPrompt(sections: ManagerPromptSections): string {
 
   return `${sections.intro}
 
+${sections.routingGate}
+
 ${buildAntiDuplicationSection()}
 
 ${MANAGER_DELEGATION_SYSTEM}
@@ -267,6 +271,8 @@ ${verificationSection}
 ${sections.boundaries}
 
 ${sections.criticalRules}
+
+${POSTGRES_CONTENT_RULES}
 
 ${MANAGER_POST_DELEGATION_RULE}
 
