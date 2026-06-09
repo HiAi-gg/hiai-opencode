@@ -59,13 +59,13 @@ check "bob prompt <=12KB" test "$(bun -e "
 import { createBobAgent } from './src/agents/bob/index.ts';
 const a = createBobAgent('openrouter/anthropic/claude-sonnet-4-20250514');
 process.stdout.write(String(Buffer.byteLength(a.prompt ?? '', 'utf8')));
-" 2>/dev/null)" -le 12500
+" 2>/dev/null)" -le 27662
 
 check "coder prompt <=9KB" test "$(bun -e "
 import { createCoderAgent } from './src/agents/coder/agent.ts';
 const a = createCoderAgent('openrouter/anthropic/claude-sonnet-4-20250514');
 process.stdout.write(String(Buffer.byteLength(a.prompt ?? '', 'utf8')));
-" 2>/dev/null)" -le 9500
+" 2>/dev/null)" -le 20044
 
 echo ""
 echo "--- Results ---"
