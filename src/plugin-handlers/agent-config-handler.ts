@@ -42,15 +42,15 @@ type AgentConfigRecord = Record<string, Record<string, unknown> | undefined> & {
 // Note: "Guard" renamed to "Manager", "Brainstormer" renamed to "Writer"
 // Legacy names still work via AGENT_NAME_MAP and LEGACY_DISPLAY_NAMES
 const CANONICAL_VISIBLE_AGENT_NAMES = [
-  "bob",
-  "coder",
-  "strategist",
-  "manager",
-  "critic",
-  "designer",
-  "researcher",
-  "writer",
-  "vision",
+  "Bob",
+  "Coder",
+  "Strategist",
+  "Manager",
+  "Critic",
+  "Designer",
+  "Researcher",
+  "Writer",
+  "Vision",
 ] as const;
 
 const RUNTIME_AGENT_DESCRIPTIONS: Partial<Record<string, string>> = {
@@ -88,12 +88,12 @@ function forceVisiblePrimaryAgent(agent: unknown, name: string, forceMode?: "pri
   const base = agent as Record<string, unknown>;
   return {
     ...base,
-    name: name.charAt(0).toUpperCase() + name.slice(1),
+    name,
     hidden: false,
     mode: forceMode ?? "all",
     ...(typeof base.description === "string" && base.description.trim().length > 0
       ? {}
-      : { description: RUNTIME_AGENT_DESCRIPTIONS[name.charAt(0).toUpperCase() + name.slice(1)] }),
+      : { description: RUNTIME_AGENT_DESCRIPTIONS[name] }),
   };
 }
 
@@ -475,12 +475,12 @@ export async function applyAgentConfig(params: {
         normalizedAgents[name] = forceVisiblePrimaryAgent(
           normalizedAgents[name],
           name,
-          name === "bob" ? "primary" : "all",
+          name === "Bob" ? "primary" : "all",
         );
       }
     }
 
-    for (const hiddenName of ["agent-skills", "quality-guardian", "sub"] as const) {
+    for (const hiddenName of ["Agent Skills", "Quality Guardian", "Sub"] as const) {
       if (hiddenName in normalizedAgents) {
         normalizedAgents[hiddenName] = forceHiddenCompatibilityAgent(
           normalizedAgents[hiddenName],
