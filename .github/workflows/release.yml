@@ -79,7 +79,18 @@ jobs:
       - name: Build
         run: bun run build
 
-      - name: Publish to npm
-        run: npm publish --access public --provenance
+      - name: Publish to npm (with provenance, fallback to no-provenance on EOTP)
+        id: publish
+        run: |
+          if npm publish --access public --provenance 2>&1 | tee /tmp/publish.log; then
+            echo "Published with provenance"
+          else
+            if grep -q "EOTP" /tmp/publish.log; then
+              echo "::warning::NPM_TOKEN requires 2FA — retrying without --provenance. Replace with an Automation-type token to enable provenance. See docs/hiai-opencode/release-process.md"
+              npm publish --access public --no-provenance
+            else
+              exit 1
+            fi
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
