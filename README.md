@@ -78,7 +78,7 @@ Mode determines prompt append, variant, and reasoning effort. The executor agent
 | `ultrabrain` | `strategist` | Plan-only | Architecture, hard logic |
 | `visual-engineering` | `designer` | UI/visual | Visual problems |
 | `artistry` | `designer` | Creative | Brand, SEO, creative |
-| `git` | `platform-manager` | Git ops | Version control operations |
+| `git` | `manager` | Git ops | Version control operations |
 | `bounded` | `coder` (via fast bounded contour) | Mid-tier bounded | Moderate effort changes |
 | `cross-module` | `coder` | Deep substantial | Multi-component changes |
 | `unspecified-low` | `coder` (via fast bounded contour) | Bounded | Unclassified small tasks |
@@ -96,8 +96,9 @@ MCP integrations and which agents use them:
 | MemPalace | **MCP** | `MEMPALACE_PYTHON` (optional) | Manager (primary), all agents | Project memory and past decisions |
 | Sequential-Thinking | **MCP** | — | Strategist, Critic | Deep reasoning for planning/review |
 | Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | Researcher | Web scraping, crawl, extract, search (NOT an MCP server) |
+| agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | Coder, Vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
 
-**Important**: Firecrawl is a CLI skill, not an MCP server. It works through the `firecrawl-cli` skill in `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` to be set in your environment. Do not add it to the `mcp` section of `hiai-opencode.json`.
+**Important**: Firecrawl and `agent-browser` are CLI skills, not MCP servers. Firecrawl works through the `firecrawl-cli` skill in `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY`. `agent-browser` lives in `skills/agent-browser/` and uses native Chrome via CDP — no Playwright, no MCP. Do not add either to the `mcp` section of `hiai-opencode.json`.
 
 ## Design System
 
@@ -469,6 +470,8 @@ LSP defaults are defined in:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
+LSP pairs with [Biome](#biome-and-the-mandatory-critic-gate) for formatting and lint — Coder runs `lsp_diagnostics` after every edit and `bunx biome check .` before declaring a task done. See the Biome / Critic gate section for the closing-turn requirements.
+
 ## Environment Variables And Keys
 
 Model provider keys are handled by OpenCode Connect. Do not add `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` to `hiai-opencode` config for normal model usage.
@@ -560,6 +563,45 @@ On some Windows/OpenCode environments, local MCP process spawning can fail with 
 - the remaining issue is the host runtime's local process spawn behavior
 
 This most often affects `sequential-thinking` and `mempalace`, and sometimes local `npx`-backed tools.
+
+## MemPalace Canonical Taxonomy
+
+MemPalace is the long-term memory layer for `hiai-opencode`. To keep saves consistent across agents, hooks, and skills, all saves go through a single canonical taxonomy.
+
+**Source of truth:** [src/agents/prompt-library/mempalace-taxonomy.ts](src/agents/prompt-library/mempalace-taxonomy.ts) — exports `CANONICAL_WINGS` and `CANONICAL_ROOMS` plus `buildSaveChecklist()`.
+
+**Wing convention:**
+
+| Wing | Purpose |
+|------|---------|
+| `hiai-opencode` | Global / plugin-wide memory (decisions, configs, agent roster changes) |
+| `<project-name>` | Per-project memory (e.g. `amigo`, `webs`, `crypto`) |
+| `wing_<agent>` | Per-agent career diary (e.g. `wing_bob`, `wing_coder`) |
+
+**14 structured rooms** (plus a `diary` default):
+
+`decisions` · `bugs` · `config` · `agents` · `architecture` · `plans` · `tasks` · `reviews` · `designs` · `sessions` · `errors` · `patterns` · `constraints` · `failed-approaches`
+
+Use `mempalace_diary_write` for free-form session notes; use `mempalace_add_drawer` with an explicit `room` for anything structured. Do not invent new room names — extend the canonical list in `mempalace-taxonomy.ts` first, then call sites.
+
+## Postgres Content-Update Rules
+
+For TEXTUAL content updates against the `ai_orchestration` Postgres database, use the wrapper at [scripts/db-content-update.sh](scripts/db-content-update.sh) — do not write a new `.sql` migration file.
+
+```bash
+scripts/db-content-update.sh "SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'"
+scripts/db-content-update.sh "UPDATE landing_pages SET content = '{\"hero\":\"x\"}'::jsonb WHERE slug = 'home' RETURNING slug, content"
+```
+
+The wrapper runs `psql` with `ON_ERROR_STOP=1` and `VERBOSITY=verbose`, defaults to `localhost:5433` / `aiuser` / `ai_orchestration`, and respects `PGHOST` / `PGPORT` / `PGUSER` / `PGDATABASE` overrides.
+
+**Why a wrapper instead of a migration?** Landing-page content, copy, and slug edits are data, not schema. Putting them in versioned migration files conflates schema history with content drift and makes rollbacks painful. Use `psql` directly for one-off content reads/writes, and reserve Drizzle / SQL migration files for true schema changes.
+
+## Biome And The Mandatory Critic Gate
+
+**Biome is required.** Lint and format are governed by [biome.json](biome.json). The Coder agent runs `bunx biome check .` (and `bunx biome format .` for fix-ups) as part of the verify loop. The `lint` job in CI is fatal — fixes must land before merge, no `|| true` fallbacks.
+
+**The Critic completion gate is mandatory.** For any high-risk or multi-step implementation, the closing turn must include a `<CLOSURE>` block with `readiness: "done"` (or `"accept"` / `"reject"` in reviewer mode). Responses without a valid `<CLOSURE>` block are rejected by the Guard system. Treat `<CLOSURE>` as the per-response task-completion marker and `<promise>DONE</promise>` as the `/loop` stop signal — they are not interchangeable.
 
 ## Troubleshooting MCP Servers
 
