@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Unified OpenCode plugin — 14-agent model (9 visible + 5 hidden) with MCP integrations, browser automation, bundled skills, 150+ design systems, LSP, and safer defaults.",
   "type": "module",
   "main": "dist/index.js",
@@ -92,8 +92,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@opencode-ai/plugin": "^1.16.2",
-    "@opencode-ai/sdk": "^1.16.2",
+    "@opencode-ai/plugin": "^1.17.1",
+    "@opencode-ai/sdk": "^1.17.1",
     "bun-pty": "^0.4.8",
     "commander": "^13.1.0",
     "diff": "^7.0.0",
