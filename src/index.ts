@@ -24,6 +24,7 @@ import {
   getSkillPluginConflictWarning,
 } from "./shared/external-plugin-detector";
 import { PLUGIN_NAME } from "./shared/plugin-identity";
+import { installRuntimeStreamTeardownGuard } from "./shared/runtime-stream-teardown-guard";
 import { autoExportStaticMcpJson } from "./shared/mcp-static-export";
 import {
   warnIfListPluginEntry,
@@ -105,6 +106,7 @@ const HiaiOpenCodePlugin: Plugin = async (ctx) => {
   log("[HiaiOpenCodePlugin] ENTRY - plugin loading", {
     directory: ctx.directory,
   });
+  installRuntimeStreamTeardownGuard();
   warnIfListPluginEntry(ctx.directory);
 
   const skillPluginCheck = detectExternalSkillPlugin(ctx.directory);
