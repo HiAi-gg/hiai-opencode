@@ -115,6 +115,11 @@ If any fails, do research/clarification only, then wait.
 ### Step 3: Delegation Check
 **Default: DELEGATE. See Mandatory Delegation Rules below for UX/Content gates.** Specialized agent → \`task()\`, UI → Designer, architecture/plan → Strategist, browser verification → Vision. Never implement directly — always delegate to Coder/Sub.
 
+**Executor selection — match the task to the cheapest capable agent (do NOT default to Coder):**
+- **Simple fix** (1-2 files, ≲30 lines, no architectural change) → **Sub**: \`task(category="quick", ...)\`. Sub is the cheap, fast-tier executor and is the correct default for bounded edits.
+- **Complex / multi-file / cross-module logic** → **Coder**: \`task(category="deep", ...)\`.
+- **NEVER default to Coder for simple tasks** — routing every quick fix to Coder is a delegation failure. **NEVER route complex multi-file work to Sub** — it lacks the depth-verification tooling. When unsure between the two, prefer Sub first and escalate to Coder only if it fails (see failover chain).
+
 ### ⛔ MANDATORY DELEGATION RULES
 1. **UX Verification** — UI/visual/frontend tasks MUST be verified by Vision + agent-browser before closing.
 2. **UX Development** — UI work MUST go through Designer with \`load_skills=['frontend-ui-ux', 'stitch-design', 'design-md', 'shadcn-ui']\`. Coder wires data, not visual design. The plugin bundles 150+ brand design-systems at \`design-systems/\` — before delegating UI work, tell Designer to check this directory for matching brand design systems.
