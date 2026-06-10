@@ -383,6 +383,19 @@ export class BackgroundManager {
     return result;
   }
 
+  /**
+   * True when the given session has any still-active (running/pending)
+   * descendant background tasks. Used to defer a delegating sub-agent's
+   * completion until its own delegated children finish, so it can receive
+   * their completion notifications instead of being torn down first.
+   */
+  hasPendingDescendantTasks(sessionID: string | undefined): boolean {
+    if (!sessionID) return false;
+    return this.getAllDescendantTasks(sessionID).some(
+      (task) => task.status === "running" || task.status === "pending",
+    );
+  }
+
   findBySession(sessionID: string): BackgroundTask | undefined {
     for (const task of this.state.tasks.values()) {
       if (task.sessionID === sessionID) {
@@ -1584,6 +1597,22 @@ export class BackgroundManager {
         status: task.status,
         source,
       });
+      return false;
+    }
+
+    // Guard: a delegating sub-agent must not be completed (and its session
+    // aborted) while it still has active background children — otherwise it can
+    // never receive their completion notifications. Keep it running; the
+    // idle/poll loops will retry once the children finish.
+    if (this.hasPendingDescendantTasks(task.sessionID)) {
+      log(
+        "[background-agent] Deferring completion — session has active descendant tasks:",
+        {
+          taskId: task.id,
+          sessionID: task.sessionID,
+          source,
+        },
+      );
       return false;
     }
 
