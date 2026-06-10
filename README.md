@@ -729,8 +729,21 @@ User install after publish:
 }
 ```
 
+## Roadmap
+
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the full, prioritized plan. Highlights:
+
+- Unattended CI npm publish with provenance (remove the manual release step)
+- Finish the BackgroundManager refactor and raise test coverage toward 20%+
+- Configurable agent roster + mode→agent routing from `hiai-opencode.json`
+- Optional run telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe) (agent/tool spans, token usage)
+- Skill + design-system marketplace and an agent-analytics dashboard
+
 ## Documentation Map
 
 - [AGENTS.md](AGENTS.md): instructions for autonomous agents or tooling that need to install or modify the plugin
 - [ARCHITECTURE.md](ARCHITECTURE.md): runtime wiring, prompting layers, and modification map
+- [CHANGELOG.md](CHANGELOG.md): version history
+- [docs/ROADMAP.md](docs/ROADMAP.md): prioritized plan of upcoming work
+- [docs/quickstart.md](docs/quickstart.md): first-run guide
 - [LICENSE.md](LICENSE.md): licensing and attribution
