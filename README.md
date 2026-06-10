@@ -6,6 +6,7 @@
 [![npm downloads](https://img.shields.io/npm/dm/@hiai-gg/hiai-opencode?style=flat-square)](https://www.npmjs.com/package/@hiai-gg/hiai-opencode)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE.md)
 [![GitHub stars](https://img.shields.io/github/stars/HiAi-gg/hiai-opencode?style=flat-square)](https://github.com/HiAi-gg/hiai-opencode/stargazers)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 [![Bun](https://img.shields.io/badge/runtime-Bun-f9f1e1?style=flat-square&logo=bun)](https://bun.sh)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -611,6 +612,15 @@ The wrapper runs `psql` with `ON_ERROR_STOP=1` and `VERBOSITY=verbose`, defaults
 
 ## Troubleshooting MCP Servers
 
+If an MCP server is not appearing or not responding:
+
+- **MCP not visible in `opencode mcp list`** — runtime plugin MCP works but the static list may not show it. Run `hiai-opencode export-mcp .opencode/.mcp.json` first.
+- **MCP fails to spawn (`EPERM` on Windows)** — the plugin config is likely correct; the host runtime's process-spawn behavior is the blocker. Most often affects `sequential-thinking` and `mempalace`.
+- **Missing required env var** — enable only the MCP services whose dependencies are satisfied (see [MCP Service Notes](#mcp-service-notes)). `hiai-opencode mcp-status` reports missing keys without printing values.
+- **Stale plugin install** — reinstall with `opencode plugin @hiai-gg/hiai-opencode@latest --global` and re-run `bun run build` if you have a local clone.
+- **MemPalace Python not found** — set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) to a `uv`-managed or system `python3` interpreter. The launcher can also auto-install via `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is enabled.
+
+For the full operator playbook, see [AGENTS.md](AGENTS.md#troubleshooting).
 
 ## Diagnostics
 
