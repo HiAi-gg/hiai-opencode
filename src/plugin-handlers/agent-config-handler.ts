@@ -264,7 +264,7 @@ export async function applyAgentConfig(params: {
   const builderEnabled =
     params.pluginConfig.bob_agent?.default_builder_enabled ?? false;
   const plannerEnabled = params.pluginConfig.bob_agent?.planner_enabled ?? true;
-  const replacePlan = params.pluginConfig.bob_agent?.replace_plan ?? true;
+  const _replacePlan = params.pluginConfig.bob_agent?.replace_plan ?? true;
   const configuredDefaultAgent = getConfiguredDefaultAgent(params.config);
 
   if (isBobEnabled && builtinAgents.bob) {

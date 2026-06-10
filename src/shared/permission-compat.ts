@@ -48,7 +48,8 @@ export type DelegatableAgentKey =
   | "researcher"
   | "writer"
   | "vision"
-  | "sub";
+  | "sub"
+  | "quality-guardian";
 
 /**
  * The delegation allowlist, keyed by the calling agent's canonical config key.
@@ -84,7 +85,13 @@ export const AGENT_DELEGATION_MATRIX: Partial<
     "vision",
     "sub",
   ],
-  coder: ["designer", "researcher", "vision", "sub", "writer"],
+  coder: [
+    "designer",
+    "researcher",
+    "vision",
+    "sub",
+    "writer",
+  ],
   designer: ["coder", "researcher", "vision", "sub", "writer"],
   critic: ["researcher", "vision", "manager"],
   strategist: ["researcher", "manager", "critic", "writer"],

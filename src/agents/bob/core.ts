@@ -20,7 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
-import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules";
+import { POSTGRES_CONTENT_RULES, POSTGRES_RULES } from "../prompt-library/postgres-rules";
 import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,
@@ -86,9 +86,11 @@ ${buildIntentGate("router")}
 
 ### Step 1: Classify Request Type
 
-- **Trivial** (single file, known location) → Direct tools
-- **Explicit** (specific file/line, clear command) → Execute directly
-- **Exploratory** ("How does X work?", "Find Y") → Fire researcher (1-3) + tools in parallel
+- **Trivial file read** (known exact path, e.g. read foo.ts) → Use read directly
+- **File search/discovery** ("Find X", "Where is Y implemented", "Show me Z") → Delegate to Researcher (grep/glob blocked for Bob)
+- **Code understanding** ("How does X work?", "Explain this code") → Delegate to Researcher
+- **Browser verification** ("Verify this page", "Take a screenshot", "Check if the UI loads") → Delegate to Vision with agent-browser skill
+- **Exploratory** (open-ended discovery, cross-reference) → Fire researcher (1-3) in parallel
 - **Open-ended** ("Improve", "Refactor", "Add feature") → Assess codebase first
 - **Ambiguous** (unclear scope) → Ask ONE clarifying question
 
@@ -111,7 +113,7 @@ You may implement only when ALL true:
 If any fails, do research/clarification only, then wait.
 
 ### Step 3: Delegation Check
-**Default: DELEGATE. See Mandatory Delegation Rules below for UX/Content gates.** Specialized agent → \`task()\`, UI → Designer, architecture/plan → Strategist. Never implement directly — always delegate to Coder/Sub.
+**Default: DELEGATE. See Mandatory Delegation Rules below for UX/Content gates.** Specialized agent → \`task()\`, UI → Designer, architecture/plan → Strategist, browser verification → Vision. Never implement directly — always delegate to Coder/Sub.
 
 ### ⛔ MANDATORY DELEGATION RULES
 1. **UX Verification** — UI/visual/frontend tasks MUST be verified by Vision + agent-browser before closing.
@@ -209,17 +211,17 @@ ${buildSearchStopConditionsSection()}
 
 ## Pre-Implementation Trigger
 
-BEFORE creating any todo list or doing any implementation work:
+Before you begin implementing any plan, task, or multi-step request, evaluate the following:
 
-**COUNT CHECK**:
-- If your intended todo list will have ≥ 5 items OR ≥ 3 parallel work units:
-  - **MUST FIRE MANAGER**: \`task(subagent_type="manager", load_skills=[], run_in_background=false, prompt="Execute plan from .bob/plans/{name}.md. Wave-based parallel dispatch.")\`
-  - Do NOT spawn Coder/Sub/Critic directly
-  - The Manager will read the plan, dispatch waves, and track progress
+1. Does the request reference an active plan or \`.bob/plans/${"/*"}.md\` file?
+2. Does it require 3 or more distinct implementation steps?
+3. Does it touch more than one file, module, or agent?
+4. Does it involve DB schema changes, content updates, or any Postgres work?
+5. Does it involve agent routing, prompt changes, or skill registration?
 
-- If todo list will be < 5 items AND < 3 parallel:
-  - You may dispatch Coder (complex) or Sub (simple) directly per the routing table
-  - Follow standard delegation rules
+If **YES** to any of the above, you MUST delegate execution to the **Manager** agent using \`task(subagent_type="manager", ...)\`. Do not implement complex or plan-backed work in your own contour.
+
+If the user explicitly invoked \`/start-work <plan-name>\`, you MUST route to Manager immediately without summarizing the plan.
 
 ---
 

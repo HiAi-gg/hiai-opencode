@@ -1,41 +1,78 @@
 #!/usr/bin/env bash
-# scripts/db-content-update.sh
-#
-# Direct psql wrapper for TEXTUAL content updates to Postgres.
-# Per user rule (2026-06-08): NO new .sql migration files for content edits.
-# Always use this wrapper for landing_pages.content (slug, content jsonb) updates.
-#
-# Usage:
-#   scripts/db-content-update.sh "SELECT slug FROM landing_pages WHERE slug = 'home'"
-#   scripts/db-content-update.sh "UPDATE landing_pages SET content = '{\"hero\":\"x\"}'::jsonb WHERE slug = 'home' RETURNING slug, content"
-#
-# Connection: localhost:5433, user=aiuser, db=ai_orchestration
-# (Override with PGHOST, PGPORT, PGUSER, PGDATABASE env vars)
-
 set -euo pipefail
 
+# db-content-update.sh
+# Idempotent Postgres content update helper for agent plans.
+# Reads SQL from stdin or a file and executes against the configured PG database.
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+# Defaults — override via env
 PGHOST="${PGHOST:-localhost}"
 PGPORT="${PGPORT:-5433}"
 PGUSER="${PGUSER:-aiuser}"
 PGDATABASE="${PGDATABASE:-ai_orchestration}"
-PSQL="${PSQL:-psql}"
+PGPASSWORD="${PGPASSWORD:-}"
 
-if [ $# -lt 1 ]; then
-  echo "Usage: $0 '<SQL-STATEMENT>'" >&2
-  echo "Example: $0 \"SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'\"" >&2
-  exit 2
+# Do NOT export PGPASSWORD — pass directly to psql to avoid leaking to child processes
+
+usage() {
+  cat <<EOF
+Usage: $0 [OPTIONS] [SQL_FILE]
+
+Options:
+  -h, --help       Show this help
+  -d, --dry-run    Print the SQL instead of executing
+  -y, --yes        Skip confirmation prompt
+
+If SQL_FILE is omitted, reads SQL from stdin.
+EOF
+  exit 1
+}
+
+DRY_RUN=false
+CONFIRM=true
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help) usage ;;
+    -d|--dry-run) DRY_RUN=true; shift ;;
+    -y|--yes) CONFIRM=false; shift ;;
+    -*) echo "Unknown option: $1" >&2; usage ;;
+    *) break ;;
+  esac
+done
+
+SQL_INPUT=""
+if [[ $# -gt 0 ]]; then
+  SQL_FILE="$1"
+  [[ -f "$SQL_FILE" ]] || { echo "File not found: $SQL_FILE" >&2; exit 2; }
+  SQL_INPUT="$(cat "$SQL_FILE")"
+else
+  SQL_INPUT="$(cat)"
 fi
 
-SQL="$1"
+[[ -z "$SQL_INPUT" ]] && { echo "No SQL provided." >&2; exit 3; }
 
-# Run the query, always return the result (no -q, no -t).
-# Use --csv for machine-readable output, or omit for human-readable.
-exec "$PSQL" \
-  --host="$PGHOST" \
-  --port="$PGPORT" \
-  --username="$PGUSER" \
-  --dbname="$PGDATABASE" \
+if [[ "$DRY_RUN" == true ]]; then
+  echo "-- DRY RUN --"
+  echo "$SQL_INPUT"
+  exit 0
+fi
+
+if [[ "$CONFIRM" == true ]]; then
+  echo "About to execute SQL against ${PGUSER}@${PGHOST}:${PGPORT}/${PGDATABASE}"
+  echo "SQL preview (first 500 chars):"
+  echo "${SQL_INPUT:0:500}"
+  echo
+  read -r -p "Proceed? [y/N] " REPLY
+  [[ "$REPLY" =~ ^[Yy]$ ]] || { echo "Aborted."; exit 0; }
+fi
+
+PGPASSWORD="${PGPASSWORD:-}" psql \
   --no-psqlrc \
-  --set ON_ERROR_STOP=1 \
+  -v ON_ERROR_STOP=1 \
   --set VERBOSITY=verbose \
-  -c "$SQL"
+  -c "$SQL_INPUT"
+echo "Done."

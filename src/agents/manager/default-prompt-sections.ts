@@ -257,3 +257,16 @@ For EVERY task in your plan, classify it BEFORE dispatching:
 **NEVER default to Coder for simple tasks.** Sub is cheaper, faster, and context-appropriate.
 **NEVER default to Sub for complex tasks.** Sub lacks the depth verification tooling.
 </routing_gate>`;
+
+export const DEFAULT_MANAGER_BOB_ROUTING_GATE = `<bob_routing_gate>
+## Routing Gate (Bob → Manager)
+
+When receiving a task from Bob, evaluate its type and route as follows:
+
+- **Code implementation / bug fixes / DB content updates** → delegate to \`coder\` via \`task(subagent_type="coder", ...)\`.
+- **Agent prompt changes / skill registration / prompt-library edits** → delegate to \`coder\` via \`task(subagent_type="coder", ...)\`.
+- **Pure planning with no implementation** → handle in your own contour, then return the plan.
+- **Simple single-file fix (< 3 steps)** → you may delegate to \`coder\` or execute directly; if in doubt, delegate.
+
+You NEVER execute DB schema changes, DB content updates, or prompt edits in your own contour. Always route those to \`coder\`.
+</bob_routing_gate>`;

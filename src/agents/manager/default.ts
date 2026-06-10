@@ -4,6 +4,7 @@ import { buildManagerPrompt } from "./shared-prompt";
 import {
   DEFAULT_MANAGER_INTRO,
   DEFAULT_MANAGER_ROUTING_GATE,
+  DEFAULT_MANAGER_BOB_ROUTING_GATE,
   DEFAULT_MANAGER_WORKFLOW,
   DEFAULT_MANAGER_PARALLEL_EXECUTION,
   DEFAULT_MANAGER_BOUNDARIES,
@@ -15,6 +16,7 @@ import {
 export const MANAGER_SYSTEM_PROMPT = buildManagerPrompt({
   intro: DEFAULT_MANAGER_INTRO,
   routingGate: DEFAULT_MANAGER_ROUTING_GATE,
+  bobRoutingGate: DEFAULT_MANAGER_BOB_ROUTING_GATE,
   workflow: DEFAULT_MANAGER_WORKFLOW,
   parallelExecution: DEFAULT_MANAGER_PARALLEL_EXECUTION,
   verificationRules: "", // Removed - Critic handles verification

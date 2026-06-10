@@ -11,6 +11,9 @@ export const MODE_TO_AGENT: Record<string, CanonicalDelegateAgentKey> = {
   "git-ops": "manager",
   bounded: "sub",
   "cross-module": "coder",
+  "browser-verification": "vision",
+  "ui-inspection": "vision",
+  screenshot: "vision",
 };
 
 const LEGACY_MODE_ALIASES: Record<string, string> = {

@@ -45,8 +45,9 @@ const CANONICAL_AGENT_RESTRICTIONS: Record<string, Record<string, boolean>> = {
     edit: false,
   },
   strategist: {
-    write: false,
-    edit: false,
+    // write/edit NOT blocked here — the strategist-md-only hook enforces
+    // path-level write restrictions (.bob/*.md only). The blanket denial
+    // was overriding the hook's fine-grained path validation.
     pty_spawn: false,
     interactive_bash: false,
     bash: false,

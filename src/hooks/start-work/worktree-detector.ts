@@ -270,11 +270,24 @@ export function createWorktreeForPlan(
       stdio: ["pipe", "pipe", "pipe"],
     });
 
-    // Create worktree with new branch
     execFileSync("git", ["worktree", "add", "-b", branchName, worktreePath], {
       cwd: directory,
       stdio: ["pipe", "pipe", "pipe"],
     });
+
+    // Rebase the new branch onto main to pick up any commits that landed
+    // after HEAD was read. This prevents the worktree from being behind main
+    // when work is created after other parallel work has merged.
+    try {
+      execFileSync(
+        "git",
+        ["rebase", "main"],
+        { cwd: worktreePath, stdio: ["pipe", "pipe", "pipe"] },
+      );
+    } catch {
+      // Rebase may fail if there are conflicts or no upstream — non-fatal.
+      // The worktree is still usable; the agent can resolve conflicts later.
+    }
 
     // Ensure .bob/ directory exists in worktree
     ensureBoulderDirInWorktree(worktreePath);

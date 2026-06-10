@@ -34,9 +34,9 @@ The \`landing_pages\` table has at minimum:
 - Use \`RETURNING\` clause for UPDATE/INSERT to get the changed rows back
 
 **Examples**:
-- Read: \`scripts/db-content-update.sh "SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'"\`
-- Update: \`scripts/db-content-update.sh "UPDATE landing_pages SET content = '{"hero":"new text"}'::jsonb WHERE slug = 'home' RETURNING slug, content"\`
-- Insert: \`scripts/db-content-update.sh "INSERT INTO landing_pages (slug, content) VALUES ('new-page', '{}'::jsonb) RETURNING *"\`
+- Read: \`scripts/db-content-update.sh -y "SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'"\`
+- Update: \`scripts/db-content-update.sh -y "UPDATE landing_pages SET content = '{"hero":"new text"}'::jsonb WHERE slug = 'home' RETURNING slug, content"\`
+- Insert: \`scripts/db-content-update.sh -y "INSERT INTO landing_pages (slug, content) VALUES ('new-page', '{}'::jsonb) RETURNING *"\`
 
 **NEVER**:
 - Create a new .sql migration file for content updates
@@ -45,3 +45,10 @@ The \`landing_pages\` table has at minimum:
 - Skip returning the result — always show what the query returned
 
 This rule applies to landing_pages and any other table that holds textual content (not schema/data-model changes — those still go through migrations).`;
+
+/**
+ * Canonical Postgres content-update rules for agent prompts.
+ * Import and interpolate into system prompts where DB work may occur.
+ * Alias for POSTGRES_CONTENT_RULES.
+ */
+export const POSTGRES_RULES = POSTGRES_CONTENT_RULES;

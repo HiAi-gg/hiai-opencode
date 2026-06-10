@@ -20,7 +20,7 @@ import {
 } from "../dynamic-agent-prompt-builder";
 import { buildTodoDisciplineSection } from "../prompt-library/todo-discipline";
 import { buildIntentGate } from "../prompt-library/intent-gate";
-import { POSTGRES_CONTENT_RULES } from "../prompt-library/postgres-rules";
+import { POSTGRES_CONTENT_RULES, POSTGRES_RULES } from "../prompt-library/postgres-rules";
 import { buildSaveChecklist } from "../prompt-library/mempalace-taxonomy";
 import {
   buildSearchStopConditionsSection,

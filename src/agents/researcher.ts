@@ -113,7 +113,6 @@ export function createResearcherAgent(model: string): AgentConfig {
     "write",
     "edit",
     "apply_patch",
-    "task",
   ]);
 
   return {
@@ -144,11 +143,19 @@ export const researcherPromptMetadata: AgentPromptMetadata = {
       domain: "External Reference",
       trigger: "Need to lookup official docs or best practices",
     },
+    {
+      domain: "File Reading",
+      trigger:
+        "Need to read, search, or explain code in a specific file or directory",
+    },
   ],
   useWhen: [
     "Before planning to explore similar local implementations",
     "When encountering unknown APIs or libraries",
     "To map out the impact of a planned refactor",
+    "To read and analyze code in specific files or directories",
+    "When asked to find, examine, or explain source code",
+    "When the parent agent's grep/glob tools are unavailable",
   ],
-  avoidWhen: ["Making code changes directly (read-only agent)"],
+  avoidWhen: ["Implementation work that requires writing code"],
 };

@@ -5,6 +5,7 @@ import { GIT_CATEGORIES } from "./git-categories";
 import { GOOGLE_CATEGORIES } from "./google-categories";
 import { KIMI_CATEGORIES } from "./kimi-categories";
 import { OPENAI_CATEGORIES } from "./openai-categories";
+import { VISION_CATEGORIES } from "./vision-categories";
 
 const BUILTIN_CATEGORIES: BuiltinCategoryDefinition[] = [
   ...GOOGLE_CATEGORIES,
@@ -12,6 +13,7 @@ const BUILTIN_CATEGORIES: BuiltinCategoryDefinition[] = [
   ...ANTHROPIC_CATEGORIES,
   ...KIMI_CATEGORIES,
   ...GIT_CATEGORIES,
+  ...VISION_CATEGORIES,
 ];
 
 function buildCategoryRecord<TValue>(

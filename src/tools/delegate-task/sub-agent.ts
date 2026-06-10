@@ -20,6 +20,7 @@ export const CANONICAL_DELEGATE_AGENT_KEYS = [
   "designer",
   "writer",
   "agent-skills",
+  "quality-guardian",
 ] as const;
 
 type CanonicalDelegateAgentKey = (typeof CANONICAL_DELEGATE_AGENT_KEYS)[number];
@@ -62,6 +63,13 @@ const LEGACY_DELEGATE_AGENT_ALIASES: Record<string, CanonicalDelegateAgentKey> =
   };
 
 export function resolveCanonicalDelegateAgentKey(agentName: string): string {
+  const trimmed = agentName.trim().toLowerCase();
+  if (!trimmed) return trimmed;
+  // Canonical keys must pass through unchanged even when AGENT_NAME_MAP
+  // would otherwise migrate them (legacy config compatibility only).
+  if (CANONICAL_DELEGATE_AGENT_KEY_SET.has(trimmed)) {
+    return trimmed;
+  }
   const configKey = getAgentConfigKey(agentName).trim().toLowerCase();
   if (!configKey) return configKey;
   const resolved = LEGACY_DELEGATE_AGENT_ALIASES[configKey];
