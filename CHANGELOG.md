@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] — 2026-06-10
+
+### Added
+- **Vision browser-verification delegation category** — `browser-verification` / `ui-inspection` / `screenshot` modes route to the Vision agent with an observation-only prompt (navigate, screenshot, compare, report; no code edits). New `src/tools/delegate-task/vision-categories.ts`.
+- **`docs/ROADMAP.md`** — prioritized roadmap (phases, dependency chains, KPI targets) + README Roadmap section.
+
+### Changed
+- Prompt/permission refinements across manager, researcher, postgres-rules, messages-transform, agent-tool-restrictions, and permission-compat; snapshots regenerated. Test count 1839 → 1989.
+- Hardened `scripts/db-content-update.sh`.
+
+### Infrastructure
+- **npm publish now uses OIDC trusted publishing** (tokenless) via `release.yml` — removes the account-2FA `EOTP` failures; node 22 + `npm@latest` (OIDC needs npm ≥ 11.5.1), provenance retained.
+- **Fixed CI lint (exit 127)** — `@biomejs/biome` was missing from `package.json`/`bun.lock`, so `bun install --frozen-lockfile` never installed it; added as a devDependency.
+- Untracked local agent state (`.bob/`, `todo.md`); added `PRs welcome` badge.
+
 ## [0.2.5] — 2026-06-09
 
 ### Added
