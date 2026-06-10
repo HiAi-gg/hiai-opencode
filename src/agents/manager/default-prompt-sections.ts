@@ -238,9 +238,11 @@ When creating or decomposing a plan:
 export const DEFAULT_MANAGER_ROUTING_GATE = `<routing_gate>
 ## Per-Task Routing Gate (BEFORE any task delegation)
 
-For EVERY task in your plan, classify it BEFORE dispatching:
+For EVERY task in your plan, classify it BEFORE dispatching. This is **MANDATORY** — dispatching the wrong tier (e.g. sending a 1-2 file fix to Coder) is a delegation-system failure, not a style preference.
 
-**Simple fixes** (1-2 files, <30 lines, no architecture):
+**Default bias: prefer Sub.** Most tasks are bounded. Reach for Coder ONLY when the task genuinely meets the "Complex" test below — do not pick Coder "to be safe".
+
+**Simple fixes** (1-2 files, <30 lines, no architecture) — the common case:
 → **Sub** (category="quick", load_skills=[], run_in_background=true)
 
 **Complex implementation** (3+ files, multi-step, requires verification):
@@ -254,8 +256,9 @@ For EVERY task in your plan, classify it BEFORE dispatching:
 **Media, UI verify** → Vision (subagent_type="vision", sequential)
 **Post-wave checkboxes** → Quality Guardian (subagent_type="quality-guardian", sequential)
 
-**NEVER default to Coder for simple tasks.** Sub is cheaper, faster, and context-appropriate.
-**NEVER default to Sub for complex tasks.** Sub lacks the depth verification tooling.
+**PROHIBITION — NEVER default to Coder for simple tasks.** If a task fits the Sub test, it MUST go to Sub; routing it to Coder is a delegation failure. Sub is cheaper, faster, and context-appropriate.
+**NEVER route complex multi-file work to Sub** — it lacks the depth-verification tooling.
+When genuinely unsure between the two, dispatch to **Sub first** and escalate to Coder only if it fails.
 </routing_gate>`;
 
 export const DEFAULT_MANAGER_BOB_ROUTING_GATE = `<bob_routing_gate>
