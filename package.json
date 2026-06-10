@@ -88,7 +88,7 @@
     "check:bundle-size": "node -e \"const s=require('fs').statSync('dist/index.js').size;console.log('Bundle: '+(s/1024/1024).toFixed(2)+'MB');if(s>3*1024*1024){console.error('FAIL: bundle >3MB');process.exit(1)}else{console.log('OK: bundle <=3MB')}\"",
     "prompts:measure": "bun run scripts/measure-prompts.ts",
     "check:todos": "node scripts/check-todos.mjs || echo 'No check-todos script'",
-    "pack:check": "npm pack --dry-run",
+    "pack:check": "npm pack --dry-run --ignore-scripts",
     "prepare": "husky",
     "prepublishOnly": "bun run typecheck && bun run test && bun run build && bun run pack:check"
   },
@@ -109,6 +109,7 @@
     "zod": "^4.3.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
     "@types/diff": "^7.0.2",
