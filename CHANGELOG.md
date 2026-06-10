@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] — 2026-06-10
+
+### Fixed
+- **`supabase-postgres` skill now ships to installed users.** It lived only in the repo's local `.opencode/skills/` view, but the plugin skill materializer reads `pluginRoot/skills`, so installed users never received it — even though the Researcher/Writer prompts instruct agents to load it. Relocated to `skills/supabase-postgres/` alongside the other bundled skills.
+
+### Removed
+- **husky + commitlint** removed entirely. The `pre-commit` hook ran the full test suite and blocked commits; CI already gates typecheck/test/lint. Deleted `.husky/`, `commitlint.config.js`, the `prepare` script, and the `husky` / `@commitlint/*` devDependencies.
+
+### Changed
+- `.opencode/` is now fully gitignored (removed the `!.opencode/skills` exception); dropped `.opencode/skills/` from package `files`.
+
 ## [0.2.6] — 2026-06-10
 
 ### Added
