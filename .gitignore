@@ -83,15 +83,10 @@ bun.lockb
 # MCP
 .mcp/
 
-# Opencode
+# Opencode (local runtime/config — bundled skills live in skills/)
 .opencode/
 .mcp.json
 todo.md
-
-# But track skills in .opencode/skills/
-!.opencode/skills
-!.opencode/skills/**
-!.opencode/skills/**/*
 
 # Stitch
 .stitch-project.json
