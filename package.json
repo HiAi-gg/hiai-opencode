@@ -92,8 +92,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@opencode-ai/plugin": "^1.16.2",
-    "@opencode-ai/sdk": "^1.16.2",
+    "@opencode-ai/plugin": "^1.17.1",
+    "@opencode-ai/sdk": "^1.17.1",
     "bun-pty": "^0.4.8",
     "commander": "^13.1.0",
     "diff": "^7.0.0",
