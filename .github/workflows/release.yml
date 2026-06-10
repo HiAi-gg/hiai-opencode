@@ -4,48 +4,65 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
-  build:
-    name: build & verify
+  release:
+    name: build, publish & release
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write   # create the GitHub release
+      id-token: write   # npm provenance (sigstore)
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup bun
+      - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.x
 
-      - name: Setup Node.js (for npm pack)
+      # setup-node writes an .npmrc that authenticates via NODE_AUTH_TOKEN.
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run typecheck
+      - name: Typecheck
         run: bun run typecheck
 
-      - name: Run tests
+      - name: Test
         run: bun test
 
       - name: Build
         run: bun run build
 
-      - name: Pack tarball
-        run: npm pack
-
       - name: Check bundle size
         run: npm run check:bundle-size
+
+      - name: Pack tarball
+        run: npm pack --ignore-scripts
+
+      - name: Publish to npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          version=$(node -p "require('./package.json').version")
+          if npm view "@hiai-gg/hiai-opencode@${version}" version >/dev/null 2>&1; then
+            echo "::notice::@hiai-gg/hiai-opencode@${version} already on npm — skipping publish."
+          else
+            npm publish --access public --provenance --ignore-scripts
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
           files: |
             *.tgz
