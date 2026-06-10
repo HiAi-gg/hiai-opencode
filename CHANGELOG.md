@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] — 2026-06-10
+
+### Fixed
+- **Sub-agent delegation no longer crashes the whole session with `Worker has been terminated`.** When a delegated sub-agent session ends or is aborted, the OpenCode runtime can `write()` to an already-destroyed stream, throwing an unhandled `Cannot call write after a stream was destroyed` (`ERR_STREAM_DESTROYED`). With no `unhandledRejection` listener, Bun terminated the worker running the `task` tool, killing the parent session. The error originates entirely in the runtime bundle (`/$bunfs/...`) with no plugin frames, and OpenCode does not persist it to its file logs. Added a narrowly-scoped process guard (`src/shared/runtime-stream-teardown-guard.ts`) that swallows only this benign stream-teardown race and re-throws every other rejection, so genuine bugs still surface. Upstream OpenCode bug; this is a plugin-side mitigation.
+
+### Changed
+- Bumped `@opencode-ai/plugin` and `@opencode-ai/sdk` to `^1.17.1` to match the OpenCode runtime.
+
 ## [0.2.7] — 2026-06-10
 
 ### Fixed
