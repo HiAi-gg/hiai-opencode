@@ -10,7 +10,7 @@
 
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode } from "../types";
-import { isGlmModel, isGptModel } from "../types";
+import { getModelThinkingConfig, isGlmModel, isGptModel } from "../types";
 import type { AgentOverrideConfig } from "../../config/schema";
 import {
   createAgentToolRestrictions,
@@ -111,17 +111,10 @@ export function createBobJuniorAgentWithOverrides(
     base.top_p = override.top_p;
   }
 
-  if (isGptModel(model)) {
-    return { ...base, reasoningEffort: "medium" } as AgentConfig;
-  }
-
-  if (isGlmModel(model)) {
-    return base as AgentConfig;
-  }
-
+  const thinkingConfig = getModelThinkingConfig(model, 32000);
   return {
     ...base,
-    thinking: { type: "enabled", budgetTokens: 32000 },
+    ...thinkingConfig,
   } as AgentConfig;
 }
 

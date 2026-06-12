@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "Unified OpenCode plugin — 14-agent model (9 visible + 5 hidden) with MCP integrations, browser automation, bundled skills, 150+ design systems, LSP, and safer defaults.",
   "type": "module",
   "main": "dist/index.js",
@@ -71,10 +71,10 @@
   },
   "scripts": {
     "clean:dist": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
-    "build": "bun run clean:dist && bun build src/index.ts --outdir dist --target bun --format esm --minify && tsc --emitDeclarationOnly",
+    "build": "bun run clean:dist && bun build src/index.ts --outdir dist --target bun --format esm --minify && bun ./node_modules/typescript/bin/tsc --emitDeclarationOnly",
     "build:bundle": "bun build src/index.ts --outdir dist --target bun --format esm",
-    "build:types": "tsc --emitDeclarationOnly",
-    "typecheck": "tsc --noEmit",
+    "build:types": "bun ./node_modules/typescript/bin/tsc --emitDeclarationOnly",
+    "typecheck": "bun ./node_modules/typescript/bin/tsc --noEmit",
     "test": "bun test",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write .",

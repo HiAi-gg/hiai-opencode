@@ -128,5 +128,9 @@ export function createWriteExistingFileGuardHook(ctx: PluginInput): Hooks {
       readPermissionsBySession.delete(sessionID);
       sessionLastAccess.delete(sessionID);
     },
+    dispose: async () => {
+      readPermissionsBySession.clear();
+      sessionLastAccess.clear();
+    },
   };
 }

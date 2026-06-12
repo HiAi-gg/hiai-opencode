@@ -1,5 +1,5 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
-import type { AgentMode, AgentPromptMetadata } from "./types";
+import { getModelThinkingConfig, type AgentMode, type AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
 import { buildAgentIdentitySection } from "./prompt-library/identity";
 
@@ -63,7 +63,7 @@ export function createQualityGuardianAgent(model: string): AgentConfig {
     temperature: 0.2,
     ...restrictions,
     prompt: QUALITY_GUARDIAN_PROMPT,
-    thinking: { type: "enabled", budgetTokens: 16000 },
+    ...getModelThinkingConfig(model, 16000),
   } as AgentConfig;
 }
 createQualityGuardianAgent.mode = MODE;

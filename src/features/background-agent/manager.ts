@@ -102,6 +102,9 @@ export class BackgroundManager {
   readonly taskHistory = new TaskHistory();
   private cachedCircuitBreakerSettings?: CircuitBreakerSettings;
   private readonly executor: TaskExecutor;
+  private readonly sessionDepth = new Map<string, number>();
+  private readonly maxDepth: number;
+  private readonly maxDescendants: number;
 
   get tasks(): Map<string, BackgroundTask> {
     return this.state.tasks;
@@ -139,6 +142,8 @@ export class BackgroundManager {
 
     this.enableParentSessionNotifications =
       options?.enableParentSessionNotifications ?? true;
+    this.maxDepth = getMaxSubagentDepth(config);
+    this.maxDescendants = getMaxRootSessionSpawnBudget(config);
     this.executor = new TaskExecutor({
       client: this.client,
       directory: this.directory,
@@ -238,6 +243,18 @@ export class BackgroundManager {
     }
 
     this.state.rootDescendantCounts.set(rootSessionID, currentCount - 1);
+  }
+
+  checkSpawnLimits(parentSessionID: string): boolean {
+    const count = this.state.rootDescendantCounts.get(parentSessionID) ?? 0;
+    if (count >= this.maxDescendants) return false;
+    this.state.rootDescendantCounts.set(parentSessionID, count + 1);
+
+    const parentDepth = this.sessionDepth.get(parentSessionID) ?? 0;
+    if (parentDepth >= this.maxDepth) return false;
+    this.sessionDepth.set(parentSessionID, parentDepth + 1);
+
+    return true;
   }
 
   private markPreStartDescendantReservation(task: BackgroundTask): void {
@@ -1388,6 +1405,7 @@ export class BackgroundManager {
       this.state.tasks.delete(taskId);
       this.clearTaskHistoryWhenParentTasksGone(task.parentSessionID);
       if (task.sessionID) {
+        this.sessionDepth.delete(task.sessionID);
         subagentSessions.delete(task.sessionID);
         SessionCategoryRegistry.remove(task.sessionID);
       }

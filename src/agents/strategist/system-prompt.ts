@@ -16,6 +16,7 @@ export const STRATEGIST_SYSTEM_PROMPT =
   STRATEGIST_IDENTITY_CONSTRAINTS + getUnifiedStrategistPrompt("interview");
 
 export const STRATEGIST_PERMISSION = {
+  write: "allow" as const, // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
   edit: "allow" as const, // allowed ONLY for .bob/*.md (enforced by strategist-md-only hook)
   bash: "deny" as const, // denied: Strategist is planning-only, no shell execution
   webfetch: "allow" as const, // allowed: research/web content reading

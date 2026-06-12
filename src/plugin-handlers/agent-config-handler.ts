@@ -33,6 +33,7 @@ import {
 } from "./agent-override-protection";
 import { buildStrategistAgentConfig } from "./strategist-agent-config-builder";
 import { resolveSkillDiscoveryConfig } from "../plugin/skill-discovery-config";
+import { BACKGROUND_TASK_PROTOCOL } from "../shared/background-task-protocol";
 
 type AgentConfigRecord = Record<string, Record<string, unknown> | undefined> & {
   build?: Record<string, unknown>;
@@ -504,6 +505,10 @@ export async function applyAgentConfig(params: {
   const agentResult = params.config.agent as Record<string, unknown>;
   for (const name of Object.keys(agentResult)) {
     registerAgentName(name);
+    const agent = agentResult[name] as Record<string, unknown>;
+    if (agent && typeof agent.prompt === "string") {
+      agent.prompt = `${agent.prompt}\n\n${BACKGROUND_TASK_PROTOCOL}`;
+    }
   }
   log("[config-handler] agents loaded", { agentKeys: Object.keys(agentResult) });
   return agentResult;

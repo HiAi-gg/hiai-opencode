@@ -7,6 +7,7 @@ import {
 import { log } from "../../shared/logger";
 import { shouldRetryError } from "../../shared/model-error-classifier";
 import { setSessionModel } from "../../shared/session-model-state";
+import { reasoningContentCache, extractReasoningContent } from "../../shared/reasoning-content-cache";
 
 import type { EventInput, EventHandlerDeps } from "./types";
 import {
@@ -37,6 +38,21 @@ export async function handleMessageUpdated(
     if (providerID && modelID && !isCompactionMsg) {
       deps.lastKnownModelBySession.set(sessionID, { providerID, modelID });
       setSessionModel(sessionID, { providerID, modelID });
+    }
+  }
+
+  if (sessionID && role === "assistant" && info) {
+    const messageId = info.id as string | undefined;
+    if (messageId) {
+      const reasoningContent = extractReasoningContent(info);
+      if (reasoningContent !== null && reasoningContent.length > 0) {
+        reasoningContentCache.saveById(sessionID, messageId, reasoningContent);
+        log("[reasoning-content-cache] Saved reasoning_content from message.updated", {
+          sessionID,
+          messageId,
+          contentLength: reasoningContent.length,
+        });
+      }
     }
   }
 

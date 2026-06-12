@@ -7,6 +7,7 @@ import {
   createKeywordDetectorHook,
   createThinkingBlockValidatorHook,
   createToolPairValidatorHook,
+  createReasoningContentCacheHook,
 } from "../../hooks";
 import {
   contextCollector,
@@ -24,6 +25,9 @@ export type TransformHooks = {
     typeof createThinkingBlockValidatorHook
   > | null;
   toolPairValidator: ReturnType<typeof createToolPairValidatorHook> | null;
+  reasoningContentCache: ReturnType<
+    typeof createReasoningContentCacheHook
+  > | null;
 };
 
 export function createTransformHooks(args: {
@@ -85,11 +89,20 @@ export function createTransformHooks(args: {
       )
     : null;
 
+  const reasoningContentCache = isHookEnabled("reasoning-content-cache")
+    ? safeCreateHook(
+        "reasoning-content-cache",
+        () => createReasoningContentCacheHook(),
+        { enabled: safeHookEnabled },
+      )
+    : null;
+
   return {
     claudeCodeHooks,
     keywordDetector,
     contextInjectorMessagesTransform,
     thinkingBlockValidator,
     toolPairValidator,
+    reasoningContentCache,
   };
 }

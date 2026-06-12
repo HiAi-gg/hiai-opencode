@@ -155,12 +155,7 @@ export type AgentOverrides = Partial<
   Record<OverridableAgentName, AgentOverrideConfig>
 >;
 
-export function getModelThinkingConfig(model: string): Record<string, unknown> {
-  if (isGptModel(model)) {
-    return { reasoningEffort: "medium" };
-  }
-  if (isGlmModel(model)) {
-    return {};
-  }
-  return { thinking: { type: "enabled", budgetTokens: 32000 } };
+export function getModelThinkingConfig(model: string, budgetTokens = 32000): Record<string, unknown> {
+  // Completely disabled as per user request (Claude/GPT are not used/planned).
+  return {};
 }

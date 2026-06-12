@@ -57,6 +57,7 @@ export const HookNameSchema = z.enum([
   "webfetch-redirect-guard",
   "legacy-plugin-toast",
   "fast-apply",
+  "reasoning-content-cache",
 ]);
 
 export type HookName = z.infer<typeof HookNameSchema>;

@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] — 2026-06-12
+
+### Fixed
+- **Reasoning models (GLM/z.ai, DeepSeek and other OpenAI-compatible reasoning endpoints) no longer reject delegated/multi-step turns with `thinking is enabled but reasoning_content is missing in assistant tool call message at index N`.** The OpenCode runtime builds the outgoing `reasoning_content` field **only** from an assistant message part of `type: "reasoning"` — an `info.reasoning_content` field is ignored. After history rewrites (delegation, context injection, truncation) an assistant message could reach the provider carrying `tool_calls` but no reasoning part, which these providers reject when thinking is enabled. The `reasoning-content-cache` transform hook now operates at the **parts** layer: it captures reasoning from parts (not just the legacy `info` field), and guarantees every tool-call assistant message has a non-empty `{type:"reasoning"}` part — restored from cache when available, otherwise a neutral placeholder. This also fixes the prior cache being a no-op against the provider (it only wrote `info.reasoning_content`, which the runtime never reads). Scoped to OpenAI-compatible (unsigned) reasoning sessions only; Anthropic signed-thinking flows are left untouched (owned by `thinking-block-validator`, since signatures cannot be fabricated).
+
 ## [0.2.8] — 2026-06-10
 
 ### Fixed

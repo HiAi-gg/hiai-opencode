@@ -1,6 +1,6 @@
 import type { AgentConfig } from "@opencode-ai/sdk";
 import type { AgentMode, AgentPromptMetadata } from "../types";
-import { isGptModel } from "../types";
+import { getModelThinkingConfig } from "../types";
 import type {
   AvailableAgent,
   AvailableTool,
@@ -78,6 +78,11 @@ export function createCoderAgent(
     useTaskSystem,
   });
 
+  // Resolve model-specific thinking/reasoning config dynamically.
+  // Returns {} for unknown model families (MiniMax, Kimi, DeepSeek, etc.) to avoid
+  // sending unsupported Anthropic-style `thinking` params that cause hard API errors.
+  const thinkingConfig = getModelThinkingConfig(model);
+
   const base: AgentConfig = {
     description:
       "High-depth executor for autonomous software engineering work. Uses researcher for context gathering, escalates architecture and review gates via strategist and critic. Note: quick, writing, and unspecified-low task categories are owned by Sub, not Coder. (Coder - HiaiOpenCode)",
@@ -98,15 +103,10 @@ export function createCoderAgent(
       "sub",
       "writer",
     ],
+    ...thinkingConfig,
   };
 
-  if (isGptModel(model)) {
-    return { ...base, reasoningEffort: "medium" } as AgentConfig;
-  }
-  return {
-    ...base,
-    thinking: { type: "enabled", budgetTokens: 32000 },
-  } as AgentConfig;
+  return base as AgentConfig;
 }
 createCoderAgent.mode = MODE;
 

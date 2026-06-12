@@ -90,3 +90,5 @@ export { createLegacyPluginToastHook } from "./legacy-plugin-toast";
 export { createFastApplyHook } from "./fast-apply";
 export { createMemPalaceAutoSave } from "./mempalace-auto-save";
 export { createSubAgentReceiptHook } from "./sub-agent-receipt";
+export { createReasoningContentCacheHook } from "./reasoning-content-cache";
+

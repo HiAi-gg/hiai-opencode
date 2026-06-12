@@ -1,7 +1,7 @@
 // PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
 import { createAgentToolRestrictions } from "../../shared/permission-compat";
-import type { AgentMode, AgentPromptMetadata } from "../types";
+import { getModelThinkingConfig, type AgentMode, type AgentPromptMetadata } from "../types";
 import { buildAgentIdentitySection } from "../prompt-library/identity";
 
 const MODE: AgentMode = "subagent";
@@ -202,7 +202,7 @@ export function createCriticAgent(model: string): AgentConfig {
     model,
     temperature: 0.3,
     prompt: CRITIC_PROMPT,
-    thinking: { type: "enabled", budgetTokens: 24000 },
+    ...getModelThinkingConfig(model, 24000),
     delegate_to: ["researcher", "vision", "manager"],
   };
 }

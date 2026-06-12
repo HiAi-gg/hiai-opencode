@@ -1,6 +1,6 @@
 // PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
-import type { AgentMode, AgentPromptMetadata } from "./types";
+import { getModelThinkingConfig, type AgentMode, type AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
 import { buildAgentIdentitySection } from "./prompt-library/identity";
 
@@ -88,7 +88,7 @@ Operating rules:
 - Return concise structured outputs: direction, rationale, final copy, alternates when useful.
 
 When called as "writer", treat it as the same role.`,
-    thinking: { type: "enabled", budgetTokens: 8000 },
+    ...getModelThinkingConfig(model, 8000),
     delegate_to: ["researcher"],
   } as AgentConfig;
 }

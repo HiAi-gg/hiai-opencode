@@ -1,6 +1,6 @@
 // PROMPT_VERSION: 2026-04-26
 import type { AgentConfig } from "@opencode-ai/sdk";
-import type { AgentMode, AgentPromptMetadata } from "./types";
+import { getModelThinkingConfig, type AgentMode, type AgentPromptMetadata } from "./types";
 import { createAgentToolRestrictions } from "../shared/permission-compat";
 import { buildAgentIdentitySection } from "./prompt-library/identity";
 
@@ -123,7 +123,7 @@ export function createResearcherAgent(model: string): AgentConfig {
     temperature: 0.1,
     ...restrictions,
     prompt: RESEARCHER_PROMPT,
-    thinking: { type: "enabled", budgetTokens: 16000 },
+    ...getModelThinkingConfig(model, 16000),
     delegate_to: ["vision"],
   } as AgentConfig;
 }

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test } from "bun:test";
 import {
   ReasoningContentCache,
   reasoningContentCache,
+  extractReasoningContent,
 } from "./reasoning-content-cache";
 
 describe("ReasoningContentCache", () => {
@@ -9,6 +10,7 @@ describe("ReasoningContentCache", () => {
 
   beforeEach(() => {
     cache = new ReasoningContentCache();
+    cache.clearAll();
   });
 
   describe("save and retrieve", () => {
@@ -41,6 +43,18 @@ describe("ReasoningContentCache", () => {
       cache.save(sessionID, index, "Second content");
 
       expect(cache.retrieve(sessionID, index)).toBe("Second content");
+    });
+
+    test("persists cache entries to disk and loads them in a new instance", () => {
+      const sessionID = "session-persist";
+      const index = 2;
+      const content = "Persisted content";
+
+      cache.save(sessionID, index, content);
+
+      // Create a new instance - it should load from the persisted file
+      const newCache = new ReasoningContentCache();
+      expect(newCache.retrieve(sessionID, index)).toBe(content);
     });
   });
 
@@ -223,6 +237,104 @@ describe("ReasoningContentCache", () => {
       expect(stats.size).toBe(2);
       expect(stats.oldestTimestamp).not.toBeNull();
       expect(stats.newestTimestamp).not.toBeNull();
+    });
+  });
+
+  describe("ID-based save and retrieve", () => {
+    test("saves and retrieves reasoning_content for a message ID", () => {
+      const sessionID = "session-id-123";
+      const messageID = "msg-999";
+      const content = "This is the ID-cached reasoning content";
+
+      cache.saveById(sessionID, messageID, content);
+      const result = cache.retrieveById(sessionID, messageID);
+
+      expect(result).toBe(content);
+    });
+
+    test("returns null for non-existent ID", () => {
+      const result = cache.retrieveById("session-123", "non-existent-id");
+      expect(result).toBeNull();
+    });
+
+    test("reinjects reasoning_content using message ID (MessageWithParts style)", () => {
+      const sessionID = "session-id-reinject";
+      cache.saveById(sessionID, "msg-assistant-1", "Cached ID reasoning");
+
+      const messages = [
+        {
+          info: { id: "msg-assistant-1", role: "assistant" },
+        },
+      ];
+
+      const result = cache.reinjectIntoMessages(
+        sessionID,
+        messages as unknown[],
+      ) as Array<{
+        info: { reasoning_content?: string };
+      }>;
+
+      expect(result[0].info.reasoning_content).toBe("Cached ID reasoning");
+    });
+
+    test("reinjects reasoning_content using message ID (flat legacy style)", () => {
+      const sessionID = "session-id-flat";
+      cache.saveById(sessionID, "msg-assistant-2", "Cached flat ID reasoning");
+
+      const messages = [
+        { id: "msg-assistant-2", role: "assistant" },
+      ];
+
+      const result = cache.reinjectIntoMessages(
+        sessionID,
+        messages as unknown[],
+      ) as Array<{
+        reasoning_content?: string;
+      }>;
+
+      expect(result[0].reasoning_content).toBe("Cached flat ID reasoning");
+    });
+  });
+
+  describe("extractReasoningContent", () => {
+    test("extracts from reasoning_content direct field", () => {
+      const info = { reasoning_content: "direct reasoning" };
+      expect(extractReasoningContent(info)).toBe("direct reasoning");
+    });
+
+    test("extracts from reasoningContent direct field", () => {
+      const info = { reasoningContent: "direct reasoning content" };
+      expect(extractReasoningContent(info)).toBe("direct reasoning content");
+    });
+
+    test("extracts from reasoning direct field", () => {
+      const info = { reasoning: "direct reasoning short" };
+      expect(extractReasoningContent(info)).toBe("direct reasoning short");
+    });
+
+    test("extracts from parts array of type reasoning", () => {
+      const info = {
+        parts: [
+          { type: "text", text: "hello" },
+          { type: "reasoning", text: "extracted from part" },
+        ],
+      };
+      expect(extractReasoningContent(info)).toBe("extracted from part");
+    });
+
+    test("extracts from parts array of type thinking/redacted_thinking", () => {
+      const info = {
+        parts: [
+          { type: "thinking", thinking: "extracted from thinking part" },
+          { type: "redacted_thinking", thinking: "and redacted part" },
+        ],
+      };
+      expect(extractReasoningContent(info)).toBe("extracted from thinking part\nand redacted part");
+    });
+
+    test("returns null if no reasoning is present", () => {
+      const info = { parts: [{ type: "text", text: "hello" }] };
+      expect(extractReasoningContent(info)).toBeNull();
     });
   });
 

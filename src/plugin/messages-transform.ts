@@ -21,6 +21,7 @@ const HOOK_NAMES = [
   "contextInjectorMessagesTransform",
   "thinkingBlockValidator",
   "toolPairValidator",
+  "reasoningContentCache",
 ] as const;
 
 type HookName = (typeof HOOK_NAMES)[number];
@@ -53,6 +54,16 @@ export function createMessagesTransformHandler(args: {
     await runTransformHookSafely(
       "contextInjectorMessagesTransform",
       args.hooks.contextInjectorMessagesTransform as
+        | MessagesTransformHookRecord
+        | null
+        | undefined,
+      input,
+      output,
+    );
+
+    await runTransformHookSafely(
+      "reasoningContentCache",
+      args.hooks.reasoningContentCache as
         | MessagesTransformHookRecord
         | null
         | undefined,
