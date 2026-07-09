@@ -11,7 +11,7 @@ let client: PluginInput["client"] | null = null;
 // Local type — @opencode-ai/plugin doesn't export this
 // The runtime actor.postStop hook is registered as an object with matcher+run,
 // not as a raw function — see the registration object at line ~207.
-type ActorPostStopRegistration = {
+type _ActorPostStopRegistration = {
   matcher: { mode: string };
   run: (
     input: {
@@ -167,7 +167,7 @@ export function createBobCompletionHook(
     if (!client) return;
     try {
       const lastAssistant = await readLastAssistantMessage(sessionID);
-      const messageID = lastAssistant?.messageID;
+      const _messageID = lastAssistant?.messageID;
       const closure = parseClosureBlock(lastAssistant?.text ?? "");
       const endpoints = aggregateEndpoints(
         await readRecentToolOutputs(sessionID),

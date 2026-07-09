@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] — 2026-07-09
+
+### 🐛 Fixes
+
+- **README agent count corrected**: `createAllAgents()` registers 8 agents (bob, manager, critic, writer, designer, vision, dream-consolidator, distill-packager), not 10. bob.json additionally defines 10 configurable model slots including build, plan, explore, general as internal routing targets.
+- **README agent table corrected**: Fixed mode/visibility for all 8 registered agents. Removed phantom entries (build, plan, explore, general) that are model slots but not separate registrations. Updated footnote to reflect source truth.
+- **Nonexistent file references removed**: `src/shared/agent-display-names.ts` and `src/shared/migration/agent-names.ts` do not exist; references removed from README, AGENTS.md, ARCHITECTURE.md, and CONTRIBUTING.md.
+- **AGENTS.md "Expected Agent State" corrected**: Section now reflects actual `createAllAgents()` registration (8 agents) vs bob.json model slots (10 slots). Legacy migration note updated.
+- **CI/Windows path fix**: GitHub Actions CI workflow corrected to handle Windows path format in `acb9c03`.
+
+### 🔧 Lint Improvements
+
+- Removed unused imports: `markCompleted` (loop.ts), `BobConfig, HookSet` (quality-gate.test.ts), `existsSync` (lsp.test.ts)
+- Prefixed intentionally unused variables with underscore: `_id`, `_messageID`, `_agent`, `_name`, `_root`, `_ActorPostStopRegistration`
+- Fixed template literals in test code
+- Fixed `Number.parseInt` missing radix parameter (lsp-client.ts)
+- Fixed computed key literal (lsp.test.ts)
+
 ## [0.3.0] — 2026-07-09
 
 ### 🏗️ Complete Rewrite — plugin-bob Architecture

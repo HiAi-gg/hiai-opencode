@@ -100,7 +100,7 @@ describe("createAgentBrowserTools", () => {
 
   test("each tool has an execute function", () => {
     const tools = createAgentBrowserTools();
-    for (const [name, t] of Object.entries(tools)) {
+    for (const [_name, t] of Object.entries(tools)) {
       expect(typeof t.execute).toBe("function");
     }
   });
@@ -117,7 +117,7 @@ describe("browserGateGuard is called by each tool execute signature", () => {
   // Verify each of the 16 tools accepts (args, context) — the context param is required for the guard
   test("all 16 tools have execute with 2-arg signature", () => {
     const tools = createAgentBrowserTools();
-    for (const [name, t] of Object.entries(tools)) {
+    for (const [_name, t] of Object.entries(tools)) {
       // The execute function must accept 2 arguments (args, context)
       expect(t.execute.length).toBeGreaterThanOrEqual(2);
     }

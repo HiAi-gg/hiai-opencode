@@ -166,24 +166,28 @@ Run hiai-opencode mcp-status and opencode debug config. If the user wants openco
 
 ## Expected Agent State
 
-Visible primary agents (display name / runtime slot):
+`createAllAgents()` registers 8 agents. bob.json additionally defines 10 model slots.
+
+Visible primary agent:
 
 - `Bob` / `bob` — Orchestrator, router, entry point
-- `Strategist` / `plan` — Deep planning, architecture analysis
-- `Coder` / `build` — Implementation (deep/bounded)
-- `Explorer` / `explore` — Codebase discovery (grep, firecrawl, grep_app)
+
+Registered subagent/hidden agents:
+
 - `Manager` / `manager` — Delegation orchestrator, TODO tracker, memory steward
 - `Critic` / `critic` — Review gate (binary APPROVED/REJECTED)
-- `Designer` / `designer` — UI/visual direction, design tokens, component specs
 - `Writer` / `writer` — Content, copy, positioning, SEO
+- `Designer` / `designer` — UI/visual direction, design tokens, component specs
 - `Vision` / `vision` — Browser operator, multimodal analysis, PDF/image extraction
+- `Dream Consolidator` / `dream-consolidator` — Memory consolidation, cross-session synthesis
+- `Distill Packager` / `distill-packager` — Workflow packaging, pattern discovery
 
-Hidden/system or compatibility agents:
+Model slots (bob.json, no separate registration):
 
-- `General` / `general` — General-purpose executor, fallback
-- `Agent Skills` — Skill registry and discovery
-- `Sub` — Legacy compatibility wrapper (folded into build/general)
-- `quality-guardian` — Post-impl review and bug investigation
+- `build` / `Coder` — Implementation (deep/bounded), routes through registered agent pool
+- `plan` / `Strategist` — Deep planning, architecture analysis
+- `explore` / `Explorer` — Codebase discovery (grep, firecrawl, grep_app)
+- `general` / `General` — General-purpose executor, fallback
 
 Automatic task distribution:
 
@@ -195,13 +199,7 @@ Automatic task distribution:
 - `Designer`, `Writer`, `Manager`, and `Vision` are direct callable specialists, not category executors
 - `Bob` and `Manager` are orchestration agents, not normal subagent routing targets
 
-If runtime output differs from that set, inspect:
-
-- [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
-- [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts)
-- `src/shared/migration/*`
-
-> **v0.3.0 clean-slate note**: Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases mapped to canonical slots (`build`, `plan`, `explore`, `general`). See `docs/hiai-opencode/migration.md` for the full mapping table.
+> **v0.3.0 clean-slate note**: Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases mapped to canonical slots (`build`, `plan`, `explore`, `general`). Bob.json defines these as model slots; they are routing targets within the registered agent pool, not separate agent registrations.
 
 ## Model Configuration
 
@@ -218,7 +216,7 @@ Hidden agents and task categories are derived internally in `src/config/defaults
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 When helping a user choose model IDs, tell them to connect providers in OpenCode, run `opencode models`, and copy the exact `provider/model-id` strings into `hiai-opencode.json`. Do not invent provider prefixes.
 
-> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are handled by the migration layer in `src/shared/migration/agent-names.ts`.
+> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are handled by bob.json model slot aliases.
 
 ## Change Map
 
@@ -238,7 +236,7 @@ Use this table when you need to change something and want the right file immedia
 | Change Explorer (explore slot) prompt text | `src/agents/explore.ts` | Explorer prompt authoring lives there |
 | Change reusable policy blocks used by several agents | `src/agents/prompt-library/*` | Shared prompt sections live there |
 | Change dynamic prompt sections assembled from agent/tool/category context | `src/agents/dynamic-agent-*` | Dynamic sections are built there |
-| Change runtime display names | [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts) | Final display-name mapping lives there |
+| Change runtime display names | [src/agents/index.ts](src/agents/index.ts) | Agent definitions and display names live in `createAllAgents()` |
 | Change legacy alias resolution | `src/shared/migration/*` | Compatibility mapping lives there |
 | Change which agents are visible or hidden | [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) | Final runtime visibility is forced there |
 | Change runtime fallback descriptions | [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) | Final descriptions can be injected there |

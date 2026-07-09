@@ -102,9 +102,8 @@ These exist for compatibility or system behavior and are not intended as user-fa
 
 Runtime naming, visibility, and compatibility are normalized through:
 
-- [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
-- [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts)
-- [src/shared/migration/agent-names.ts](src/shared/migration/agent-names.ts)
+- [src/agents/index.ts](src/agents/index.ts) — `createAllAgents()` registers all 8 agents with visibility and mode
+- [src/types.ts](src/types.ts) — `AgentConfig` type definition
 
 ## Models
 

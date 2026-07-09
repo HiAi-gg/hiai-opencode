@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type {
@@ -315,8 +315,8 @@ describe("applyWorkspaceEdits", () => {
     writeFileSync(fileA, "const a = 1;", "utf-8");
     writeFileSync(fileB, "const b = 2;", "utf-8");
 
-    const fileAUri = "file://" + fileA;
-    const fileBUri = "file://" + fileB;
+    const fileAUri = `file://${fileA}`;
+    const fileBUri = `file://${fileB}`;
 
     const changes: Record<string, LSPEdit[]> = {
       [fileAUri]: [
@@ -352,7 +352,7 @@ describe("applyWorkspaceEdits", () => {
 
   test("throws on path outside project directory", () => {
     const changes: Record<string, LSPEdit[]> = {
-      ["file:///etc/passwd"]: [
+      "file:///etc/passwd": [
         {
           range: {
             start: { line: 0, character: 0 },

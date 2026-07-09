@@ -294,7 +294,7 @@ export class BackgroundManager {
   private async poll() {
     if (!this.client) return;
 
-    for (const [id, task] of this.tasks) {
+    for (const [_id, task] of this.tasks) {
       if (task.status !== "running") continue;
 
       // Check stale timeout
@@ -409,10 +409,10 @@ export class BackgroundManager {
   private startCleanup() {
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
-      for (const [id, task] of this.tasks) {
+      for (const [_id, task] of this.tasks) {
         if (task.status !== "running") {
           if (task.completedAt && now - task.completedAt > 10 * 60 * 1000) {
-            this.tasks.delete(id);
+            this.tasks.delete(_id);
           }
         }
       }

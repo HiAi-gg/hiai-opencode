@@ -21,7 +21,7 @@ export function formatLocation(loc: LSPLocation, root: string): string {
 }
 
 /** Format a single diagnostic as `[SEV] line:col — message`. */
-export function formatDiagnostic(d: LSPDiagnostic, root: string): string {
+export function formatDiagnostic(d: LSPDiagnostic, _root: string): string {
   const sev =
     d.severity === 1
       ? "ERROR"

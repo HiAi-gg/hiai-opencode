@@ -137,7 +137,7 @@ export class LSPClient {
         this.buffer = this.buffer.slice(headerEnd + 4);
         continue;
       }
-      const len = Number.parseInt(match[1]);
+      const len = Number.parseInt(match[1], 10);
       const bodyStart = headerEnd + 4;
       if (this.buffer.length < bodyStart + len) break;
       const body = this.buffer.slice(bodyStart, bodyStart + len);

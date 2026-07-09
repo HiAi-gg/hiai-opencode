@@ -304,7 +304,7 @@ describe("formatScreenshotOutput", () => {
   });
 
   test("handles base64 with trailing newline", () => {
-    const fakeBase64 = fakePngBase64(1500) + "\n";
+    const fakeBase64 = `${fakePngBase64(1500)}\n`;
     const result = formatScreenshotOutput(fakeBase64, tmpProjectDir);
     expect(result).toMatch(/^Screenshot saved:/);
   });

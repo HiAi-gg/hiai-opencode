@@ -9,7 +9,6 @@ import type { BobConfig, HookSet } from "../types";
 import {
   detectCompletionMarker,
   get,
-  markCompleted,
   recordIteration,
   reset,
   setContinuationPrompt,

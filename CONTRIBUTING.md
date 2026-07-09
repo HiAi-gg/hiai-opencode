@@ -36,7 +36,7 @@ Agents touch multiple files. Here is the checklist:
 1. **Agent factory** — Create `src/agents/<name>.ts` (or a directory `src/agents/<name>/` for multi-file agents).
 2. **Prompt library** — Add shared policy blocks in `src/agents/prompt-library/` if the agent has reusable prompt sections.
 3. **Dynamic prompt builder** — Update `src/agents/dynamic-agent-prompt-builder.ts` if the agent needs context-driven prompt assembly.
-4. **Agent display names** — Add the agent to `src/shared/agent-display-names.ts`.
+4. **Agent registration** — Add the agent to `src/agents/index.ts` in `createAllAgents()`.
 5. **Default config** — Add the model slot to `src/config/defaults.ts` (if it is a visible primary agent).
 6. **Agent config handler** — Register the agent in `src/plugin-handlers/agent-config-handler.ts` for runtime normalization.
 7. **Migration** — If replacing a deprecated agent, add a migration entry in `src/shared/migration/agent-names.ts`.

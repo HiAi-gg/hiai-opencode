@@ -104,7 +104,7 @@ describe("applyAgentPermissions — default external_directory allow", () => {
 
 describe("applyAgentPermissions — no external_directory by default", () => {
   test("bob/vision: no default external_directory, no restrictions", () => {
-    for (const agent of ["bob", "vision"]) {
+    for (const _agent of ["bob", "vision"]) {
       const { permission, tools } = applyAgentPermissions(undefined, {});
       expect(permission.external_directory).toBeUndefined();
       expect(Object.keys(permission)).toHaveLength(0);
@@ -126,7 +126,7 @@ describe("applyAgentPermissions — no external_directory by default", () => {
   test("bob/vision: no external_directory even with allow default passed", () => {
     // This simulates what happens when getDefaultExternalDirectory returns
     // undefined for bob and vision — defaultPerms is empty
-    for (const agent of ["bob", "vision"]) {
+    for (const _agent of ["bob", "vision"]) {
       const { permission } = applyAgentPermissions(undefined, {});
       expect(permission.external_directory).toBeUndefined();
     }

@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import type { BobConfig, HookSet } from "../types";
 
 // Helper to create a quality gate instance
 // We can't import createQualityGate directly if it's not exported

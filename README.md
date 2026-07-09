@@ -12,7 +12,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![OpenCode](https://img.shields.io/badge/host-OpenCode-blue?style=flat-square)](https://opencode.ai)
 
-Multi-agent orchestration plugin for OpenCode. 10 specialized agents (bob, build, plan, explore, general, manager, critic, designer, writer, vision), 30 hooks, BM25 FTS5 memory search, LSP diagnostics, agent-browser integration, completion controller, auto dream/distill memory consolidation. One prompt to set up and run.
+Multi-agent orchestration plugin for OpenCode. 8 registered agents (bob, manager, critic, writer, designer, vision, dream-consolidator, distill-packager) with 10 configurable model slots, 30 hooks, BM25 FTS5 memory search, LSP diagnostics, agent-browser integration, completion controller, auto dream/distill memory consolidation. One prompt to set up and run.
 
 **v0.3.0 is a complete clean-slate rewrite** from legacy plugin-bob 0.2.9. Agent names, MCP set, and architecture have been rebuilt from scratch. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases only.
 
@@ -89,20 +89,20 @@ Use [.env.example](.env.example) as the canonical template.
 
 ## Agents
 
+`createAllAgents()` registers 8 agents. bob.json additionally defines model slots for build, plan, explore, and general as compatibility aliases.
+
 | Config key | Display name | Role | Mode | Visible |
 |------------|-------------|------|------|---------|
 | bob | Bob | Orchestrator — delegates, verifies. Never mutates files. | primary | ✅ |
-| plan | Strategist | Principal Architect — deep planning, architecture analysis. | primary | ✅ |
-| designer | Designer | UI/visual direction, design tokens, component specs. | primary | ✅ |
-| writer | Writer | Content, copy, positioning, SEO specialist. | primary | ✅ |
-| build | Coder | Senior Staff Engineer — implements from plans. | subagent | hidden |
-| explore | Explorer | Codebase discovery — grep, firecrawl, grep_app. | subagent | hidden |
-| manager | Manager | Coordinator — parallel wave execution. | subagent | hidden |
-| critic | Critic | Quality Guardian — reviews, binary APPROVED/REJECTED. | subagent | hidden |
-| vision | Vision | Browser operator + multimodal analysis. | subagent | hidden |
-| general | General | General-purpose executor — fallback for unclassified tasks. | subagent | hidden |
+| manager | Manager | Architecture — systems, boundaries, integration, delegation coordination. | subagent | hidden |
+| critic | Critic | Plan critic — reviewing plans for clarity, verifiability, and quality. | subagent | hidden |
+| writer | Writer | Content, copy, positioning, SEO. Website/product copy specialist. | subagent | hidden |
+| designer | Designer | UI/visual direction via design systems and component specifications. | subagent | hidden |
+| vision | Vision | Analyze images, PDFs, diagrams. Visual content extraction and verification. | subagent | hidden |
+| dream-consolidator | Dream Consolidator | Memory consolidation — cross-session knowledge synthesis. | subagent | hidden |
+| distill-packager | Distill Packager | Workflow packaging — discovers patterns, creates skills/agents. | subagent | hidden |
 
-> **Runtime agent slots vs display names**: Config keys in `bob.json` use internal slot names (`build`, `plan`, `explore`, `general`). Display names shown in the /agents UI are normalized at runtime by `src/shared/agent-display-names.ts`. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases for migration (see `docs/hiai-opencode/migration.md`).
+> **Model slots vs registered agents**: `bob.json` defines 10 configurable model slots (`bob`, `build`, `plan`, `explore`, `manager`, `critic`, `designer`, `writer`, `vision`, `general`). Only the 8 agents above are registered by `createAllAgents()` in `src/agents/index.ts`. Slots `build`, `plan`, `explore`, and `general` are internal routing targets with no separate registration — they delegate to the registered agent pool. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases.
 
 ### Mode-Based Task Routing
 
