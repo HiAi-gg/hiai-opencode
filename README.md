@@ -63,7 +63,7 @@ CLI skills (NOT MCP):
 - context7: on-demand CLI skill via skill("explore/context7").
 - agent-browser: requires bun add -g agent-browser && agent-browser install.
 
-Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
+Check bob.env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
 
 Run verification commands where available:
 - opencode debug config
@@ -115,7 +115,12 @@ This file ships as part of the plugin package and contains agent models, MCP set
 
 ### 2. Environment Variables — API Keys
 
-API keys are loaded from multiple paths in priority order. Create a local `.env` file in your OpenCode environment or export these variables in your shell before starting OpenCode.
+API keys are loaded from multiple paths in priority order. Copy the env template and fill in your keys (or export these variables in your shell before starting OpenCode):
+
+```bash
+cp bob.env.example bob.env
+# Edit your keys in bob.env (git-ignored, never committed)
+```
 
 ```bash
 # Required for CLI skills:
@@ -124,7 +129,7 @@ FIRECRAWL_API_KEY=fc-your_key
 # CONTEXT7_API_KEY=ctx7-your_key
 ```
 
-Use [.env.example](.env.example) as the canonical template.
+Use [bob.env.example](bob.env.example) as the canonical template.
 
 ## Agents
 

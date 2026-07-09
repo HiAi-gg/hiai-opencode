@@ -1,8 +1,10 @@
 # Configuration Reference
 
-hiai-opencode is configured through two files: `bob.json` (models, features, LSP,
-MCP) and `bob.env` (API keys). Both ship in the plugin package; users override
-settings by placing `bob.json` in their project root.
+hiai-opencode uses a dual-config system with three file types:
+
+- **`bob.json`** — Runtime/default plugin config loaded by the plugin code. Contains model slots, MCP/LSP toggles, feature flags, and internal defaults. Ships in the plugin package; users can override by placing `bob.json` in their project root or `.opencode/`.
+- **`hiai-opencode.json`** — User-facing CLI/template config loaded by the OpenCode CLI. Edit this file for model selection, MCP enable/disable, and skill discovery settings. Uses `{env:VAR_NAME}` placeholders for secrets — never put raw API keys here.
+- **`bob.env`** — Environment variables / API keys for services like Firecrawl and Context7. The canonical template is `bob.env.example`.
 
 ## Config Resolution Order
 
@@ -328,8 +330,7 @@ Controls the session-idle loop driver in `loop.ts`.
   },
   "dream": { "auto": true, "interval_days": 7 },
   "distill": { "auto": true, "interval_days": 30 },
-    "telemetry": { "enabled": false, "serviceName": "hiai-opencode" },
-  }
+  "telemetry": { "enabled": false, "serviceName": "hiai-opencode" }
 }
 ```
 
@@ -338,7 +339,7 @@ Controls the session-idle loop driver in `loop.ts`.
 | Variable               | Required | Description                                                         |
 | ---------------------- | -------- | ------------------------------------------------------------------- |
 | `FIRECRAWL_API_KEY`    | Yes      | Web search & scraping (firecrawl)                                   |
-| `CONTEXT7_API_KEY`     | Yes      | Library documentation lookups                                       |
+| `CONTEXT7_API_KEY`     | No       | Library documentation lookups (on-demand CLI skill)                 |
 | `AGENT_BROWSER_HEADED` | No       | Set to `1` to opt into visible browser window (default is headless) |
 
 Copy `bob.env.example` to `bob.env` and fill in keys. `bob.env` is git-ignored.

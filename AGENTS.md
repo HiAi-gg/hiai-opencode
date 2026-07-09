@@ -92,7 +92,7 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 - Use `src/mcp/registry.ts` as the source of truth for default MCP launch wiring.
 - Keep skill discovery deterministic by default: packaged plugin skills, generated builtin skills, explicit config sources, and project `.opencode/skills`.
 - Do not enable global OpenCode, Claude, or Agents skill folders unless the user explicitly asks.
-- Use `.env.example` as the key template, but never print, invent, commit, or hardcode secret values.
+- Use `bob.env.example` as the key template, but never print, invent, commit, or hardcode secret values.
 - Prefer user-level or project-local installs. Do not use sudo/admin rights unless the user explicitly asks.
 
 ### Bootstrap Checklist
@@ -421,7 +421,7 @@ Use `skills.disable` for noisy individual skills:
 
 ## Environment Variables
 
-Use [.env.example](.env.example) as the canonical key template for local setup and release checks.
+Use [bob.env.example](bob.env.example) as the canonical key template for local setup and release checks.
 
 Model provider credentials are configured through OpenCode Connect. Do not ask users to put `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` into `hiai-opencode.json` for normal model usage. The plugin stores model IDs only.
 
@@ -572,7 +572,7 @@ Firecrawl is a CLI skill (not an MCP server). The `FIRECRAWL_API_KEY` env var mu
 export FIRECRAWL_API_KEY=fc-...
 ```
 
-Or set it in `.env` in your project root. Firecrawl is NOT configured via `hiai-opencode.json` MCP section.
+Or set it in `bob.env` in your project root. Firecrawl is NOT configured via `hiai-opencode.json` MCP section.
 
 ### Browser Automation (agent-browser)
 

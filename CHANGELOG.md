@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.3] — 2026-07-09
+
+### 📦 Env/Config Consistency & Template Cleanup
+
+- **Env templates consolidated**: Merged `.env.example` (OLLAMA vars, HIAI_OPENCODE_* vars) and `hiai-opencode.example` (MEMPALACE vars) into single canonical `bob.env.example`. Deleted `.env.example`, `hiai-opencode.example`, `hiai-opencode.example.json` (redundant third templates).
+- **Removed `.env.example` from package.json `files`** — only `bob.env.example` ships as the canonical env template.
+- **`.gitignore` updated**: Added `bob.env` entry to prevent accidental API key commits.
+- **README.md**: Replaced `.env`/`.env.example` instructions with `bob.env`/`bob.env.example`. Added dual-config explanation (bob.json runtime + hiai-opencode.json user-facing).
+- **AGENTS.md**: Replaced `.env.example` key template references with `bob.env.example`. Fixed Firecrawl env reference (`.env` → `bob.env`).
+- **docs/quickstart.md**: Replaced `.env.example` → `bob.env.example`, `.env` → `bob.env`.
+- **docs/CONFIG.md**: Clarified dual-config system (`bob.json` runtime + `hiai-opencode.json` user-facing + `bob.env` secrets). Fixed CONTEXT7_API_KEY required→optional (No). Fixed malformed JSON in full example (extra closing brace).
+- **ARCHITECTURE.md**: Fixed security guidance — keys go in `bob.env` with `{env:VAR}` placeholders in JSON, not raw in config files.
+- **Security**: CRITICAL finding — `plugin-bob/bob.env` contains unredacted FIRECRAWL_API_KEY and CONTEXT7_API_KEY. Flagged for separate rotation in `plugin-bob` repository.
+
 ## [0.3.2] — 2026-07-09
 
 ### 📝 Docs & Package Cleanup

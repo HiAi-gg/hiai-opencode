@@ -56,7 +56,7 @@ User input
 **Key wiring rules:**
 - OpenCode plugins are NOT MCP servers. `hiai-opencode` only provides the OpenCode-side launch wiring for MCP servers through its `mcp` config and helper launchers in `assets/mcp/`.
 - Model credentials go through OpenCode Connect, not `hiai-opencode.json`.
-- Service keys (`FIRECRAWL_API_KEY`, `STITCH_AI_API_KEY`, etc.) go in `hiai-opencode.json` `mcp` section or as env vars.
+- Service keys (e.g. `FIRECRAWL_API_KEY`) are configured in `bob.env` (env file) or as shell variables. Use `{env:VAR_NAME}` placeholders in `hiai-opencode.json` — never put raw API keys there.
 
 ## Repository Layout
 

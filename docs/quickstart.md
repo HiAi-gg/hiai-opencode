@@ -10,10 +10,10 @@ opencode plugin @hiai-gg/hiai-opencode@latest --global
 
 ## 2. Set API keys
 
-Copy `.env.example` to `.env` and fill in your keys:
+Copy `bob.env.example` to `bob.env` and fill in your keys:
 
 ```bash
-cp .env.example .env
+cp bob.env.example bob.env
 ```
 
 Required for CLI skills you want to enable:
