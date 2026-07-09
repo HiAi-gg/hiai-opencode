@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.4] — 2026-07-09
+
+### 🐛 Env Checklist Bug Fix
+
+- **AGENTS.md bootstrap checklist corrected**: `STITCH_AI_API_KEY` and `MEMPALACE_PYTHON` removed from active key checks (were incorrectly listed as active keys despite being marked "Removed from default registry in v0.3.0"). Moved to clearly labeled legacy/removed note. Added `AGENT_BROWSER_SESSION` and `GREP_APP_API_KEY` to active checklist to match `bob.env.example` canonical template.
+
 ## [0.3.3] — 2026-07-09
 
 ### 📦 Env/Config Consistency & Template Cleanup

@@ -115,13 +115,16 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `global_claude: false`
    - `project_agents: false`
    - `global_agents: false`
-6. Check environment variables without printing values:
-   - `FIRECRAWL_API_KEY`
-   - `STITCH_AI_API_KEY`
-   - `CONTEXT7_API_KEY`
-   - `MEMPALACE_PYTHON`
-   
+6. Check environment variables without printing values (see `bob.env.example` for canonical list):
+   - `FIRECRAWL_API_KEY` (required for Firecrawl CLI skill)
+   - `CONTEXT7_API_KEY` (optional/on-demand for Context7 CLI skill)
+   - `AGENT_BROWSER_SESSION` (optional; browser automation session name)
+   - `GREP_APP_API_KEY` (optional; only if grep.app search is configured)
    - `HIAI_MCP_AUTO_INSTALL`
+
+   **Legacy keys (removed from default registry in v0.3.0 — configure manually only if needed)**:
+   - `STITCH_AI_API_KEY` (Stitch MCP — designer UI generation)
+   - `MEMPALACE_PYTHON` (MemPalace MCP — agent memory, uses `uv` or `python` fallback)
 7. Verify with:
    - `opencode debug config`
    - `hiai-opencode doctor`
