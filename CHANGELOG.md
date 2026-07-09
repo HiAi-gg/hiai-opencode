@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-07-09
+
+### 🏗️ Complete Rewrite — plugin-bob Architecture
+
+- **Architecture**: Clean-slate rewrite. Migrated from legacy multi-plugin architecture to unified `BobPlugin` orchestrator.
+- **Agents**: 10 specialized agents (bob, plan, general, build, explore, manager, critic, writer, designer, vision) with role-based prompts.
+- **Tools**: 6 LSP tools, 14 agent-browser tools, Firecrawl (scrape/search/map), Memory (BM25 FTS5), 4 Session tools, Background task management.
+- **Hooks**: 30+ runtime hooks (loop, session-recovery, context-window-limit-recovery, caveman protocol, quality-gate, closure-injector, edit-error-recovery, json-error-recovery, token-budget, model-fallback, preemptive-compaction, etc.).
+- **Protocol**: Caveman internal protocol for plan serialization and execution.
+- **Memory**: SQLite FTS5 BM25 backend at `~/.hiai-opencode/data/hiai-memory.db`.
+- **Telemetry**: OpenTelemetry integration for metrics and tracing.
+
+### 🔄 Migration from 0.2.9
+
+- Data directory moved: `~/.hiai-bob/` → `~/.hiai-opencode/`
+- Config directory moved: `$XDG_CONFIG_HOME/hiai-bob/` → `$XDG_CONFIG_HOME/hiai-opencode/`
+- Install: `opencode plugin @hiai-gg/hiai-opencode@latest --global`
+- All agent names, tool names, and hook names preserved where possible.
+- Removed: Playwright integration (replaced by agent-browser CLI).
+- Removed: design-systems/, prompt-templates/, craft/ (open-design artifacts — available separately).
+
+### 📦 Dependencies
+
+- Runtime: `@opencode-ai/plugin ^1.17.0`, `@opentelemetry/api ^1.9.1`, `drizzle-orm ^0.45.2`
+- Dev: `@biomejs/biome ^2.4.15`, `bun-types ^1.3.0`, `typescript ^5.7.0`
+
+### 🔧 Key Fixes in 0.3.0
+
+- **Caveman writer exclusion**: Writer agent excluded from Caveman compression for full-context content work.
+- **BackgroundManager sanitizer**: Circuit breaker (20 consecutive same-tool, 4000 total, 5 concurrent) prevents runaway subagents.
+- **Vision/General browser gate**: Vision owns browser verification; General/Sub gets Sub as fallback when Vision unavailable.
+- **Playwright/Puppeteer ban**: Agent-browser CLI is the sole browser automation tool — no Playwright, no Puppeteer.
+- **context7 hardened**: Removed from MCP registry; on-demand CLI skill via `skill("explore/context7")`, requires `CONTEXT7_API_KEY`.
+- **firecrawl**: CLI-only (not MCP), requires `FIRECRAWL_API_KEY`, with 3 dedicated tools (scrape, search, map).
+- **Environment hardening**: bob.env loaded from 7-layer priority path (project → .opencode/ → ~/.config/hiai-opencode/ → plugin root), existing process.env values preserved.
+
 ## [0.2.9] — 2026-06-12
 
 ### Fixed

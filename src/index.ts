@@ -1,320 +1,336 @@
-import type { Plugin } from "@opencode-ai/plugin";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
-
-import type { HookName } from "./config";
-
-import { createHooks } from "./create-hooks";
-import { createManagers } from "./create-managers";
+import os from 'node:os';
+import { join } from 'node:path';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import type { Config, Hooks, Plugin, PluginInput } from '@opencode-ai/plugin';
+import { createAllAgents } from './agents';
+import { BUILD_PROMPT } from './agents/build';
+import { EXPLORE_PROMPT } from './agents/explore';
+import { GENERAL_PROMPT } from './agents/general';
+import { PLAN_PROMPT } from './agents/plan';
+import { loadConfig } from './config';
+import { BackgroundManager } from './features/background-manager/index';
+import { createBobCompletionHook, setCompletionClient } from './features/completion-controller';
+import { createDreamDistillHook } from './features/dream-distill';
+import { getMcpConfig } from './features/mcp/registry';
+import { initTelemetry, shutdownTelemetry } from './features/telemetry/index';
+import { createHooks } from './hooks/index';
+import { createMemoryService } from './memory/service';
+import { applyAgentPermissions, getDefaultExternalDirectory } from './permissions';
+import { createAgentBrowserTools } from './tools/agent-browser';
 import {
-  createRuntimeTmuxConfig,
-  isTmuxIntegrationEnabled,
-} from "./create-runtime-tmux-config";
-import { createTools } from "./create-tools";
-import { createPluginInterface } from "./plugin-interface";
-import { createPluginDispose, type PluginDispose } from "./plugin-dispose";
-
-import { loadPluginConfig } from "./plugin-config";
-import { createModelCacheState } from "./plugin-state";
-import { createFirstMessageVariantGate } from "./shared/first-message-variant";
-import { injectServerAuthIntoClient, log, logWarn, logError } from "./shared";
-import { hydratePluginConfigWithPlatformDefaults } from "./shared/runtime-plugin-config";
+  backgroundCancelTool,
+  backgroundOutputTool,
+  setBackgroundManager,
+} from './tools/background-task';
+import { firecrawlMapTool, firecrawlScrapeTool, firecrawlSearchTool } from './tools/firecrawl';
 import {
-  detectExternalSkillPlugin,
-  getSkillPluginConflictWarning,
-} from "./shared/external-plugin-detector";
-import { PLUGIN_NAME } from "./shared/plugin-identity";
-import { installRuntimeStreamTeardownGuard } from "./shared/runtime-stream-teardown-guard";
-import { autoExportStaticMcpJson } from "./shared/mcp-static-export";
+  lspDiagnosticsTool,
+  lspFindReferencesTool,
+  lspGotoDefinitionTool,
+  lspPrepareRenameTool,
+  lspRenameTool,
+  lspSymbolsTool,
+} from './tools/lsp';
+import { setLspConfig } from './tools/lsp/server-definitions';
+import { createMemoryTool } from './tools/memory-tool';
 import {
-  warnIfListPluginEntry,
-  warnMissingRequiredMcpEnv,
-} from "./shared/startup-diagnostics";
-import { lintModeAgentCapabilities } from "./plugin/startup-diagnostics";
-import { startBackgroundCheck as startTmuxCheck } from "./tools/interactive-bash";
-import { lspManager } from "./tools/lsp/client";
+  sessionInfoTool,
+  sessionListTool,
+  sessionReadTool,
+  sessionSearchTool,
+  setSessionClient,
+} from './tools/session-manager';
+import { createSkillTool } from './tools/skill';
+import type { BobConfig } from './types';
 
-import { loadConfig } from "./config/loader";
-import type { HiaiOpencodeConfig } from "./config/types";
+const PLUGIN_NAME = 'HiAiOpenCodePlugin';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-import { createPlugin as createSubtask2Plugin } from "./internals/plugins/subtask2/core/plugin";
-import { createBuiltinSkills } from "./features/builtin-skills";
-import {
-  materializeBuiltinSkills,
-  materializePluginSkillDirectories,
-} from "./features/builtin-skills/materialize";
+export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
+  const config = loadConfig(input.directory);
+  const agents = createAllAgents(config);
+  const bobHooks = createHooks(config as BobConfig);
+  const skillsDir = join(__dirname, '..', 'skills');
+  const promptsDir = join(__dirname, 'features', 'dream-distill');
+  const memoryDataDir = join(os.homedir(), '.hiai-opencode', 'data', 'memory');
+  const memoryDbPath = join(os.homedir(), '.hiai-opencode', 'data', 'hiai-memory.db');
 
-let activePluginDispose: PluginDispose | null = null;
+  // Init memory service
+  const memoryService = createMemoryService({
+    memoryRoot: memoryDataDir,
+    dbPath: memoryDbPath,
+    ccIndex: false,
+    reconcileOnSearch: true,
+    searchScoreFloor: config.completion ? 0.15 : 0.15,
+  });
 
-function configureBundledBunPtyLibrary(): void {
-  if (process.env.BUN_PTY_LIB?.trim()) {
-    return;
+  // Init completion controller
+  setCompletionClient(input.client);
+
+  // Init session tools
+  setSessionClient(input.client);
+
+  // Init background manager
+  const backgroundManager = new BackgroundManager(config.background_manager);
+  setBackgroundManager(backgroundManager);
+  backgroundManager.setClient(input.client);
+
+  // Init LSP config
+  if (config.lsp) setLspConfig(config.lsp);
+
+  // Init telemetry
+  if (config.telemetry?.enabled) {
+    initTelemetry(config.telemetry);
   }
 
-  const libraryName =
-    process.platform === "win32"
-      ? "rust_pty.dll"
-      : process.platform === "darwin"
-        ? process.arch === "arm64"
-          ? "librust_pty_arm64.dylib"
-          : "librust_pty.dylib"
-        : process.arch === "arm64"
-          ? "librust_pty_arm64.so"
-          : "librust_pty.so";
+  const completionHooks =
+    config.completion?.enabled !== false ? createBobCompletionHook(config) : {};
 
-  const candidates = [
-    join(
-      import.meta.dirname,
-      "..",
-      "node_modules",
-      "bun-pty",
-      "rust-pty",
-      "target",
-      "release",
-      libraryName,
-    ),
-    join(
-      import.meta.dirname,
-      "..",
-      "..",
-      "bun-pty",
-      "rust-pty",
-      "target",
-      "release",
-      libraryName,
-    ),
-    join(
-      import.meta.dirname,
-      "..",
-      "..",
-      "..",
-      "bun-pty",
-      "rust-pty",
-      "target",
-      "release",
-      libraryName,
-    ),
-  ];
+  // Init dream/distill auto-trigger
+  const dreamDistillHooks = createDreamDistillHook(config, input.client, promptsDir);
 
-  const resolved = candidates.find((candidate) => existsSync(candidate));
-  if (resolved) {
-    process.env.BUN_PTY_LIB = resolved;
-  }
-}
+  const hooks: Hooks = {};
 
-const HiaiOpenCodePlugin: Plugin = async (ctx) => {
-  log("[HiaiOpenCodePlugin] ENTRY - plugin loading", {
-    directory: ctx.directory,
-  });
-  installRuntimeStreamTeardownGuard();
-  warnIfListPluginEntry(ctx.directory);
+  // ── Agent registration via config hook ──
+  hooks.config = async (cfg: Config) => {
+    try {
+      const agentCfg = ((cfg as Record<string, unknown>).agent ?? {}) as Record<
+        string,
+        Record<string, unknown>
+      >;
+      const c = cfg as Record<string, unknown>;
+      let agentsDict = c.agent as Record<string, unknown>;
+      agentsDict ??= {};
+      c.agent = agentsDict;
+      let mcpDict = c.mcp as Record<string, unknown> | undefined;
 
-  const skillPluginCheck = detectExternalSkillPlugin(ctx.directory);
-  if (skillPluginCheck.detected && skillPluginCheck.pluginName) {
-    logWarn(getSkillPluginConflictWarning(skillPluginCheck.pluginName));
-  }
+      // Upgrade native agents with our prompts/models
+      const resolveModelForAgent = (agentKey: string): string | undefined => {
+        return (config as BobConfig).models?.[agentKey]?.model;
+      };
 
-  injectServerAuthIntoClient(ctx.client);
-  await activePluginDispose?.();
+      // Helper: build default permissions for agent (read-only review agents get external_directory allow)
+      const defaultPermsForAgent = (agentKey: string): Record<string, string> => {
+        const perms: Record<string, string> = {};
+        const ext = getDefaultExternalDirectory(agentKey);
+        if (ext) perms.external_directory = ext;
+        return perms;
+      };
 
-  const internalConfig: HiaiOpencodeConfig = loadConfig(ctx.directory);
-  const pluginConfig = hydratePluginConfigWithPlatformDefaults(
-    loadPluginConfig(ctx.directory, ctx),
-    internalConfig,
-  );
-  warnMissingRequiredMcpEnv({
-    pluginConfig,
-    platformConfig: internalConfig,
-  });
-  lintModeAgentCapabilities();
-  autoExportStaticMcpJson(ctx.directory, internalConfig);
-
-  materializeBuiltinSkills(
-    createBuiltinSkills({
-      browserProvider:
-        pluginConfig.browser_automation_engine?.provider ?? "agent-browser",
-      disabledSkills: new Set(pluginConfig.disabled_skills ?? []),
-    }),
-  );
-  materializePluginSkillDirectories(join(import.meta.dirname, ".."));
-
-  // Initialize model requirements from configuration
-  const { initializeModelRequirements } = await import(
-    "./shared/model-requirements"
-  );
-  initializeModelRequirements(internalConfig);
-
-  const { initializeModelHeuristics } = await import(
-    "./shared/model-capability-heuristics"
-  );
-  initializeModelHeuristics(internalConfig);
-
-  const tmuxIntegrationEnabled = isTmuxIntegrationEnabled(pluginConfig);
-  if (tmuxIntegrationEnabled) {
-    startTmuxCheck();
-  }
-
-  const disabledHooks = new Set(pluginConfig.disabled_hooks ?? []);
-  const isHookEnabled = (hookName: HookName): boolean =>
-    !disabledHooks.has(hookName);
-  const safeHookEnabled = pluginConfig.experimental?.safe_hook_creation ?? true;
-
-  const firstMessageVariantGate = createFirstMessageVariantGate();
-  const tmuxConfig = createRuntimeTmuxConfig(pluginConfig);
-  const modelCacheState = createModelCacheState();
-
-  const managers = createManagers({
-    ctx,
-    pluginConfig,
-    tmuxConfig,
-    modelCacheState,
-    backgroundNotificationHookEnabled: isHookEnabled("background-notification"),
-  });
-
-  const toolsResult = await createTools({
-    ctx,
-    pluginConfig,
-    platformConfig: internalConfig,
-    managers,
-  });
-
-  const hooks = createHooks({
-    ctx,
-    pluginConfig,
-    modelCacheState,
-    backgroundManager: managers.backgroundManager,
-    managers,
-    isHookEnabled,
-    safeHookEnabled,
-    mergedSkills: toolsResult.mergedSkills,
-    availableSkills: toolsResult.availableSkills,
-  });
-
-  const dispose = createPluginDispose({
-    backgroundManager: managers.backgroundManager,
-    skillMcpManager: managers.skillMcpManager,
-    lspManager,
-    disposeHooks: hooks.disposeHooks,
-  });
-
-  const pluginInterface = createPluginInterface({
-    ctx,
-    pluginConfig,
-    firstMessageVariantGate,
-    managers,
-    hooks,
-    tools: toolsResult.filteredTools,
-  });
-
-  // --- Internal Plugins Integration ---
-  // The OpenCode plugin SDK exposes a strongly-typed `Hooks` shape, while
-  // optional sub-plugins (subtask2, PTY) define an open-ended set of hook
-  // names. `lookup` is a single chokepoint for the dynamic dispatch — every
-  // other call site stays typed.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lookup = (
-    obj: unknown,
-    key: string,
-  ): ((...args: any[]) => any) | undefined =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (obj as Record<string, any> | undefined)?.[key];
-
-  const subtask2Result = await createSubtask2Plugin(ctx);
-  // Tool shape is enforced by the OpenCode SDK at registration time; we treat
-  // ptyResult.tool as opaque here and let the SDK validate downstream.
-  let ptyResult: {
-    tool: Record<string, unknown>;
-    event?: (input: unknown) => unknown;
-  } = { tool: {} as Record<string, unknown> };
-  try {
-    configureBundledBunPtyLibrary();
-    const mod = await import("./internals/plugins/pty/plugin");
-    ptyResult = (await mod.PTYPlugin(ctx)) as typeof ptyResult;
-  } catch (err) {
-    logError("PTYPlugin failed to load:", err);
-  }
-  const combinedResult = {
-    name: PLUGIN_NAME,
-    ...pluginInterface,
-
-    // Merge Tools
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tool: { ...pluginInterface.tool, ...(ptyResult.tool as any) },
-
-    "command.execute.before": async (input: unknown, output: unknown) => {
-      await lookup(pluginInterface, "command.execute.before")?.(input, output);
-      await lookup(subtask2Result, "command.execute.before")?.(input, output);
-    },
-
-    "tool.execute.before": async (input: unknown, output: unknown) => {
-      await lookup(pluginInterface, "tool.execute.before")?.(input, output);
-      await lookup(subtask2Result, "tool.execute.before")?.(input, output);
-    },
-
-    "tool.execute.after": async (input: unknown, output: unknown) => {
-      await lookup(pluginInterface, "tool.execute.after")?.(input, output);
-      await lookup(subtask2Result, "tool.execute.after")?.(input, output);
-    },
-
-    "experimental.chat.messages.transform": async (
-      input: unknown,
-      output: unknown,
-    ) => {
-      await lookup(pluginInterface, "experimental.chat.messages.transform")?.(
-        input,
-        output,
-      );
-      await lookup(subtask2Result, "experimental.chat.messages.transform")?.(
-        input,
-        output,
-      );
-    },
-
-    config: async (input: unknown) => {
-      await lookup(pluginInterface, "config")?.(input);
-      await lookup(subtask2Result, "config")?.(input);
-    },
-
-    event: async (input: unknown) => {
-      await lookup(pluginInterface, "event")?.(input);
-      await lookup(subtask2Result, "event")?.(input);
-      await lookup(ptyResult, "event")?.(input);
-    },
-
-    "experimental.session.compacting": async (
-      _input: { sessionID: string },
-      output: { context: string[] },
-    ): Promise<void> => {
-      await hooks.compactionContextInjector?.capture(_input.sessionID);
-      await hooks.compactionTodoPreserver?.capture(_input.sessionID);
-      await hooks.claudeCodeHooks?.["experimental.session.compacting"]?.(
-        _input,
-        output,
-      );
-      if (hooks.compactionContextInjector) {
-        output.context.push(
-          hooks.compactionContextInjector.inject(_input.sessionID),
+      // Upgrade explore — firecrawl + grep_app + context7 for deep codebase exploration
+      {
+        const existing = agentCfg.explore ?? {};
+        const { permission, tools: restrictionTools } = applyAgentPermissions(
+          config.agent_restrictions?.explore,
+          {
+            firecrawl_search: true,
+            firecrawl_scrape: true,
+            firecrawl_map: true,
+          },
+          defaultPermsForAgent('explore'),
         );
+        agentsDict.explore = {
+          ...existing,
+          description:
+            'Explore Agent — firecrawl + grep_app + context7 for deep codebase exploration',
+          mode: 'subagent',
+          hidden: true,
+          model: resolveModelForAgent('explore') ?? resolveModelForAgent('bob'),
+          prompt: EXPLORE_PROMPT,
+          temperature: 0.1,
+          tools: restrictionTools,
+          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+        };
       }
-    },
+
+      // Upgrade plan → plan-level architect with thinking
+      {
+        const existing = agentCfg.plan ?? {};
+        const { permission, tools } = applyAgentPermissions(
+          config.agent_restrictions?.plan,
+          {},
+          defaultPermsForAgent('plan'),
+        );
+        agentsDict.plan = {
+          ...existing,
+          description:
+            'Principal Architect — deep planning, architecture analysis, phased execution graphs',
+          mode: 'all',
+          model: resolveModelForAgent('plan') ?? resolveModelForAgent('bob'),
+          prompt: PLAN_PROMPT,
+          temperature: 0.1,
+          thinking: { type: 'enabled', budgetTokens: 16000 },
+          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+          ...(Object.keys(tools).length > 0 ? { tools } : {}),
+        };
+      }
+
+      // Upgrade build → build-level builder with verification gates
+      {
+        const existing = agentCfg.build ?? {};
+        const { permission, tools } = applyAgentPermissions(
+          config.agent_restrictions?.build,
+          {},
+          defaultPermsForAgent('build'),
+        );
+        agentsDict.build = {
+          ...existing,
+          description:
+            'Senior Staff Engineer — implements from plans with mandatory verification gates',
+          mode: 'subagent',
+          hidden: true,
+          model: resolveModelForAgent('build') ?? resolveModelForAgent('bob'),
+          prompt: BUILD_PROMPT,
+          temperature: 0.2,
+          thinking: { type: 'enabled', budgetTokens: 16000 },
+          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+          ...(Object.keys(tools).length > 0 ? { tools } : {}),
+        };
+      }
+
+      // Upgrade general → general-level cheap executor
+      {
+        const existing = agentCfg.general ?? {};
+        const { permission, tools } = applyAgentPermissions(
+          config.agent_restrictions?.general,
+          {},
+          defaultPermsForAgent('general'),
+        );
+        agentsDict.general = {
+          ...existing,
+          description: 'Cheap bounded executor — fast, simple tasks, fallback for failed agents',
+          mode: 'all',
+          model: resolveModelForAgent('general') ?? resolveModelForAgent('manager'),
+          prompt: GENERAL_PROMPT,
+          temperature: 0.1,
+          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+          ...(Object.keys(tools).length > 0 ? { tools } : {}),
+        };
+      }
+
+      for (const agent of agents) {
+        const name = agent.key;
+        const existing = agentCfg[name] ?? {};
+
+        const { permission, tools } = applyAgentPermissions(
+          config.agent_restrictions?.[agent.key],
+          {},
+          defaultPermsForAgent(name),
+        );
+
+        agentsDict[name] = {
+          ...existing,
+          description: agent.config.description,
+          mode: agent.config.mode,
+          ...(agent.config.model ? { model: agent.config.model } : {}),
+          prompt: agent.config.prompt,
+          ...(agent.config.temperature !== undefined
+            ? { temperature: agent.config.temperature }
+            : {}),
+          ...(agent.config.thinking ? { thinking: agent.config.thinking } : {}),
+          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+          ...(Object.keys(tools).length > 0 ? { tools } : {}),
+          ...(agent.config.hidden ? { hidden: true } : {}),
+        };
+      }
+
+      // Validate and register MCP config
+      if (Object.keys(config.mcp ?? {}).length > 0) {
+        mcpDict ??= {};
+        c.mcp = mcpDict;
+        const validated = getMcpConfig(config.mcp ?? {}, config.auth);
+        for (const [key, value] of Object.entries(validated)) {
+          mcpDict[key] = value;
+        }
+        // Also pass through any user MCP configs not in the registry
+        for (const [key, value] of Object.entries(config.mcp ?? {})) {
+          if (value.enabled && !validated[key]) {
+            mcpDict[key] = value;
+          }
+        }
+      }
+
+      if (config.dream)
+        c.dream = {
+          ...((c.dream ?? {}) as Record<string, unknown>),
+          ...config.dream,
+        };
+      if (config.distill)
+        c.distill = {
+          ...((c.distill ?? {}) as Record<string, unknown>),
+          ...config.distill,
+        };
+    } catch (e) {
+      console.error('[HiAiOpenCodePlugin] config hook error:', e);
+    }
   };
 
-  activePluginDispose = dispose;
+  // ── Behavioural hooks ──
+  {
+    const h = hooks as Record<string, unknown>;
+    const bh = bobHooks as Record<string, unknown>;
+    for (const key of Object.keys(bh)) {
+      const fn = bh[key];
+      if (fn && key !== 'name') h[key] = fn;
+    }
+    // Completion controller hooks
+    const ch = completionHooks as Record<string, unknown>;
+    for (const key of Object.keys(ch)) {
+      const fn = ch[key];
+      if (fn) h[key] = fn;
+    }
+    // Dream/Distill auto-trigger (event hook)
+    if (dreamDistillHooks.event) {
+      const existing = h.event as ((input: { event: unknown }) => Promise<void>) | undefined;
+      const dreamEvent = dreamDistillHooks.event as (input: { event: unknown }) => Promise<void>;
+      h.event = existing
+        ? async (evt: unknown) => {
+            await existing(evt as { event: unknown });
+            await dreamEvent(evt as { event: unknown });
+          }
+        : dreamEvent;
+    }
+  }
 
-  return combinedResult;
+  // ── Tools ──
+  hooks.tool = {
+    skill: createSkillTool(skillsDir),
+    ...createAgentBrowserTools(),
+    lsp_diagnostics: lspDiagnosticsTool,
+    lsp_goto_definition: lspGotoDefinitionTool,
+    lsp_find_references: lspFindReferencesTool,
+    lsp_symbols: lspSymbolsTool,
+    lsp_prepare_rename: lspPrepareRenameTool,
+    lsp_rename: lspRenameTool,
+    session_list: sessionListTool,
+    session_read: sessionReadTool,
+    session_search: sessionSearchTool,
+    session_info: sessionInfoTool,
+    background_output: backgroundOutputTool,
+    background_cancel: backgroundCancelTool,
+    hiai_memory_search: createMemoryTool(memoryService),
+    firecrawl_search: firecrawlSearchTool,
+    firecrawl_scrape: firecrawlScrapeTool,
+    firecrawl_map: firecrawlMapTool,
+  };
+
+  hooks.dispose = async () => {
+    if (bobHooks.dispose) await bobHooks.dispose();
+    await shutdownTelemetry();
+    console.log(`[${PLUGIN_NAME}] disposed`);
+  };
+
+  console.log(
+    `[${PLUGIN_NAME}] loaded: ${agents.length} agents, ${Object.keys(hooks.tool ?? {}).length} tools, hooks ready`,
+  );
+
+  return hooks;
 };
 
-export const server: Plugin = HiaiOpenCodePlugin;
-export default server;
+const plugin = {
+  id: 'hiai-opencode',
+  server: BobPlugin,
+};
 
-export type {
-  HiaiOpenCodeConfig,
-  AgentName,
-  AgentOverrideConfig,
-  AgentOverrides,
-  McpName,
-  HookName,
-  BuiltinCommandName,
-} from "./config";
-
-export type { ConfigLoadError } from "./shared/config-errors";
+export default plugin;

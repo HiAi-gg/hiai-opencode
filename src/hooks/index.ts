@@ -1,94 +1,138 @@
-export {
-  createTodoContinuationEnforcer,
-  type TodoContinuationEnforcer,
-} from "./todo-continuation-enforcer";
-export { createContextWindowMonitorHook } from "./context-window-monitor";
-export { createSessionNotification } from "./session-notification";
-export {
-  sendSessionNotification,
-  playSessionNotificationSound,
-  detectPlatform,
-  getDefaultSoundPath,
-} from "./session-notification-sender";
-export {
-  buildWindowsToastScript,
-  escapeAppleScriptText,
-  escapePowerShellSingleQuotedText,
-} from "./session-notification-formatting";
-export { hasIncompleteTodos } from "./session-todo-status";
-export { createIdleNotificationScheduler } from "./session-notification-scheduler";
-export {
-  createSessionRecoveryHook,
-  type SessionRecoveryHook,
-  type SessionRecoveryOptions,
-} from "./session-recovery";
-export { createCommentCheckerHooks } from "./comment-checker";
-export { createToolOutputTruncatorHook } from "./tool-output-truncator";
-export { createDirectoryAgentsInjectorHook } from "./directory-agents-injector";
-export { createDirectoryReadmeInjectorHook } from "./directory-readme-injector";
-export { createEmptyTaskResponseDetectorHook } from "./empty-task-response-detector";
-export {
-  createAnthropicContextWindowLimitRecoveryHook,
-  type AnthropicContextWindowLimitRecoveryOptions,
-} from "./anthropic-context-window-limit-recovery";
-export { createThinkModeHook } from "./think-mode";
-export {
-  createModelFallbackHook,
-  setPendingModelFallback,
-  clearPendingModelFallback,
-  type ModelFallbackState,
-} from "./model-fallback/hook";
-export { createClaudeCodeHooksHook } from "./claude-code-hooks";
-export { createRulesInjectorHook } from "./rules-injector";
-export { createBackgroundNotificationHook } from "./background-notification";
-export { createAgentUsageReminderHook } from "./agent-usage-reminder";
-export { createKeywordDetectorHook } from "./keyword-detector";
-export { createNonInteractiveEnvHook } from "./non-interactive-env";
-export { createInteractiveBashSessionHook } from "./interactive-bash-session";
-export { createThinkingBlockValidatorHook } from "./thinking-block-validator";
-export { createToolPairValidatorHook } from "./tool-pair-validator";
-export { createCategorySkillReminderHook } from "./category-skill-reminder";
-export { createRalphLoopHook, type RalphLoopHook } from "./ralph-loop";
-export { createAutoSlashCommandHook } from "./auto-slash-command";
-export { createEditErrorRecoveryHook } from "./edit-error-recovery";
-export { createStrategistMdOnlyHook } from "./strategist-md-only";
-export { createAgentToolPermissionHook } from "./agent-tool-permission";
-export { createBobJuniorNotepadHook } from "./sub-notepad";
-export { createTaskResumeInfoHook } from "./task-resume-info";
-export { createStartWorkHook } from "./start-work";
-export { createGuardHook } from "./manager";
-export { createDelegateTaskRetryHook } from "./delegate-task-retry";
-export { createQuestionLabelTruncatorHook } from "./question-label-truncator";
-export {
-  createStopContinuationGuardHook,
-  type StopContinuationGuard,
-} from "./stop-continuation-guard";
-export { createCompactionContextInjector } from "./compaction-context-injector";
-export { createCompactionTodoPreserverHook } from "./compaction-todo-preserver";
-export { createUnstableAgentBabysitterHook } from "./unstable-agent-babysitter";
-export { createPreemptiveCompactionHook } from "./preemptive-compaction";
-export { createTasksTodowriteDisablerHook } from "./tasks-todowrite-disabler";
-export {
-  createRuntimeFallbackHook,
-  type RuntimeFallbackHook,
-  type RuntimeFallbackOptions,
-} from "./runtime-fallback";
-export { createWriteExistingFileGuardHook } from "./write-existing-file-guard";
-export { createBashFileReadGuardHook } from "./bash-file-read-guard";
-export { createHashlineReadEnhancerHook } from "./hashline-read-enhancer";
-export { createHashlineEditDiffEnhancerHook } from "./hashline-edit-diff-enhancer";
-export {
-  createJsonErrorRecoveryHook,
-  JSON_ERROR_TOOL_EXCLUDE_LIST,
-  JSON_ERROR_PATTERNS,
-  JSON_ERROR_REMINDER,
-} from "./json-error-recovery";
-export { createReadImageResizerHook } from "./read-image-resizer";
-export { createTodoDescriptionOverrideHook } from "./todo-description-override";
-export { createWebFetchRedirectGuardHook } from "./webfetch-redirect-guard";
-export { createLegacyPluginToastHook } from "./legacy-plugin-toast";
-export { createFastApplyHook } from "./fast-apply";
-export { createMemPalaceAutoSave } from "./mempalace-auto-save";
-export { createSubAgentReceiptHook } from "./sub-agent-receipt";
-export { createReasoningContentCacheHook } from "./reasoning-content-cache";
+import type { BobConfig, HookSet } from '../types';
+import { createClosureInjector } from './closure-injector';
 
+import { createContextWindowMonitor } from './context-window-monitor';
+import { createEditErrorRecovery } from './edit-error-recovery';
+import { createJsonErrorRecovery } from './json-error-recovery';
+import { createLegalGate } from './legal-gate';
+import { createModelFallbackHook } from './model-fallback';
+import { createNonInteractiveEnv } from './non-interactive-env';
+import { createPreemptiveCompaction } from './preemptive-compaction';
+import { createQualityGate } from './quality-gate';
+import { createRulesInjector } from './rules-injector';
+import { createRuntimeFallback } from './runtime-fallback';
+import { createStopContinuationGuard } from './stop-continuation-guard';
+import { createThinkingBlockValidator } from './thinking-block-validator';
+import { createTodoContinuationHook } from './todo-continuation';
+import { createToolPairValidator } from './tool-pair-validator';
+import { createWriteExistingFileGuard } from './write-existing-file-guard';
+
+import { createCavemanMessageCompressor } from './caveman-message-compressor';
+import { createCavemanSystemInjector } from './caveman-system-injector';
+import { createCompactionContextInjector } from './compaction-context-injector';
+import { createDirectoryAgentsInjector } from './directory-agents-injector';
+import { createLoopHook } from './loop';
+import { createManagerGuard } from './manager-guard';
+import { createSessionNotification } from './session-notification';
+
+import { createAgentUsageReminder } from './agent-usage-reminder';
+import { createCompactionTodoPreserverHook } from './compaction-todo-preserver';
+import { createContextWindowLimitRecoveryHook } from './context-window-limit-recovery';
+import { createReasoningContentCacheHook } from './reasoning-content-cache';
+import { createSessionRecoveryHook } from './session-recovery';
+import { createThinkModeHook } from './think-mode';
+import { createTokenBudgetHook } from './token-budget';
+
+type HookFactory = (config: BobConfig) => HookSet;
+
+interface NamedHookFactory {
+  name: string;
+  factory: HookFactory;
+}
+
+const HOOK_POINT_KEYS: (keyof HookSet)[] = [
+  'experimental.chat.messages.transform',
+  'experimental.chat.system.transform',
+  'experimental.session.compacting',
+  'experimental.compaction.autocontinue',
+  'event',
+  'chat.message',
+  'chat.params',
+  'tool.execute.before',
+  'tool.execute.after',
+  'permission.ask',
+  'command.execute.before',
+];
+
+function mergeHookSets(factories: HookFactory[], config: BobConfig): HookSet {
+  const allSets = factories.map((f) => f(config));
+  const merged: HookSet = {};
+
+  for (const point of HOOK_POINT_KEYS) {
+    const handlers = allSets
+      .map((s) => s[point])
+      .filter((h): h is (...args: never[]) => Promise<void> => typeof h === 'function');
+    if (handlers.length === 0) continue;
+
+    if (handlers.length === 1) {
+      (merged as Record<string, unknown>)[point] = handlers[0];
+    } else {
+      (merged as Record<string, unknown>)[point] = async (input: unknown, output: unknown) => {
+        for (const handler of handlers) {
+          try {
+            await handler(input as never, output as never);
+          } catch (err) {
+            console.error(`[hiai-opencode] Hook handler error in ${point}:`, err);
+          }
+        }
+      };
+    }
+  }
+
+  const disposeFns = allSets
+    .map((s) => s.dispose)
+    .filter((d): d is NonNullable<typeof d> => d != null);
+  if (disposeFns.length > 0) {
+    merged.dispose = async () => {
+      for (const fn of disposeFns) await fn();
+    };
+  }
+
+  return merged;
+}
+
+const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
+  { name: 'closure-injector', factory: createClosureInjector },
+  { name: 'caveman-system-injector', factory: createCavemanSystemInjector },
+  { name: 'caveman-message-compressor', factory: createCavemanMessageCompressor },
+
+  { name: 'todo-continuation', factory: createTodoContinuationHook },
+  { name: 'quality-gate', factory: createQualityGate },
+  { name: 'context-window-monitor', factory: createContextWindowMonitor },
+  { name: 'tool-pair-validator', factory: createToolPairValidator },
+  { name: 'thinking-block-validator', factory: createThinkingBlockValidator },
+  { name: 'write-existing-file-guard', factory: createWriteExistingFileGuard },
+  { name: 'json-error-recovery', factory: createJsonErrorRecovery },
+  { name: 'edit-error-recovery', factory: createEditErrorRecovery },
+  { name: 'non-interactive-env', factory: createNonInteractiveEnv },
+  { name: 'model-fallback', factory: createModelFallbackHook },
+  { name: 'runtime-fallback', factory: createRuntimeFallback },
+  { name: 'preemptive-compaction', factory: createPreemptiveCompaction },
+  { name: 'stop-continuation-guard', factory: createStopContinuationGuard },
+  { name: 'rules-injector', factory: createRulesInjector },
+  { name: 'legal-gate', factory: createLegalGate },
+
+  { name: 'directory-agents-injector', factory: createDirectoryAgentsInjector },
+  { name: 'loop', factory: createLoopHook },
+  { name: 'manager-guard', factory: createManagerGuard },
+  { name: 'compaction-context-injector', factory: createCompactionContextInjector },
+  { name: 'session-notification', factory: createSessionNotification },
+
+  { name: 'agent-usage-reminder', factory: createAgentUsageReminder },
+  { name: 'session-recovery', factory: createSessionRecoveryHook },
+  { name: 'think-mode', factory: createThinkModeHook },
+  { name: 'token-budget', factory: createTokenBudgetHook },
+  { name: 'compaction-todo-preserver', factory: createCompactionTodoPreserverHook },
+  { name: 'reasoning-content-cache', factory: createReasoningContentCacheHook },
+  { name: 'context-window-limit-recovery', factory: createContextWindowLimitRecoveryHook },
+];
+
+export function createHooks(config: BobConfig): HookSet {
+  const disabledSet = new Set(config.hooks?.disabled ?? []);
+
+  const enabledFactories = ALL_NAMED_HOOK_FACTORIES.filter((h) => !disabledSet.has(h.name)).map(
+    (h) => h.factory,
+  );
+
+  return mergeHookSets(enabledFactories, config);
+}

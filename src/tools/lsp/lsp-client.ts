@@ -1,148 +1,329 @@
-import { readFileSync } from "node:fs";
-import { extname, resolve } from "node:path";
-import { pathToFileURL } from "node:url";
+import { existsSync, readFileSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { spawn } from 'bun';
 
-import { getLanguageId } from "./config";
-import { LSPClientConnection } from "./lsp-client-connection";
-import { logWarn } from "../../shared/logger";
-import type { Diagnostic } from "./types";
+export interface LSPDiagnostic {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  severity?: number;
+  message: string;
+  source?: string;
+}
 
-export class LSPClient extends LSPClientConnection {
+export interface LSPLocation {
+  uri: string;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+}
+
+export interface LSPSymbol {
+  name: string;
+  kind: number;
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  location?: LSPLocation;
+}
+
+export interface LSPPrepareRename {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  placeholder: string;
+}
+
+export interface LSPEdit {
+  range: {
+    start: { line: number; character: number };
+    end: { line: number; character: number };
+  };
+  newText: string;
+}
+
+const LANG_MAP: Record<string, string> = {
+  '.ts': 'typescript',
+  '.tsx': 'typescriptreact',
+  '.js': 'javascript',
+  '.jsx': 'javascriptreact',
+  '.mts': 'typescript',
+  '.cts': 'typescript',
+  '.mjs': 'javascript',
+  '.cjs': 'javascript',
+  '.svelte': 'svelte',
+  '.py': 'python',
+  '.json': 'json',
+};
+
+export class LSPClient {
+  private proc: ReturnType<typeof spawn> | null = null;
+  private requestId = 0;
+  private pendingRequests = new Map<
+    number,
+    {
+      resolve: (v: unknown) => void;
+      reject: (e: Error) => void;
+      timer: ReturnType<typeof setTimeout>;
+    }
+  >();
+  private diagnosticsStore = new Map<string, LSPDiagnostic[]>();
   private openedFiles = new Set<string>();
   private documentVersions = new Map<string, number>();
   private lastSyncedText = new Map<string, string>();
+  private buffer = '';
+  private reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+  private running = false;
 
-  async openFile(filePath: string): Promise<void> {
-    const absPath = resolve(filePath);
+  constructor(
+    private root: string,
+    private command: string[],
+    private options: {
+      initializationOptions?: Record<string, unknown>;
+      env?: Record<string, string>;
+    } = {},
+  ) {}
 
-    const uri = pathToFileURL(absPath).href;
-    const text = readFileSync(absPath, "utf-8");
+  async start() {
+    this.proc = spawn(this.command, {
+      stdin: 'pipe',
+      stdout: 'pipe',
+      stderr: 'pipe',
+      cwd: this.root,
+      env: { ...process.env, ...(this.options.env ?? {}) },
+    });
+    this.running = true;
+    const stdout = this.proc.stdout as unknown as ReadableStream<Uint8Array>;
+    this.reader = stdout.getReader();
+    this.readLoop();
+    await this.initialize();
+  }
 
-    if (!this.openedFiles.has(absPath)) {
-      const ext = extname(absPath);
-      const languageId = getLanguageId(ext);
-      const version = 1;
+  private async readLoop() {
+    if (!this.reader) return;
+    try {
+      while (true) {
+        const { value, done } = await this.reader.read();
+        if (done) break;
+        this.buffer += new TextDecoder('utf-8', { fatal: false }).decode(value, { stream: true });
+        this.processBuffer();
+      }
+    } catch {
+      // stream closed
+    }
+  }
 
-      this.sendNotification("textDocument/didOpen", {
+  private processBuffer() {
+    const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+    if (this.buffer.length > MAX_BUFFER_SIZE) {
+      this.buffer = '';
+      console.error('[bob] LSP buffer exceeded max size, clearing');
+      return;
+    }
+    while (true) {
+      const headerEnd = this.buffer.indexOf('\r\n\r\n');
+      if (headerEnd === -1) break;
+      const header = this.buffer.slice(0, headerEnd);
+      const match = header.match(/Content-Length: (\d+)/);
+      if (!match) {
+        this.buffer = this.buffer.slice(headerEnd + 4);
+        continue;
+      }
+      const len = Number.parseInt(match[1]);
+      const bodyStart = headerEnd + 4;
+      if (this.buffer.length < bodyStart + len) break;
+      const body = this.buffer.slice(bodyStart, bodyStart + len);
+      this.buffer = this.buffer.slice(bodyStart + len);
+      try {
+        const msg = JSON.parse(body);
+        if (msg.id !== undefined && this.pendingRequests.has(msg.id)) {
+          const pending =
+            this.pendingRequests.get(msg.id) ??
+            (() => {
+              throw new Error('pending not found');
+            })();
+          this.pendingRequests.delete(msg.id);
+          clearTimeout(pending.timer);
+          if (msg.error) pending.reject(new Error(msg.error.message));
+          else pending.resolve(msg.result);
+        } else if (msg.method === 'textDocument/publishDiagnostics') {
+          this.diagnosticsStore.set(msg.params.uri, msg.params.diagnostics ?? []);
+        } else if (msg.method && msg.id !== undefined) {
+          this.sendResponse(msg.id, null);
+        }
+      } catch {
+        // parse error
+      }
+    }
+  }
+
+  private sendRequest(method: string, params: unknown): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      if (!this.running || !this.proc) {
+        reject(new Error('LSP client not running'));
+        return;
+      }
+      const id = ++this.requestId;
+      const timer = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error(`Timeout: ${method}`));
+      }, 15000);
+      this.pendingRequests.set(id, { resolve, reject, timer });
+      const msg = JSON.stringify({ jsonrpc: '2.0', id, method, params });
+      const header = `Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n`;
+      this.writeStdin(header + msg);
+    });
+  }
+
+  private writeStdin(data: string) {
+    const stdin = this.proc?.stdin as unknown as { write(data: string): void } | undefined;
+    stdin?.write(data);
+  }
+
+  private sendNotification(method: string, params: unknown) {
+    if (!this.proc) return;
+    const msg = JSON.stringify({ jsonrpc: '2.0', method, params });
+    const header = `Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n`;
+    this.writeStdin(header + msg);
+  }
+
+  private sendResponse(id: number, result: unknown) {
+    if (!this.proc) return;
+    const msg = JSON.stringify({ jsonrpc: '2.0', id, result });
+    const header = `Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n`;
+    this.writeStdin(header + msg);
+  }
+
+  private async initialize() {
+    const rootUri = pathToFileURL(this.root).href;
+    const initParams: Record<string, unknown> = {
+      processId: process.pid,
+      rootUri,
+      rootPath: this.root,
+      workspaceFolders: [{ uri: rootUri, name: 'workspace' }],
+      capabilities: {
         textDocument: {
-          uri,
-          languageId,
-          version,
-          text,
+          definition: { linkSupport: true },
+          references: {},
+          publishDiagnostics: {},
+          documentSymbol: {},
+          rename: { prepareSupport: true },
         },
-      });
+        workspace: { symbol: {}, workspaceFolders: true },
+      },
+    };
+    if (this.options.initializationOptions) {
+      initParams.initializationOptions = this.options.initializationOptions;
+    }
+    await this.sendRequest('initialize', initParams);
+    this.sendNotification('initialized', {});
+    await new Promise((r) => setTimeout(r, 300));
+  }
 
-      this.openedFiles.add(absPath);
-      this.documentVersions.set(uri, version);
+  async openFile(filePath: string) {
+    const resolved = resolve(filePath);
+    if (!existsSync(resolved)) return;
+    const uri = pathToFileURL(resolved).href;
+    const text = readFileSync(resolved, 'utf-8');
+    const ext = extname(resolved);
+    const langId = LANG_MAP[ext] ?? 'plaintext';
+
+    if (!this.openedFiles.has(resolved)) {
+      this.sendNotification('textDocument/didOpen', {
+        textDocument: { uri, languageId: langId, version: 1, text },
+      });
+      this.openedFiles.add(resolved);
+      this.documentVersions.set(uri, 1);
       this.lastSyncedText.set(uri, text);
       await new Promise((r) => setTimeout(r, 1000));
-      return;
+    } else if (this.lastSyncedText.get(uri) !== text) {
+      const version = (this.documentVersions.get(uri) ?? 1) + 1;
+      this.sendNotification('textDocument/didChange', {
+        textDocument: { uri, version },
+        contentChanges: [{ text }],
+      });
+      this.sendNotification('textDocument/didSave', {
+        textDocument: { uri },
+        text,
+      });
+      this.documentVersions.set(uri, version);
+      this.lastSyncedText.set(uri, text);
     }
-
-    const prevText = this.lastSyncedText.get(uri);
-    if (prevText === text) {
-      return;
-    }
-
-    const nextVersion = (this.documentVersions.get(uri) ?? 1) + 1;
-    this.documentVersions.set(uri, nextVersion);
-    this.lastSyncedText.set(uri, text);
-
-    this.sendNotification("textDocument/didChange", {
-      textDocument: { uri, version: nextVersion },
-      contentChanges: [{ text }],
-    });
-
-    // Some servers update diagnostics only after save
-    this.sendNotification("textDocument/didSave", {
-      textDocument: { uri },
-      text,
-    });
   }
 
   async definition(
     filePath: string,
     line: number,
     character: number,
-  ): Promise<unknown> {
-    const absPath = resolve(filePath);
-    await this.openFile(absPath);
-    return this.sendRequest("textDocument/definition", {
-      textDocument: { uri: pathToFileURL(absPath).href },
+  ): Promise<LSPLocation | LSPLocation[] | null> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const result = await this.sendRequest('textDocument/definition', {
+      textDocument: { uri },
       position: { line: line - 1, character },
     });
+    return (result as LSPLocation | LSPLocation[] | null) ?? null;
   }
 
-  async references(
-    filePath: string,
-    line: number,
-    character: number,
-    includeDeclaration = true,
-  ): Promise<unknown> {
-    const absPath = resolve(filePath);
-    await this.openFile(absPath);
-    return this.sendRequest("textDocument/references", {
-      textDocument: { uri: pathToFileURL(absPath).href },
+  async references(filePath: string, line: number, character: number): Promise<LSPLocation[]> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const result = await this.sendRequest('textDocument/references', {
+      textDocument: { uri },
       position: { line: line - 1, character },
-      context: { includeDeclaration },
+      context: { includeDeclaration: true },
     });
+    return (result as LSPLocation[]) ?? [];
   }
 
-  async documentSymbols(filePath: string): Promise<unknown> {
-    const absPath = resolve(filePath);
-    await this.openFile(absPath);
-    return this.sendRequest("textDocument/documentSymbol", {
-      textDocument: { uri: pathToFileURL(absPath).href },
-    });
-  }
-
-  async workspaceSymbols(query: string): Promise<unknown> {
-    return this.sendRequest("workspace/symbol", { query });
-  }
-
-  async diagnostics(filePath: string): Promise<{ items: Diagnostic[] }> {
-    const absPath = resolve(filePath);
-    const uri = pathToFileURL(absPath).href;
-    await this.openFile(absPath);
+  async diagnostics(filePath: string): Promise<LSPDiagnostic[]> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
     await new Promise((r) => setTimeout(r, 500));
-
+    let result: { items?: unknown[] } | null = null;
     try {
-      const result = await this.sendRequest<{ items?: Diagnostic[] }>(
-        "textDocument/diagnostic",
-        {
-          textDocument: { uri },
-        },
-      );
-      if (result && typeof result === "object" && "items" in result) {
-        return result as { items: Diagnostic[] };
-      }
-    } catch (error) {
-      // Pull-style diagnostic request failed (server doesn't support it, timed
-      // out, or the LSP connection is broken). Fall back to whatever the
-      // server has already pushed via publishDiagnostics.
-      logWarn(
-        "[lsp-client] pull diagnostics request failed, using pushed store",
-        {
-          uri,
-          error: String(error),
-        },
-      );
+      result = (await this.sendRequest('textDocument/diagnostic', {
+        textDocument: { uri },
+      })) as { items?: unknown[] };
+    } catch {
+      return this.diagnosticsStore.get(uri) ?? [];
     }
+    return (result?.items as LSPDiagnostic[] | undefined) ?? [];
+  }
 
-    return { items: this.diagnosticsStore.get(uri) ?? [] };
+  async symbols(filePath: string): Promise<LSPSymbol[]> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const result = await this.sendRequest('textDocument/documentSymbol', {
+      textDocument: { uri },
+    });
+    return (result as LSPSymbol[]) ?? [];
+  }
+
+  async workspaceSymbols(query: string): Promise<LSPSymbol[]> {
+    const result = await this.sendRequest('workspace/symbol', {
+      query,
+    });
+    return (result as LSPSymbol[]) ?? [];
   }
 
   async prepareRename(
     filePath: string,
     line: number,
     character: number,
-  ): Promise<unknown> {
-    const absPath = resolve(filePath);
-    await this.openFile(absPath);
-    return this.sendRequest("textDocument/prepareRename", {
-      textDocument: { uri: pathToFileURL(absPath).href },
+  ): Promise<LSPPrepareRename | null> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const prepResult = await this.sendRequest('textDocument/prepareRename', {
+      textDocument: { uri },
       position: { line: line - 1, character },
     });
+    return (prepResult as LSPPrepareRename) ?? null;
   }
 
   async rename(
@@ -150,13 +331,34 @@ export class LSPClient extends LSPClientConnection {
     line: number,
     character: number,
     newName: string,
-  ): Promise<unknown> {
-    const absPath = resolve(filePath);
-    await this.openFile(absPath);
-    return this.sendRequest("textDocument/rename", {
-      textDocument: { uri: pathToFileURL(absPath).href },
+  ): Promise<Record<string, LSPEdit[]> | null> {
+    await this.openFile(filePath);
+    const uri = pathToFileURL(resolve(filePath)).href;
+    const result = await this.sendRequest('textDocument/rename', {
+      textDocument: { uri },
       position: { line: line - 1, character },
       newName,
     });
+    const workspaceEdit = result as {
+      changes?: Record<string, LSPEdit[]>;
+    } | null;
+    return workspaceEdit?.changes ?? null;
+  }
+
+  async stop() {
+    if (!this.running) return;
+    this.running = false;
+    try {
+      await this.sendRequest('shutdown', null);
+      this.sendNotification('exit', null);
+    } catch {
+      // ignore
+    }
+    this.proc?.kill();
+    for (const pending of this.pendingRequests.values()) {
+      clearTimeout(pending.timer);
+      pending.reject(new Error('Client stopped'));
+    }
+    this.pendingRequests.clear();
   }
 }

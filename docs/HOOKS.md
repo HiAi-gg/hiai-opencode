@@ -1,126 +1,95 @@
 # Hooks Reference
 
-**Generated:** 2026-04-26
+hiai-opencode registers 30 hooks, organized by category. Hooks are filtered at
+composition time by `config.hooks.disabled` in `bob.json`.
 
-This document catalogs all ~51 hooks used by hiai-opencode for OpenCode plugin integration.
+## Safety (4 hooks)
 
-## Hook Architecture
+| Hook | File | Purpose |
+|------|------|---------|
+| **legal-gate** | `legal-gate.ts` | Enforces project ethical-use policy — hard deny-list (military, ransomware, credential theft, C2, exfiltration, PII scraping) + contextual deny (dual-use security terms only block when paired with offensive-intent verbs). Also implements ask-before-do via `permission.ask` for high-risk tools (bash, write, edit, patch, webfetch). |
+| **non-interactive-env** | `non-interactive-env.ts` | Blocks interactive commands (vim, ssh, nano, etc.) in subagent environments. |
+| **write-existing-file-guard** | `write-existing-file-guard.ts` | Warns when writing to an existing file (prevents accidental overwrites). |
+| **model-fallback** | `model-fallback.ts` | Falls back to alternate model on provider error. |
 
-Hooks are composed in five tiers:
-- **Session hooks**: 21 hooks handling session lifecycle and state
-- **Tool guard hooks**: 15 hooks enforcing pre/post tool execution policies
-- **Transform hooks**: 5 hooks modifying messages and prompts
-- **Continuation hooks**: 8 hooks for multi-turn continuation logic
-- **Skill hooks**: 2 hooks for skill-related functionality
+## Quality (4 hooks)
 
-## Session Hooks (`create-session-hooks.ts`)
+| Hook | File | Purpose |
+|------|------|---------|
+| **quality-gate** | `quality-gate.ts` | Detects lint/typecheck failures in tool output and flags them. |
+| **tool-pair-validator** | `tool-pair-validator.ts` | Auto-injects missing `tool_result` blocks when a tool produces output. |
+| **thinking-block-validator** | `thinking-block-validator.ts` | Fixes empty or malformed thinking tags. |
+| **closure-injector** | `closure-injector.ts` | Enforces `<CLOSURE>` block structure in agent responses. |
 
-| Hook Name | Trigger | Purpose | Side Effects |
-|-----------|---------|---------|--------------|
-| `session.created` | Session created | Initialize session state, model cache | Sets session agent, model state |
-| `session.deleted` | Session deleted | Cleanup session resources | Clears session cache, removes temp files |
-| `session.idle` | Session becomes idle | Advance return chains, loop iterations | Processes deferred returns, triggers loops |
-| `session.error` | Session error | Log error, attempt recovery | Records error state, triggers fallback |
-| `chat.message` | Chat message received | First-message variant gate, keyword detection | Sets session variant, triggers keywords |
-| `chat.params` | Chat parameters resolved | Anthropic effort level, think mode | Applies effort/temperature settings |
-| `chat.headers` | Chat headers built | Copilot x-initiator header injection | Adds authentication headers |
-| `ralphLoop` | Ultrawork mode | Ralph loop continuation enforcement | Tracks task progress, continues work |
-| `todoContinuationEnforcer` | TODO tool used | Enforces todo continuation via system directive | Injects continuation reminders |
-| `sessionRecovery` | Session recovery triggered | Recovery from context exhaustion | Stores/resotres session state |
-| `preemptiveCompaction` | Token limit approaching | Preemptive context reduction | Compresses context before limit |
-| `ultraworkVariantAvailability` | Ultrawork mode check | Determines if ultrawork available | Flags session for ultrawork |
-| `ultraworDBModelOverride` | Ultrawork DB access | Database-level model override | Overrides model from DB |
-| `ultraworkModelOverride` | Ultrawork enabled | Runtime model override for ultrawork | Applies model changes |
-| `noBobGpt` | Bob agent GPT check | Blocks GPT for Bob agent | Modifies model selection |
-| `noCoderNonGpt` | Coder non-GPT check | Blocks non-GPT for coder | Modifies model selection |
-| `nonInteractiveEnv` | Environment check | Detects non-interactive environment | Sets environment flags |
-| `agentUsageReminder` | Agent action | Reminds about agent usage policies | Logs agent usage |
-| `sessionTodoStatus` | Session todo update | Tracks TODO task status across session | Updates todo state |
-| `writeExistingFileGuard` | Write tool on existing file | Prevents overwrite of existing files | Guards file writes |
-| `webfetchRedirectGuard` | Webfetch redirect | Blocks redirects to untrusted domains | Validates redirect URLs |
-| `sessionStatusNormalizer` | Session status check | Normalizes status across OpenCode versions | Standardizes status |
+## Recovery (5 hooks)
 
-## Tool Guard Hooks (`create-tool-guard-hooks.ts`)
+| Hook | File | Purpose |
+|------|------|---------|
+| **edit-error-recovery** | `edit-error-recovery.ts` | Auto-fix "oldString not found" by suggesting re-read. |
+| **json-error-recovery** | `json-error-recovery.ts` | Suggests re-read on JSON parse errors in tool inputs. |
+| **context-window-limit-recovery** | `context-window-limit-recovery.ts` | Detects context limit errors → injects compaction hints, resets loop state. |
+| **runtime-fallback** | `runtime-fallback.ts` | Caps output at 32K tokens to prevent context overflow. |
+| **session-recovery** | `session-recovery.ts` | Classifies session errors into 7 types, records them in loop-state. |
 
-| Hook Name | Trigger | Purpose | Side Effects |
-|-----------|---------|---------|--------------|
-| `tool.execute.before` | Tool execution starts | Pre-tool guards, file guard, label truncator | Injects rules, validates paths |
-| `tool.execute.after` | Tool execution completes | Post-tool processing, output truncation | Truncates output, logs metadata |
-| `toolPairValidator` | Tool pair execution | Validates sequential tool pairs | Blocks invalid sequences |
-| `toolOutputTruncator` | Tool output generated | Truncates large tool outputs | Limits output size |
-| `preemptiveCompactionNoTextTail` | Compaction without text tail | Prevents text tail removal during compaction | Preserves text tail |
-| `preemptiveCompactionDegradationMonitor` | Compaction degradation | Monitors quality degradation during compaction | Tracks degradation metrics |
-| `modelFallback` | Model unavailable | Attempts fallback chain on model failure | Switches to fallback model |
-| `modelFallbackChatMessage` | Chat message with fallback | Handles chat message fallback | Retries with fallback |
-| `thinkMode` | Think mode enabled | Manages thinking block behavior | Validates thinking usage |
-| `thinkingBlockValidator` | Thinking block detected | Validates thinking block content | Checks block validity |
-| `unstableAgentBabysitter` | Unstable agent detected | Tracks unstable agent behavior | Monitors agent stability |
-| `toolExecuteBeforeGuard` | Pre-execution guard | Additional pre-tool validation | Validates tool call |
-| `toolExecuteAfterGuard` | Post-execution guard | Additional post-tool validation | Reviews tool output |
-| `availableCategories` | Category build | Builds category list for agent prompts | Generates category metadata |
+## System (8 hooks)
 
-## Transform Hooks (`create-transform-hooks.ts`)
+| Hook | File | Purpose |
+|------|------|---------|
+| **rules-injector** | `rules-injector.ts` | Injects AGENTS.md rules into system prompt. |
+| **context-window-monitor** | `context-window-monitor.ts` | Warns at 70% context window threshold. |
+| **think-mode** | `think-mode.ts` | Enables 10K thinking budget for supported agents. |
+| **token-budget** | `token-budget.ts` | Manages token budget enforcement. |
+| **session-notification** | `session-notification.ts` | Session lifecycle notifications. |
+| **agent-usage-reminder** | `agent-usage-reminder.ts` | Reminds agents of available tools/agents. |
+| **caveman-system-injector** | `caveman-system-injector.ts` | Injects caveman internal protocol fragments into system prompt for Bob and target subagents. |
+| **caveman-message-compressor** | `caveman-message-compressor.ts` | Conservative message/history compressor — currently adds conciseness marker, no lossy rewriting. |
 
-| Hook Name | Trigger | Purpose | Side Effects |
-|-----------|---------|---------|--------------|
-| `experimental.chat.messages.transform` | Message transform | Context injection, thinking block validation | Modifies message content |
-| `session.compacting` | Session compaction | Context + TODO preservation | Preserves context during compaction |
-| `experimental.session.compacting` | Session compaction | Alternative compaction hook | Handles session compaction |
-| `compactionContextInjector` | Context during compaction | Injects context during compaction | Adds context data |
-| `compactionTodoPreserver` | TODO during compaction | Preserves TODO state during compaction | Saves todo state |
+## Lifecycle (4 hooks)
 
-## Skill Hooks (`create-skill-hooks.ts`)
+| Hook | File | Purpose |
+|------|------|---------|
+| **compaction-context-injector** | `compaction-context-injector.ts` | Preserves context during session compaction. |
+| **compaction-todo-preserver** | `compaction-todo-preserver.ts` | Preserves todo state across compaction. |
+| **reasoning-content-cache** | `reasoning-content-cache.ts` | Caches reasoning content for reuse. |
+| **preemptive-compaction** | `preemptive-compaction.ts` | Preemptive compaction before context limit is reached. |
 
-| Hook Name | Trigger | Purpose | Side Effects |
-|-----------|---------|---------|--------------|
-| `skill.context` | Skill context requested | Builds skill context for tools | Generates skill metadata |
-| `agentUsageReminder` | Agent action | Reminds about skill usage | Logs skill usage |
+## Loop & Continuation (3 hooks)
 
-## Hook Configuration
+| Hook | File | Purpose |
+|------|------|---------|
+| **loop** | `loop.ts` | Main session-idle loop driver with iteration counting, cooldown, completion detection. |
+| **todo-continuation** | `todo-continuation.ts` | Continues on incomplete todo state. |
+| **stop-continuation-guard** | `stop-continuation-guard.ts` | Guards against unintended continuation stops. |
 
-Hooks can be disabled via `hiai-opencode.json`:
+## Agent Management (2 hooks)
 
-```json
+| Hook | File | Purpose |
+|------|------|---------|
+| **directory-agents-injector** | `directory-agents-injector.ts` | Injects directory-based agent definitions. |
+| **manager-guard** | `manager-guard.ts` | Manages subagent delegation guardrails. |
+
+## Disabling Hooks
+
+In `bob.json`:
+
+```jsonc
 {
   "hooks": {
-    "disabled": [
-      "preemptiveCompaction",
-      "modelFallback"
-    ]
+    "disabled": ["non-interactive-env", "context-window-monitor"]
   }
 }
 ```
 
-## Hook Timing (when `HIAI_HOOK_TIMINGS=1`)
+The `disabled_hooks` legacy array is also supported and merged with `hooks.disabled`.
 
-Enable hook timing measurement by setting the environment variable:
-```
-HIAI_HOOK_TIMINGS=1 opencode ...
-```
+## Adding a Hook
 
-Timings are written to `OPENCODE_LOG` with format: `hook:<name>:<duration_ms>`
-
-## Key Hook Dependencies
-
-```
-session.created
-    └── session.idle
-            └── sessionRecovery
-                    └── session.deleted
-
-tool.execute.before
-    └── tool.execute.after
-            └── toolOutputTruncator
-
-chat.message
-    ├── keywordDetector
-    │       └── ralphLoop
-    │               └── todoContinuationEnforcer
-    └── chat.params
-            └── thinkMode
-
-experimental.chat.messages.transform
-    └── session.compacting
-            ├── compactionContextInjector
-            └── compactionTodoPreserver
-```
+1. Create a factory function in `src/hooks/<name>.ts`:
+   ```ts
+   import type { BobConfig, HookSet } from "../types";
+   export function createMyHook(config: BobConfig): HookSet { ... }
+   ```
+2. Register in `src/hooks/index.ts`:
+   - Import the factory
+   - Add `{ name: "my-hook", factory: createMyHook }` to `ALL_NAMED_HOOK_FACTORIES`
+3. The hook is auto-enabled; disable via `hooks.disabled` in bob.json if needed.

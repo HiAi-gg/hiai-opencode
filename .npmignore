@@ -9,3 +9,15 @@ config/.opencode/
 *.sqlite3-wal
 .bob/
 .opencode/palace/
+
+# From plugin-bob:
+bob.env
+.github/
+src/
+node_modules/
+bun.lock
+
+# IDE and OS
+*.swp
+*.swo
+.DS_Store

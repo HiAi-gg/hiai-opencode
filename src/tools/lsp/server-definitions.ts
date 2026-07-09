@@ -1,202 +1,154 @@
-import type { LSPServerConfig } from "./types";
-
-export const LSP_INSTALL_HINTS: Record<string, string> = {
-  typescript: "npm install -g typescript-language-server typescript",
-  deno: "Install Deno from https://deno.land",
-  vue: "npm install -g @vue/language-server",
-  eslint: "npm install -g vscode-langservers-extracted",
-  oxlint: "npm install -g oxlint",
-  biome: "npm install -g @biomejs/biome",
-  gopls: "go install golang.org/x/tools/gopls@latest",
-  "ruby-lsp": "gem install ruby-lsp",
-  basedpyright: "pip install basedpyright",
-  pyright: "pip install pyright",
-  ty: "pip install ty",
-  ruff: "pip install ruff",
-  "elixir-ls": "See https://github.com/elixir-lsp/elixir-ls",
-  zls: "See https://github.com/zigtools/zls",
-  csharp: "dotnet tool install -g csharp-ls",
-  fsharp: "dotnet tool install -g fsautocomplete",
-  "sourcekit-lsp": "Included with Xcode or Swift toolchain",
-  rust: "rustup component add rust-analyzer",
-  clangd: "See https://clangd.llvm.org/installation",
-  svelte: "npm install -g svelte-language-server",
-  astro: "npm install -g @astrojs/language-server",
-  "bash-ls": "npm install -g bash-language-server",
-  jdtls: "See https://github.com/eclipse-jdtls/eclipse.jdt.ls",
-  "yaml-ls": "npm install -g yaml-language-server",
-  "lua-ls": "See https://github.com/LuaLS/lua-language-server",
-  php: "npm install -g intelephense",
-  dart: "Included with Dart SDK",
-  "terraform-ls": "See https://github.com/hashicorp/terraform-ls",
-  terraform: "See https://github.com/hashicorp/terraform-ls",
-  prisma: "npm install -g prisma",
-  "ocaml-lsp": "opam install ocaml-lsp-server",
-  texlab: "See https://github.com/latex-lsp/texlab",
-  dockerfile: "npm install -g dockerfile-language-server-nodejs",
-  gleam: "See https://gleam.run/getting-started/installing/",
-  "clojure-lsp": "See https://clojure-lsp.io/installation/",
-  nixd: "nix profile install nixpkgs#nixd",
-  tinymist: "See https://github.com/Myriad-Dreamin/tinymist",
-  "haskell-language-server": "ghcup install hls",
-  bash: "npm install -g bash-language-server",
-  "kotlin-ls": "See https://github.com/Kotlin/kotlin-lsp",
+export type LspServerEntry = {
+  command: string;
+  args: string[];
+  extensions: string[];
+  initializationOptions?: Record<string, unknown>;
+  env?: Record<string, string>;
 };
 
-// Synced with OpenCode's server.ts
-// https://github.com/sst/opencode/blob/dev/packages/opencode/src/lsp/server.ts
-export const BUILTIN_SERVERS: Record<string, Omit<LSPServerConfig, "id">> = {
+export const BUILTIN_SERVERS: Record<string, LspServerEntry> = {
   typescript: {
-    command: ["typescript-language-server", "--stdio"],
-    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"],
+    command: 'typescript-language-server',
+    args: ['--stdio'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts', '.mjs', '.cjs'],
   },
-  deno: {
-    command: ["deno", "lsp"],
-    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs"],
+  svelte: {
+    command: 'svelteserver',
+    args: ['--stdio'],
+    extensions: ['.svelte'],
   },
-  vue: { command: ["vue-language-server", "--stdio"], extensions: [".vue"] },
   eslint: {
-    command: ["vscode-eslint-language-server", "--stdio"],
-    extensions: [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx",
-      ".mjs",
-      ".cjs",
-      ".mts",
-      ".cts",
-      ".vue",
-    ],
-  },
-  oxlint: {
-    command: ["oxlint", "--lsp"],
-    extensions: [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx",
-      ".mjs",
-      ".cjs",
-      ".mts",
-      ".cts",
-      ".vue",
-      ".astro",
-      ".svelte",
-    ],
-  },
-  biome: {
-    command: ["biome", "lsp-proxy", "--stdio"],
-    extensions: [
-      ".ts",
-      ".tsx",
-      ".js",
-      ".jsx",
-      ".mjs",
-      ".cjs",
-      ".mts",
-      ".cts",
-      ".json",
-      ".jsonc",
-      ".vue",
-      ".astro",
-      ".svelte",
-      ".css",
-      ".graphql",
-      ".gql",
-      ".html",
-    ],
-  },
-  gopls: { command: ["gopls"], extensions: [".go"] },
-  "ruby-lsp": {
-    command: ["rubocop", "--lsp"],
-    extensions: [".rb", ".rake", ".gemspec", ".ru"],
-  },
-  basedpyright: {
-    command: ["basedpyright-langserver", "--stdio"],
-    extensions: [".py", ".pyi"],
+    command: 'npx',
+    args: ['-y', 'eslint-lsp'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
   },
   pyright: {
-    command: ["pyright-langserver", "--stdio"],
-    extensions: [".py", ".pyi"],
+    command: 'pyright-langserver',
+    args: ['--stdio'],
+    extensions: ['.py'],
   },
-  ty: { command: ["ty", "server"], extensions: [".py", ".pyi"] },
-  ruff: { command: ["ruff", "server"], extensions: [".py", ".pyi"] },
-  "elixir-ls": { command: ["elixir-ls"], extensions: [".ex", ".exs"] },
-  zls: { command: ["zls"], extensions: [".zig", ".zon"] },
-  csharp: { command: ["csharp-ls"], extensions: [".cs"] },
-  fsharp: {
-    command: ["fsautocomplete"],
-    extensions: [".fs", ".fsi", ".fsx", ".fsscript"],
+  html: {
+    command: 'vscode-html-language-server',
+    args: ['--stdio'],
+    extensions: ['.html', '.htm'],
   },
-  "sourcekit-lsp": {
-    command: ["sourcekit-lsp"],
-    extensions: [".swift", ".objc", ".objcpp"],
+  css: {
+    command: 'vscode-css-language-server',
+    args: ['--stdio'],
+    extensions: ['.css', '.scss', '.less'],
   },
-  rust: { command: ["rust-analyzer"], extensions: [".rs"] },
-  clangd: {
-    command: ["clangd", "--background-index", "--clang-tidy"],
-    extensions: [
-      ".c",
-      ".cpp",
-      ".cc",
-      ".cxx",
-      ".c++",
-      ".h",
-      ".hpp",
-      ".hh",
-      ".hxx",
-      ".h++",
-    ],
+  json: {
+    command: 'vscode-json-language-server',
+    args: ['--stdio'],
+    extensions: ['.json', '.jsonc'],
   },
-  svelte: { command: ["svelteserver", "--stdio"], extensions: [".svelte"] },
-  astro: { command: ["astro-ls", "--stdio"], extensions: [".astro"] },
-  bash: {
-    command: ["bash-language-server", "start"],
-    extensions: [".sh", ".bash", ".zsh", ".ksh"],
+  vue: {
+    command: 'vue-language-server',
+    args: ['--stdio'],
+    extensions: ['.vue'],
   },
-  // Keep legacy alias for backward compatibility
-  "bash-ls": {
-    command: ["bash-language-server", "start"],
-    extensions: [".sh", ".bash", ".zsh", ".ksh"],
+  go: {
+    command: 'gopls',
+    args: ['serve'],
+    extensions: ['.go'],
   },
-  jdtls: { command: ["jdtls"], extensions: [".java"] },
-  "yaml-ls": {
-    command: ["yaml-language-server", "--stdio"],
-    extensions: [".yaml", ".yml"],
+  rust: {
+    command: 'rust-analyzer',
+    args: [],
+    extensions: ['.rs'],
   },
-  "lua-ls": { command: ["lua-language-server"], extensions: [".lua"] },
-  php: { command: ["intelephense", "--stdio"], extensions: [".php"] },
-  dart: {
-    command: ["dart", "language-server", "--lsp"],
-    extensions: [".dart"],
+  yaml: {
+    command: 'yaml-language-server',
+    args: ['--stdio'],
+    extensions: ['.yaml', '.yml'],
   },
-  terraform: {
-    command: ["terraform-ls", "serve"],
-    extensions: [".tf", ".tfvars"],
+  biome: {
+    command: 'biome',
+    args: ['lsp-proxy'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json', '.css'],
+    env: { BIOME_LOG_DIR: '/tmp' },
   },
-  // Legacy alias for backward compatibility
-  "terraform-ls": {
-    command: ["terraform-ls", "serve"],
-    extensions: [".tf", ".tfvars"],
+  oxlint: {
+    command: 'oxlint',
+    args: ['--lsp'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
   },
-  prisma: { command: ["prisma", "language-server"], extensions: [".prisma"] },
-  "ocaml-lsp": { command: ["ocamllsp"], extensions: [".ml", ".mli"] },
-  texlab: { command: ["texlab"], extensions: [".tex", ".bib"] },
-  dockerfile: {
-    command: ["docker-langserver", "--stdio"],
-    extensions: [".dockerfile"],
+  deno: {
+    command: 'deno',
+    args: ['lsp'],
+    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.json'],
+    initializationOptions: {
+      enable: true,
+      lint: true,
+      suggest: { imports: { hosts: {} } },
+      unstable: false,
+    },
   },
-  gleam: { command: ["gleam", "lsp"], extensions: [".gleam"] },
-  "clojure-lsp": {
-    command: ["clojure-lsp", "listen"],
-    extensions: [".clj", ".cljs", ".cljc", ".edn"],
+  ruff: {
+    command: 'ruff',
+    args: ['server'],
+    extensions: ['.py'],
+    initializationOptions: {
+      settings: { showSyntaxErrors: true },
+    },
   },
-  nixd: { command: ["nixd"], extensions: [".nix"] },
-  tinymist: { command: ["tinymist"], extensions: [".typ", ".typc"] },
-  "haskell-language-server": {
-    command: ["haskell-language-server-wrapper", "--lsp"],
-    extensions: [".hs", ".lhs"],
-  },
-  "kotlin-ls": { command: ["kotlin-lsp"], extensions: [".kt", ".kts"] },
 };
+
+type LspUserConfig = {
+  enabled?: boolean;
+  command?: string;
+  args?: string[];
+  initializationOptions?: Record<string, unknown>;
+  env?: Record<string, string>;
+};
+
+let _lspConfig: Record<string, LspUserConfig> | undefined;
+
+export function setLspConfig(config: Record<string, LspUserConfig>): void {
+  _lspConfig = config;
+}
+
+const PRIORITY = [
+  'typescript',
+  'biome',
+  'oxlint',
+  'deno',
+  'svelte',
+  'eslint',
+  'pyright',
+  'ruff',
+  'html',
+  'css',
+  'json',
+  'vue',
+  'go',
+  'rust',
+  'yaml',
+];
+
+export function findServerForExtension(
+  ext: string,
+  lspConfig?: Record<string, LspUserConfig>,
+): { id: string; server: LspServerEntry } | null {
+  const config = lspConfig ?? _lspConfig;
+  for (const id of PRIORITY) {
+    const server = BUILTIN_SERVERS[id];
+    if (config && config[id]?.enabled === false) continue;
+    if (server?.extensions.includes(ext)) return { id, server };
+  }
+  return null;
+}
+
+export function getServerDef(id: string, config?: LspUserConfig): LspServerEntry | null {
+  if (config?.enabled === false) return null;
+  const builtin = BUILTIN_SERVERS[id];
+  if (!builtin) return null;
+  if (!config) return builtin;
+  return {
+    command: config.command ?? builtin.command,
+    args: config.args ?? builtin.args,
+    extensions: builtin.extensions,
+    initializationOptions: config.initializationOptions ?? builtin.initializationOptions,
+    env: config.env ?? builtin.env,
+  };
+}

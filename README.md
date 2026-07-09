@@ -1,4 +1,4 @@
-# hiai-opencode
+# @hiai-gg/hiai-opencode
 
 [![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml?query=branch%3Amain)
 [![Release](https://img.shields.io/github/v/release/HiAi-gg/hiai-opencode?style=flat-square&logo=github)](https://github.com/HiAi-gg/hiai-opencode/releases/latest)
@@ -9,256 +9,34 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](CONTRIBUTING.md)
 [![Bun](https://img.shields.io/badge/runtime-Bun-f9f1e1?style=flat-square&logo=bun)](https://bun.sh)
 [![Node](https://img.shields.io/badge/node-%E2%89%A520-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![OpenCode](https://img.shields.io/badge/host-OpenCode-blue?style=flat-square)](https://opencode.ai)
 
-`hiai-opencode` is an OpenCode plugin that turns vanilla OpenCode into an opinionated multi-agent cockpit.
+Multi-agent orchestration plugin for OpenCode. 10 specialized agents, 30 hooks, BM25 FTS5 memory search, LSP diagnostics, agent-browser integration, completion controller, auto dream/distill memory consolidation. One prompt to set up and run.
 
-**What you get on top of plain OpenCode:**
-
-- **14-agent canonical model (9 visible + 5 hidden)** with peer-aware prompts — Bob orchestrates, Coder/Sub implement, Strategist plans, Critic gates, Researcher discovers via Context7/Firecrawl/grep_app/MemPalace, Designer drives Stitch UI generation, Writer owns copy/SEO, Vision extracts PDFs/images, Manager keeps memory, Quality Guardian reviews, Sandbox sandboxes bash.
-- **Mode → agent routing** for `task()` delegation — `quick`/`bounded`/`unspecified-low` → Sub, `deep`/`cross-module` → Coder, `ultrabrain` → Strategist, `visual-engineering`/`artistry` → Designer, `writing` → Writer, `git-ops` → Manager. No more "everything routes to coder".
-- **MCP wiring out of the box** — Stitch, Context7, grep_app, MemPalace, Sequential-Thinking. Each agent's prompt knows which MCP servers it owns. Firecrawl is available as a CLI skill (not MCP).
-- **LSP defaults** for TypeScript, Svelte, ESLint, Bash, Pyright. Coder must run `lsp_diagnostics` after every edit.
-- **Permission discipline** — read-only agents cannot delegate; write-capable agents have explicit file-scope limits.
-
-This repository is intended to be usable by someone who clones it from GitHub without any internal context. External MCP servers, skills, model providers, and auxiliary OpenCode plugins remain their own upstream projects; this plugin only provides OpenCode wiring, defaults, prompts, launchers, and documentation around them.
-
-## Why This Exists
-
-I wanted the "one install, give me the whole cockpit" setup. More agents, more MCP servers, more skills, better defaults, fewer tiny config islands. 🚀
-
-The problem: all those great tools do not magically become friends just because you installed them. Some are npm packages, some are Python tools, some need API keys, some need a local service, and some only wake up after the first run. Meanwhile your main agent can waste half the context window just reading everything you bolted on. Not chill. 😅
-
-So `hiai-opencode` is my attempt to wire the best pieces I use into one OpenCode-friendly shape: agents, prompts, skills, MCP launchers, LSP defaults, and a clean config surface. It does not claim ownership of the upstream tools. It just tries to make them cooperate.
-
-After the first install, a few MCP services may still need local dependencies or keys. You have two options:
-
-- Follow the setup sections below: [Install](#install), [Environment](#environment), and [MCP Service Notes](#mcp-service-notes).
-- Or ask OpenCode to do the boring part for you. Paste this after installing:
-
-```text
-Read AGENTS.md and finish hiai-opencode setup for this workspace.
-
-Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
-
-Check which MCP services can run on this machine, update hiai-opencode.json, install only missing user-level or project-local dependencies, and report missing API keys without printing secret values.
-
-Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug config`.
-```
-
-For the full operator playbook, see [AGENTS.md](AGENTS.md). 🤖
-
-
-## Agents
-
-**9 Visible Primary Agents:**
-
-| Agent | Role | When to use |
-|-------|------|-------------|
-| `Bob` | Orchestrator, router, distributor | Entry point; complex tasks needing multi-agent coordination |
-| `Coder` | Deep implementation, focused execution | Complex features, refactors, deep work |
-| `Strategist` | Planning, architecture, pre-check | Scope definition, architectural decisions |
-| `Manager` | Delegation orchestrator, TODO tracker | Coordinates specialists, maintains session continuity |
-| `Critic` | Review gate, high-accuracy verification | Plan review, code review, regression catch |
-| `Designer` | UI/visual direction via Stitch MCP | Visual problems, design systems, screen generation |
-| `Researcher` | Local + external search | Codebase exploration, documentation discovery via Context7/grep_app/Firecrawl CLI/MemPalace |
-| `Writer` | Content, copy, positioning, SEO | Website copy, product messaging, naming |
-| `Vision` | PDF/image/diagram extraction, browser UI verification | Multimodal analysis, live browser verification |
-
-**5 Hidden System Agents** (used internally, not for direct selection):
-
-- `Agent Skills` — Skill registry, discovery, and capability orchestration
-- `Sub` — Compatibility wrapper for bounded execution (folded into Coder's contour)
-- `build` — Default executor (OpenCode system agent)
-- `plan` — Plan mode agent (OpenCode system agent)
-- `Quality Guardian` — Post-implementation review and bug investigation (compatibility alias for Critic)
-
-## Modes (Task Routing)
-
-Mode determines prompt append, variant, and reasoning effort. The executor agent is selected via `mode → agent` mapping.
-
-| Mode | Agent | Prompt variant | When to use |
-|------|-------|----------------|-------------|
-| `quick` | `coder` (via fast bounded contour) | Fast bounded | Small targeted changes |
-| `writing` | `writer` | Docs/prose | Content, i18n, copy |
-| `deep` | `coder` | Deep reasoning | Complex implementation |
-| `ultrabrain` | `strategist` | Plan-only | Architecture, hard logic |
-| `visual-engineering` | `designer` | UI/visual | Visual problems |
-| `artistry` | `designer` | Creative | Brand, SEO, creative |
-| `git` | `manager` | Git ops | Version control operations |
-| `bounded` | `coder` (via fast bounded contour) | Mid-tier bounded | Moderate effort changes |
-| `cross-module` | `coder` | Deep substantial | Multi-component changes |
-| `unspecified-low` | `coder` (via fast bounded contour) | Bounded | Unclassified small tasks |
-| `unspecified-high` | `coder` | Deep | Unclassified substantial tasks |
-
-## Integrations
-
-MCP integrations and which agents use them:
-
-| Service | Type | Key env var | Agent(s) | What it's for |
-|---------|------|------------|----------|---------------|
-| Stitch | **MCP** | `STITCH_AI_API_KEY` | Designer | UI generation, design systems, screen variants |
-| Context7 | **MCP** | `CONTEXT7_API_KEY` (optional) | Researcher, Coder | Library API documentation |
-| grep_app | **MCP** | — | Researcher | GitHub OSS code pattern search |
-| MemPalace | **MCP** | `MEMPALACE_PYTHON` (optional) | Manager (primary), all agents | Project memory and past decisions |
-| Sequential-Thinking | **MCP** | — | Strategist, Critic | Deep reasoning for planning/review |
-| Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | Researcher | Web scraping, crawl, extract, search (NOT an MCP server) |
-| agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | Coder, Vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
-
-**Important**: Firecrawl and `agent-browser` are CLI skills, not MCP servers. Firecrawl works through the `firecrawl-cli` skill in `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY`. `agent-browser` lives in `skills/agent-browser/` and uses native Chrome via CDP — no Playwright, no MCP. Do not add either to the `mcp` section of `hiai-opencode.json`.
-
-## Design System
-
-The plugin bundles a comprehensive design library sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0).
-
-**150+ brand design systems** in `design-systems/` — each contains:
-- `DESIGN.md` — brand voice, typography, color palette, component patterns, layout principles
-- `tokens.css` — CSS custom properties for colors, spacing, typography, shadows
-- `components.html` — reference HTML for key UI components
-
-Brands include: Apple, Linear, Stripe, Vercel, Airbnb, BMW, Spotify, Notion, Figma, Supabase, and 140+ more.
-
-**48 design skills** in `skills/` — covering:
-- Visual storytelling, editorial layouts, motion design
-- Figma integration (create, generate, implement, export)
-- Canvas design, poster/hero layouts, slide decks
-- Accessibility baselines, animation discipline, color theory
-
-**Craft guidelines** in `craft/` — deep references on:
-- Typography hierarchy (editorial + standard)
-- Color systems and accessibility
-- Form validation UX, state coverage patterns
-- Laws of UX, RTL/bidirectional layout
-- Anti-AI-slop patterns (preventing generic output)
-
-**Prompt templates** in `prompt-templates/` — ready-made prompts for image generation and video production.
-
-The Designer agent uses these assets to ground its output in real brand systems instead of generic AI aesthetics. When the Designer agent works on a task, it can reference brand-specific tokens, typography scales, and component patterns from the design-systems library.
-
-## What You Get
-
-- **9 visible primary agents** + **5 hidden system agents** (Agent Skills, Sub, build, plan, Quality Guardian)
-- **Mode-based task routing** via `task(category=..., ...)` or `task(mode=..., ...)`
-- Skill materialization into OpenCode's `skills/` view
-- **MCP wiring** for `stitch`, `sequential-thinking`, `mempalace`, `context7`, and `grep_app`
-- **CLI skills** (not MCP): `firecrawl-cli` for web scraping (requires `FIRECRAWL_API_KEY`)
-- LSP wiring for TypeScript, Svelte, Python, Bash, and ESLint
-
-## Continuation, Ralph-Loop, And Auto-Start
-
-The plugin runs three layered mechanisms so a session does not give up halfway through a TODO list.
-
-| Mechanism | Trigger | What it does |
-|-----------|---------|--------------|
-| **Todo continuation enforcer** | `session.idle` while open todos remain | Injects a continuation prompt after a 2s countdown. Backs off on stagnation, abort, token-limit, and pending-question. |
-| **Ralph-loop** | `/ralph-loop <goal>` or `/ulw-loop <goal>` | Runs an explicit completion loop. Stops on `<promise>DONE</promise>`. Cancel with `/cancel-ralph`. |
-| **Auto ralph-loop** | N+ open todos in one session | Auto-starts ralph-loop in ULTRAWORK mode so each iteration is forced to delegate to specialist agents (researcher / strategist / coder / critic). |
-
-Tune the auto-start threshold in `hiai-opencode.json`:
-
-```json
-{
-  "ralph_loop": {
-    "enabled": true,
-    "auto_start_threshold": 5
-  }
-}
-```
-
-`auto_start_threshold: 0` disables auto-start. The enforcer always yields to ralph-loop while it owns the session, so the two never inject duplicate prompts.
-
-## Requirements
-
-Minimum:
-
-- OpenCode installed
-- Node.js 18+
-- Bun 1.3.14+
-
-Usually required:
-
-- at least one model provider connected in OpenCode for the model IDs you configure
-
-Optional, depending on which services you want:
-
-**MCP services** (configured in `hiai-opencode.json`):
-- `STITCH_AI_API_KEY` for Stitch
-- `CONTEXT7_API_KEY` for Context7 (optional, but recommended for rate limits)
-- Python 3.9+ or `uv` for MemPalace
-
-**CLI skills** (not MCP, just set env var):
-- `FIRECRAWL_API_KEY` for Firecrawl web scraping
-
-**Other:**
-- local language servers if you want LSP beyond the npm-bootstrapped helpers
-
-## Quick Install
-
-```bash
-opencode plugin @hiai-gg/hiai-opencode@latest --global
-```
-
-**After installing**, paste this into OpenCode to finish setup automatically:
-
-```text
-Read AGENTS.md and finish hiai-opencode setup for this workspace.
-
-Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
-
-Check which MCP services can run on this machine, update hiai-opencode.json, install only missing user-level or project-local dependencies, and report missing API keys without printing secret values.
-
-Then run `hiai-opencode doctor`, `hiai-opencode mcp-status`, and `opencode debug config`.
-```
+---
 
 ## Install
 
-### 1. Register the OpenCode plugin
-
 ```bash
 opencode plugin @hiai-gg/hiai-opencode@latest --global
 ```
 
-Optional Dynamic Context Pruning plugin:
+After installing, verify the plugin is registered:
 
 ```bash
-opencode plugin @tarquinen/opencode-dcp@latest --global
+opencode debug config
 ```
 
-Do not put MCP server packages such as `@modelcontextprotocol/server-sequential-thinking` into the OpenCode `plugin` array. They are MCP servers, not OpenCode plugins.
+## Config
 
-Manual OpenCode config equivalent:
+`hiai-opencode` uses two configuration files that ship with the plugin:
 
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@hiai-gg/hiai-opencode",
-    "@tarquinen/opencode-dcp@latest"]
-}
-```
+### 1. `bob.json` — Agent Models & Behaviour
 
-The packaged minimal OpenCode example lives in [config/opencode.json](config/opencode.json).
+This file ships as part of the plugin package and contains agent models, MCP settings, LSP configuration, and feature flags.
 
-### 2. Create project config
-
-Create a project-level config file at `hiai-opencode.json` in the project root or at `.opencode/hiai-opencode.json`.
-
-Bash:
-
-```bash
-mkdir -p .opencode
-cp hiai-opencode.json .opencode/hiai-opencode.json
-```
-
-PowerShell:
-
-```powershell
-New-Item -ItemType Directory -Force .opencode
-Copy-Item .\hiai-opencode.json .\.opencode\hiai-opencode.json
-```
-
-If you installed only from npm/OpenCode and do not have this repository checked out, create `.opencode/hiai-opencode.json` with the shape below and adjust it later.
-
-```json
+```jsonc
 {
   "models": {
     "bob": { "model": "kimi-for-coding/k2p6", "recommended": "xhigh" },
@@ -273,56 +51,267 @@ If you installed only from npm/OpenCode and do not have this repository checked 
   },
   "mcp": {
     "sequential-thinking": { "enabled": true },
-    "mempalace": { "enabled": true, "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}" },
+    "mempalace": { "enabled": true, "pythonPath": "{env:MEMPALACE_PYTHON:-\./.venv/bin/python}" },
     "stitch": { "enabled": false },
-    "context7": { "enabled": true }
+    "context7": { "enabled": true },
+    "grep_app": { "enabled": true }
+  },
+  "lsp": {
+    "typescript": { "enabled": true },
+    "svelte": { "enabled": true },
+    "eslint": { "enabled": true },
+    "pyright": { "enabled": true },
+    "bash": { "enabled": true }
+  },
+  "completion": {
+    "enabled": true,
+    "max_auto_continues": 25,
+    "require_critic": true
+  },
+  "dream": { "auto": true, "interval_days": 7 },
+  "distill": { "auto": true, "interval_days": 30 },
+  "telemetry": { "enabled": false, "serviceName": "hiai-opencode" }
+}
+```
+
+### 2. Environment Variables — API Keys
+
+API keys are loaded from multiple paths in priority order. Create a local `.env` file in your OpenCode environment or export these variables in your shell before starting OpenCode.
+
+```bash
+# Project root or .opencode/
+STITCH_AI_API_KEY=your_stitch_key
+FIRECRAWL_API_KEY=fc-your_key
+CONTEXT7_API_KEY=ctx7-your_key
+MEMPALACE_PYTHON=./.venv/bin/python
+```
+
+Use [.env.example](.env.example) as the canonical template.
+
+## Agents
+
+| Agent | Role | Mode | Visible |
+|-------|------|------|---------|
+| bob | Orchestrator — delegates, verifies. Never mutates files. | primary | ✅ |
+| strategist | Principal Architect — deep planning, architecture analysis. | primary | ✅ |
+| designer | UI/visual direction, design tokens, component specs. | primary | ✅ |
+| writer | Content, copy, positioning, SEO specialist. | primary | ✅ |
+| coder | Senior Staff Engineer — implements from plans. | subagent | hidden |
+| researcher | Explore Agent — firecrawl + grep_app + context7. | subagent | hidden |
+| manager | Coordinator — parallel wave execution. | subagent | hidden |
+| critic | Quality Guardian — reviews, binary APPROVED/REJECTED. | subagent | hidden |
+| vision | Browser operator + multimodal analysis. | subagent | hidden |
+| sub | Cheap bounded executor — fast, simple tasks. | subagent | hidden |
+
+### Mode-Based Task Routing
+
+Mode determines which agent executes the task:
+
+| Mode | Agent | When to use |
+|------|-------|-------------|
+| `quick` | coder (fast bounded) | Small targeted changes |
+| `writing` | writer | Content, i18n, copy |
+| `deep` | coder | Complex implementation |
+| `ultrabrain` | strategist | Architecture, hard logic |
+| `visual-engineering` | designer | Visual problems |
+| `artistry` | designer | Brand, creative |
+| `git` | manager | Version control operations |
+| `bounded` | coder (fast bounded) | Moderate effort changes |
+| `cross-module` | coder | Multi-component changes |
+| `unspecified-low` | coder (fast bounded) | Unclassified small tasks |
+| `unspecified-high` | coder | Unclassified substantial tasks |
+
+## Tools
+
+### LSP — 6 Tools
+
+Live diagnostics, navigation, and refactoring powered by language servers.
+
+- `lsp_diagnostics` — Run diagnostics across your codebase
+- `lsp_goto_definition` — Jump to definition
+- `lsp_find_references` — Find all references
+- `lsp_symbols` — List symbols in a file
+- `lsp_prepare_rename` — Prepare rename operations
+- `lsp_rename` — Rename symbols across files
+
+Supports TypeScript, Svelte, ESLint, Python (Pyright), Bash, HTML, CSS, JSON, Vue, Go (gopls), Rust (rust-analyzer), YAML. Servers auto-install via npx on first use.
+
+**Important**: The Coder agent runs `lsp_diagnostics` after every file edit as part of the verify loop.
+
+### Agent Browser — 14 Tools
+
+Full browser automation via the `/agent-browser` CLI skill (not an MCP server).
+
+- `agent_browser_navigate` — Navigate to a URL
+- `agent_browser_snapshot` — Take an accessibility snapshot
+- `agent_browser_click` — Click an element
+- `agent_browser_fill` — Fill an input
+- `agent_browser_type` — Type text
+- `agent_browser_screenshot` — Take a screenshot
+- `agent_browser_eval` — Evaluate JavaScript
+- `agent_browser_wait` — Wait for a duration
+- `agent_browser_close` — Close the browser
+- `agent_browser_console` — Get console logs
+- `agent_browser_select` — Select an option
+- `agent_browser_hover` — Hover over an element
+- `agent_browser_press` — Press a key
+- `agent_browser_batch` — Execute multiple commands sequentially
+
+**Screenshots**: `agent_browser_screenshot` saves captured images to `.opencode/screenshots/agent-browser-<timestamp>.png` in the project directory. It returns a compact path descriptor (file path + byte size) — never raw base64.
+
+### Memory — BM25 FTS5 Search
+
+`hiai_memory_search` — Search MEMORY.md, checkpoint.md, notes.md, and task progress files using SQLite FTS5 with BM25 ranking. Own database at `~/.hiai-opencode/data/hiai-memory.db`. Supports scope, type, and project filters.
+
+### Session Manager — 4 Tools
+
+- `session_list` — List all sessions
+- `session_read` — Read a session
+- `session_search` — Search across all sessions
+- `session_info` — Get session metadata
+
+### Background Tasks — 2 Tools
+
+- `background_output` — Poll background subagent output
+- `background_cancel` — Cancel a background task
+
+### Skills — 1 Tool
+
+`skill` — Load bundled skill workflows. Supports namespaced names:
+
+- `build/shadcn-ui`, `build/incremental-implementation`, `build/systematic-debugging`
+- `plan/interview-me`, `plan/spec-driven-development`
+- `explore/context7`
+- `writer/documentation-and-adrs`
+- `designer/theme-factory`
+- Top-level group names also work: `build`, `plan`, `writer`, `explore`, etc.
+
+## Hooks — 30 Registered
+
+| Category | Hooks |
+|----------|-------|
+| **Safety** | legal-gate, non-interactive-env, write-existing-file-guard |
+| **Quality** | quality-gate, tool-pair-validator, thinking-block-validator |
+| **Recovery** | edit-error-recovery, json-error-recovery, context-window-limit-recovery, runtime-fallback |
+| **System** | closure-injector, rules-injector, context-window-monitor, think-mode, caveman-system-injector, caveman-message-compressor |
+| **Lifecycle** | compaction-context-injector, compaction-todo-preserver, reasoning-content-cache, preemptive-compaction, token-budget |
+
+## Features
+
+### Completion Controller
+
+Auto-continue state machine: blocked workflows stop, incomplete todos trigger another turn, complete work triggers critic review, critic-APPROVED work injects a summary card. Max 25 auto-continues per session. Configurable in `bob.json`.
+
+### Background Manager
+
+Tracks background subagent lifecycle with circuit breaker (4000 total tool calls, 20 consecutive same-tool threshold), concurrency limit (5 parallel), stale timeout (45 minutes). Auto-polls every 5 seconds.
+
+### Dream & Distill — Memory Consolidation
+
+- **Dream** (7-day interval): Reads checkpoints + raw trajectory DB, promotes durable knowledge to MEMORY.md under Rules, Architecture Decisions, Discovered Knowledge, Patterns, and Gotchas sections. Keeps MEMORY.md under 200 lines/10KB.
+- **Distill** (30-day interval): Discovers repeated workflows across sessions, verifies against trajectory DB, packages into skills/subagents/commands. Creates nothing if no strong evidence exists.
+
+### Memory — FTS5 Full-Text Search
+
+SQLite FTS5 index at `~/.hiai-opencode/data/hiai-memory.db`. Reconciles filesystem and index bidirectionally on each search. Fingerprint-based change detection skips unchanged files. BM25 ranking with relative score floor (default 0.15, configurable).
+
+### Caveman Internal Protocol
+
+Integrates the **Caveman** internal communication protocol for compressed agent-to-agent messaging. Coverage across the full interaction pipeline:
+
+| Domain | What Caveman Does |
+|--------|------------------|
+| **bob internal reasoning** | Bob's own chain-of-thought uses terse, artifact-focused language — drops filler, fragments OK, no boilerplate. |
+| **bob → agents (briefs)** | Delegation briefs from Bob to subagents are compressed: stripped of polite formality, focused on task + evidence + expected outcome. |
+| **agents → bob (evidence)** | Subagent responses back to Bob use terse evidence reports: status line, findings, files touched — no narrative wrapping. |
+| **final user output** | Always decoded to normal, structured language with a valid `<CLOSURE>` block. No caveman fragments ever reach the user. |
+| **disk / persistent storage** | MEMORY.md, session checkpoints, and task progress files remain human-readable. Caveman compresses only in-context LLM tokens, never on-disk storage. |
+
+**CLOSURE preserved**: The `<CLOSURE>` protocol at the end of every agent response is never modified or suppressed by Caveman.
+
+**Disable mechanism**: Add `"caveman-system-injector"` or `"caveman-message-compressor"` to `hooks.disabled` in bob.json.
+
+**Vision excluded**: Vision agent never receives caveman fragments, ensuring full-context prompts for visual work.
+
+Configuration in `bob.json`:
+
+```jsonc
+{
+  "caveman": {
+    "enabled": true,
+    "level": "full",
+    "bob_internal": true,
+    "bob_to_agents": true,
+    "agents_to_bob": true,
+    "final_user_output": "normal",
+    "target_agents": ["bob", "strategist", "coder", "manager", "critic", "designer", "researcher", "writer", "vision"],
+    "exclude_agents": [],
+    "min_messages_to_compress": 5
   }
 }
 ```
 
-By default, skill discovery is deterministic: `hiai-opencode` skills plus project-local `.opencode/skills` only. Global Claude/OpenCode/Agents skill folders are opt-in.
+## Architecture
 
-### 3. Connect models and add service keys
+- **Zero core modifications** — pure plugin via `@opencode-ai/plugin` hooks
+- **Bundled config** — `bob.json` ships in the package; user overrides in project root or `.opencode/`
+- **Own SQLite** — memory DB at `~/.hiai-opencode/data/hiai-memory.db`, never touches OpenCode storage
+- **Postinstall** — echoes setup reminder
+- **No external services** — all infrastructure is local: SQLite (Bun), LSP (npx), agent-browser (CLI skill)
 
-Model provider credentials belong to OpenCode Connect, not to `hiai-opencode`.
-This plugin only reads the 10 model IDs in `models`. Internal routing derives hidden agents and task categories from those 10 choices.
+### MCP Integrations
 
-Use OpenCode Connect to authorize the providers behind your configured model IDs. Then add only the service keys for MCP or search integrations you actually use:
+| Service | Type | Key env var | Agent(s) | What it's for |
+|---------|------|-------------|----------|---------------|
+| Stitch | **MCP** | `STITCH_AI_API_KEY` | designer | UI generation, design systems, screen variants |
+| Context7 | **MCP** | `CONTEXT7_API_KEY` (optional) | researcher, coder | Library API documentation |
+| grep_app | **MCP** | — | researcher | GitHub OSS code pattern search |
+| MemPalace | **MCP** | `MEMPALACE_PYTHON` (optional) | manager (primary), all agents | Project memory and past decisions |
+| Sequential-Thinking | **MCP** | — | strategist, critic | Deep reasoning for planning/review |
+| Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | researcher | Web scraping, crawl, extract, search (NOT an MCP server) |
+| agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | coder, vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
+
+**Important**: Firecrawl and `agent-browser` are CLI skills, not MCP servers. Do not add either to the `mcp` section of `hiai-opencode.json`.
+
+## Post-Install Setup
+
+After installing the plugin, copy the environment template and fill in your API keys:
 
 ```bash
-opencode models
+cp bob.env.example bob.env
+# Edit your keys in bob.env (git-ignored, never committed)
 ```
 
-Use the exact model IDs printed by OpenCode in `hiai-opencode.json`. For example, `openrouter/minimax/minimax-m2.7` routes through OpenRouter, while `minimax/minimax-m2.7` routes through a direct Minimax provider only if that provider is connected in OpenCode.
+Install external CLIs manually if needed:
 
 ```bash
-export FIRECRAWL_API_KEY=...
-export STITCH_AI_API_KEY=...
-export CONTEXT7_API_KEY=...
+bun add -g agent-browser firecrawl-cli && agent-browser install
 ```
 
-See [Environment Variables And Keys](#environment-variables-and-keys) for the full list.
+You can also ask OpenCode to finish local setup with this prompt:
 
-### 4. Start and verify
+```text
+Read AGENTS.md and finish hiai-opencode setup for this workspace.
 
-```bash
-opencode
-hiai-opencode doctor
-hiai-opencode mcp-status
-hiai-opencode export-mcp .opencode/.mcp.json
-opencode debug config
-opencode mcp list --print-logs --log-level INFO
+Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
+
+Check that @hiai-gg/hiai-opencode is registered.
+
+Enable only MCP services that can run on this machine:
+- sequential-thinking: requires node/npx.
+- grep_app: no key required.
+
+CLI skills (NOT MCP):
+- firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var.
+- agent-browser: requires bun add -g agent-browser && agent-browser install.
+
+Check bob.env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
+
+Run verification commands where available:
+- opencode debug config
 ```
-
-`opencode mcp list` reads static `.mcp.json` files in many OpenCode versions. Runtime MCP servers launched by plugins may work but not appear there. If you want `opencode mcp list` visibility, run `hiai-opencode export-mcp .opencode/.mcp.json` first.
-
-`hiai-opencode mcp-status` is the fastest visibility check. It does not change OpenCode config; it reports config location, enabled MCP services, missing keys, and basic local runtime availability.
-
-`hiai-opencode doctor` is the broader install/runtime diagnostic. It includes MCP status, static `.mcp.json` freshness, OpenCode Connect visibility, skill materialization, agent naming/count checks, LSP runtime checks, MemPalace Python source selection, and real MCP tool probes.
 
 ## Development Install
-
-Direct npm install is only needed for development or inspection:
 
 ```bash
 bun install
@@ -337,382 +326,19 @@ bun install
 bun run build
 ```
 
-## Post-Install Bootstrap Prompt
-
-After installing the plugin, you can ask OpenCode to finish local setup with this prompt:
-
-```text
-Inspect this OpenCode workspace and finish hiai-opencode setup.
-
-Do not add MCP server packages to the OpenCode plugin list. Keep OpenCode plugins separate from MCP servers.
-
-Check that @hiai-gg/hiai-opencode is registered. If Dynamic Context Pruning is requested, install @tarquinen/opencode-dcp as a separate OpenCode plugin.
-
-Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp object as the single switchboard for enabling or disabling MCP services.
-
-Keep skill discovery deterministic unless I explicitly ask for external skills. Leave global_opencode, project_claude, global_claude, project_agents, and global_agents disabled by default.
-
-Enable only MCP services that can run on this machine:
-- sequential-thinking: requires node/npx.
-- mempalace: requires uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed. Leave `HIAI_MCP_AUTO_INSTALL` enabled unless the user forbids package installation.
-- stitch: requires STITCH_AI_API_KEY.
-- context7: works without a key but use CONTEXT7_API_KEY if available.
-- grep_app: no key required.
-
-CLI skills (NOT MCP, do not add to mcp config):
-- firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var; no mcp config needed.
-
-Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
-
-Run verification commands where available:
-- opencode debug config
-- hiai-opencode mcp-status
-- hiai-opencode export-mcp .opencode/.mcp.json
-- opencode mcp list --print-logs --log-level INFO
-
-If a dependency is missing, install only user-level or project-local dependencies, explain every command before running it, and do not use sudo/admin rights unless the user explicitly asks.
-```
-
-## Where To Change Things
-
-### Models
-
-Canonical user-facing config for 10 primary agent models, MCP/LSP switches, service auth placeholders, and skill discovery:
-
-- [hiai-opencode.json](hiai-opencode.json)
-
-Runtime loader for the bundled canonical config:
-
-- [src/config/defaults.ts](src/config/defaults.ts)
-
-If you want to change model selection, edit the 10 entries in `models`. Do not add category-specific model choices unless you are intentionally developing the plugin internals.
-
-Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
-After connecting providers in OpenCode, run `opencode models` and copy the exact model IDs from that output into `hiai-opencode.json`.
-
-### Prompting
-
-Prompting has two main layers:
-
-1. source prompt files in [src/agents](src/agents)
-2. runtime assembly in [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
-
-Important prompt entrypoints:
-
-- `Bob`: `src/agents/bob/*`
-- `Coder`: `src/agents/coder/*`
-- `Strategist`: `src/agents/strategist/*`
-- `Manager`: `src/agents/manager/*`
-- `Critic`: `src/agents/critic/*`
-- `Vision`: [src/agents/ui.ts](src/agents/ui.ts)
-- `Researcher`: [src/agents/researcher.ts](src/agents/researcher.ts)
-- `Writer`: [src/agents/writer.ts](src/agents/writer.ts)
-
-Name mapping and visibility:
-
-- [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts)
-- [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
-
-### Skills
-
-Project skill definitions live under:
-
-- [skills](skills)
-
-Skill materialization logic:
-
-- [src/features/builtin-skills/materialize.ts](src/features/builtin-skills/materialize.ts)
-
-Built-in helper skills include browser automation, frontend UI/UX, review, git workflow, hiai-opencode setup, AI slop cleanup, and `website-copywriting`.
-
-Website/product copy should use:
-
-```text
-task(subagent_type="writer", load_skills=["website-copywriting"], ...)
-```
-
-`writer`, `copywriter`, and `content-writer` are aliases for `writer`.
-
-Manager memory stewardship:
-
-- Use `task(subagent_type="platform-manager", ...)` or `task(subagent_type="manager", ...)` for MemPalace cleanup, session ledgers, TODO hygiene, and architecture decision handoff.
-- Manager writes only durable decisions and important project state. It should not dump raw chat logs into memory.
-
-Skill discovery defaults:
-
-```json
-{
-  "skill_discovery": {
-    "config_sources": true,
-    "project_opencode": true,
-    "global_opencode": false,
-    "project_claude": false,
-    "global_claude": false,
-    "project_agents": false,
-    "global_agents": false
-  }
-}
-```
-
-This keeps clean installs reproducible and avoids accidentally mixing Codex, Claude, Antigravity, and global OpenCode skill collections. To opt into external skill folders, enable the specific source you want instead of turning everything on.
-
-### MCP
-
-Default MCP registry:
-
-- [src/mcp/registry.ts](src/mcp/registry.ts)
-
-OpenCode MCP config assembly:
-
-- [src/mcp/index.ts](src/mcp/index.ts)
-
-Runtime helper launchers:
-
-- [assets/mcp](assets/mcp)
-- [assets/runtime](assets/runtime)
-
-### LSP
-
-LSP defaults are defined in:
-
-- [src/config/defaults.ts](src/config/defaults.ts)
-
-LSP pairs with [Biome](#biome-and-the-mandatory-critic-gate) for formatting and lint — Coder runs `lsp_diagnostics` after every edit and `bunx biome check .` before declaring a task done. See the Biome / Critic gate section for the closing-turn requirements.
-
-## Environment Variables And Keys
-
-Model provider keys are handled by OpenCode Connect. Do not add `OPENROUTER_API_KEY`, `OPENAI_API_KEY`, or `ANTHROPIC_API_KEY` to `hiai-opencode` config for normal model usage.
-
-**MCP services** (go in `hiai-opencode.json` mcp section):
-- `STITCH_AI_API_KEY`
-- `CONTEXT7_API_KEY` (optional)
-- `MEMPALACE_PYTHON`
-- `MEMPALACE_PALACE_PATH`
-
-**CLI skills** (just set env var, not in mcp config):
-- `FIRECRAWL_API_KEY` — for Firecrawl web scraping (NOT an MCP server)
-
-**Other:**
-- `OLLAMA_BASE_URL`
-- `OLLAMA_MODEL`
-- `HIAI_MCP_AUTO_INSTALL`
-- `HIAI_OPENCODE_AUTO_EXPORT_MCP`
-- `HIAI_OPENCODE_MCP_EXPORT_PATH`
-
-Optional headless or non-Connect fallback variables are documented in [.env.example](.env.example), but they are not required for normal OpenCode model auth.
-
-Use [.env.example](.env.example) as the reference template. Create a local `.env` in your OpenCode environment or export these variables in your shell before startup.
-
-## MCP Service Notes
-
-The user-facing MCP switchboard is the `mcp` object in `hiai-opencode.json`:
-
-```json
-{
-  "mcp": {
-    "mempalace": { "enabled": false },
-    "grep_app": { "enabled": true }
-  }
-}
-```
-
-The source of truth for default MCP wiring is `src/mcp/registry.ts`. Change that file when adding a new MCP integration or changing its launch command, required env vars, or install strategy.
-
-### Works well as remote MCP
-
-- `stitch`
-- `context7`
-- `grep_app`
-
-### Works with local helper bootstrap
-
-- `sequential-thinking`: launches `@modelcontextprotocol/server-sequential-thinking` through the helper npm runner.
-
-### CLI skills (not MCP)
-
-- `firecrawl`: uses the CLI skill at `skills/firecrawl-cli/` and requires `FIRECRAWL_API_KEY` for web scraping and extraction tasks. No MCP server needed.
-
-### Browser Automation
-
-For browser automation, use the `/agent-browser` skill instead of an MCP server. The CLI uses native Chrome via CDP — no Playwright.
-
-**Install** (Bun):
-```bash
-bun add -g agent-browser && agent-browser install
-```
-
-Or via npm:
-```bash
-npm i -g agent-browser && agent-browser install
-```
-
-Repo: https://github.com/vercel-labs/agent-browser
-
-Key environment variables (`AGENT_BROWSER_*`):
-- `AGENT_BROWSER_HEADED=1` — show browser window
-- `AGENT_BROWSER_SESSION=name` — isolated session
-- `AGENT_BROWSER_PROFILE=path` — persistent profile
-- `AGENT_BROWSER_PROVIDER=name` — cloud provider (browserbase, browseruse, kernel)
-- `AGENT_BROWSER_AUTO_CONNECT=1` — auto-discover running Chrome
-- `AGENT_BROWSER_EXECUTABLE_PATH` — custom browser binary
-
-Use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
-
-### Needs upstream runtime or extra setup
-
-- `mempalace`: prefers `uv`; otherwise uses Python. You can force interpreter selection via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON`. If `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher can run `python -m pip install --user mempalace` on first start.
-
-### Important Windows note
-
-On some Windows/OpenCode environments, local MCP process spawning can fail with `EPERM` for `cmd` or `node`. If you see that:
-
-- the plugin config is likely correct
-- the remaining issue is the host runtime's local process spawn behavior
-
-This most often affects `sequential-thinking` and `mempalace`, and sometimes local `npx`-backed tools.
-
-## MemPalace Canonical Taxonomy
-
-MemPalace is the long-term memory layer for `hiai-opencode`. To keep saves consistent across agents, hooks, and skills, all saves go through a single canonical taxonomy.
-
-**Source of truth:** [src/agents/prompt-library/mempalace-taxonomy.ts](src/agents/prompt-library/mempalace-taxonomy.ts) — exports `CANONICAL_WINGS` and `CANONICAL_ROOMS` plus `buildSaveChecklist()`.
-
-**Wing convention:**
-
-| Wing | Purpose |
-|------|---------|
-| `hiai-opencode` | Global / plugin-wide memory (decisions, configs, agent roster changes) |
-| `<project-name>` | Per-project memory (e.g. `amigo`, `webs`, `crypto`) |
-| `wing_<agent>` | Per-agent career diary (e.g. `wing_bob`, `wing_coder`) |
-
-**14 structured rooms** (plus a `diary` default):
-
-`decisions` · `bugs` · `config` · `agents` · `architecture` · `plans` · `tasks` · `reviews` · `designs` · `sessions` · `errors` · `patterns` · `constraints` · `failed-approaches`
-
-Use `mempalace_diary_write` for free-form session notes; use `mempalace_add_drawer` with an explicit `room` for anything structured. Do not invent new room names — extend the canonical list in `mempalace-taxonomy.ts` first, then call sites.
-
-## Postgres Content-Update Rules
-
-For TEXTUAL content updates against the `ai_orchestration` Postgres database, use the wrapper at [scripts/db-content-update.sh](scripts/db-content-update.sh) — do not write a new `.sql` migration file.
-
-```bash
-scripts/db-content-update.sh "SELECT slug, jsonb_pretty(content) FROM landing_pages WHERE slug = 'home'"
-scripts/db-content-update.sh "UPDATE landing_pages SET content = '{\"hero\":\"x\"}'::jsonb WHERE slug = 'home' RETURNING slug, content"
-```
-
-The wrapper runs `psql` with `ON_ERROR_STOP=1` and `VERBOSITY=verbose`, defaults to `localhost:5433` / `aiuser` / `ai_orchestration`, and respects `PGHOST` / `PGPORT` / `PGUSER` / `PGDATABASE` overrides.
-
-**Why a wrapper instead of a migration?** Landing-page content, copy, and slug edits are data, not schema. Putting them in versioned migration files conflates schema history with content drift and makes rollbacks painful. Use `psql` directly for one-off content reads/writes, and reserve Drizzle / SQL migration files for true schema changes.
-
-## Biome And The Mandatory Critic Gate
-
-**Biome is required.** Lint and format are governed by [biome.json](biome.json). The Coder agent runs `bunx biome check .` (and `bunx biome format .` for fix-ups) as part of the verify loop. The `lint` job in CI is fatal — fixes must land before merge, no `|| true` fallbacks.
-
-**The Critic completion gate is mandatory.** For any high-risk or multi-step implementation, the closing turn must include a `<CLOSURE>` block with `readiness: "done"` (or `"accept"` / `"reject"` in reviewer mode). Responses without a valid `<CLOSURE>` block are rejected by the Guard system. Treat `<CLOSURE>` as the per-response task-completion marker and `<promise>DONE</promise>` as the `/loop` stop signal — they are not interchangeable.
-
-## Troubleshooting MCP Servers
-
-If an MCP server is not appearing or not responding:
-
-- **MCP not visible in `opencode mcp list`** — runtime plugin MCP works but the static list may not show it. Run `hiai-opencode export-mcp .opencode/.mcp.json` first.
-- **MCP fails to spawn (`EPERM` on Windows)** — the plugin config is likely correct; the host runtime's process-spawn behavior is the blocker. Most often affects `sequential-thinking` and `mempalace`.
-- **Missing required env var** — enable only the MCP services whose dependencies are satisfied (see [MCP Service Notes](#mcp-service-notes)). `hiai-opencode mcp-status` reports missing keys without printing values.
-- **Stale plugin install** — reinstall with `opencode plugin @hiai-gg/hiai-opencode@latest --global` and re-run `bun run build` if you have a local clone.
-- **MemPalace Python not found** — set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) to a `uv`-managed or system `python3` interpreter. The launcher can also auto-install via `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is enabled.
-
-For the full operator playbook, see [AGENTS.md](AGENTS.md#troubleshooting).
-
-## Diagnostics
-
-The plugin now emits startup warnings for common misconfiguration, including:
-
-- `.opencode/opencode.json` containing `plugin: ["list"]`
-- enabled MCP integrations with missing required env vars such as `STITCH_AI_API_KEY`
-
-Available CLI:
-
-```bash
-hiai-opencode doctor
-hiai-opencode mcp-status
-hiai-opencode export-mcp .opencode/.mcp.json
-```
-
-By default, the plugin auto-exports `.opencode/.mcp.json` at workspace startup when the file is missing. This closes the visibility gap where runtime plugin MCP works but `opencode mcp list` only reads static files. Control it with:
-
-```bash
-export HIAI_OPENCODE_AUTO_EXPORT_MCP=if-missing  # default
-export HIAI_OPENCODE_AUTO_EXPORT_MCP=always      # overwrite only managed hiai-opencode exports
-export HIAI_OPENCODE_AUTO_EXPORT_MCP=force       # force overwrite even non-managed files
-export HIAI_OPENCODE_AUTO_EXPORT_MCP=0           # disable auto-export
-export HIAI_OPENCODE_MCP_EXPORT_PATH=.opencode/.mcp.json   # override path
-export HIAI_OPENCODE_EXPORT_MCP_MODE=safe        # export-mcp command mode: safe|force
-```
-
-Inside OpenCode, use the slash command:
-
-```text
-/doctor
-/mcp-status
-```
-
-`hiai-opencode export-mcp` writes a standard `.mcp.json` so hosts whose `mcp list` ignores plugin runtime MCP can still show the same servers statically. Exports are marker-tagged as hiai-managed; by default, the command avoids overwriting non-managed files unless `HIAI_OPENCODE_EXPORT_MCP_MODE=force` is set.
-
-Use:
-
-```bash
-hiai-opencode mcp-status
-hiai-opencode export-mcp .opencode/.mcp.json
-opencode debug config
-opencode mcp list --print-logs --log-level INFO
-```
-
-## Core Components And Upstream Projects
-
-`hiai-opencode` wires these projects and ideas into an OpenCode-friendly setup. Upstream projects remain independent; this table is attribution and orientation, not an ownership claim.
-
-| Component | Upstream | Notes |
-|---|---|---|
-| OpenCode host/runtime | [anomalyco/opencode](https://github.com/anomalyco/opencode) | plugin host and runtime target |
-| Core orchestration influences | [code-yeongyu/oh-my-openagent](https://github.com/code-yeongyu/oh-my-openagent) | architectural influence |
-| Planning / workflow influences | [obra/superpowers](https://github.com/obra/superpowers) | planning, review, and debugging ideas |
-| Specialist / platform influences | [vtemian/micode](https://github.com/vtemian/micode) | platform-style specialist behavior |
-| Agent skill ecosystem | [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) | tactical workflow skill ideas |
-| Supabase Postgres skill | [supabase/agent-skills](https://github.com/supabase/agent-skills/blob/main/skills/supabase-postgres-best-practices/SKILL.md) | Postgres best practices skill |
-| Browser automation | [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser) | CLI-based browser automation via CDP |
-| Optional external plugin | [Opencode-DCP/opencode-dynamic-context-pruning](https://github.com/Opencode-DCP/opencode-dynamic-context-pruning) | installed separately |
-| MemPalace | [MemPalace/mempalace](https://github.com/MemPalace/mempalace) | external MCP/runtime |
-| Sequential Thinking | [modelcontextprotocol/servers](https://github.com/modelcontextprotocol/servers) | external MCP |
-| Firecrawl CLI skill | [firecrawl/firecrawl](https://github.com/firecrawl/firecrawl) | CLI-based web scraping, crawl, extract, search (NOT an MCP server) |
-| Context7 MCP | [upstash/context7](https://github.com/upstash/context7) | external MCP |
-| bun-pty / PTY ecosystem | [shekohex/opencode-pty](https://github.com/shekohex/opencode-pty) | PTY/runtime integration influence |
-| Design systems and skills | [nexu-io/open-design](https://github.com/nexu-io/open-design) | brand-grade design systems, design skills, craft guidelines (Apache 2.0) |
-
-## Build And Publish
-
-Build:
+## Build & Publish
 
 ```bash
 bun run build
-```
-
-Typecheck:
-
-```bash
 bun run typecheck
-```
-
-Prompt snapshots:
-
-```bash
-bun run prompts:measure
 ```
 
 Before publishing:
 
-1. run `bun run build`
-2. run `npm pack --dry-run`
-3. verify `debug config`
-4. run `hiai-opencode export-mcp .opencode/.mcp.json` if you need static `mcp list` visibility
+1. Run `bun run build`
+2. Run `npm pack --dry-run`
+3. Verify `opencode debug config`
+4. Run `hiai-opencode export-mcp .opencode/.mcp.json` if you need static `mcp list` visibility
 
 Publish:
 
@@ -720,30 +346,17 @@ Publish:
 npm publish --access public
 ```
 
-User install after publish:
-
-```json
-{
-  "$schema": "https://opencode.ai/config.json",
-  "plugin": ["@hiai-gg/hiai-opencode"]
-}
-```
-
 ## Roadmap
 
-See [docs/ROADMAP.md](docs/ROADMAP.md) for the full, prioritized plan. Highlights:
-
-- Unattended CI npm publish with provenance (remove the manual release step)
+- Unattended CI npm publish with provenance
 - Finish the BackgroundManager refactor and raise test coverage toward 20%+
 - Configurable agent roster + mode→agent routing from `hiai-opencode.json`
-- Optional run telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe) (agent/tool spans, token usage)
+- Optional run telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe)
 - Skill + design-system marketplace and an agent-analytics dashboard
 
 ## Documentation Map
 
-- [AGENTS.md](AGENTS.md): instructions for autonomous agents or tooling that need to install or modify the plugin
+- [AGENTS.md](AGENTS.md): instructions for autonomous agents or tooling that need to install, configure, verify, or modify the plugin
 - [ARCHITECTURE.md](ARCHITECTURE.md): runtime wiring, prompting layers, and modification map
 - [CHANGELOG.md](CHANGELOG.md): version history
-- [docs/ROADMAP.md](docs/ROADMAP.md): prioritized plan of upcoming work
-- [docs/quickstart.md](docs/quickstart.md): first-run guide
 - [LICENSE.md](LICENSE.md): licensing and attribution
