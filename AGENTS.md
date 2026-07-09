@@ -182,24 +182,27 @@ Registered subagent/hidden agents:
 - `Dream Consolidator` / `dream-consolidator` — Memory consolidation, cross-session synthesis
 - `Distill Packager` / `distill-packager` — Workflow packaging, pattern discovery
 
-Model slots (bob.json, no separate registration):
+Model slots (bob.json) — additionally upgraded as native agents in src/index.ts:
 
-- `build` / `Coder` — Implementation (deep/bounded), routes through registered agent pool
-- `plan` / `Strategist` — Deep planning, architecture analysis
-- `explore` / `Explorer` — Codebase discovery (grep, firecrawl, grep_app)
-- `general` / `General` — General-purpose executor, fallback
+- `build` / `Coder` — Implementation (deep/bounded), hidden subagent
+- `plan` / `Strategist` — Deep planning, architecture analysis, visible (mode: all)
+- `explore` / `Explorer` — Codebase discovery (grep, firecrawl, grep_app), hidden subagent
+- `general` / `General` — General-purpose executor/fallback, visible (mode: all)
 
-Automatic task distribution:
+Task routing (from Bob's prompt — sole source of truth):
 
-- Category-based task execution routes through `build` (display: Coder)
-- `quick`, `writing`, and `unspecified-low` use build's fast bounded contour
-- `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` use build's deep contour
-- `Critic` is selected explicitly for review and verification passes
-- `explore` is selected explicitly for codebase and documentation discovery
-- `Designer`, `Writer`, `Manager`, and `Vision` are direct callable specialists, not category executors
-- `Bob` and `Manager` are orchestration agents, not normal subagent routing targets
+| Category | Routes to |
+|----------|-----------|
+| `quick` | general (General) — cheap bounded executor |
+| `deep` | build (Coder) — complex multi-file implementation |
+| `visual-engineering` | designer (Designer) |
+| `writing` | writer (Writer) |
+| `ultrabrain` | plan (Strategist) |
+| review/verification | critic (Critic) — explicit selection |
+| research/discovery | explore (Explorer) — explicit selection |
+| browser/visual | vision (Vision) — explicit selection |
 
-> **v0.3.0 clean-slate note**: Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases mapped to canonical slots (`build`, `plan`, `explore`, `general`). Bob.json defines these as model slots; they are routing targets within the registered agent pool, not separate agent registrations.
+> **v0.3.0 clean-slate note**: Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases mapped to canonical slots (`build`, `plan`, `explore`, `general`). Bob.json defines these as model slots; they are additionally upgraded as native agents in `src/index.ts`.
 
 ## Model Configuration
 

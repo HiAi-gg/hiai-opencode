@@ -30,6 +30,45 @@ After installing, verify the plugin is registered:
 opencode debug config
 ```
 
+## Post-Install Setup
+
+After installing the plugin, copy the environment template and fill in your API keys:
+
+```bash
+cp bob.env.example bob.env
+# Edit your keys in bob.env (git-ignored, never committed)
+```
+
+Install external CLIs manually if needed:
+
+```bash
+bun add -g agent-browser firecrawl-cli && agent-browser install
+```
+
+You can also ask OpenCode to finish local setup with this prompt:
+
+```text
+Read AGENTS.md and finish hiai-opencode setup for this workspace.
+
+Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
+
+Check that @hiai-gg/hiai-opencode is registered.
+
+Enable only MCP services that can run on this machine:
+- sequential-thinking: requires node/npx.
+- grep_app: no key required.
+
+CLI skills (NOT MCP):
+- firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var.
+- context7: on-demand CLI skill via skill("explore/context7").
+- agent-browser: requires bun add -g agent-browser && agent-browser install.
+
+Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
+
+Run verification commands where available:
+- opencode debug config
+```
+
 ## Config
 
 `hiai-opencode` uses two configuration files that ship with the plugin:
@@ -102,25 +141,27 @@ Use [.env.example](.env.example) as the canonical template.
 | dream-consolidator | Dream Consolidator | Memory consolidation — cross-session knowledge synthesis. | subagent | hidden |
 | distill-packager | Distill Packager | Workflow packaging — discovers patterns, creates skills/agents. | subagent | hidden |
 
-> **Model slots vs registered agents**: `bob.json` defines 10 configurable model slots (`bob`, `build`, `plan`, `explore`, `manager`, `critic`, `designer`, `writer`, `vision`, `general`). Only the 8 agents above are registered by `createAllAgents()` in `src/agents/index.ts`. Slots `build`, `plan`, `explore`, and `general` are internal routing targets with no separate registration — they delegate to the registered agent pool. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases.
+> **Model slots vs registered agents**: `bob.json` defines 10 configurable model slots (`bob`, `build`, `plan`, `explore`, `manager`, `critic`, `designer`, `writer`, `vision`, `general`). The 8 agents above are registered by `createAllAgents()` in `src/agents/index.ts`. Slots `build`, `plan`, `explore`, and `general` are additionally **upgraded as native agents** in `src/index.ts` (plan and general are visible; build and explore are hidden). Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases mapped to these slots.
 
 ### Mode-Based Task Routing
 
-Mode determines which agent executes the task:
+Bob routes work by category (defined in Bob's prompt). These are the active categories — there is no separate TypeScript routing map; Bob's prompt is the sole source of truth:
 
-| Mode | Runtime slot | Display agent | When to use |
-|------|-------------|---------------|-------------|
-| `quick` | build (fast bounded) | Coder | Small targeted changes |
-| `writing` | writer | Writer | Content, i18n, copy |
-| `deep` | build | Coder | Complex implementation |
-| `ultrabrain` | plan | Strategist | Architecture, hard logic |
-| `visual-engineering` | designer | Designer | Visual problems |
-| `artistry` | designer | Designer | Brand, creative |
-| `git` | manager | Manager | Version control operations |
-| `bounded` | build (fast bounded) | Coder | Moderate effort changes |
-| `cross-module` | build | Coder | Multi-component changes |
-| `unspecified-low` | build (fast bounded) | Coder | Unclassified small tasks |
-| `unspecified-high` | build | Coder | Unclassified substantial tasks |
+| Category | Delegates to | When to use |
+|----------|-------------|-------------|
+| `quick` | general (General) | 1-2 files, <30 lines, simple |
+| `deep` | build (Coder) | Complex multi-file implementation |
+| `visual-engineering` | designer (Designer) | UI/frontend, visual design |
+| `writing` | writer (Writer) | Documentation, copy, i18n |
+| `ultrabrain` | plan (Strategist) | Hard logic, architecture, planning |
+
+Additional delegation categories (not mode-based, but used explicitly):
+
+| Category | Delegates to | When to use |
+|----------|-------------|-------------|
+| review/verification | critic (Critic) | Plan review, quality gate |
+| research/discovery | explore (Explorer) | Codebase grep, docs, web search |
+| browser/visual verification | vision (Vision) | Live UI inspection, screenshots |
 
 ## Tools
 
@@ -265,52 +306,13 @@ Configuration in `bob.json`:
 | Service | Type | Key env var | Agent(s) | What it's for |
 |---------|------|-------------|----------|---------------|
 | grep_app | **MCP** | — | explore, build | GitHub OSS code pattern search |
-| Sequential-Thinking | **MCP** | — | plan, critic | Deep reasoning for planning/review |
+| Sequential-Thinking | **MCP** (local via npx @modelcontextprotocol/server-sequential-thinking) | — | plan, critic | Deep reasoning for planning/review |
 | Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | explore | Web scraping, crawl, extract, search (NOT an MCP server) |
 | agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | build, vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
 
 **Removed in v0.3.0**: Stitch, Context7, and MemPalace MCP servers are no longer part of the default MCP registry. Context7 is available as an on-demand CLI skill via `skill("explore/context7")`. Stitch and MemPalace must be configured manually if needed.
 
 **Important**: Firecrawl and `agent-browser` are CLI skills, not MCP servers. Do not add either to the `mcp` section of `hiai-opencode.json`.
-
-## Post-Install Setup
-
-After installing the plugin, copy the environment template and fill in your API keys:
-
-```bash
-cp bob.env.example bob.env
-# Edit your keys in bob.env (git-ignored, never committed)
-```
-
-Install external CLIs manually if needed:
-
-```bash
-bun add -g agent-browser firecrawl-cli && agent-browser install
-```
-
-You can also ask OpenCode to finish local setup with this prompt:
-
-```text
-Read AGENTS.md and finish hiai-opencode setup for this workspace.
-
-Keep OpenCode plugins separate from MCP servers. Do not add MCP server packages to the OpenCode plugin list.
-
-Check that @hiai-gg/hiai-opencode is registered.
-
-Enable only MCP services that can run on this machine:
-- sequential-thinking: requires node/npx.
-- grep_app: no key required.
-
-CLI skills (NOT MCP):
-- firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var.
-- context7: on-demand CLI skill via skill("explore/context7").
-- agent-browser: requires bun add -g agent-browser && agent-browser install.
-
-Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
-
-Run verification commands where available:
-- opencode debug config
-```
 
 ## Development Install
 
