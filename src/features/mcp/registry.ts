@@ -1,31 +1,31 @@
-import { resolveEnvVars } from '../../shared/env';
+import { resolveEnvVars } from "../../shared/env";
 
 const DEFAULT_MCP_TIMEOUT = 60_000; // 60s per request
 
 export const MCP_REGISTRY: Record<
   string,
   {
-    type: 'local' | 'remote';
+    type: "local" | "remote";
     command?: string[];
     url?: string;
     environment?: Record<string, string>;
     headers?: Record<string, string>;
-    install?: 'bundled' | 'npm' | 'python' | 'remote';
+    install?: "bundled" | "npm" | "python" | "remote";
     requiredEnv?: string[];
     optionalEnv?: string[];
     timeout?: number;
   }
 > = {
-  'sequential-thinking': {
-    type: 'local',
-    command: ['npx', '-y', '@modelcontextprotocol/server-sequential-thinking'],
+  "sequential-thinking": {
+    type: "local",
+    command: ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
     requiredEnv: [],
     optionalEnv: [],
     timeout: DEFAULT_MCP_TIMEOUT,
   },
   grep_app: {
-    type: 'remote',
-    url: 'https://mcp.grep.app',
+    type: "remote",
+    url: "https://mcp.grep.app",
     requiredEnv: [],
     optionalEnv: [],
     timeout: DEFAULT_MCP_TIMEOUT,
@@ -51,7 +51,9 @@ export function getMcpConfig(
     if (registry.requiredEnv && registry.requiredEnv.length > 0) {
       const missing = registry.requiredEnv.filter((k) => !process.env[k]);
       if (missing.length > 0) {
-        console.log(`[bob] MCP ${name} skipped: missing env: ${missing.join(', ')}`);
+        console.log(
+          `[bob] MCP ${name} skipped: missing env: ${missing.join(", ")}`,
+        );
         continue;
       }
     }
@@ -67,18 +69,22 @@ export function getMcpConfig(
       }
     }
 
-    if (registry.type === 'local' && registry.command) {
+    if (registry.type === "local" && registry.command) {
       result[name] = {
-        type: 'local',
+        type: "local",
         command: registry.command,
-        ...(registry.environment ? { environment: resolveEnvVars(registry.environment) } : {}),
+        ...(registry.environment
+          ? { environment: resolveEnvVars(registry.environment) }
+          : {}),
         ...(registry.timeout ? { timeout: registry.timeout } : {}),
       };
-    } else if (registry.type === 'remote' && registry.url) {
+    } else if (registry.type === "remote" && registry.url) {
       result[name] = {
-        type: 'remote',
+        type: "remote",
         url: registry.url,
-        ...(Object.keys(headers).length > 0 ? { headers: resolveEnvVars(headers) } : {}),
+        ...(Object.keys(headers).length > 0
+          ? { headers: resolveEnvVars(headers) }
+          : {}),
         ...(registry.timeout ? { timeout: registry.timeout } : {}),
       };
     }

@@ -39,13 +39,13 @@ export function validateClosure(text: string): {
   data?: { reasoning: string; evidence: string[]; readiness: string };
 } {
   const match = text.match(/<CLOSURE>([\s\S]*?)<\/CLOSURE>/);
-  if (!match) return { isValid: false, error: 'No CLOSURE block found' };
+  if (!match) return { isValid: false, error: "No CLOSURE block found" };
   try {
     const data = JSON.parse(match[1].trim());
     if (!data.reasoning || !data.readiness)
-      return { isValid: false, error: 'Missing required fields' };
+      return { isValid: false, error: "Missing required fields" };
     return { isValid: true, data };
   } catch {
-    return { isValid: false, error: 'Invalid JSON in CLOSURE block' };
+    return { isValid: false, error: "Invalid JSON in CLOSURE block" };
   }
 }

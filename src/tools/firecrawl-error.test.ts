@@ -2,8 +2,8 @@
  * firecrawl-error.test.ts — Tests for Firecrawl error classification helpers.
  */
 
-import { describe, expect, test, beforeEach } from "bun:test";
-import { hasFirecrawlKey, formatFirecrawlError } from "./firecrawl";
+import { beforeEach, describe, expect, test } from "bun:test";
+import { formatFirecrawlError, hasFirecrawlKey } from "./firecrawl";
 
 describe("hasFirecrawlKey", () => {
   beforeEach(() => {

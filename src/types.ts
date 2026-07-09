@@ -1,4 +1,4 @@
-export type AgentMode = 'primary' | 'subagent' | 'all';
+export type AgentMode = "primary" | "subagent" | "all";
 
 export interface AgentConfig {
   name: string;
@@ -19,11 +19,11 @@ export interface AgentOverrides {
 
 export interface CavemanConfig {
   enabled: boolean;
-  level?: 'minimal' | 'balanced' | 'full';
+  level?: "minimal" | "balanced" | "full";
   bob_internal?: boolean;
   bob_to_agents?: boolean;
   agents_to_bob?: boolean;
-  final_user_output?: 'normal';
+  final_user_output?: "normal";
   target_agents?: string[];
   exclude_agents?: string[];
   min_messages_to_compress?: number;
@@ -80,7 +80,7 @@ export interface BobConfig {
 export interface ClosureBlock {
   reasoning: string;
   evidence: string[];
-  readiness: 'accept' | 'reject' | 'done';
+  readiness: "accept" | "reject" | "done";
 }
 
-export type HookSet = import('@opencode-ai/plugin').Hooks;
+export type HookSet = import("@opencode-ai/plugin").Hooks;

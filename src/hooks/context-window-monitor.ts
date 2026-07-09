@@ -1,9 +1,9 @@
-import type { BobConfig, HookSet } from '../types';
+import type { BobConfig, HookSet } from "../types";
 
 export function createContextWindowMonitor(_config: BobConfig): HookSet {
   return {
-    'experimental.chat.system.transform': async (_input, output) => {
-      const ctx = output.system.join('\n').length;
+    "experimental.chat.system.transform": async (_input, output) => {
+      const ctx = output.system.join("\n").length;
       const maxCtx = 128_000;
       const ratio = ctx / maxCtx;
       if (ratio > 0.7) {

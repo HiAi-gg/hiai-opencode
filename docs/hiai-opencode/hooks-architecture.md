@@ -12,15 +12,15 @@ Hooks are registered as handlers on OpenCode's plugin interface. Each hook retur
 
 ## Hook Tiers
 
-Hooks are organized into three tiers:
+Hooks are organized as named hook sets registered in `src/hooks/index.ts`:
 
-| Tier | Count | Files | Purpose |
-|------|-------|-------|---------|
-| **Core** | 43 | `create-core-hooks.ts` → `createSessionHooks` (22), `createToolGuardHooks` (15), `createTransformHooks` (6) | Primary session monitoring, tool guards, message transforms |
-| **Continuation** | 8 | `create-continuation-hooks.ts` | Todo enforcement, stop-continuation guard, compaction context, session recovery, delegate task retry |
-| **Skill** | 2 | `create-skill-hooks.ts` | Category skill reminder, auto-slash command |
+| Category | Named Hooks | Purpose |
+|----------|-------------|---------|
+| **Total** | **30** (source: `ALL_NAMED_HOOK_FACTORIES` in `src/hooks/index.ts`) | All named hooks |
 
-Total: **53 hooks** across the three tiers.
+The 30 named hooks cover: closure injection, caveman protocol (system injector + message compressor), todo continuation, quality gate, context window monitor, tool pair validator, thinking block validator, write existing file guard, JSON error recovery, edit error recovery, non-interactive env, model fallback, runtime fallback, preemptive compaction, stop continuation guard, rules injector, legal gate, directory agents injector, loop, manager guard, compaction context injector, session notification, agent usage reminder, session recovery, think mode, token budget, compaction todo preserver, reasoning content cache, and context window limit recovery.
+
+Note: Each named hook registers handlers at one or more hook points (`event`, `tool.execute.before`, `tool.execute.after`, `experimental.chat.messages.transform`, etc.). The sum of individual handler registrations across all hook points exceeds the named-hook count of 30.
 
 ## Compaction System Architecture
 

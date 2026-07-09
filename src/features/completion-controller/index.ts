@@ -1,12 +1,12 @@
-import type { Hooks, PluginInput } from '@opencode-ai/plugin';
-import type { BobConfig } from '../../types';
-import { decide } from './decide';
-import { aggregateEndpoints } from './port-scanner';
-import { matchesAnyGlob, parseCriticVerdict } from './signals';
-import * as st from './state';
-import { buildSummary, parseClosureBlock } from './summary-builder';
+import type { Hooks, PluginInput } from "@opencode-ai/plugin";
+import type { BobConfig } from "../../types";
+import { decide } from "./decide";
+import { aggregateEndpoints } from "./port-scanner";
+import { matchesAnyGlob, parseCriticVerdict } from "./signals";
+import * as st from "./state";
+import { buildSummary, parseClosureBlock } from "./summary-builder";
 
-let client: PluginInput['client'] | null = null;
+let client: PluginInput["client"] | null = null;
 
 // Local type — @opencode-ai/plugin doesn't export this
 // The runtime actor.postStop hook is registered as an object with matcher+run,
@@ -26,13 +26,14 @@ type ActorPostStopRegistration = {
   ) => Promise<void>;
 };
 
-export function setCompletionClient(c: PluginInput['client']) {
+export function setCompletionClient(c: PluginInput["client"]) {
   client = c;
 }
 
 export function createBobCompletionHook(
   config: BobConfig,
-): Pick<Hooks, 'tool.execute.after' | 'event' | 'chat.message'> & Record<string, unknown> {
+): Pick<Hooks, "tool.execute.after" | "event" | "chat.message"> &
+  Record<string, unknown> {
   const cfg = config.completion ?? {
     enabled: true,
     max_auto_continues: 25,
@@ -44,7 +45,7 @@ export function createBobCompletionHook(
 
   async function readLastAssistantVerdict(
     sessionID: string,
-  ): Promise<'approved' | 'rejected' | null> {
+  ): Promise<"approved" | "rejected" | null> {
     if (!client) return null;
     try {
       const res = await client.session.messages({ path: { id: sessionID } });
@@ -52,11 +53,13 @@ export function createBobCompletionHook(
         info?: { role?: string };
         parts?: Array<{ type?: string; text?: string }>;
       }>;
-      const lastAssistant = [...msgs].reverse().find((m) => m.info?.role === 'assistant');
+      const lastAssistant = [...msgs]
+        .reverse()
+        .find((m) => m.info?.role === "assistant");
       const text = (lastAssistant?.parts ?? [])
-        .filter((p) => p.type === 'text')
-        .map((p) => p.text ?? '')
-        .join('');
+        .filter((p) => p.type === "text")
+        .map((p) => p.text ?? "")
+        .join("");
       return parseCriticVerdict(text);
     } catch {
       return null;
@@ -71,15 +74,22 @@ export function createBobCompletionHook(
       const res = await client.session.messages({ path: { id: sessionID } });
       const msgs = (res.data ?? []) as Array<{
         info?: { id?: string; role?: string };
-        parts?: Array<{ type?: string; text?: string; tool?: string; state?: { output?: string } }>;
+        parts?: Array<{
+          type?: string;
+          text?: string;
+          tool?: string;
+          state?: { output?: string };
+        }>;
       }>;
-      const lastAssistant = [...msgs].reverse().find((m) => m.info?.role === 'assistant');
+      const lastAssistant = [...msgs]
+        .reverse()
+        .find((m) => m.info?.role === "assistant");
       const id = lastAssistant?.info?.id;
       if (!id) return null;
       const text = (lastAssistant?.parts ?? [])
-        .filter((p) => p.type === 'text')
-        .map((p) => p.text ?? '')
-        .join('');
+        .filter((p) => p.type === "text")
+        .map((p) => p.text ?? "")
+        .join("");
       return { messageID: id, text };
     } catch {
       return null;
@@ -100,7 +110,9 @@ export function createBobCompletionHook(
           state?: { status?: string; output?: string };
         }>;
       }>;
-      const lastAssistantIdx = [...msgs].reverse().findIndex((m) => m.info?.role === 'assistant');
+      const lastAssistantIdx = [...msgs]
+        .reverse()
+        .findIndex((m) => m.info?.role === "assistant");
       if (lastAssistantIdx < 0) return [];
       // Walk backwards from the last assistant message — recent bash/read tool
       // outputs are the most likely source of "the user started something".
@@ -108,7 +120,7 @@ export function createBobCompletionHook(
       const window = msgs.slice(Math.max(0, startIdx - 4), startIdx + 1);
       return window.flatMap((m) =>
         (m.parts ?? []).flatMap((p) => {
-          if (p.type !== 'tool') return [];
+          if (p.type !== "tool") return [];
           if (!p.tool) return [];
           const output = p.state?.output;
           if (!output) return [];
@@ -131,12 +143,15 @@ export function createBobCompletionHook(
           data?: Array<{ content?: string; status?: string }>;
         }>;
       };
-      if (typeof api.todos === 'function') {
+      if (typeof api.todos === "function") {
         const res = await api.todos({ path: { id: sessionID } });
         const list = res.data ?? [];
         return list
-          .filter((t) => t.status && t.status !== 'completed' && t.status !== 'cancelled')
-          .map((t) => t.content ?? '')
+          .filter(
+            (t) =>
+              t.status && t.status !== "completed" && t.status !== "cancelled",
+          )
+          .map((t) => t.content ?? "")
           .filter(Boolean);
       }
     } catch {
@@ -145,13 +160,18 @@ export function createBobCompletionHook(
     return [];
   }
 
-  async function injectSummary(sessionID: string, reason: string): Promise<void> {
+  async function injectSummary(
+    sessionID: string,
+    reason: string,
+  ): Promise<void> {
     if (!client) return;
     try {
       const lastAssistant = await readLastAssistantMessage(sessionID);
       const messageID = lastAssistant?.messageID;
-      const closure = parseClosureBlock(lastAssistant?.text ?? '');
-      const endpoints = aggregateEndpoints(await readRecentToolOutputs(sessionID));
+      const closure = parseClosureBlock(lastAssistant?.text ?? "");
+      const endpoints = aggregateEndpoints(
+        await readRecentToolOutputs(sessionID),
+      );
       const remaining = await readRemainingTodos(sessionID);
       const text = buildSummary({
         closure,
@@ -164,7 +184,7 @@ export function createBobCompletionHook(
         await client.session.prompt({
           path: { id: sessionID },
           body: {
-            parts: [{ type: 'text', text, metadata: { bob_summary: true } }],
+            parts: [{ type: "text", text, metadata: { bob_summary: true } }],
           },
         });
       }
@@ -174,10 +194,15 @@ export function createBobCompletionHook(
   }
 
   return {
-    'tool.execute.after': async (input, _output) => {
+    "tool.execute.after": async (input, _output) => {
       const sid = input.sessionID;
       if (!sid) return;
-      if (input.tool !== 'write' && input.tool !== 'edit' && input.tool !== 'apply_patch') return;
+      if (
+        input.tool !== "write" &&
+        input.tool !== "edit" &&
+        input.tool !== "apply_patch"
+      )
+        return;
       const args = (input.args as Record<string, unknown> | undefined) ?? {};
       const fp = (args.filePath ?? args.path) as string | undefined;
       if (!fp) return;
@@ -190,7 +215,7 @@ export function createBobCompletionHook(
     // session (correctly resetting the root orchestrator's state). When a
     // subagent auto-continues, sessionID is the subagent's session, which
     // is harmless (subagent state is not used for decide()).
-    'chat.message': async (input, _output) => {
+    "chat.message": async (input, _output) => {
       if (cfg.reset_on_user_message && input.sessionID) {
         st.resetForUser(input.sessionID);
       }
@@ -200,27 +225,34 @@ export function createBobCompletionHook(
     // state machine, so decide() knows whether there is still work to do.
     event: async (input) => {
       const evt = input.event as
-        | { type: string; properties: { sessionID: string; todos: Array<{ status: string }> } }
+        | {
+            type: string;
+            properties: { sessionID: string; todos: Array<{ status: string }> };
+          }
         | undefined;
-      if (evt?.type === 'todo.updated' && evt.properties) {
+      if (evt?.type === "todo.updated" && evt.properties) {
         const hasIncomplete = evt.properties.todos.some(
-          (t) => t.status !== 'completed' && t.status !== 'cancelled',
+          (t) => t.status !== "completed" && t.status !== "cancelled",
         );
         st.setHasIncompleteTodos(evt.properties.sessionID, hasIncomplete);
       }
     },
 
-    'actor.postStop': {
-      matcher: { mode: 'peer' },
+    "actor.postStop": {
+      matcher: { mode: "peer" },
       run: async (
-        input: { sessionID: string; agentType: string; parentSessionID?: string },
+        input: {
+          sessionID: string;
+          agentType: string;
+          parentSessionID?: string;
+        },
         output: { continue?: boolean; reason?: string },
       ) => {
         const sid = input.sessionID;
         if (!sid) return;
 
         // Critic subagent: capture the verdict for the parent session.
-        if (input.agentType === 'critic') {
+        if (input.agentType === "critic") {
           const verdict = await readLastAssistantVerdict(sid);
           if (verdict) {
             const parent = input.parentSessionID ?? sid;
@@ -236,7 +268,11 @@ export function createBobCompletionHook(
         if (input.parentSessionID) {
           const childState = st.get(sid);
           for (const fp of childState.changedFiles) {
-            st.recordChangedFile(decideSessionID, fp, matchesAnyGlob(fp, cfg.ui_globs));
+            st.recordChangedFile(
+              decideSessionID,
+              fp,
+              matchesAnyGlob(fp, cfg.ui_globs),
+            );
           }
         }
 
@@ -254,7 +290,7 @@ export function createBobCompletionHook(
           requireCritic: cfg.require_critic,
         });
 
-        if (action.kind === 'stop') {
+        if (action.kind === "stop") {
           // Inject the completion summary as a synthetic ignored text part
           // on the last assistant message. The TUI picks it up via the
           // `bob_summary` metadata flag and renders it as a stylized card.

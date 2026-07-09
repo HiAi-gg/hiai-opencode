@@ -13,7 +13,7 @@ items. Completed work lives in [CHANGELOG.md](../CHANGELOG.md) and `log.md`.
 
 ---
 
-## ✅ Recently shipped (0.2.4 → 0.2.5)
+## ✅ Recently shipped (0.2.5 → 0.3.0)
 
 | Item | Version | Notes |
 |---|---|---|
@@ -104,11 +104,11 @@ items. Completed work lives in [CHANGELOG.md](../CHANGELOG.md) and `log.md`.
 
 | Doc | Purpose | Status |
 |---|---|---|
-| `README.md` | Public landing + install | ✅ current (0.2.5) |
+| `README.md` | Public landing + install | ✅ current (0.3.0) |
 | `AGENTS.md` | Operator playbook / agent manual | ✅ current |
 | `ARCHITECTURE.md` | System overview | ✅ current |
 | `CHANGELOG.md` | Version history | ✅ current |
-| `docs/quickstart.md` | First-run guide | ✅ current |
+| `docs/quickstart.md` | First-run guide | ✅ current (0.3.0) |
 | `docs/HOOKS.md` / `HOOK_TIMINGS.md` | Hook reference | ✅ current |
 | `docs/PERMISSIONS.md` | Agent permission model | ✅ current |
 | `docs/hiai-opencode/adr/` | Architecture decisions | ✅ current |

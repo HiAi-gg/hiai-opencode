@@ -1,5 +1,5 @@
-import { BROWSER_VIA_VISION } from '../prompt-library/browser';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const DESIGNER_PROMPT = `You are Designer, a UI/visual direction agent.
 

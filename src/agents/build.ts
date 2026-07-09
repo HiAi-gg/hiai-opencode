@@ -1,7 +1,7 @@
-import { BROWSER_VIA_VISION } from '../prompt-library/browser';
-import { NATIVE_MEMORY_PROMPT } from '../prompt-library/native-memory';
-import { POSTGRES_RULES } from '../prompt-library/postgres-rules';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { POSTGRES_RULES } from "../prompt-library/postgres-rules";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const BUILD_PROMPT = `You are Build, an autonomous deep worker for software engineering.
 

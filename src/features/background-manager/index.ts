@@ -1,4 +1,4 @@
-import type { PluginInput } from '@opencode-ai/plugin';
+import type { PluginInput } from "@opencode-ai/plugin";
 
 interface ToolCallWindow {
   lastSignature: string;
@@ -17,7 +17,7 @@ export interface BackgroundTask {
   id: string;
   sessionID: string;
   parentSessionID: string;
-  status: 'running' | 'completed' | 'error' | 'cancelled';
+  status: "running" | "completed" | "error" | "cancelled";
   description: string;
   result?: string;
   error?: string;
@@ -28,21 +28,29 @@ export interface BackgroundTask {
 }
 
 function sortObject(obj: unknown): unknown {
-  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj === null || typeof obj !== "object") return obj;
   if (Array.isArray(obj)) return obj.map(sortObject);
   return Object.keys(obj as Record<string, unknown>)
     .sort()
     .reduce(
       (acc, key) => {
-        (acc as Record<string, unknown>)[key] = sortObject((obj as Record<string, unknown>)[key]);
+        (acc as Record<string, unknown>)[key] = sortObject(
+          (obj as Record<string, unknown>)[key],
+        );
         return acc;
       },
       {} as Record<string, unknown>,
     );
 }
 
-function createToolCallSignature(toolName: string, toolInput?: Record<string, unknown>): string {
-  if (!toolInput || (typeof toolInput === 'object' && Object.keys(toolInput).length === 0))
+function createToolCallSignature(
+  toolName: string,
+  toolInput?: Record<string, unknown>,
+): string {
+  if (
+    !toolInput ||
+    (typeof toolInput === "object" && Object.keys(toolInput).length === 0)
+  )
     return toolName;
   return `${toolName}::${JSON.stringify(sortObject(toolInput))}`;
 }
@@ -63,8 +71,9 @@ function detectRepetitiveToolUse(window: ToolCallWindow): {
   tool?: string;
   count?: number;
 } {
-  if (!window || window.consecutiveCount < window.threshold) return { triggered: false };
-  const tool = window.lastSignature.split('::')[0];
+  if (!window || window.consecutiveCount < window.threshold)
+    return { triggered: false };
+  const tool = window.lastSignature.split("::")[0];
   return { triggered: true, tool, count: window.consecutiveCount };
 }
 
@@ -77,25 +86,25 @@ function detectRepetitiveToolUse(window: ToolCallWindow): {
  * Preserves: task description, useful deliverable content, evidence paths.
  */
 export function formatBackgroundResultForParent(raw: string): string {
-  if (!raw) return 'No output';
+  if (!raw) return "No output";
 
   let text = raw;
 
   // 1. Strip <CLOSURE>...</CLOSURE> blocks entirely
-  text = text.replace(/<CLOSURE>[\s\S]*?<\/CLOSURE>/gi, '');
+  text = text.replace(/<CLOSURE>[\s\S]*?<\/CLOSURE>/gi, "");
 
   // 2. Strip Result Envelope labels and their line content
   // These patterns match the full line containing the label
-  text = text.replace(/\*\*Status:\*\*[^\n]*/gi, '');
-  text = text.replace(/\*\*Summary:\*\*[^\n]*/gi, '');
-  text = text.replace(/\*\*Evidence:\*\*[^\n]*/gi, '');
-  text = text.replace(/\*\*Files touched:\*\*[^\n]*/gi, '');
+  text = text.replace(/\*\*Status:\*\*[^\n]*/gi, "");
+  text = text.replace(/\*\*Summary:\*\*[^\n]*/gi, "");
+  text = text.replace(/\*\*Evidence:\*\*[^\n]*/gi, "");
+  text = text.replace(/\*\*Files touched:\*\*[^\n]*/gi, "");
 
   // 3. Strip any remaining <CLOSURE_PROTOCOL>...</CLOSURE_PROTOCOL> blocks
-  text = text.replace(/<CLOSURE_PROTOCOL>[\s\S]*?<\/CLOSURE_PROTOCOL>/gi, '');
+  text = text.replace(/<CLOSURE_PROTOCOL>[\s\S]*?<\/CLOSURE_PROTOCOL>/gi, "");
 
   // 4. Clean up multiple blank lines resulting from removals
-  text = text.replace(/\n{3,}/g, '\n\n');
+  text = text.replace(/\n{3,}/g, "\n\n");
 
   // 5. Trim whitespace
   text = text.trim();
@@ -106,12 +115,12 @@ export function formatBackgroundResultForParent(raw: string): string {
     text = `${text.slice(0, MAX_LEN)}\n... (truncated)`;
   }
 
-  return text || 'No output';
+  return text || "No output";
 }
 
 export class BackgroundManager {
   private tasks = new Map<string, BackgroundTask>();
-  private client: PluginInput['client'] | null = null;
+  private client: PluginInput["client"] | null = null;
   private pollInterval: ReturnType<typeof setInterval> | null = null;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
   private concurrencyLimit = 5;
@@ -134,10 +143,16 @@ export class BackgroundManager {
       consecutive_threshold?: number;
     };
   }) {
-    if (config?.concurrency_limit !== undefined && config.concurrency_limit < 1) {
-      throw new Error(`concurrency_limit must be >= 1, got ${config.concurrency_limit}`);
+    if (
+      config?.concurrency_limit !== undefined &&
+      config.concurrency_limit < 1
+    ) {
+      throw new Error(
+        `concurrency_limit must be >= 1, got ${config.concurrency_limit}`,
+      );
     }
-    if (config?.concurrency_limit) this.concurrencyLimit = config.concurrency_limit;
+    if (config?.concurrency_limit)
+      this.concurrencyLimit = config.concurrency_limit;
     if (config?.stale_timeout_ms) this.staleTimeoutMs = config.stale_timeout_ms;
     if (config?.circuit_breaker) {
       this.circuitBreaker = {
@@ -155,7 +170,7 @@ export class BackgroundManager {
     }
   }
 
-  setClient(client: PluginInput['client']) {
+  setClient(client: PluginInput["client"]) {
     this.client = client;
     this.startPolling();
     this.startCleanup();
@@ -164,7 +179,9 @@ export class BackgroundManager {
   checkSpawnLimits(parentSessionID: string): boolean {
     const count = this.rootDescendantCounts.get(parentSessionID) ?? 0;
     if (count >= this.maxDescendants) {
-      console.log(`[hiai-opencode] Spawn limit: ${count} descendants for ${parentSessionID}`);
+      console.log(
+        `[hiai-opencode] Spawn limit: ${count} descendants for ${parentSessionID}`,
+      );
       return false;
     }
     this.rootDescendantCounts.set(parentSessionID, count + 1);
@@ -186,14 +203,16 @@ export class BackgroundManager {
       id: `bg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
       sessionID: input.sessionID,
       parentSessionID: input.parentSessionID,
-      status: 'running',
+      status: "running",
       description: input.description,
       createdAt: Date.now(),
       startedAt: Date.now(),
     };
 
     if (!this.checkSpawnLimits(input.parentSessionID)) {
-      throw new Error(`Spawn limit reached for session ${input.parentSessionID}`);
+      throw new Error(
+        `Spawn limit reached for session ${input.parentSessionID}`,
+      );
     }
 
     task.progress = { toolCalls: 0, lastUpdate: new Date() };
@@ -206,7 +225,11 @@ export class BackgroundManager {
     return this.tasks.get(id);
   }
 
-  recordToolCall(taskId: string, toolName: string, toolInput?: Record<string, unknown>) {
+  recordToolCall(
+    taskId: string,
+    toolName: string,
+    toolInput?: Record<string, unknown>,
+  ) {
     if (!this.circuitBreaker.enabled) return;
     const task = this.tasks.get(taskId);
     if (!task?.progress) return;
@@ -224,29 +247,40 @@ export class BackgroundManager {
 
     const check = detectRepetitiveToolUse(task.progress.toolCallWindow);
     if (check.triggered) {
-      this.cancel(taskId, `Circuit breaker: ${check.count} consecutive ${check.tool} calls`);
+      this.cancel(
+        taskId,
+        `Circuit breaker: ${check.count} consecutive ${check.tool} calls`,
+      );
       return;
     }
 
     if (task.progress.toolCalls >= this.circuitBreaker.maxToolCalls) {
-      this.cancel(taskId, `Circuit breaker: ${task.progress.toolCalls} total tool calls`);
+      this.cancel(
+        taskId,
+        `Circuit breaker: ${task.progress.toolCalls} total tool calls`,
+      );
     }
   }
 
   cancel(id: string, reason?: string): boolean {
     const task = this.tasks.get(id);
     if (!task) return false;
-    const wasRunning = task.status === 'running';
-    task.status = 'cancelled';
+    const wasRunning = task.status === "running";
+    task.status = "cancelled";
     task.completedAt = Date.now();
     if (reason) task.error = reason;
     if (wasRunning) this.runningCount = Math.max(0, this.runningCount - 1);
     if (task.parentSessionID) {
       const count = this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
-      this.rootDescendantCounts.set(task.parentSessionID, Math.max(0, count - 1));
+      this.rootDescendantCounts.set(
+        task.parentSessionID,
+        Math.max(0, count - 1),
+      );
     }
     if (this.client && task.sessionID) {
-      this.client.session.abort({ path: { id: task.sessionID } }).catch(() => {});
+      this.client.session
+        .abort({ path: { id: task.sessionID } })
+        .catch(() => {});
     }
     return true;
   }
@@ -261,17 +295,21 @@ export class BackgroundManager {
     if (!this.client) return;
 
     for (const [id, task] of this.tasks) {
-      if (task.status !== 'running') continue;
+      if (task.status !== "running") continue;
 
       // Check stale timeout
       if (Date.now() - task.createdAt > this.staleTimeoutMs) {
-        task.status = 'error';
-        task.error = 'Task timed out';
+        task.status = "error";
+        task.error = "Task timed out";
         task.completedAt = Date.now();
         this.runningCount = Math.max(0, this.runningCount - 1);
         if (task.parentSessionID) {
-          const count = this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
-          this.rootDescendantCounts.set(task.parentSessionID, Math.max(0, count - 1));
+          const count =
+            this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
+          this.rootDescendantCounts.set(
+            task.parentSessionID,
+            Math.max(0, count - 1),
+          );
         }
         await this.notifyParent(task);
         continue;
@@ -281,39 +319,52 @@ export class BackgroundManager {
       try {
         const statusResult = await this.client.session.status();
         const sessionStatus = statusResult.data?.[task.sessionID];
-        const status = (sessionStatus as { status?: string } | undefined)?.status;
+        const status = (sessionStatus as { status?: string } | undefined)
+          ?.status;
 
-        if (status === 'idle' || status === 'completed') {
+        if (status === "idle" || status === "completed") {
           // Fetch result
-          const messages = await this.client.session.messages({ path: { id: task.sessionID } });
+          const messages = await this.client.session.messages({
+            path: { id: task.sessionID },
+          });
           const lastAssistant = (messages.data ?? [])
             .reverse()
-            .find((m: { info?: { role?: string } }) => m.info?.role === 'assistant');
+            .find(
+              (m: { info?: { role?: string } }) => m.info?.role === "assistant",
+            );
           const text =
             lastAssistant?.parts
-              ?.filter((p) => (p as { type?: string }).type === 'text')
+              ?.filter((p) => (p as { type?: string }).type === "text")
               .map((p) => (p as { text?: string }).text)
-              .join('') ?? '';
+              .join("") ?? "";
 
-          task.status = 'completed';
+          task.status = "completed";
           task.result = text;
           task.completedAt = Date.now();
           this.runningCount = Math.max(0, this.runningCount - 1);
           if (task.parentSessionID) {
-            const count = this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
-            this.rootDescendantCounts.set(task.parentSessionID, Math.max(0, count - 1));
+            const count =
+              this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
+            this.rootDescendantCounts.set(
+              task.parentSessionID,
+              Math.max(0, count - 1),
+            );
           }
 
           // Notify parent
           await this.notifyParent(task);
-        } else if (status === 'error') {
-          task.status = 'error';
-          task.error = 'Session errored';
+        } else if (status === "error") {
+          task.status = "error";
+          task.error = "Session errored";
           task.completedAt = Date.now();
           this.runningCount = Math.max(0, this.runningCount - 1);
           if (task.parentSessionID) {
-            const count = this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
-            this.rootDescendantCounts.set(task.parentSessionID, Math.max(0, count - 1));
+            const count =
+              this.rootDescendantCounts.get(task.parentSessionID) ?? 1;
+            this.rootDescendantCounts.set(
+              task.parentSessionID,
+              Math.max(0, count - 1),
+            );
           }
           await this.notifyParent(task);
         }
@@ -327,37 +378,39 @@ export class BackgroundManager {
     if (!this.client) return;
     try {
       const sanitizedResult =
-        task.status === 'completed'
-          ? formatBackgroundResultForParent(task.result ?? '')
+        task.status === "completed"
+          ? formatBackgroundResultForParent(task.result ?? "")
           : undefined;
 
       const message =
-        task.status === 'completed'
-          ? `[Background task completed: ${task.description}]\nResult: ${sanitizedResult ?? 'No output'}`
-          : `[Background task failed: ${task.description}]\nError: ${task.error ?? 'Unknown error'}`;
+        task.status === "completed"
+          ? `[Background task completed: ${task.description}]\nResult: ${sanitizedResult ?? "No output"}`
+          : `[Background task failed: ${task.description}]\nError: ${task.error ?? "Unknown error"}`;
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Notification timeout')), 10000),
+        setTimeout(() => reject(new Error("Notification timeout")), 10000),
       );
       const notifyPromise = this.client.session.prompt({
         path: { id: task.parentSessionID },
-        body: { parts: [{ type: 'text' as const, text: message }] },
+        body: { parts: [{ type: "text" as const, text: message }] },
       });
       await Promise.race([notifyPromise, timeoutPromise]);
     } catch {
-      console.log('[hiai-opencode] Notification failed or timed out');
+      console.log("[hiai-opencode] Notification failed or timed out");
     }
   }
 
   getRunningTasks(): BackgroundTask[] {
-    return Array.from(this.tasks.values()).filter((t) => t.status === 'running');
+    return Array.from(this.tasks.values()).filter(
+      (t) => t.status === "running",
+    );
   }
 
   private startCleanup() {
     this.cleanupInterval = setInterval(() => {
       const now = Date.now();
       for (const [id, task] of this.tasks) {
-        if (task.status !== 'running') {
+        if (task.status !== "running") {
           if (task.completedAt && now - task.completedAt > 10 * 60 * 1000) {
             this.tasks.delete(id);
           }

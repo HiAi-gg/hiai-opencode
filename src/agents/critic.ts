@@ -1,5 +1,5 @@
-import { BROWSER_VIA_VISION } from '../prompt-library/browser';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const CRITIC_PROMPT = `You are Critic, a review gate agent.
 

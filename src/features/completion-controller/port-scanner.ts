@@ -38,15 +38,18 @@ export interface Endpoint {
  * pattern matcher. The caller is responsible for selecting which outputs to
  * feed in (e.g. the most recent N bash/read results for the session).
  */
-export function scanOutputForEndpoints(text: string, source: string): Endpoint[] {
+export function scanOutputForEndpoints(
+  text: string,
+  source: string,
+): Endpoint[] {
   if (!text) return [];
   const slice = text.length > SOURCE_LIMIT ? text.slice(0, SOURCE_LIMIT) : text;
   const hits = new Map<string, Endpoint>();
 
   const add = (rawUrl: string, port: number | null) => {
-    const url = rawUrl.replace(/[.,;)\]]+$/, '');
+    const url = rawUrl.replace(/[.,;)\]]+$/, "");
     if (!url) return;
-    const key = `${url}|${port ?? ''}`;
+    const key = `${url}|${port ?? ""}`;
     if (hits.has(key)) return;
     hits.set(key, { url, port, source });
   };
@@ -65,7 +68,7 @@ export function scanOutputForEndpoints(text: string, source: string): Endpoint[]
       if (/^\d+$/.test(candidate)) {
         if (!isPlausiblePort(candidate)) continue;
         add(`localhost:${candidate}`, Number(candidate));
-      } else if (candidate.includes(':')) {
+      } else if (candidate.includes(":")) {
         add(candidate, extractPort(candidate));
       } else {
         add(candidate, null);
@@ -81,11 +84,13 @@ export function scanOutputForEndpoints(text: string, source: string): Endpoint[]
  * us whatever they've already collected (the hook has access to the messages
  * bucket); we just dedupe and rank.
  */
-export function aggregateEndpoints(entries: Array<{ tool: string; output: string }>): Endpoint[] {
+export function aggregateEndpoints(
+  entries: Array<{ tool: string; output: string }>,
+): Endpoint[] {
   const seen = new Map<string, Endpoint>();
   for (const e of entries) {
     for (const ep of scanOutputForEndpoints(e.output, e.tool)) {
-      const key = `${ep.url}|${ep.port ?? ''}`;
+      const key = `${ep.url}|${ep.port ?? ""}`;
       if (seen.has(key)) continue;
       seen.set(key, ep);
     }

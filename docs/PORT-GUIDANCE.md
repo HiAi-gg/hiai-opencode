@@ -27,8 +27,8 @@ Multiple projects default to port 5173 (Vite dev server), port 3000 (Next.js), o
 | webs PostgreSQL | 5432 |
 | ai-core Redis | 6380 |
 | webs Redis | 6379 |
-| hiai-bob backend | 50900 |
-| hiai-bob frontend | 50901–50902 |
+| hiai-opencode backend | 50900 |
+| hiai-opencode frontend | 50901–50902 |
 
 ## See Also
 

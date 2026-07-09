@@ -1,5 +1,5 @@
-import { NATIVE_MEMORY_PROMPT } from '../prompt-library/native-memory';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const WRITER_PROMPT = `You are Writer, a content and copy specialist.
 

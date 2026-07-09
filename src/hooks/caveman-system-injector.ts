@@ -3,8 +3,8 @@ import {
   BOB_INTERNAL_CAVEMAN,
   DELEGATION_CAVEMAN,
   SUBAGENT_INTERNAL,
-} from '../prompt-library/caveman';
-import type { BobConfig, CavemanConfig, HookSet } from '../types';
+} from "../prompt-library/caveman";
+import type { BobConfig, CavemanConfig, HookSet } from "../types";
 
 /**
  * Caveman System Injector — injects internal communication protocol
@@ -34,13 +34,21 @@ import type { BobConfig, CavemanConfig, HookSet } from '../types';
 export function createCavemanSystemInjector(config: BobConfig): HookSet {
   const caveman: CavemanConfig = config.caveman ?? {
     enabled: true,
-    level: 'full',
+    level: "full",
     bob_internal: true,
     bob_to_agents: true,
     agents_to_bob: true,
-    final_user_output: 'normal',
-    target_agents: ['bob', 'explore', 'build', 'critic', 'general', 'designer', 'manager'],
-    exclude_agents: ['vision', 'writer'],
+    final_user_output: "normal",
+    target_agents: [
+      "bob",
+      "explore",
+      "build",
+      "critic",
+      "general",
+      "designer",
+      "manager",
+    ],
+    exclude_agents: ["vision", "writer"],
     min_messages_to_compress: 5,
   };
 
@@ -61,7 +69,7 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
   }
 
   return {
-    'experimental.chat.system.transform': async (
+    "experimental.chat.system.transform": async (
       input: { sessionID?: string; model: { id: string } },
       output: { system: string[] },
     ) => {
@@ -89,7 +97,7 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
         if (!isTarget) return;
 
         // Bob gets: internal style + delegation protocol + decode boundary
-        if (agentName === 'bob') {
+        if (agentName === "bob") {
           if (caveman.bob_internal) {
             output.system.push(BOB_INTERNAL_CAVEMAN);
           }
@@ -105,7 +113,7 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
           output.system.push(SUBAGENT_INTERNAL);
         }
       } catch (err) {
-        console.error('[hiai-opencode] caveman-system-injector error:', err);
+        console.error("[hiai-opencode] caveman-system-injector error:", err);
       }
     },
   };

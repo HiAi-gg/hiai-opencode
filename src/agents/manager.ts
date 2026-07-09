@@ -1,6 +1,6 @@
-import { BROWSER_VIA_VISION } from '../prompt-library/browser';
-import { NATIVE_MEMORY_PROMPT } from '../prompt-library/native-memory';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const MANAGER_PROMPT = `You are Manager, a delegation coordinator agent.
 

@@ -1,5 +1,5 @@
-import { NATIVE_MEMORY_PROMPT } from '../prompt-library/native-memory';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const EXPLORE_PROMPT = `You are Explore, a codebase exploration agent.
 

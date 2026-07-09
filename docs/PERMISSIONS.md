@@ -76,7 +76,7 @@ system handles the actual allow/deny UI.
 
 File: `src/config.ts` → `agent_restrictions`
 
-Default restrictions:
+Default restrictions (using internal runtime slot names — `build` = Coder, `plan` = Strategist, `explore` = Explorer):
 
 ```jsonc
 {

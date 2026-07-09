@@ -13,15 +13,12 @@
 # Do not put model provider keys here for normal OpenCode usage.
 # Connect model providers in OpenCode itself.
 
-# MCP Service Keys
+# CLI Skill Keys
 
-# Optional - Stitch AI remote MCP service
-# STITCH_AI_API_KEY=your_stitch_api_key_here
-
-# Optional - Firecrawl web scraping MCP
+# Required - Firecrawl web scraping (CLI skill, NOT MCP)
 # FIRECRAWL_API_KEY=your_firecrawl_api_key_here
 
-# Optional - Context7 code search MCP
+# Optional - Context7 code search (on-demand CLI skill, NOT MCP)
 # CONTEXT7_API_KEY=your_context7_api_key_here
 
 # Local Model Helpers

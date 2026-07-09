@@ -1,11 +1,11 @@
-import { fingerprint } from './signals';
+import { fingerprint } from "./signals";
 
 export interface SessionRuntime {
   autoContinues: number;
   hasIncompleteTodos: boolean;
   changedFiles: string[];
   reviewedFingerprint: string | null;
-  criticVerdict: 'approved' | 'rejected' | null;
+  criticVerdict: "approved" | "rejected" | null;
   blockerFlagged: boolean;
   uiChangedSinceReview: boolean;
 }
@@ -29,7 +29,11 @@ export function get(sessionID: string): SessionRuntime {
   return s;
 }
 
-export function recordChangedFile(sessionID: string, path: string, isUi: boolean): void {
+export function recordChangedFile(
+  sessionID: string,
+  path: string,
+  isUi: boolean,
+): void {
   const s = get(sessionID);
   if (!s.changedFiles.includes(path)) s.changedFiles.push(path);
   if (isUi) s.uiChangedSinceReview = true;
@@ -37,14 +41,20 @@ export function recordChangedFile(sessionID: string, path: string, isUi: boolean
   s.reviewedFingerprint = null;
 }
 
-export function recordCriticVerdict(sessionID: string, verdict: 'approved' | 'rejected'): void {
+export function recordCriticVerdict(
+  sessionID: string,
+  verdict: "approved" | "rejected",
+): void {
   const s = get(sessionID);
   s.criticVerdict = verdict;
   s.reviewedFingerprint = fingerprint(s.changedFiles);
-  if (verdict === 'approved') s.uiChangedSinceReview = false;
+  if (verdict === "approved") s.uiChangedSinceReview = false;
 }
 
-export function setHasIncompleteTodos(sessionID: string, hasIncomplete: boolean): void {
+export function setHasIncompleteTodos(
+  sessionID: string,
+  hasIncomplete: boolean,
+): void {
   get(sessionID).hasIncompleteTodos = hasIncomplete;
 }
 

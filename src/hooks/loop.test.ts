@@ -1,17 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import {
-  detectCompletionMarker,
-  classifyError,
-  buildRecoveryHint,
   buildContinuationPrompt,
   buildRecoveryContext,
+  buildRecoveryHint,
+  classifyError,
+  detectCompletionMarker,
 } from "./loop-state";
 
 // ── detectCompletionMarker ──
 
 describe("detectCompletionMarker", () => {
   test("detects <promise>DONE</promise> marker", () => {
-    expect(detectCompletionMarker("foo <promise>DONE</promise> bar")).toBe(true);
+    expect(detectCompletionMarker("foo <promise>DONE</promise> bar")).toBe(
+      true,
+    );
   });
 
   test("detects <promise>DONE</promise> case-insensitive", () => {
@@ -144,9 +146,17 @@ describe("buildRecoveryHint", () => {
 
   test("hints are distinct", () => {
     const hints = new Set(
-      (["rate_limit", "auth", "timeout", "empty_response", "context_window_exceeded", "server_error", "unknown"] as const).map((t) =>
-        buildRecoveryHint(t),
-      ),
+      (
+        [
+          "rate_limit",
+          "auth",
+          "timeout",
+          "empty_response",
+          "context_window_exceeded",
+          "server_error",
+          "unknown",
+        ] as const
+      ).map((t) => buildRecoveryHint(t)),
     );
     expect(hints.size).toBe(7);
   });

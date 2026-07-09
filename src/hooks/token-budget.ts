@@ -1,13 +1,17 @@
-import type { BobConfig, HookSet } from '../types';
+import type { BobConfig, HookSet } from "../types";
 
 export function createTokenBudgetHook(_config: BobConfig): HookSet {
   return {
-    'experimental.chat.messages.transform': async (
-      _input: Parameters<NonNullable<HookSet['experimental.chat.messages.transform']>>[0],
-      output: Parameters<NonNullable<HookSet['experimental.chat.messages.transform']>>[1],
+    "experimental.chat.messages.transform": async (
+      _input: Parameters<
+        NonNullable<HookSet["experimental.chat.messages.transform"]>
+      >[0],
+      output: Parameters<
+        NonNullable<HookSet["experimental.chat.messages.transform"]>
+      >[1],
     ) => {
       if (output?.messages?.length > 100) {
-        console.log('[hiai-opencode] Token budget: high message count');
+        console.log("[hiai-opencode] Token budget: high message count");
       }
     },
   };

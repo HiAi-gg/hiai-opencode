@@ -92,11 +92,13 @@ Override agent models in `hiai-opencode.json` (project root or `.opencode/`):
 ```json
 {
   "models": {
-    "coder": "anthropic/claude-opus-4",
-    "sub": "anthropic/claude-haiku-4"
+    "build": "anthropic/claude-opus-4",
+    "general": "anthropic/claude-haiku-4"
   }
 }
 ```
+
+> **Legacy name support**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are automatically resolved.
 
 Full reference: [`config/hiai-opencode.schema.json`](config/hiai-opencode.schema.json).
 
@@ -111,17 +113,19 @@ opencode
 
 Inside the session, run `/agents`. You should see 9 visible agents:
 
-| Agent | Role |
-|-------|------|
-| `Bob` | Orchestrator, router |
-| `Coder` | Deep implementation |
-| `Strategist` | Planning, architecture |
-| `Manager` | Delegation orchestrator, TODO tracker |
-| `Critic` | Review gate |
-| `Designer` | UI/visual via Stitch MCP |
-| `Researcher` | Local + external search |
-| `Writer` | Content, copy, SEO |
-| `Vision` | PDF/image extraction |
+| Agent (display) | Runtime slot | Role |
+|-----------------|-------------|------|
+| `Bob` | bob | Orchestrator, router |
+| `Coder` | build | Deep implementation |
+| `Strategist` | plan | Planning, architecture |
+| `Explorer` | explore | Local + external search |
+| `Manager` | manager | Delegation orchestrator, TODO tracker |
+| `Critic` | critic | Review gate |
+| `Designer` | designer | UI/visual direction |
+| `Writer` | writer | Content, copy, SEO |
+| `Vision` | vision | PDF/image extraction, browser verification |
+
+> **Note**: Runtime config keys differ from display names. `build` = Coder, `plan` = Strategist, `explore` = Explorer, `general` = General (hidden fallback). Legacy `coder`/`strategist`/`researcher`/`sub` names are preserved as compatibility aliases.
 
 ### CLI diagnostics
 

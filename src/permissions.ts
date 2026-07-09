@@ -16,49 +16,49 @@
 
 /** Agents that receive external_directory: 'allow' by default. */
 export const EXTERNAL_DIRECTORY_ALLOW_AGENTS = new Set([
-  'explore',
-  'plan',
-  'critic',
-  'build',
-  'general',
-  'manager',
-  'writer',
-  'designer',
+  "explore",
+  "plan",
+  "critic",
+  "build",
+  "general",
+  "manager",
+  "writer",
+  "designer",
 ]);
 
 /** Permission keys that map to permission.* deny. */
 export const PERMISSION_KEYS = new Set([
-  'edit',
-  'bash',
-  'webfetch',
-  'doom_loop',
-  'external_directory',
+  "edit",
+  "bash",
+  "webfetch",
+  "doom_loop",
+  "external_directory",
 ]);
 
 /** Tool keys that map to tools.* disable. */
 export const TOOLS_KEYS = new Set([
-  'write',
-  'grep',
-  'glob',
-  'task',
-  'apply_patch',
+  "write",
+  "grep",
+  "glob",
+  "task",
+  "apply_patch",
   // agent_browser_* tools — restricted per-agent to enforce Vision ownership
-  'agent_browser_navigate',
-  'agent_browser_snapshot',
-  'agent_browser_click',
-  'agent_browser_fill',
-  'agent_browser_type',
-  'agent_browser_screenshot',
-  'agent_browser_eval',
-  'agent_browser_wait',
-  'agent_browser_close',
-  'agent_browser_console',
-  'agent_browser_select',
-  'agent_browser_hover',
-  'agent_browser_press',
-  'agent_browser_batch',
-  'agent_browser_set_viewport',
-  'agent_browser_set_device',
+  "agent_browser_navigate",
+  "agent_browser_snapshot",
+  "agent_browser_click",
+  "agent_browser_fill",
+  "agent_browser_type",
+  "agent_browser_screenshot",
+  "agent_browser_eval",
+  "agent_browser_wait",
+  "agent_browser_close",
+  "agent_browser_console",
+  "agent_browser_select",
+  "agent_browser_hover",
+  "agent_browser_press",
+  "agent_browser_batch",
+  "agent_browser_set_viewport",
+  "agent_browser_set_device",
 ]);
 
 export interface AgentPermissions {
@@ -74,9 +74,11 @@ export interface AgentPermissions {
  * Bob and Vision are explicitly excluded — Bob delegates discovery to Explore,
  * and Vision is browser/multimodal only.
  */
-export function getDefaultExternalDirectory(agentKey: string): string | undefined {
+export function getDefaultExternalDirectory(
+  agentKey: string,
+): string | undefined {
   if (EXTERNAL_DIRECTORY_ALLOW_AGENTS.has(agentKey)) {
-    return 'allow';
+    return "allow";
   }
   return undefined;
 }
@@ -99,7 +101,7 @@ export function applyAgentPermissions(
   if (restrictions) {
     for (const [key, value] of Object.entries(restrictions)) {
       if (value !== false) continue;
-      if (PERMISSION_KEYS.has(key)) permission[key] = 'deny';
+      if (PERMISSION_KEYS.has(key)) permission[key] = "deny";
       else if (TOOLS_KEYS.has(key)) tools[key] = false;
     }
   }

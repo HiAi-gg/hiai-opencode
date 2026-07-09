@@ -11,8 +11,8 @@ settings by placing `bob.json` in their project root.
 3. `<project>/.opencode/bob.json`
 4. `<project>/bob.jsonc`
 5. `<project>/.opencode/bob.jsonc`
-6. `$XDG_CONFIG_HOME/hiai-bob/bob.json`
-7. `$XDG_CONFIG_HOME/hiai-bob/bob.jsonc`
+6. `$XDG_CONFIG_HOME/hiai-opencode/bob.json`
+7. `$XDG_CONFIG_HOME/hiai-opencode/bob.jsonc`
 
 First found wins for each key; deep-merged with defaults.
 
@@ -270,7 +270,7 @@ Controls the session-idle loop driver in `loop.ts`.
 {
   "telemetry": {
     "enabled": false,
-    "serviceName": "hiai-bob",
+    "serviceName": "hiai-opencode",
     "endpoint": "http://localhost:4318/v1/traces",
     "sampleRate": 1.0,
   },
@@ -328,7 +328,8 @@ Controls the session-idle loop driver in `loop.ts`.
   },
   "dream": { "auto": true, "interval_days": 7 },
   "distill": { "auto": true, "interval_days": 30 },
-  "telemetry": { "enabled": false, "serviceName": "hiai-bob" },
+    "telemetry": { "enabled": false, "serviceName": "hiai-opencode" },
+  }
 }
 ```
 
@@ -348,7 +349,7 @@ Copy `bob.env.example` to `bob.env` and fill in keys. `bob.env` is git-ignored.
 
 1. `<projectDir>/bob.env` — project-local (highest priority)
 2. `<projectDir>/.opencode/bob.env` — OpenCode project config
-3. `$XDG_CONFIG_HOME/hiai-bob/bob.env` — global user config (`~/.config/hiai-bob/bob.env`)
+3. `$XDG_CONFIG_HOME/hiai-opencode/bob.env` — global user config (`~/.config/hiai-opencode/bob.env`)
 4. `<plugin_root>/bob.env` — plugin bundled fallback (lowest priority)
 
 Only keys **not already present** in `process.env` are set from bob.env.

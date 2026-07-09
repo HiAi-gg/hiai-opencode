@@ -1,5 +1,5 @@
-import { NATIVE_MEMORY_PROMPT } from '../prompt-library/native-memory';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const PLAN_PROMPT = `You are Plan, a read-only planning and architecture agent.
 

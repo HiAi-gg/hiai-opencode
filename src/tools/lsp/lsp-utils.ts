@@ -1,10 +1,21 @@
-import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
-import { join as pathJoin, resolve } from 'node:path';
-import type { LSPDiagnostic, LSPEdit, LSPLocation, LSPSymbol } from './lsp-client';
+import {
+  existsSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
+import { join as pathJoin, resolve } from "node:path";
+import type {
+  LSPDiagnostic,
+  LSPEdit,
+  LSPLocation,
+  LSPSymbol,
+} from "./lsp-client";
 
 /** Format an LSP location as `file:line:col` (relative to root). */
 export function formatLocation(loc: LSPLocation, root: string): string {
-  const uri = loc.uri.startsWith('file://') ? loc.uri.slice(7) : loc.uri;
+  const uri = loc.uri.startsWith("file://") ? loc.uri.slice(7) : loc.uri;
   const rel = uri.startsWith(root) ? uri.slice(root.length + 1) : uri;
   return `${rel}:${loc.range.start.line + 1}:${loc.range.start.character}`;
 }
@@ -12,44 +23,50 @@ export function formatLocation(loc: LSPLocation, root: string): string {
 /** Format a single diagnostic as `[SEV] line:col — message`. */
 export function formatDiagnostic(d: LSPDiagnostic, root: string): string {
   const sev =
-    d.severity === 1 ? 'ERROR' : d.severity === 2 ? 'WARN' : d.severity === 3 ? 'INFO' : 'HINT';
+    d.severity === 1
+      ? "ERROR"
+      : d.severity === 2
+        ? "WARN"
+        : d.severity === 3
+          ? "INFO"
+          : "HINT";
   const pos = `${d.range.start.line + 1}:${d.range.start.character}`;
   return `[${sev}] ${pos} — ${d.message}`;
 }
 
 const SYMBOL_KINDS = [
-  '',
-  'File',
-  'Module',
-  'Namespace',
-  'Package',
-  'Class',
-  'Method',
-  'Property',
-  'Field',
-  'Constructor',
-  'Enum',
-  'Interface',
-  'Function',
-  'Variable',
-  'Constant',
-  'String',
-  'Number',
-  'Boolean',
-  'Array',
-  'Object',
-  'Key',
-  'Null',
-  'EnumMember',
-  'Struct',
-  'Event',
-  'Operator',
-  'TypeParameter',
+  "",
+  "File",
+  "Module",
+  "Namespace",
+  "Package",
+  "Class",
+  "Method",
+  "Property",
+  "Field",
+  "Constructor",
+  "Enum",
+  "Interface",
+  "Function",
+  "Variable",
+  "Constant",
+  "String",
+  "Number",
+  "Boolean",
+  "Array",
+  "Object",
+  "Key",
+  "Null",
+  "EnumMember",
+  "Struct",
+  "Event",
+  "Operator",
+  "TypeParameter",
 ];
 
 /** Format a symbol as `[Kind] name (line N)`. */
 export function formatSymbol(s: LSPSymbol): string {
-  const kind = SYMBOL_KINDS[s.kind] ?? 'Unknown';
+  const kind = SYMBOL_KINDS[s.kind] ?? "Unknown";
   const line = (s.location?.range ?? s.range).start.line + 1;
   return `[${kind}] ${s.name} (line ${line})`;
 }
@@ -65,10 +82,10 @@ export function formatSymbol(s: LSPSymbol): string {
 export function severityFromFilter(filter?: string): number | undefined {
   if (!filter) return undefined;
   const f = filter.toLowerCase();
-  if (f === 'error') return 1;
-  if (f === 'warning' || f === 'warn') return 2;
-  if (f === 'info') return 3;
-  if (f === 'hint') return 4;
+  if (f === "error") return 1;
+  if (f === "warning" || f === "warn") return 2;
+  if (f === "info") return 3;
+  if (f === "hint") return 4;
   return undefined;
 }
 
@@ -93,23 +110,27 @@ export function applyWorkspaceEdits(
   const results: { file: string; edits: number }[] = [];
 
   for (const [uri, edits] of Object.entries(changes)) {
-    const rawPath = uri.startsWith('file://') ? uri.slice(7) : uri;
+    const rawPath = uri.startsWith("file://") ? uri.slice(7) : uri;
     const filePath = resolve(rawPath);
 
     // Sandbox: reject paths outside the project directory
     if (!filePath.startsWith(resolvedProject)) {
-      throw new Error(`Sandbox blocked: edit target "${rawPath}" is outside the project directory`);
+      throw new Error(
+        `Sandbox blocked: edit target "${rawPath}" is outside the project directory`,
+      );
     }
 
     if (!existsSync(filePath)) {
       throw new Error(`File not found: ${filePath}`);
     }
 
-    const original = readFileSync(filePath, 'utf-8');
+    const original = readFileSync(filePath, "utf-8");
     const modified = applyTextEdits(original, edits);
-    writeFileSync(filePath, modified, 'utf-8');
+    writeFileSync(filePath, modified, "utf-8");
 
-    const rel = rawPath.startsWith(projectDir) ? rawPath.slice(projectDir.length + 1) : rawPath;
+    const rel = rawPath.startsWith(projectDir)
+      ? rawPath.slice(projectDir.length + 1)
+      : rawPath;
     results.push({ file: rel, edits: edits.length });
   }
 
@@ -134,7 +155,7 @@ function applyTextEdits(text: string, edits: LSPEdit[]): string {
 
 /** Apply one LSP TextEdit to a string. */
 export function applySingleEdit(text: string, edit: LSPEdit): string {
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const { start, end } = edit.range;
 
   // Edits are 0-indexed for lines/character
@@ -143,7 +164,7 @@ export function applySingleEdit(text: string, edit: LSPEdit): string {
   const endLine = end.line;
   const endChar = end.character;
 
-  const newParts = edit.newText.split('\n');
+  const newParts = edit.newText.split("\n");
   const result: string[] = [];
 
   // Lines before the edit region
@@ -152,7 +173,7 @@ export function applySingleEdit(text: string, edit: LSPEdit): string {
   }
 
   // Start line: prefix before edit + first part of new text
-  const startPrefix = lines[startLine]?.slice(0, startChar) ?? '';
+  const startPrefix = lines[startLine]?.slice(0, startChar) ?? "";
   result.push(startPrefix + newParts[0]);
 
   // Middle lines of new text (if multi-line)
@@ -162,7 +183,7 @@ export function applySingleEdit(text: string, edit: LSPEdit): string {
 
   // Last line: if newText was multi-line, appendsuffix to the last new part
   // If single-line, append to the already-written line
-  const endSuffix = lines[endLine]?.slice(endChar) ?? '';
+  const endSuffix = lines[endLine]?.slice(endChar) ?? "";
   if (newParts.length > 1) {
     result[result.length - 1] += endSuffix;
   } else {
@@ -174,7 +195,7 @@ export function applySingleEdit(text: string, edit: LSPEdit): string {
     result.push(lines[i]);
   }
 
-  return result.join('\n');
+  return result.join("\n");
 }
 
 /** Collect file paths in a directory matching given extensions (non-recursive). */
@@ -186,8 +207,8 @@ export function globFiles(dir: string, extensions: string[]): string[] {
       const full = pathJoin(dir, entry);
       try {
         if (statSync(full).isFile()) {
-          const idx = full.lastIndexOf('.');
-          const ext = idx >= 0 ? full.slice(idx) : '';
+          const idx = full.lastIndexOf(".");
+          const ext = idx >= 0 ? full.slice(idx) : "";
           if (extensions.length === 0 || extensions.includes(ext)) {
             files.push(full);
           }

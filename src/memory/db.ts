@@ -1,8 +1,8 @@
-import { Database as BunDatabase } from 'bun:sqlite';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
-import { drizzle } from 'drizzle-orm/bun-sqlite';
-import type { BunSQLiteDatabase } from 'drizzle-orm/bun-sqlite';
+import { Database as BunDatabase } from "bun:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname } from "node:path";
+import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
+import { drizzle } from "drizzle-orm/bun-sqlite";
 
 let _db: BunSQLiteDatabase | null = null;
 let _dbPath: string | null = null;
@@ -10,8 +10,8 @@ let _initialized = false;
 
 function ensureSchema(sqlite: BunDatabase) {
   if (_initialized && _dbPath) return;
-  sqlite.run('PRAGMA journal_mode = WAL');
-  sqlite.run('PRAGMA busy_timeout = 5000');
+  sqlite.run("PRAGMA journal_mode = WAL");
+  sqlite.run("PRAGMA busy_timeout = 5000");
 
   // Create main table
   sqlite.run(`
@@ -36,9 +36,9 @@ function ensureSchema(sqlite: BunDatabase) {
   `);
 
   // Create triggers — drop first for idempotency, then recreate
-  sqlite.run('DROP TRIGGER IF EXISTS memory_fts_ai');
-  sqlite.run('DROP TRIGGER IF EXISTS memory_fts_ad');
-  sqlite.run('DROP TRIGGER IF EXISTS memory_fts_au');
+  sqlite.run("DROP TRIGGER IF EXISTS memory_fts_ai");
+  sqlite.run("DROP TRIGGER IF EXISTS memory_fts_ad");
+  sqlite.run("DROP TRIGGER IF EXISTS memory_fts_au");
 
   sqlite.run(`
     CREATE TRIGGER memory_fts_ai AFTER INSERT ON memory_fts BEGIN
@@ -58,8 +58,12 @@ function ensureSchema(sqlite: BunDatabase) {
   `);
 
   // Create indexes
-  sqlite.run('CREATE INDEX IF NOT EXISTS memory_fts_scope_idx ON memory_fts(scope, scope_id)');
-  sqlite.run('CREATE INDEX IF NOT EXISTS memory_fts_type_idx ON memory_fts(type)');
+  sqlite.run(
+    "CREATE INDEX IF NOT EXISTS memory_fts_scope_idx ON memory_fts(scope, scope_id)",
+  );
+  sqlite.run(
+    "CREATE INDEX IF NOT EXISTS memory_fts_type_idx ON memory_fts(type)",
+  );
 
   _initialized = true;
 }

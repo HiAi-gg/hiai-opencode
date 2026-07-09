@@ -8,75 +8,75 @@ export type LspServerEntry = {
 
 export const BUILTIN_SERVERS: Record<string, LspServerEntry> = {
   typescript: {
-    command: 'typescript-language-server',
-    args: ['--stdio'],
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mts', '.cts', '.mjs', '.cjs'],
+    command: "typescript-language-server",
+    args: ["--stdio"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".mts", ".cts", ".mjs", ".cjs"],
   },
   svelte: {
-    command: 'svelteserver',
-    args: ['--stdio'],
-    extensions: ['.svelte'],
+    command: "svelteserver",
+    args: ["--stdio"],
+    extensions: [".svelte"],
   },
   eslint: {
-    command: 'npx',
-    args: ['-y', 'eslint-lsp'],
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
+    command: "npx",
+    args: ["-y", "eslint-lsp"],
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
   },
   pyright: {
-    command: 'pyright-langserver',
-    args: ['--stdio'],
-    extensions: ['.py'],
+    command: "pyright-langserver",
+    args: ["--stdio"],
+    extensions: [".py"],
   },
   html: {
-    command: 'vscode-html-language-server',
-    args: ['--stdio'],
-    extensions: ['.html', '.htm'],
+    command: "vscode-html-language-server",
+    args: ["--stdio"],
+    extensions: [".html", ".htm"],
   },
   css: {
-    command: 'vscode-css-language-server',
-    args: ['--stdio'],
-    extensions: ['.css', '.scss', '.less'],
+    command: "vscode-css-language-server",
+    args: ["--stdio"],
+    extensions: [".css", ".scss", ".less"],
   },
   json: {
-    command: 'vscode-json-language-server',
-    args: ['--stdio'],
-    extensions: ['.json', '.jsonc'],
+    command: "vscode-json-language-server",
+    args: ["--stdio"],
+    extensions: [".json", ".jsonc"],
   },
   vue: {
-    command: 'vue-language-server',
-    args: ['--stdio'],
-    extensions: ['.vue'],
+    command: "vue-language-server",
+    args: ["--stdio"],
+    extensions: [".vue"],
   },
   go: {
-    command: 'gopls',
-    args: ['serve'],
-    extensions: ['.go'],
+    command: "gopls",
+    args: ["serve"],
+    extensions: [".go"],
   },
   rust: {
-    command: 'rust-analyzer',
+    command: "rust-analyzer",
     args: [],
-    extensions: ['.rs'],
+    extensions: [".rs"],
   },
   yaml: {
-    command: 'yaml-language-server',
-    args: ['--stdio'],
-    extensions: ['.yaml', '.yml'],
+    command: "yaml-language-server",
+    args: ["--stdio"],
+    extensions: [".yaml", ".yml"],
   },
   biome: {
-    command: 'biome',
-    args: ['lsp-proxy'],
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.json', '.css'],
-    env: { BIOME_LOG_DIR: '/tmp' },
+    command: "biome",
+    args: ["lsp-proxy"],
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".json", ".css"],
+    env: { BIOME_LOG_DIR: "/tmp" },
   },
   oxlint: {
-    command: 'oxlint',
-    args: ['--lsp'],
-    extensions: ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs'],
+    command: "oxlint",
+    args: ["--lsp"],
+    extensions: [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
   },
   deno: {
-    command: 'deno',
-    args: ['lsp'],
-    extensions: ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.json'],
+    command: "deno",
+    args: ["lsp"],
+    extensions: [".ts", ".tsx", ".js", ".jsx", ".mjs", ".mts", ".cjs", ".json"],
     initializationOptions: {
       enable: true,
       lint: true,
@@ -85,9 +85,9 @@ export const BUILTIN_SERVERS: Record<string, LspServerEntry> = {
     },
   },
   ruff: {
-    command: 'ruff',
-    args: ['server'],
-    extensions: ['.py'],
+    command: "ruff",
+    args: ["server"],
+    extensions: [".py"],
     initializationOptions: {
       settings: { showSyntaxErrors: true },
     },
@@ -109,21 +109,21 @@ export function setLspConfig(config: Record<string, LspUserConfig>): void {
 }
 
 const PRIORITY = [
-  'typescript',
-  'biome',
-  'oxlint',
-  'deno',
-  'svelte',
-  'eslint',
-  'pyright',
-  'ruff',
-  'html',
-  'css',
-  'json',
-  'vue',
-  'go',
-  'rust',
-  'yaml',
+  "typescript",
+  "biome",
+  "oxlint",
+  "deno",
+  "svelte",
+  "eslint",
+  "pyright",
+  "ruff",
+  "html",
+  "css",
+  "json",
+  "vue",
+  "go",
+  "rust",
+  "yaml",
 ];
 
 export function findServerForExtension(
@@ -139,7 +139,10 @@ export function findServerForExtension(
   return null;
 }
 
-export function getServerDef(id: string, config?: LspUserConfig): LspServerEntry | null {
+export function getServerDef(
+  id: string,
+  config?: LspUserConfig,
+): LspServerEntry | null {
   if (config?.enabled === false) return null;
   const builtin = BUILTIN_SERVERS[id];
   if (!builtin) return null;
@@ -148,7 +151,8 @@ export function getServerDef(id: string, config?: LspUserConfig): LspServerEntry
     command: config.command ?? builtin.command,
     args: config.args ?? builtin.args,
     extensions: builtin.extensions,
-    initializationOptions: config.initializationOptions ?? builtin.initializationOptions,
+    initializationOptions:
+      config.initializationOptions ?? builtin.initializationOptions,
     env: config.env ?? builtin.env,
   };
 }

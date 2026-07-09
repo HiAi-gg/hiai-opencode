@@ -10,13 +10,13 @@
  * log reason is recorded.
  */
 
-import type { BobConfig, HookSet } from '../types';
+import type { BobConfig, HookSet } from "../types";
 import {
   buildContinuationPrompt,
   get,
   setContinuationPrompt,
   setHasIncompleteTasks,
-} from './loop-state';
+} from "./loop-state";
 
 const COOLDOWN_MS = 30_000;
 
@@ -32,9 +32,11 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
       if (!sessionID) return;
 
       switch (evt.type) {
-        case 'session.idle': {
+        case "session.idle": {
           // Update incomplete-tasks flag from event data if available
-          const maybeTodoCount = evt.properties.incompleteTodoCount as number | undefined;
+          const maybeTodoCount = evt.properties.incompleteTodoCount as
+            | number
+            | undefined;
           if (maybeTodoCount !== undefined) {
             setHasIncompleteTasks(sessionID, maybeTodoCount > 0);
           }
@@ -65,17 +67,21 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
           break;
         }
 
-        case 'session.error': {
+        case "session.error": {
           // Log the error for continuation context
-          const errorStr = evt.properties?.error ? String(evt.properties.error) : 'unknown error';
+          const errorStr = evt.properties?.error
+            ? String(evt.properties.error)
+            : "unknown error";
           console.log(
             `[hiai-opencode] Todo-continuation: session ${sessionID} errored — ${errorStr}. Continuation state reset.`,
           );
           break;
         }
 
-        case 'session.deleted': {
-          console.log(`[hiai-opencode] Todo-continuation: session ${sessionID} deleted — cleanup`);
+        case "session.deleted": {
+          console.log(
+            `[hiai-opencode] Todo-continuation: session ${sessionID} deleted — cleanup`,
+          );
           break;
         }
       }

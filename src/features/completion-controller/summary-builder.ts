@@ -5,9 +5,9 @@
 // Pure functions only — no I/O — so callers can unit-test the shape without
 // touching the sync bucket.
 
-import type { Endpoint } from './port-scanner';
+import type { Endpoint } from "./port-scanner";
 
-export type Readiness = 'done' | 'accept' | 'reject';
+export type Readiness = "done" | "accept" | "reject";
 
 export interface ClosureData {
   reasoning: string;
@@ -45,7 +45,7 @@ export function parseClosureBlock(text: string): ClosureData | null {
 function extractJson(body: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(body);
-    return typeof parsed === 'object' && parsed !== null
+    return typeof parsed === "object" && parsed !== null
       ? (parsed as Record<string, unknown>)
       : null;
   } catch {
@@ -54,13 +54,19 @@ function extractJson(body: string): Record<string, unknown> | null {
 }
 
 function normalizeClosure(raw: Record<string, unknown>): ClosureData | null {
-  const reasoning = typeof raw.reasoning === 'string' ? raw.reasoning.trim() : '';
-  const readinessRaw = typeof raw.readiness === 'string' ? raw.readiness.toLowerCase() : '';
-  if (readinessRaw !== 'done' && readinessRaw !== 'accept' && readinessRaw !== 'reject')
+  const reasoning =
+    typeof raw.reasoning === "string" ? raw.reasoning.trim() : "";
+  const readinessRaw =
+    typeof raw.readiness === "string" ? raw.readiness.toLowerCase() : "";
+  if (
+    readinessRaw !== "done" &&
+    readinessRaw !== "accept" &&
+    readinessRaw !== "reject"
+  )
     return null;
   const evidence = Array.isArray(raw.evidence)
     ? raw.evidence
-        .filter((e): e is string => typeof e === 'string')
+        .filter((e): e is string => typeof e === "string")
         .map((e) => e.trim())
         .filter(Boolean)
     : [];
@@ -74,50 +80,55 @@ function normalizeClosure(raw: Record<string, unknown>): ClosureData | null {
 export function buildSummary(input: SummaryInput): string {
   const lines: string[] = [];
 
-  const status = input.closure ? readinessLabel(input.closure.readiness) : readinessLabel('done');
-  const title = input.closure?.readiness === 'reject' ? 'Bob Summary — rejected' : 'Bob Summary';
+  const status = input.closure
+    ? readinessLabel(input.closure.readiness)
+    : readinessLabel("done");
+  const title =
+    input.closure?.readiness === "reject"
+      ? "Bob Summary — rejected"
+      : "Bob Summary";
   lines.push(`## ${title}`);
   if (input.sessionLabel) lines.push(`*${input.sessionLabel}*`);
-  lines.push('');
+  lines.push("");
   lines.push(`**Status:** ${status}`);
-  lines.push('');
+  lines.push("");
 
   const reasoning = input.closure?.reasoning;
   if (reasoning) {
-    lines.push('### Reasoning');
+    lines.push("### Reasoning");
     lines.push(reasoning);
-    lines.push('');
+    lines.push("");
   }
 
   const evidence = input.closure?.evidence.slice(0, MAX_EVIDENCE) ?? [];
   if (evidence.length > 0) {
-    lines.push('### Evidence');
+    lines.push("### Evidence");
     for (const e of evidence) lines.push(`- ${e}`);
-    lines.push('');
+    lines.push("");
   }
 
   if (input.endpoints.length > 0) {
-    lines.push('### Open endpoints');
-    lines.push('| URL | Port | Source |');
-    lines.push('| --- | ---: | --- |');
+    lines.push("### Open endpoints");
+    lines.push("| URL | Port | Source |");
+    lines.push("| --- | ---: | --- |");
     for (const ep of input.endpoints.slice(0, MAX_ENDPOINTS)) {
-      lines.push(`| \`${ep.url}\` | ${ep.port ?? '—'} | ${ep.source} |`);
+      lines.push(`| \`${ep.url}\` | ${ep.port ?? "—"} | ${ep.source} |`);
     }
-    lines.push('');
+    lines.push("");
   }
 
   const remaining = input.remaining.slice(0, MAX_REMAINING);
   if (remaining.length > 0) {
-    lines.push('### Remaining items');
+    lines.push("### Remaining items");
     for (const r of remaining) lines.push(`- ${r}`);
-    lines.push('');
+    lines.push("");
   }
 
-  return `${lines.join('\n').trimEnd()}\n`;
+  return `${lines.join("\n").trimEnd()}\n`;
 }
 
 function readinessLabel(r: Readiness): string {
-  if (r === 'done') return 'completed';
-  if (r === 'accept') return 'accepted';
-  return 'rejected';
+  if (r === "done") return "completed";
+  if (r === "accept") return "accepted";
+  return "rejected";
 }

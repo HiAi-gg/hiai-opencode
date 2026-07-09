@@ -1,17 +1,17 @@
 {
-  "_description": "hiai-opencode user configuration template. Public display names (shown to users): Bob, Coder, Strategist, Manager, Critic, Designer, Researcher, Writer, Vision. Config keys (used in this file and in code) are: bob, coder, strategist, manager, critic, designer, researcher, writer, vision.",
+  "_description": "hiai-opencode user configuration template (example). Display names (shown to users): Bob, Strategist (plan), Coder (build), Explorer (explore), Manager, Critic, Designer, Writer, Vision, General. Config keys: bob, build, plan, manager, critic, designer, explore, writer, vision, general. Legacy compatibility aliases: coder→build, strategist→plan, researcher→explore, sub→general (hidden).",
   "$schema": "./config/hiai-opencode.schema.json",
    "models": {
     "bob": {
       "model": "kimi-for-coding/k2p6",
       "recommended": "high"
     },
-    "coder": {
-      "model": "minimax-coding-plan/MiniMax-M3",
+    "build": {
+      "model": "opencode-go/deepseek-v4-pro",
       "recommended": "high"
     },
-    "strategist": {
-      "model": "deepseek/deepseek-v4-pro",
+    "plan": {
+      "model": "opencode-go/deepseek-v4-pro",
       "recommended": "xhigh"
     },
     "manager": {
@@ -23,50 +23,35 @@
       "recommended": "high"
     },
     "designer": {
-      "model": "google/gemini-3.5-flash",
+      "model": "opencode-go/kimi-k2.7-code",
       "recommended": "design"
     },
-    "researcher": {
-      "model": "minimax-coding-plan/MiniMax-M2.7",
+    "explore": {
+      "model": "opencode-go/deepseek-v4-flash",
       "recommended": "fast"
     },
     "writer": {
-      "model": "openrouter/mistralai/mistral-small-2603",
+      "model": "opencode-go/deepseek-v4-flash",
       "recommended": "writing"
     },
     "vision": {
-      "model": "openrouter/google/gemma-3-12b-it",
+      "model": "opencode-go/mimo-v2.5",
       "recommended": "vision"
     },
-    "sub": {
-      "model": "minimax-coding-plan/MiniMax-M2.7",
+    "general": {
+      "model": "opencode-go/deepseek-v4-flash",
       "recommended": "fast"
     }
   },
   "auth": {
-    "stitch": "{env:STITCH_AI_API_KEY}",
-    "context7": "{env:CONTEXT7_API_KEY}",
     "firecrawl": "{env:FIRECRAWL_API_KEY}"
   },
   "mcp": {
-    "stitch": {
-      "enabled": true
-    },
     "sequential-thinking": {
-      "enabled": true
-    },
-    "mempalace": {
-      "enabled": true
-    },
-    "context7": {
       "enabled": true
     },
     "grep_app": {
       "enabled": true
-    },
-    "websearch": {
-      "enabled": true,
-      "provider": "exa"
     }
   },
   "lsp": {
@@ -98,7 +83,7 @@
   "subtask2": {
     "replace_generic": true
   },
-  "ralph_loop": {
+  "loop": {
     "enabled": true,
     "auto_start_threshold": 5
   }

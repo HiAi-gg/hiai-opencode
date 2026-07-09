@@ -69,6 +69,5 @@ Full license: https://github.com/nexu-io/open-design/blob/main/LICENSE
 
 Included content:
 - `skills/` — 130+ skill definitions with SKILL.md prompts and checklists
-- `design-systems/` — 150+ brand DESIGN.md files with tokens.css and components.html
-- `prompt-templates/` — image and video prompt templates
-- `craft/` — typography, color, accessibility, animation, and UX guidelines
+
+**Note**: `design-systems/`, `prompt-templates/`, and `craft/` directories were removed in v0.3.0. These assets remain available from the upstream [nexu-io/open-design](https://github.com/nexu-io/open-design) repository (Apache 2.0).

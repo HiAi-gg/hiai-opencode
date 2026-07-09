@@ -10,14 +10,14 @@
  * - Bob/Plan grep/glob/webfetch restrictions remain unchanged
  */
 
-import { describe, expect, test, beforeAll } from "bun:test";
-import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   applyAgentPermissions,
-  getDefaultExternalDirectory,
   EXTERNAL_DIRECTORY_ALLOW_AGENTS,
+  getDefaultExternalDirectory,
 } from "./permissions";
 
 // ── getDefaultExternalDirectory ─────────────────────────────────────────────
@@ -457,12 +457,16 @@ describe("config hook integration", () => {
   // ── Browser tool restrictions for Critic ────────────────────────────────────
 
   test("applyAgentPermissions maps agent_browser_screenshot:false to tools false", () => {
-    const { tools } = applyAgentPermissions({ agent_browser_screenshot: false });
+    const { tools } = applyAgentPermissions({
+      agent_browser_screenshot: false,
+    });
     expect(tools.agent_browser_screenshot).toBe(false);
   });
 
   test("applyAgentPermissions maps agent_browser_set_viewport:false to tools false", () => {
-    const { tools } = applyAgentPermissions({ agent_browser_set_viewport: false });
+    const { tools } = applyAgentPermissions({
+      agent_browser_set_viewport: false,
+    });
     expect(tools.agent_browser_set_viewport).toBe(false);
   });
 
@@ -476,26 +480,28 @@ describe("config hook integration", () => {
     // because the hard gate in src/tools/agent-browser/index.ts is now the runtime enforcement.
     // Config-level restrictions are no longer needed for browser tools.
     const browserTools = [
-      'agent_browser_navigate',
-      'agent_browser_snapshot',
-      'agent_browser_click',
-      'agent_browser_fill',
-      'agent_browser_type',
-      'agent_browser_screenshot',
-      'agent_browser_eval',
-      'agent_browser_wait',
-      'agent_browser_close',
-      'agent_browser_console',
-      'agent_browser_select',
-      'agent_browser_hover',
-      'agent_browser_press',
-      'agent_browser_batch',
-      'agent_browser_set_viewport',
-      'agent_browser_set_device',
+      "agent_browser_navigate",
+      "agent_browser_snapshot",
+      "agent_browser_click",
+      "agent_browser_fill",
+      "agent_browser_type",
+      "agent_browser_screenshot",
+      "agent_browser_eval",
+      "agent_browser_wait",
+      "agent_browser_close",
+      "agent_browser_console",
+      "agent_browser_select",
+      "agent_browser_hover",
+      "agent_browser_press",
+      "agent_browser_batch",
+      "agent_browser_set_viewport",
+      "agent_browser_set_device",
     ];
     for (const bt of browserTools) {
       // Config no longer explicitly disables these — hard gate blocks at tool.execute() instead
-      expect(critic.tools && (critic.tools as Record<string, boolean>)[bt]).toBeUndefined();
+      expect(
+        critic.tools && (critic.tools as Record<string, boolean>)[bt],
+      ).toBeUndefined();
     }
     await hooks.dispose?.();
   });
@@ -522,7 +528,9 @@ describe("config hook integration", () => {
     const agent = cfg.agent as Record<string, unknown>;
     const explore = agent.explore as Record<string, unknown>;
     expect(explore.permission).toBeDefined();
-    expect((explore.permission as Record<string, string>).webfetch).toBe("deny");
+    expect((explore.permission as Record<string, string>).webfetch).toBe(
+      "deny",
+    );
     await hooks.dispose?.();
   });
 });

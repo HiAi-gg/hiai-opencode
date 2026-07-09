@@ -32,6 +32,6 @@ export function buildFtsQuery(raw: string): string | null {
       ?.map((t) => t.trim())
       .filter(Boolean) ?? [];
   if (tokens.length === 0) return null;
-  const quoted = tokens.map((t) => `"${t.replaceAll('"', '')}"`);
-  return quoted.join(' OR ');
+  const quoted = tokens.map((t) => `"${t.replaceAll('"', "")}"`);
+  return quoted.join(" OR ");
 }

@@ -1,4 +1,4 @@
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const VISION_PROMPT = `You are Vision, the multimodal analysis and BROWSER OPERATOR agent.
 

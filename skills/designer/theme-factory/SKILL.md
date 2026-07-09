@@ -1,18 +1,12 @@
 ---
 name: theme-factory
-description: |
-  Apply professional font and color themes to artifacts including slides, docs, reports, and HTML landing pages. Ships 10 pre-set themes.
-triggers:
-  - "theme factory"
-  - "apply theme"
-  - "design theme"
-  - "theme generator"
-  - "preset theme"
-od:
-  mode: design-system
-  category: design-systems
-  upstream: "https://github.com/community/skills/tree/main/theme-factory"
+description: Design token extraction and component mapping from branded design systems (design-systems removed from plugin in v0.3.0; source upstream).
+allowed-tools:
+  - "Read"
+  - "Glob"
+  - "webfetch"
 ---
+
 
 # theme-factory
 

@@ -1,6 +1,6 @@
 # Hook Timings Reference
 
-**Generated:** 2026-04-26
+**Generated:** 2026-07-09
 
 ## HIAI_HOOK_TIMINGS Flag
 

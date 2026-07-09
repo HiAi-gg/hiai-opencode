@@ -1,29 +1,31 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, isAbsolute, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { resolveEnvVars } from './shared/env';
-import type { BobConfig } from './types';
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, isAbsolute, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { resolveEnvVars } from "./shared/env";
+import type { BobConfig } from "./types";
 
 // Plugin root: two levels up from src/config.ts (src/ → plugin-bob/)
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PLUGIN_ROOT = join(__dirname, '..');
+const PLUGIN_ROOT = join(__dirname, "..");
 
 /**
  * Parse an env file and return key-value pairs.
  * Supports both `export KEY=value` and plain `KEY=value` lines.
  * Does NOT clobber existing process.env values.
  */
-export function parseEnvFile(text: string): Array<{ key: string; value: string }> {
+export function parseEnvFile(
+  text: string,
+): Array<{ key: string; value: string }> {
   const entries: Array<{ key: string; value: string }> = [];
-  for (const line of text.split('\n')) {
+  for (const line of text.split("\n")) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (!trimmed || trimmed.startsWith("#")) continue;
     // Match export KEY=value or KEY=value
     const match = trimmed.match(/^(?:export\s+)?(\w+)=(.*)$/);
     if (match) {
-      const key = match[1] ?? '';
-      const rawValue = match[2] ?? '';
-      const value = rawValue.replace(/^['"]|['"]$/g, '');
+      const key = match[1] ?? "";
+      const rawValue = match[2] ?? "";
+      const value = rawValue.replace(/^['"]|['"]$/g, "");
       entries.push({ key, value });
     }
   }
@@ -38,10 +40,10 @@ export function parseEnvFile(text: string): Array<{ key: string; value: string }
  * the actual secret value.
  */
 const MANAGED_ENV_KEYS = new Set([
-  'FIRECRAWL_API_KEY',
-  'CONTEXT7_API_KEY',
-  'AGENT_BROWSER_SESSION',
-  'GREP_APP_API_KEY',
+  "FIRECRAWL_API_KEY",
+  "CONTEXT7_API_KEY",
+  "AGENT_BROWSER_SESSION",
+  "GREP_APP_API_KEY",
 ] as const);
 
 /**
@@ -57,10 +59,10 @@ const MANAGED_ENV_KEYS = new Set([
 export function loadEnvFiles(projectDir: string): void {
   const globalDir = globalConfigDir();
   const candidates = [
-    join(projectDir, 'bob.env'),
-    join(projectDir, '.opencode', 'bob.env'),
-    join(globalDir, 'bob.env'),
-    join(PLUGIN_ROOT, 'bob.env'),
+    join(projectDir, "bob.env"),
+    join(projectDir, ".opencode", "bob.env"),
+    join(globalDir, "bob.env"),
+    join(PLUGIN_ROOT, "bob.env"),
   ];
 
   // Phase 1 – collect first-env-file value for every key (respects file priority)
@@ -68,7 +70,7 @@ export function loadEnvFiles(projectDir: string): void {
   for (const envPath of candidates) {
     if (!existsSync(envPath)) continue;
     try {
-      const text = readFileSync(envPath, 'utf-8');
+      const text = readFileSync(envPath, "utf-8");
       const entries = parseEnvFile(text);
       for (const { key, value } of entries) {
         // First file wins for each key
@@ -77,7 +79,12 @@ export function loadEnvFiles(projectDir: string): void {
         }
       }
     } catch (err) {
-      console.warn('[hiai-opencode] Failed to load env from', envPath, ':', err);
+      console.warn(
+        "[hiai-opencode] Failed to load env from",
+        envPath,
+        ":",
+        err,
+      );
     }
   }
 
@@ -105,7 +112,7 @@ export function loadEnvFiles(projectDir: string): void {
 export const DEFAULT_CONFIG: BobConfig = {
   models: {},
   mcp: {
-    'sequential-thinking': { enabled: true },
+    "sequential-thinking": { enabled: true },
     grep_app: { enabled: true },
   },
   lsp: {
@@ -155,18 +162,26 @@ export const DEFAULT_CONFIG: BobConfig = {
       consecutive_threshold: 20,
     },
   },
-  telemetry: { enabled: false, serviceName: 'hiai-opencode' },
+  telemetry: { enabled: false, serviceName: "hiai-opencode" },
   disabled_agents: [],
   disabled_hooks: [],
   caveman: {
     enabled: true,
-    level: 'full',
+    level: "full",
     bob_internal: true,
     bob_to_agents: true,
     agents_to_bob: true,
-    final_user_output: 'normal',
-    target_agents: ['bob', 'explore', 'build', 'critic', 'general', 'designer', 'manager'],
-    exclude_agents: ['vision', 'writer'],
+    final_user_output: "normal",
+    target_agents: [
+      "bob",
+      "explore",
+      "build",
+      "critic",
+      "general",
+      "designer",
+      "manager",
+    ],
+    exclude_agents: ["vision", "writer"],
     min_messages_to_compress: 5,
   },
   completion: {
@@ -174,14 +189,14 @@ export const DEFAULT_CONFIG: BobConfig = {
     max_auto_continues: 25,
     require_critic: true,
     ui_globs: [
-      '**/*.svelte',
-      '**/*.tsx',
-      '**/*.jsx',
-      '**/*.vue',
-      '**/*.css',
-      '**/*.scss',
-      '**/*.html',
-      '**/*.astro',
+      "**/*.svelte",
+      "**/*.tsx",
+      "**/*.jsx",
+      "**/*.vue",
+      "**/*.css",
+      "**/*.scss",
+      "**/*.html",
+      "**/*.astro",
     ],
     reset_on_user_message: true,
   },
@@ -194,55 +209,61 @@ function stripJsonComments(json: string): string {
     /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\/\/.*$|\/\*[\s\S]*?\*\//gm,
     (_match, string) => {
       if (string) return string;
-      return '';
+      return "";
     },
   );
 }
 
 const REQUIRED_AGENT_KEYS = [
-  'bob',
-  'build',
-  'plan',
-  'manager',
-  'critic',
-  'designer',
-  'explore',
-  'writer',
-  'vision',
-  'general',
+  "bob",
+  "build",
+  "plan",
+  "manager",
+  "critic",
+  "designer",
+  "explore",
+  "writer",
+  "vision",
+  "general",
 ] as const;
 
-function validateModels(models: BobConfig['models']): void {
+function validateModels(models: BobConfig["models"]): void {
   const m = models ?? {};
   for (const key of REQUIRED_AGENT_KEYS) {
     const model = m[key]?.model;
-    if (typeof model !== 'string' || model.trim() === '') {
+    if (typeof model !== "string" || model.trim() === "") {
       console.warn(
         `[hiai-opencode] agent "${key}" has no model — set models.${key}.model in bob.json`,
       );
       continue;
     }
-    const slash = model.trim().indexOf('/');
+    const slash = model.trim().indexOf("/");
     if (slash <= 0 || slash === model.trim().length - 1) {
-      console.warn(`[hiai-opencode] agent "${key}" model "${model}" is not "<provider>/<model>"`);
+      console.warn(
+        `[hiai-opencode] agent "${key}" model "${model}" is not "<provider>/<model>"`,
+      );
     }
   }
   for (const key of Object.keys(m)) {
-    if (!REQUIRED_AGENT_KEYS.includes(key as (typeof REQUIRED_AGENT_KEYS)[number])) {
-      console.warn(`[hiai-opencode] models.${key} is not a known agent — ignored`);
+    if (
+      !REQUIRED_AGENT_KEYS.includes(key as (typeof REQUIRED_AGENT_KEYS)[number])
+    ) {
+      console.warn(
+        `[hiai-opencode] models.${key} is not a known agent — ignored`,
+      );
     }
   }
 }
 
 function globalConfigDir(): string {
   const home = process.env.HIAI_BOB_HOME;
-  if (home && isAbsolute(home)) return join(home, 'config');
+  if (home && isAbsolute(home)) return join(home, "config");
   const xdg = process.env.XDG_CONFIG_HOME;
   const base =
     xdg && isAbsolute(xdg)
       ? xdg
-      : join(process.env.HOME ?? process.env.USERPROFILE ?? '', '.config');
-  return join(base, 'hiai-opencode');
+      : join(process.env.HOME ?? process.env.USERPROFILE ?? "", ".config");
+  return join(base, "hiai-opencode");
 }
 
 export function loadConfig(projectDir: string): BobConfig {
@@ -252,20 +273,20 @@ export function loadConfig(projectDir: string): BobConfig {
   const cfgDir = globalConfigDir();
   // Plugin's own bob.json — ALWAYS loaded first, user config overwrites
   const candidates = [
-    join(PLUGIN_ROOT, 'bob.json'),
-    join(projectDir, 'bob.json'),
-    join(projectDir, '.opencode', 'bob.json'),
-    join(projectDir, 'bob.jsonc'),
-    join(projectDir, '.opencode', 'bob.jsonc'),
-    join(cfgDir, 'bob.json'),
-    join(cfgDir, 'bob.jsonc'),
+    join(PLUGIN_ROOT, "bob.json"),
+    join(projectDir, "bob.json"),
+    join(projectDir, ".opencode", "bob.json"),
+    join(projectDir, "bob.jsonc"),
+    join(projectDir, ".opencode", "bob.jsonc"),
+    join(cfgDir, "bob.json"),
+    join(cfgDir, "bob.jsonc"),
   ];
 
   let userConfig: Partial<BobConfig> = {};
   for (const candidate of candidates) {
     if (existsSync(candidate)) {
       try {
-        const raw = readFileSync(candidate, 'utf-8');
+        const raw = readFileSync(candidate, "utf-8");
         const cleaned = stripJsonComments(raw);
         userConfig = JSON.parse(cleaned);
         break;
@@ -303,7 +324,11 @@ export function loadConfig(projectDir: string): BobConfig {
     ...(userConfig.disabled_hooks ?? []),
   ];
   const allHooksDisabled = [
-    ...new Set([...defaultHooksDisabled, ...userHooksDisabled, ...legacyDisabledHooks]),
+    ...new Set([
+      ...defaultHooksDisabled,
+      ...userHooksDisabled,
+      ...legacyDisabledHooks,
+    ]),
   ];
 
   const defaultToolsDisabled = DEFAULT_CONFIG.tools?.disabled ?? [];
@@ -311,7 +336,9 @@ export function loadConfig(projectDir: string): BobConfig {
 
   const defaultAgentsDisabled = DEFAULT_CONFIG.disabled_agents ?? [];
   const userAgentsDisabled = userConfig.disabled_agents ?? [];
-  const allAgentsDisabled = [...new Set([...defaultAgentsDisabled, ...userAgentsDisabled])];
+  const allAgentsDisabled = [
+    ...new Set([...defaultAgentsDisabled, ...userAgentsDisabled]),
+  ];
 
   return resolveEnvVars({
     ...DEFAULT_CONFIG,
@@ -321,7 +348,8 @@ export function loadConfig(projectDir: string): BobConfig {
     lsp: mergedLsp,
     agent_restrictions: mergedAgentRestrictions,
     auth: mergedAuth,
-    background_manager: userConfig.background_manager ?? DEFAULT_CONFIG.background_manager,
+    background_manager:
+      userConfig.background_manager ?? DEFAULT_CONFIG.background_manager,
     telemetry: userConfig.telemetry ?? DEFAULT_CONFIG.telemetry,
     hooks: { disabled: allHooksDisabled },
     tools: {

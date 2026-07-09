@@ -1,4 +1,4 @@
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const GENERAL_PROMPT = `You are General, a cheap bounded executor from BobPlugin.
 

@@ -1,19 +1,22 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, writeFileSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-
+import { join } from "node:path";
+import type {
+  LSPDiagnostic,
+  LSPEdit,
+  LSPLocation,
+  LSPSymbol,
+} from "./lsp-client";
 import {
-  formatLocation,
-  formatDiagnostic,
-  formatSymbol,
-  severityFromFilter,
-  filterDiagnosticsBySeverity,
   applySingleEdit,
   applyWorkspaceEdits,
+  filterDiagnosticsBySeverity,
+  formatDiagnostic,
+  formatLocation,
+  formatSymbol,
+  severityFromFilter,
 } from "./lsp-utils";
-
-import type { LSPDiagnostic, LSPLocation, LSPSymbol, LSPEdit } from "./lsp-client";
 
 // ─── formatLocation ────────────────────────────────────────────────
 
@@ -23,7 +26,10 @@ describe("formatLocation", () => {
   test("strips file:// prefix and shows rel path", () => {
     const loc: LSPLocation = {
       uri: "file:///home/user/project/src/index.ts",
-      range: { start: { line: 4, character: 7 }, end: { line: 4, character: 20 } },
+      range: {
+        start: { line: 4, character: 7 },
+        end: { line: 4, character: 20 },
+      },
     };
     expect(formatLocation(loc, root)).toBe("src/index.ts:5:7");
   });
@@ -31,7 +37,10 @@ describe("formatLocation", () => {
   test("shows abs path when not under root", () => {
     const loc: LSPLocation = {
       uri: "file:///other/lib.ts",
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 1 },
+      },
     };
     expect(formatLocation(loc, root)).toBe("/other/lib.ts:1:0");
   });
@@ -39,7 +48,10 @@ describe("formatLocation", () => {
   test("handles non-file URIs", () => {
     const loc: LSPLocation = {
       uri: "/absolute/path.ts",
-      range: { start: { line: 9, character: 3 }, end: { line: 9, character: 10 } },
+      range: {
+        start: { line: 9, character: 3 },
+        end: { line: 9, character: 10 },
+      },
     };
     expect(formatLocation(loc, root)).toBe("/absolute/path.ts:10:3");
   });
@@ -52,7 +64,10 @@ describe("formatDiagnostic", () => {
 
   test("formats severity 1 as ERROR", () => {
     const d: LSPDiagnostic = {
-      range: { start: { line: 0, character: 5 }, end: { line: 0, character: 10 } },
+      range: {
+        start: { line: 0, character: 5 },
+        end: { line: 0, character: 10 },
+      },
       severity: 1,
       message: "Type 'X' is not assignable",
     };
@@ -64,7 +79,10 @@ describe("formatDiagnostic", () => {
 
   test("formats severity 2 as WARN", () => {
     const d: LSPDiagnostic = {
-      range: { start: { line: 2, character: 0 }, end: { line: 2, character: 1 } },
+      range: {
+        start: { line: 2, character: 0 },
+        end: { line: 2, character: 1 },
+      },
       severity: 2,
       message: "Unused variable",
     };
@@ -73,7 +91,10 @@ describe("formatDiagnostic", () => {
 
   test("formats severity 3 as INFO", () => {
     const d: LSPDiagnostic = {
-      range: { start: { line: 5, character: 0 }, end: { line: 5, character: 1 } },
+      range: {
+        start: { line: 5, character: 0 },
+        end: { line: 5, character: 1 },
+      },
       severity: 3,
       message: "info msg",
     };
@@ -82,7 +103,10 @@ describe("formatDiagnostic", () => {
 
   test("defaults unknown severity to HINT", () => {
     const d: LSPDiagnostic = {
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
       message: "hint msg",
     };
     expect(formatDiagnostic(d, root)).toContain("[HINT]");
@@ -96,7 +120,10 @@ describe("formatSymbol", () => {
     const s: LSPSymbol = {
       name: "MyClass",
       kind: 5,
-      range: { start: { line: 10, character: 0 }, end: { line: 30, character: 1 } },
+      range: {
+        start: { line: 10, character: 0 },
+        end: { line: 30, character: 1 },
+      },
     };
     expect(formatSymbol(s)).toBe("[Class] MyClass (line 11)");
   });
@@ -105,7 +132,10 @@ describe("formatSymbol", () => {
     const s: LSPSymbol = {
       name: "doStuff",
       kind: 12,
-      range: { start: { line: 42, character: 0 }, end: { line: 55, character: 0 } },
+      range: {
+        start: { line: 42, character: 0 },
+        end: { line: 55, character: 0 },
+      },
     };
     expect(formatSymbol(s)).toBe("[Function] doStuff (line 43)");
   });
@@ -114,10 +144,16 @@ describe("formatSymbol", () => {
     const s: LSPSymbol = {
       name: "Foo",
       kind: 5,
-      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } },
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
       location: {
         uri: "file:///a.ts",
-        range: { start: { line: 99, character: 0 }, end: { line: 99, character: 5 } },
+        range: {
+          start: { line: 99, character: 0 },
+          end: { line: 99, character: 5 },
+        },
       },
     };
     expect(formatSymbol(s)).toContain("(line 100)");
@@ -127,7 +163,10 @@ describe("formatSymbol", () => {
     const s: LSPSymbol = {
       name: "weird",
       kind: 999,
-      range: { start: { line: 1, character: 0 }, end: { line: 1, character: 0 } },
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 0 },
+      },
     };
     expect(formatSymbol(s)).toBe("[Unknown] weird (line 2)");
   });
@@ -136,23 +175,54 @@ describe("formatSymbol", () => {
 // ─── severityFromFilter ────────────────────────────────────────────
 
 describe("severityFromFilter", () => {
-  test("returns 1 for error", () => expect(severityFromFilter("error")).toBe(1));
-  test("returns 2 for warning", () => expect(severityFromFilter("warning")).toBe(2));
+  test("returns 1 for error", () =>
+    expect(severityFromFilter("error")).toBe(1));
+  test("returns 2 for warning", () =>
+    expect(severityFromFilter("warning")).toBe(2));
   test("returns 2 for warn", () => expect(severityFromFilter("warn")).toBe(2));
   test("returns 3 for info", () => expect(severityFromFilter("info")).toBe(3));
   test("returns 4 for hint", () => expect(severityFromFilter("hint")).toBe(4));
-  test("returns undefined for undefined", () => expect(severityFromFilter(undefined)).toBeUndefined());
-  test("returns undefined for unknown filter", () => expect(severityFromFilter("critical")).toBeUndefined());
+  test("returns undefined for undefined", () =>
+    expect(severityFromFilter(undefined)).toBeUndefined());
+  test("returns undefined for unknown filter", () =>
+    expect(severityFromFilter("critical")).toBeUndefined());
 });
 
 // ─── filterDiagnosticsBySeverity ───────────────────────────────────
 
 describe("filterDiagnosticsBySeverity", () => {
   const diags: LSPDiagnostic[] = [
-    { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, severity: 1, message: "err" },
-    { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, severity: 2, message: "warn" },
-    { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, severity: 3, message: "info" },
-    { range: { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } }, message: "no-sev" },
+    {
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+      severity: 1,
+      message: "err",
+    },
+    {
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+      severity: 2,
+      message: "warn",
+    },
+    {
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+      severity: 3,
+      message: "info",
+    },
+    {
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 0, character: 0 },
+      },
+      message: "no-sev",
+    },
   ];
 
   test("maxSeverity 1 keeps errors + no-severity (treated as error)", () => {
@@ -177,7 +247,10 @@ describe("filterDiagnosticsBySeverity", () => {
 describe("applySingleEdit", () => {
   test("single-line replacement", () => {
     const result = applySingleEdit("hello world", {
-      range: { start: { line: 0, character: 6 }, end: { line: 0, character: 11 } },
+      range: {
+        start: { line: 0, character: 6 },
+        end: { line: 0, character: 11 },
+      },
       newText: "there",
     });
     expect(result).toBe("hello there");
@@ -186,7 +259,10 @@ describe("applySingleEdit", () => {
   test("multi-line replacement with single-line newText (deletion)", () => {
     const text = "line1\nline2\nline3\nline4";
     const edit: LSPEdit = {
-      range: { start: { line: 1, character: 0 }, end: { line: 2, character: 5 } },
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 2, character: 5 },
+      },
       newText: "replaced",
     };
     const result = applySingleEdit(text, edit);
@@ -195,7 +271,10 @@ describe("applySingleEdit", () => {
 
   test("insertion (zero-length range)", () => {
     const result = applySingleEdit("ab", {
-      range: { start: { line: 0, character: 1 }, end: { line: 0, character: 1 } },
+      range: {
+        start: { line: 0, character: 1 },
+        end: { line: 0, character: 1 },
+      },
       newText: "XX",
     });
     expect(result).toBe("aXXb");
@@ -204,7 +283,10 @@ describe("applySingleEdit", () => {
   test("full line replacement with newlines in newText", () => {
     const text = "a\nb\nc";
     const edit: LSPEdit = {
-      range: { start: { line: 0, character: 0 }, end: { line: 2, character: 1 } },
+      range: {
+        start: { line: 0, character: 0 },
+        end: { line: 2, character: 1 },
+      },
       newText: "x\ny\nz",
     };
     expect(applySingleEdit(text, edit)).toBe("x\ny\nz");
@@ -213,7 +295,10 @@ describe("applySingleEdit", () => {
   test("empty newText (deletion)", () => {
     const text = "keep\ndelete this\nkeep";
     const edit: LSPEdit = {
-      range: { start: { line: 1, character: 0 }, end: { line: 1, character: 11 } },
+      range: {
+        start: { line: 1, character: 0 },
+        end: { line: 1, character: 11 },
+      },
       newText: "",
     };
     expect(applySingleEdit(text, edit)).toBe("keep\n\nkeep");
@@ -236,13 +321,19 @@ describe("applyWorkspaceEdits", () => {
     const changes: Record<string, LSPEdit[]> = {
       [fileAUri]: [
         {
-          range: { start: { line: 0, character: 6 }, end: { line: 0, character: 7 } },
+          range: {
+            start: { line: 0, character: 6 },
+            end: { line: 0, character: 7 },
+          },
           newText: "x",
         },
       ],
       [fileBUri]: [
         {
-          range: { start: { line: 0, character: 6 }, end: { line: 0, character: 7 } },
+          range: {
+            start: { line: 0, character: 6 },
+            end: { line: 0, character: 7 },
+          },
           newText: "y",
         },
       ],
@@ -263,12 +354,17 @@ describe("applyWorkspaceEdits", () => {
     const changes: Record<string, LSPEdit[]> = {
       ["file:///etc/passwd"]: [
         {
-          range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+          range: {
+            start: { line: 0, character: 0 },
+            end: { line: 0, character: 1 },
+          },
           newText: "x",
         },
       ],
     };
-    expect(() => applyWorkspaceEdits(changes, "/safe/project")).toThrow("Sandbox blocked");
+    expect(() => applyWorkspaceEdits(changes, "/safe/project")).toThrow(
+      "Sandbox blocked",
+    );
   });
 
   test("handles empty changes gracefully", () => {

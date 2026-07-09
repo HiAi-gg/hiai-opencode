@@ -1,7 +1,10 @@
-import { BROWSER_VIA_VISION } from '../prompt-library/browser';
-import { NATIVE_MEMORY_PROMPT, NATIVE_TASKS_PROMPT } from '../prompt-library/native-memory';
-import { POSTGRES_RULES } from '../prompt-library/postgres-rules';
-import { CLOSURE_SCHEMA_PROMPT } from '../shared/closure';
+import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import {
+  NATIVE_MEMORY_PROMPT,
+  NATIVE_TASKS_PROMPT,
+} from "../prompt-library/native-memory";
+import { POSTGRES_RULES } from "../prompt-library/postgres-rules";
+import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const BOB_PROMPT = `You are Bob, an orchestrator agent from BobPlugin.
 

@@ -16,13 +16,14 @@ Copy `.env.example` to `.env` and fill in your keys:
 cp .env.example .env
 ```
 
-Required for MCP services you want to enable:
+Required for CLI skills you want to enable:
 
-| Key | Service | Get it at |
-|-----|---------|-----------|
-| `STITCH_AI_API_KEY` | Stitch (UI generation) | https://stitch.withgoogle.com |
-| `FIRECRAWL_API_KEY` | Firecrawl (web scraping) | https://firecrawl.ai |
-| `CONTEXT7_API_KEY` | Context7 (library docs) | https://context7.com |
+| Key | Service | Type | Get it at |
+|-----|---------|------|-----------|
+| `FIRECRAWL_API_KEY` | Firecrawl (web scraping) | CLI skill | https://firecrawl.ai |
+| `CONTEXT7_API_KEY` | Context7 (library docs) | On-demand CLI skill | https://context7.com |
+
+> **Note**: Stitch, Context7, and MemPalace MCP servers were removed from the default MCP registry in v0.3.0. Context7 remains available as an on-demand CLI skill via `skill("explore/context7")`.
 
 Model keys (OpenAI-compatible providers) are configured through **OpenCode Connect**, not here.
 

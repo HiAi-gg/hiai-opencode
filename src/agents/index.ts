@@ -1,10 +1,10 @@
-import type { AgentConfig, BobConfig } from '../types';
-import { BOB_PROMPT } from './bob';
-import { CRITIC_PROMPT } from './critic';
-import { DESIGNER_PROMPT } from './designer';
-import { MANAGER_PROMPT } from './manager';
-import { VISION_PROMPT } from './vision';
-import { WRITER_PROMPT } from './writer';
+import type { AgentConfig, BobConfig } from "../types";
+import { BOB_PROMPT } from "./bob";
+import { CRITIC_PROMPT } from "./critic";
+import { DESIGNER_PROMPT } from "./designer";
+import { MANAGER_PROMPT } from "./manager";
+import { VISION_PROMPT } from "./vision";
+import { WRITER_PROMPT } from "./writer";
 
 export interface AgentDefinition {
   key: string;
@@ -20,99 +20,108 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
 
   const agents: { key: string; config: AgentConfig }[] = [
     {
-      key: 'bob',
+      key: "bob",
       config: {
-        name: 'Bob',
-        description: 'Orchestrator — research, delegate, verify. Primary agent for all tasks.',
-        mode: 'primary',
-        model: resolveModel('bob', config),
+        name: "Bob",
+        description:
+          "Orchestrator — research, delegate, verify. Primary agent for all tasks.",
+        mode: "primary",
+        model: resolveModel("bob", config),
         prompt: BOB_PROMPT,
         temperature: 0.3,
       },
     },
     {
-      key: 'manager',
+      key: "manager",
       config: {
-        name: 'Manager',
-        description: 'Architecture — systems, boundaries, integration, delegation coordination.',
-        mode: 'subagent',
+        name: "Manager",
+        description:
+          "Architecture — systems, boundaries, integration, delegation coordination.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('manager', config),
+        model: resolveModel("manager", config),
         prompt: MANAGER_PROMPT,
         temperature: 0.2,
       },
     },
     {
-      key: 'critic',
+      key: "critic",
       config: {
-        name: 'Critic',
-        description: 'Plan critic — reviewing plans for clarity, verifiability, and quality.',
-        mode: 'subagent',
+        name: "Critic",
+        description:
+          "Plan critic — reviewing plans for clarity, verifiability, and quality.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('critic', config),
+        model: resolveModel("critic", config),
         prompt: CRITIC_PROMPT,
         temperature: 0.1,
       },
     },
     {
-      key: 'writer',
+      key: "writer",
       config: {
-        name: 'Writer',
-        description: 'Content, copy, positioning, SEO. Website/product copy specialist.',
-        mode: 'subagent',
+        name: "Writer",
+        description:
+          "Content, copy, positioning, SEO. Website/product copy specialist.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('writer', config),
+        model: resolveModel("writer", config),
         prompt: WRITER_PROMPT,
         temperature: 0.5,
       },
     },
     {
-      key: 'designer',
+      key: "designer",
       config: {
-        name: 'Designer',
-        description: 'UI/visual direction via design systems and component specifications.',
-        mode: 'subagent',
+        name: "Designer",
+        description:
+          "UI/visual direction via design systems and component specifications.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('designer', config),
+        model: resolveModel("designer", config),
         prompt: DESIGNER_PROMPT,
         temperature: 0.4,
       },
     },
     {
-      key: 'vision',
+      key: "vision",
       config: {
-        name: 'Vision',
-        description: 'Analyze images, PDFs, diagrams. Visual content extraction and verification.',
-        mode: 'subagent',
+        name: "Vision",
+        description:
+          "Analyze images, PDFs, diagrams. Visual content extraction and verification.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('vision', config),
+        model: resolveModel("vision", config),
         prompt: VISION_PROMPT,
         temperature: 0.2,
-        thinking: { type: 'disabled' },
+        thinking: { type: "disabled" },
       },
     },
     {
-      key: 'dream-consolidator',
+      key: "dream-consolidator",
       config: {
-        name: 'Dream Consolidator',
-        description: 'Memory consolidation agent — cross-session knowledge synthesis.',
-        mode: 'subagent',
+        name: "Dream Consolidator",
+        description:
+          "Memory consolidation agent — cross-session knowledge synthesis.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('bob', config),
-        prompt: 'You are a memory consolidation agent. Your task is provided at invocation.',
+        model: resolveModel("bob", config),
+        prompt:
+          "You are a memory consolidation agent. Your task is provided at invocation.",
         temperature: 0.2,
       },
     },
     {
-      key: 'distill-packager',
+      key: "distill-packager",
       config: {
-        name: 'Distill Packager',
+        name: "Distill Packager",
         description:
-          'Workflow packaging agent — discovers repeated patterns, creates skills/agents.',
-        mode: 'subagent',
+          "Workflow packaging agent — discovers repeated patterns, creates skills/agents.",
+        mode: "subagent",
         hidden: true,
-        model: resolveModel('bob', config),
-        prompt: 'You are a workflow packaging agent. Your task is provided at invocation.',
+        model: resolveModel("bob", config),
+        prompt:
+          "You are a workflow packaging agent. Your task is provided at invocation.",
         temperature: 0.3,
       },
     },

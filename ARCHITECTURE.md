@@ -26,19 +26,19 @@ User input
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
 │  Simple / small (<5 todos, no parallelism)            │
-│    └─► coder  (deep/bounded)                          │
-│    └─► sub    (quick)                                 │
+│    └─► build (Coder)   (deep/bounded)                 │
+│    └─► general         (quick/fallback)               │
 │                                                      │
 │  Complex / wave-based (5+ todos, 3+ parallel)         │
-│    └─► manager ── wave dispatch ──► coder / sub       │
+│    └─► manager ── wave dispatch ──► build / general   │
 │                                                      │
 │  Planning / architecture                              │
-│    └─► strategist ── plan, then route                 │
+│    └─► plan (Strategist) ── plan, then route          │
 │                                                      │
 │  Specialist tiers (always delegated, not routed):     │
-│    researcher  ◄── background (facts, docs)           │
+│    explore     ◄── background (facts, docs, grep)     │
 │    writer      ◄── copy / SEO / messaging            │
-│    designer    ◄── visual / Stitch MCP                │
+│    designer    ◄── visual direction                   │
 │    critic      ◄── review gate                        │
 │    quality-guardian ◄── post-impl review              │
 │                                                      │
@@ -68,34 +68,35 @@ User input
 - [assets/mcp](assets/mcp): helper launchers for bundled MCP integrations
 - [assets/runtime](assets/runtime): npm bootstrap helpers and runtime tooling
 - [skills](skills): packaged project skills
-- [design-systems](design-systems): 150+ brand design-systems sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0)
+- ~~design-systems~~ — removed in v0.3.0 (available from [nexu-io/open-design](https://github.com/nexu-io/open-design) separately)
 - [config](config): packaged sample OpenCode config
 
 ## Agent Model
 
-### Visible Primary Agents
+### Visible Primary Agents (display name / runtime slot)
 
 These are the agents meant to be visible in the normal UI:
 
-- `Bob`
-- `Coder`
-- `Strategist`
-- `Manager`
-- `Critic`
-- `Designer`
-- `Researcher`
-- `Writer`
-- `Vision`
+- `Bob` / `bob`
+- `Coder` / `build`
+- `Strategist` / `plan`
+- `Manager` / `manager`
+- `Critic` / `critic`
+- `Designer` / `designer`
+- `Explorer` / `explore`
+- `Writer` / `writer`
+- `Vision` / `vision`
 
 ### Hidden/System Agents
 
 These exist for compatibility or system behavior and are not intended as user-facing primary agents:
 
+- `General` / `general`
 - `Agent Skills`
-- `Sub`
-- `build`
-- `plan`
+- `Sub` (legacy compatibility)
 - `Quality Guardian`
+
+> **Note**: Runtime config keys (`build`, `plan`, `explore`, `general`) are the canonical internal names. Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases via `src/shared/migration/agent-names.ts`.
 
 ### Canonical Source Files
 
@@ -151,9 +152,8 @@ These files create the top-level agent config objects:
 Examples:
 
 - Bob: `src/agents/bob/agent.ts` (unified model-agnostic factory, no model-specific variants)
-- Coder: `src/agents/coder/gpt.ts`, `src/agents/coder/gpt-codex.ts`, `src/agents/coder/gpt-pro.ts`
-- Strategist: `src/agents/strategist/gpt.ts`, `src/agents/strategist/gemini.ts`
-- Manager: `src/agents/manager/gpt.ts`, `src/agents/manager/gemini.ts`
+- Coder: `src/agents/coder/agent.ts`, `src/agents/coder/core.ts` (unified factory, no model-specific variants)
+- Manager: `src/agents/manager/agent.ts` (unified factory, no model-specific variants)
 
 This is where provider- or model-family-specific behavior usually lives.
 
@@ -263,17 +263,17 @@ Helper launchers live in:
 - [assets/mcp](assets/mcp)
 - [assets/runtime](assets/runtime)
 
-Current MCP set:
+Current MCP set (v0.3.0):
 
-- `stitch`
 - `sequential-thinking`
-- `mempalace`
-- `context7`
 - `grep_app`
 
 CLI skills (not MCP):
 - `firecrawl` — web scraping, crawl, extract, search
 - `agent-browser` — browser automation via Chrome CDP
+- `context7` — on-demand via `skill("explore/context7")`
+
+**Removed in v0.3.0**: `stitch`, `mempalace`, `context7` (from default MCP registry).
 
 ## LSP
 

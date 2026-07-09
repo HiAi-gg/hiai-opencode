@@ -1,4 +1,4 @@
-import type { BobConfig, CavemanConfig, HookSet } from '../types';
+import type { BobConfig, CavemanConfig, HookSet } from "../types";
 
 /**
  * Caveman Message Compressor — optional conservative message/history
@@ -25,13 +25,21 @@ import type { BobConfig, CavemanConfig, HookSet } from '../types';
 export function createCavemanMessageCompressor(config: BobConfig): HookSet {
   const caveman: CavemanConfig = config.caveman ?? {
     enabled: true,
-    level: 'full',
+    level: "full",
     bob_internal: true,
     bob_to_agents: true,
     agents_to_bob: true,
-    final_user_output: 'normal',
-    target_agents: ['bob', 'explore', 'build', 'critic', 'general', 'designer', 'manager'],
-    exclude_agents: ['vision', 'writer'],
+    final_user_output: "normal",
+    target_agents: [
+      "bob",
+      "explore",
+      "build",
+      "critic",
+      "general",
+      "designer",
+      "manager",
+    ],
+    exclude_agents: ["vision", "writer"],
     min_messages_to_compress: 5,
   };
 
@@ -40,9 +48,13 @@ export function createCavemanMessageCompressor(config: BobConfig): HookSet {
   }
 
   return {
-    'experimental.chat.messages.transform': async (
-      _input: Parameters<NonNullable<HookSet['experimental.chat.messages.transform']>>[0],
-      output: Parameters<NonNullable<HookSet['experimental.chat.messages.transform']>>[1],
+    "experimental.chat.messages.transform": async (
+      _input: Parameters<
+        NonNullable<HookSet["experimental.chat.messages.transform"]>
+      >[0],
+      output: Parameters<
+        NonNullable<HookSet["experimental.chat.messages.transform"]>
+      >[1],
     ) => {
       try {
         if (!output?.messages?.length) return;
@@ -59,17 +71,24 @@ export function createCavemanMessageCompressor(config: BobConfig): HookSet {
         // Find the last assistant message to add a conciseness hint
         for (let i = output.messages.length - 1; i >= 0; i--) {
           const msg = output.messages[i];
-          if (msg.info?.role !== 'assistant') continue;
+          if (msg.info?.role !== "assistant") continue;
           if (!msg.parts?.length) continue;
 
-          const lastPart = msg.parts[msg.parts.length - 1] as Record<string, unknown>;
-          if (lastPart?.type === 'text' && typeof lastPart.text === 'string') {
+          const lastPart = msg.parts[msg.parts.length - 1] as Record<
+            string,
+            unknown
+          >;
+          if (lastPart?.type === "text" && typeof lastPart.text === "string") {
             // Only add the marker if caveman protocol is enabled for context
-            if (caveman.bob_internal || caveman.bob_to_agents || caveman.agents_to_bob) {
+            if (
+              caveman.bob_internal ||
+              caveman.bob_to_agents ||
+              caveman.agents_to_bob
+            ) {
               // Insert a conciseness reminder only if one isn't already present
-              if (!lastPart.text.includes('[hiai-opencode] caveman')) {
+              if (!lastPart.text.includes("[hiai-opencode] caveman")) {
                 lastPart.text +=
-                  '\n\n[hiai-opencode] caveman: prefer concise internal communication — drop filler, preserve exact artifacts.';
+                  "\n\n[hiai-opencode] caveman: prefer concise internal communication — drop filler, preserve exact artifacts.";
               }
             }
           }
@@ -77,7 +96,7 @@ export function createCavemanMessageCompressor(config: BobConfig): HookSet {
         }
       } catch (err) {
         // Fail-safe: log and continue without breaking messages
-        console.error('[hiai-opencode] caveman-message-compressor error:', err);
+        console.error("[hiai-opencode] caveman-message-compressor error:", err);
       }
     },
   };

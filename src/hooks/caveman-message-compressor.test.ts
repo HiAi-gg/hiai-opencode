@@ -109,8 +109,9 @@ describe("caveman-message-compressor", () => {
       type: string;
       text: string;
     };
-    const occurrences = (lastPart.text.match(/\[hiai-opencode\] caveman/g) ?? [])
-      .length;
+    const occurrences = (
+      lastPart.text.match(/\[hiai-opencode\] caveman/g) ?? []
+    ).length;
     expect(occurrences).toBe(1); // Only one, not duplicated
   });
 

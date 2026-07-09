@@ -6,13 +6,17 @@
 
 ## Agent Name Migrations
 
-Three agent names have been deprecated and replaced. The migration is handled automatically by `src/shared/migration/agent-names.ts` — old names are resolved to their canonical replacements at config load time.
+The following agent names have been deprecated and replaced. The migration is handled automatically by `src/shared/migration/agent-names.ts` — old names are resolved to their canonical replacements at config load time.
 
 | Deprecated | Replacement | Deprecated since |
 |---|---|---|
 | `guard` | `manager` | 2026-04-11 |
 | `brainstormer` | `writer` | 2026-04-11 |
 | `multimodal` | `vision` | 2026-04-11 |
+| `coder` | `build` | 2026-07-09 (v0.3.0) |
+| `strategist` | `plan` | 2026-07-09 (v0.3.0) |
+| `researcher` | `explore` | 2026-07-09 (v0.3.0) |
+| `sub` | `general` | 2026-07-09 (v0.3.0) |
 
 ### `guard` → `manager`
 
@@ -147,6 +151,17 @@ If you have a minimal config with only the 5 legacy keys, you must add the missi
 ---
 
 ## Breaking Changes in Recent Versions
+
+### v0.2.9 → v0.3.0 (2026-07-09, clean-slate rewrite)
+
+- **Agent names:** `coder` → `build`, `strategist` → `plan`, `researcher` → `explore`, `sub` → `general`
+- **MCP changes:** `stitch`, `mempalace`, `context7` removed from default MCP registry. Context7 remains as on-demand CLI skill (`skill("explore/context7")`).
+- **Config key changes:** `ralph_loop` → `loop` for consistency
+- **Data directory:** `~/.hiai-bob/` → `~/.hiai-opencode/`
+- **Config directory:** `$XDG_CONFIG_HOME/hiai-bob/` → `$XDG_CONFIG_HOME/hiai-opencode/`
+- **Removed directories:** `design-systems/`, `prompt-templates/`, `craft/` — available from upstream [nexu-io/open-design](https://github.com/nexu-io/open-design)
+- **Display names unchanged:** User sees `Bob`, `Coder`, `Strategist`, `Manager`, `Critic`, `Designer`, `Researcher`, `Writer`, `Vision` — runtime slots changed internally only.
+- Legacy names (`coder`, `strategist`, `researcher`, `sub`) still work in config via migration layer.
 
 ### v0.x → v1.0 (2026-04-11)
 

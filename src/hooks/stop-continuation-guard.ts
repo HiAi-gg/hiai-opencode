@@ -7,11 +7,16 @@
  * session.deleted (session gone — clean up), and session.stop events.
  */
 
-import type { BobConfig, HookSet } from '../types';
-import { reset } from './loop-state';
+import type { BobConfig, HookSet } from "../types";
+import { reset } from "./loop-state";
 
 /** Event types that should clear loop/continuation state. */
-const STOP_EVENTS = new Set(['user.message', 'session.error', 'session.deleted', 'session.stop']);
+const STOP_EVENTS = new Set([
+  "user.message",
+  "session.error",
+  "session.deleted",
+  "session.stop",
+]);
 
 // We also need to track which sessions were reset so we don't
 // reset them again in the same event burst.
@@ -28,7 +33,7 @@ export function createStopContinuationGuard(_config: BobConfig): HookSet {
 
       if (!STOP_EVENTS.has(evt.type)) return;
 
-      const sessionID = (evt.properties?.sessionID as string) ?? 'unknown';
+      const sessionID = (evt.properties?.sessionID as string) ?? "unknown";
 
       // Debounce: skip if we just reset this session
       if (recentlyReset.has(sessionID)) return;
@@ -38,8 +43,10 @@ export function createStopContinuationGuard(_config: BobConfig): HookSet {
       // Clear loop/continuation state
       reset(sessionID);
 
-      if (evt.type === 'session.stop') {
-        console.log(`[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`);
+      if (evt.type === "session.stop") {
+        console.log(
+          `[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`,
+        );
       }
     },
 

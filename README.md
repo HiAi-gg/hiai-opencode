@@ -12,7 +12,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![OpenCode](https://img.shields.io/badge/host-OpenCode-blue?style=flat-square)](https://opencode.ai)
 
-Multi-agent orchestration plugin for OpenCode. 10 specialized agents, 30 hooks, BM25 FTS5 memory search, LSP diagnostics, agent-browser integration, completion controller, auto dream/distill memory consolidation. One prompt to set up and run.
+Multi-agent orchestration plugin for OpenCode. 10 specialized agents (bob, build, plan, explore, general, manager, critic, designer, writer, vision), 30 hooks, BM25 FTS5 memory search, LSP diagnostics, agent-browser integration, completion controller, auto dream/distill memory consolidation. One prompt to set up and run.
+
+**v0.3.0 is a complete clean-slate rewrite** from legacy plugin-bob 0.2.9. Agent names, MCP set, and architecture have been rebuilt from scratch. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases only.
 
 ---
 
@@ -40,20 +42,18 @@ This file ships as part of the plugin package and contains agent models, MCP set
 {
   "models": {
     "bob": { "model": "kimi-for-coding/k2p6", "recommended": "xhigh" },
-    "coder": { "model": "minimax-coding-plan/MiniMax-M2.7", "recommended": "high" },
-    "strategist": { "model": "deepseek/deepseek-v4-pro", "recommended": "high" },
-    "manager": { "model": "opencode-go/qwen3.6-plus", "recommended": "middle" },
+    "build": { "model": "opencode-go/deepseek-v4-pro", "recommended": "high" },
+    "plan": { "model": "opencode-go/deepseek-v4-pro", "recommended": "xhigh" },
+    "manager": { "model": "opencode-go/deepseek-v4-flash", "recommended": "middle" },
     "critic": { "model": "opencode-go/mimo-v2.5-pro", "recommended": "high" },
-    "designer": { "model": "openrouter/google/gemini-3.1-pro-preview", "recommended": "design" },
-    "researcher": { "model": "openrouter/deepseek/deepseek-v4-flash", "recommended": "fast" },
-    "writer": { "model": "openrouter/mistralai/mistral-small-2603", "recommended": "writing" },
-    "vision": { "model": "openrouter/google/gemma-4-26b-a4b-it", "recommended": "vision" }
+    "designer": { "model": "opencode-go/kimi-k2.7-code", "recommended": "design" },
+    "explore": { "model": "opencode-go/deepseek-v4-flash", "recommended": "fast" },
+    "writer": { "model": "opencode-go/deepseek-v4-flash", "recommended": "writing" },
+    "vision": { "model": "opencode-go/mimo-v2.5", "recommended": "vision" },
+    "general": { "model": "opencode-go/deepseek-v4-flash", "recommended": "fast" }
   },
   "mcp": {
     "sequential-thinking": { "enabled": true },
-    "mempalace": { "enabled": true, "pythonPath": "{env:MEMPALACE_PYTHON:-\./.venv/bin/python}" },
-    "stitch": { "enabled": false },
-    "context7": { "enabled": true },
     "grep_app": { "enabled": true }
   },
   "lsp": {
@@ -79,47 +79,48 @@ This file ships as part of the plugin package and contains agent models, MCP set
 API keys are loaded from multiple paths in priority order. Create a local `.env` file in your OpenCode environment or export these variables in your shell before starting OpenCode.
 
 ```bash
-# Project root or .opencode/
-STITCH_AI_API_KEY=your_stitch_key
+# Required for CLI skills:
 FIRECRAWL_API_KEY=fc-your_key
-CONTEXT7_API_KEY=ctx7-your_key
-MEMPALACE_PYTHON=./.venv/bin/python
+# Optional — on-demand Context7 skill:
+# CONTEXT7_API_KEY=ctx7-your_key
 ```
 
 Use [.env.example](.env.example) as the canonical template.
 
 ## Agents
 
-| Agent | Role | Mode | Visible |
-|-------|------|------|---------|
-| bob | Orchestrator — delegates, verifies. Never mutates files. | primary | ✅ |
-| strategist | Principal Architect — deep planning, architecture analysis. | primary | ✅ |
-| designer | UI/visual direction, design tokens, component specs. | primary | ✅ |
-| writer | Content, copy, positioning, SEO specialist. | primary | ✅ |
-| coder | Senior Staff Engineer — implements from plans. | subagent | hidden |
-| researcher | Explore Agent — firecrawl + grep_app + context7. | subagent | hidden |
-| manager | Coordinator — parallel wave execution. | subagent | hidden |
-| critic | Quality Guardian — reviews, binary APPROVED/REJECTED. | subagent | hidden |
-| vision | Browser operator + multimodal analysis. | subagent | hidden |
-| sub | Cheap bounded executor — fast, simple tasks. | subagent | hidden |
+| Config key | Display name | Role | Mode | Visible |
+|------------|-------------|------|------|---------|
+| bob | Bob | Orchestrator — delegates, verifies. Never mutates files. | primary | ✅ |
+| plan | Strategist | Principal Architect — deep planning, architecture analysis. | primary | ✅ |
+| designer | Designer | UI/visual direction, design tokens, component specs. | primary | ✅ |
+| writer | Writer | Content, copy, positioning, SEO specialist. | primary | ✅ |
+| build | Coder | Senior Staff Engineer — implements from plans. | subagent | hidden |
+| explore | Explorer | Codebase discovery — grep, firecrawl, grep_app. | subagent | hidden |
+| manager | Manager | Coordinator — parallel wave execution. | subagent | hidden |
+| critic | Critic | Quality Guardian — reviews, binary APPROVED/REJECTED. | subagent | hidden |
+| vision | Vision | Browser operator + multimodal analysis. | subagent | hidden |
+| general | General | General-purpose executor — fallback for unclassified tasks. | subagent | hidden |
+
+> **Runtime agent slots vs display names**: Config keys in `bob.json` use internal slot names (`build`, `plan`, `explore`, `general`). Display names shown in the /agents UI are normalized at runtime by `src/shared/agent-display-names.ts`. Legacy names (`coder`, `strategist`, `researcher`, `sub`) are preserved as compatibility aliases for migration (see `docs/hiai-opencode/migration.md`).
 
 ### Mode-Based Task Routing
 
 Mode determines which agent executes the task:
 
-| Mode | Agent | When to use |
-|------|-------|-------------|
-| `quick` | coder (fast bounded) | Small targeted changes |
-| `writing` | writer | Content, i18n, copy |
-| `deep` | coder | Complex implementation |
-| `ultrabrain` | strategist | Architecture, hard logic |
-| `visual-engineering` | designer | Visual problems |
-| `artistry` | designer | Brand, creative |
-| `git` | manager | Version control operations |
-| `bounded` | coder (fast bounded) | Moderate effort changes |
-| `cross-module` | coder | Multi-component changes |
-| `unspecified-low` | coder (fast bounded) | Unclassified small tasks |
-| `unspecified-high` | coder | Unclassified substantial tasks |
+| Mode | Runtime slot | Display agent | When to use |
+|------|-------------|---------------|-------------|
+| `quick` | build (fast bounded) | Coder | Small targeted changes |
+| `writing` | writer | Writer | Content, i18n, copy |
+| `deep` | build | Coder | Complex implementation |
+| `ultrabrain` | plan | Strategist | Architecture, hard logic |
+| `visual-engineering` | designer | Designer | Visual problems |
+| `artistry` | designer | Designer | Brand, creative |
+| `git` | manager | Manager | Version control operations |
+| `bounded` | build (fast bounded) | Coder | Moderate effort changes |
+| `cross-module` | build | Coder | Multi-component changes |
+| `unspecified-low` | build (fast bounded) | Coder | Unclassified small tasks |
+| `unspecified-high` | build | Coder | Unclassified substantial tasks |
 
 ## Tools
 
@@ -244,8 +245,8 @@ Configuration in `bob.json`:
     "bob_to_agents": true,
     "agents_to_bob": true,
     "final_user_output": "normal",
-    "target_agents": ["bob", "strategist", "coder", "manager", "critic", "designer", "researcher", "writer", "vision"],
-    "exclude_agents": [],
+    "target_agents": ["bob", "explore", "build", "critic", "general", "designer", "manager"],
+    "exclude_agents": ["vision", "writer"],
     "min_messages_to_compress": 5
   }
 }
@@ -263,13 +264,12 @@ Configuration in `bob.json`:
 
 | Service | Type | Key env var | Agent(s) | What it's for |
 |---------|------|-------------|----------|---------------|
-| Stitch | **MCP** | `STITCH_AI_API_KEY` | designer | UI generation, design systems, screen variants |
-| Context7 | **MCP** | `CONTEXT7_API_KEY` (optional) | researcher, coder | Library API documentation |
-| grep_app | **MCP** | — | researcher | GitHub OSS code pattern search |
-| MemPalace | **MCP** | `MEMPALACE_PYTHON` (optional) | manager (primary), all agents | Project memory and past decisions |
-| Sequential-Thinking | **MCP** | — | strategist, critic | Deep reasoning for planning/review |
-| Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | researcher | Web scraping, crawl, extract, search (NOT an MCP server) |
-| agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | coder, vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
+| grep_app | **MCP** | — | explore, build | GitHub OSS code pattern search |
+| Sequential-Thinking | **MCP** | — | plan, critic | Deep reasoning for planning/review |
+| Firecrawl | **CLI skill** | `FIRECRAWL_API_KEY` | explore | Web scraping, crawl, extract, search (NOT an MCP server) |
+| agent-browser | **CLI skill** | `AGENT_BROWSER_*` (optional) | build, vision | Playwright-free browser automation via native Chrome + CDP (NOT an MCP server, NOT Playwright) |
+
+**Removed in v0.3.0**: Stitch, Context7, and MemPalace MCP servers are no longer part of the default MCP registry. Context7 is available as an on-demand CLI skill via `skill("explore/context7")`. Stitch and MemPalace must be configured manually if needed.
 
 **Important**: Firecrawl and `agent-browser` are CLI skills, not MCP servers. Do not add either to the `mcp` section of `hiai-opencode.json`.
 
@@ -303,9 +303,10 @@ Enable only MCP services that can run on this machine:
 
 CLI skills (NOT MCP):
 - firecrawl-cli: requires FIRECRAWL_API_KEY. Just set the env var.
+- context7: on-demand CLI skill via skill("explore/context7").
 - agent-browser: requires bun add -g agent-browser && agent-browser install.
 
-Check bob.env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
+Check .env.example, report missing keys without printing secret values, and never invent or hardcode API keys.
 
 Run verification commands where available:
 - opencode debug config

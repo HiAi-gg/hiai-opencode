@@ -4,7 +4,7 @@ This file is for autonomous agents or tooling that need to install, configure, v
 
 ## Production Environment
 
-**This is a production project.** All tools, MCP servers, skills, and integrations must be functional at all times. If any service stops working during a session (e.g., MemPalace MCP disconnects, build failures, test regressions), it must be diagnosed and fixed immediately — do not leave broken state behind.
+**This is a production project.** All tools, MCP servers, skills, and integrations must be functional at all times. If any service stops working during a session (e.g., build failures, test regressions, MCP server errors), it must be diagnosed and fixed immediately — do not leave broken state behind.
 
 ## Purpose
 
@@ -134,11 +134,9 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 | Service | Enable when | Dependency behavior |
 |---|---|---|
 | `sequential-thinking` | Node and npx are available | Helper launcher runs `@modelcontextprotocol/server-sequential-thinking` |
-
-| `mempalace` | `uv` is available, or Python 3.9+ with pip is available | Launcher prefers `uv`; otherwise uses Python and can run `python -m pip install --user mempalace` when `HIAI_MCP_AUTO_INSTALL` is not disabled. Interpreter can be pinned via `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` |
-| `stitch` | `STITCH_AI_API_KEY` is set | Remote MCP endpoint |
-| `context7` | User wants Context7 docs/search | Remote MCP endpoint; use `CONTEXT7_API_KEY` if available |
 | `grep_app` | User wants GitHub/code search | Remote MCP endpoint; no key required |
+
+**Removed from default MCP registry in v0.3.0**: `mempalace`, `stitch`, `context7`. Context7 is available as an on-demand CLI skill via `skill("explore/context7")`.
 
 ### Prompt For OpenCode Users
 
@@ -155,10 +153,11 @@ Find or create hiai-opencode.json in the project root or .opencode/. Use its mcp
 
 Check which services can run here:
 - sequential-thinking: node/npx.
-- mempalace: uv or Python 3.9+ with pip; set `mcp.mempalace.pythonPath` (or `MEMPALACE_PYTHON`) if needed; `HIAI_MCP_AUTO_INSTALL` controls first-run pip install.
-- stitch: STITCH_AI_API_KEY.
-- context7: optional CONTEXT7_API_KEY.
 - grep_app: no key required.
+
+CLI skills (not MCP):
+- firecrawl: requires FIRECRAWL_API_KEY.
+- context7: on-demand via skill("explore/context7").
 
 Report missing keys without printing secret values. Never invent or hardcode API keys.
 
@@ -167,33 +166,32 @@ Run hiai-opencode mcp-status and opencode debug config. If the user wants openco
 
 ## Expected Agent State
 
-Visible primary agents:
+Visible primary agents (display name / runtime slot):
 
-- `Bob`
-- `Coder`
-- `Strategist`
-- `Manager`
-- `Critic`
-- `Designer`
-- `Researcher`
-- `Writer`
-- `Vision`
+- `Bob` / `bob` — Orchestrator, router, entry point
+- `Strategist` / `plan` — Deep planning, architecture analysis
+- `Coder` / `build` — Implementation (deep/bounded)
+- `Explorer` / `explore` — Codebase discovery (grep, firecrawl, grep_app)
+- `Manager` / `manager` — Delegation orchestrator, TODO tracker, memory steward
+- `Critic` / `critic` — Review gate (binary APPROVED/REJECTED)
+- `Designer` / `designer` — UI/visual direction, design tokens, component specs
+- `Writer` / `writer` — Content, copy, positioning, SEO
+- `Vision` / `vision` — Browser operator, multimodal analysis, PDF/image extraction
 
 Hidden/system or compatibility agents:
 
-- `Agent Skills`
-- `Sub`
-- `build`
-- `plan`
-- `quality-guardian`
+- `General` / `general` — General-purpose executor, fallback
+- `Agent Skills` — Skill registry and discovery
+- `Sub` — Legacy compatibility wrapper (folded into build/general)
+- `quality-guardian` — Post-impl review and bug investigation
 
 Automatic task distribution:
 
-- Category-based task execution routes through `Coder`
-- `quick`, `writing`, and `unspecified-low` use Coder's fast bounded contour
-- `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` use Coder's deep contour
+- Category-based task execution routes through `build` (display: Coder)
+- `quick`, `writing`, and `unspecified-low` use build's fast bounded contour
+- `deep`, `ultrabrain`, `visual-engineering`, `artistry`, and `unspecified-high` use build's deep contour
 - `Critic` is selected explicitly for review and verification passes
-- `Researcher` is selected explicitly for codebase and documentation discovery
+- `explore` is selected explicitly for codebase and documentation discovery
 - `Designer`, `Writer`, `Manager`, and `Vision` are direct callable specialists, not category executors
 - `Bob` and `Manager` are orchestration agents, not normal subagent routing targets
 
@@ -202,6 +200,8 @@ If runtime output differs from that set, inspect:
 - [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
 - [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts)
 - `src/shared/migration/*`
+
+> **v0.3.0 clean-slate note**: Legacy agent names (`coder`, `strategist`, `researcher`, `sub`) are preserved as internal compatibility aliases mapped to canonical slots (`build`, `plan`, `explore`, `general`). See `docs/hiai-opencode/migration.md` for the full mapping table.
 
 ## Model Configuration
 
@@ -213,10 +213,12 @@ The runtime loader is:
 
 - [src/config/defaults.ts](src/config/defaults.ts)
 
-Users configure only the 10 primary agent model slots under `models`: `bob`, `coder`, `strategist`, `manager`, `critic`, `designer`, `researcher`, `writer`, `vision`, and `sub`.
+Users configure the 10 primary agent model slots under `models`: `bob`, `build`, `plan`, `manager`, `critic`, `designer`, `explore`, `writer`, `vision`, and `general`.
 Hidden agents and task categories are derived internally in `src/config/defaults.ts`.
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 When helping a user choose model IDs, tell them to connect providers in OpenCode, run `opencode models`, and copy the exact `provider/model-id` strings into `hiai-opencode.json`. Do not invent provider prefixes.
+
+> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are handled by the migration layer in `src/shared/migration/agent-names.ts`.
 
 ## Change Map
 
@@ -228,12 +230,12 @@ Use this table when you need to change something and want the right file immedia
 | Change how categories inherit the 10 model slots | [src/config/defaults.ts](src/config/defaults.ts) | Category routing is internal |
 | Change MCP/LSP user-facing switches | [hiai-opencode.json](hiai-opencode.json) | Users only toggle enabled state there |
 | Change Bob behavior or prompt text | `src/agents/bob/*` | Bob prompt authoring lives there |
-| Change Coder behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
-| Change Strategist behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
+| Change Coder (build slot) behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
+| Change Strategist (plan slot) behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
 | Change Manager behavior or prompt text | `src/agents/manager/*` | Manager prompt authoring lives there |
 | Change Critic prompt text | `src/agents/critic/*` | Critic prompt authoring lives there |
 | Change Vision prompt text | [src/agents/ui.ts](src/agents/ui.ts) | Vision lives there |
-| Change Manager prompt text | `src/agents/manager/*` | Manager lives there |
+| Change Explorer (explore slot) prompt text | `src/agents/explore.ts` | Explorer prompt authoring lives there |
 | Change reusable policy blocks used by several agents | `src/agents/prompt-library/*` | Shared prompt sections live there |
 | Change dynamic prompt sections assembled from agent/tool/category context | `src/agents/dynamic-agent-*` | Dynamic sections are built there |
 | Change runtime display names | [src/shared/agent-display-names.ts](src/shared/agent-display-names.ts) | Final display-name mapping lives there |
@@ -333,13 +335,12 @@ Runtime helper assets live in:
 - [assets/mcp](assets/mcp)
 - [assets/runtime](assets/runtime)
 
-Current MCP set:
+Current MCP set (v0.3.0):
 
 - `sequential-thinking`
-- `mempalace`
-- `stitch`
-- `context7`
 - `grep_app`
+
+**Removed in v0.3.0**: `mempalace`, `stitch`, `context7` (removed from default MCP registry). Context7 is available as an on-demand CLI skill via `skill("explore/context7")`.
 
 ## Writing And Website Copy
 
@@ -369,8 +370,8 @@ Use `platform-manager` / `manager` when durable project memory or handoff state 
 
 Manager owns:
 
-- MemPalace decision hygiene: search first, deduplicate, write only durable decisions and important preferences.
-- Architecture memory updates: when architecture changes, update MemPalace.
+- Project memory hygiene: search before writing, deduplicate, write only durable decisions and important preferences.
+- Architecture memory updates: when architecture changes, update project MEMORY.md.
 - TODO hygiene: mark completed items complete, preserve unfinished tasks with blocker and next action, remove duplicate stale TODOs.
 - Session continuity: write concise handoff ledgers, not raw transcripts.
 
@@ -425,22 +426,21 @@ Model provider credentials are configured through OpenCode Connect. Do not ask u
 
 Common service keys:
 
-- `STITCH_AI_API_KEY` (MCP)
 - `FIRECRAWL_API_KEY` (CLI skill, not MCP)
-- `CONTEXT7_API_KEY` (MCP)
+- `CONTEXT7_API_KEY` (on-demand CLI skill via `skill("explore/context7")`)
 - `OLLAMA_BASE_URL`
 - `OLLAMA_MODEL`
-- `MEMPALACE_PYTHON` (MCP)
-- `MEMPALACE_PALACE_PATH` (MCP)
+
+**Removed from default registry (v0.3.0)**: `STITCH_AI_API_KEY`, `MEMPALACE_PYTHON`, `MEMPALACE_PALACE_PATH` — configure manually if needed.
 
 - `HIAI_MCP_AUTO_INSTALL`
 - `HIAI_OPENCODE_AUTO_EXPORT_MCP`
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
 - `HIAI_OPENCODE_EXPORT_MCP_MODE`
 
-## MemPalace
+## MemPalace (Legacy Reference)
 
-**Canonical taxonomy**: `src/agents/prompt-library/mempalace-taxonomy.ts` (single source of truth — 14 rooms).
+**Canonical taxonomy**: `src/agents/prompt-library/mempalace-taxonomy.ts` (single source of truth — 14 rooms). Note: MemPalace MCP was removed from the default MCP registry in v0.3.0. This section documents the legacy taxonomy for manual setup.
 
 Wing conventions:
 - `wing: "hiai-opencode"` — global/plugin-wide memory
@@ -457,36 +457,34 @@ Use `mempalace_diary_write(agent_name, entry)` for free-form session summaries.
 Agent/MCP/LSP integration reference — which agents use which integrations:
 
 ```
-AGENTS:
-  bob (you)        — orchestrator
-  coder            — implementation (deep)
-  sub              — implementation (cheap, bounded)
-  strategist       — planning (read-only, no code)
-  critic           — review gate (APPROVED/REJECTED)
-  researcher       — discovery: local grep + Context7/Firecrawl/grep_app/MemPalace
-  designer         — UI via Stitch MCP, design systems from open-design
-  writer     — copy/positioning/SEO (write to copy files only)
-  vision           — PDF/image extraction
-  manager          — MemPalace memory steward
-  quality-guardian — post-impl review + bug investigation
-  agent-skills      — skill registry, discovery
+AGENTS (runtime slot / display name):
+  bob (you)           — orchestrator
+  build (Coder)       — implementation (deep/bounded)
+  plan (Strategist)   — planning (read-only, no code)
+  explore (Explorer)  — discovery: local grep + Firecrawl/grep_app + Context7 CLI skill
+  critic              — review gate (APPROVED/REJECTED)
+  designer            — UI/visual direction
+  writer              — copy/positioning/SEO
+  vision              — PDF/image extraction, browser UI verification
+  manager             — delegation orchestrator, memory steward
+  general             — general-purpose executor (fallback)
+  quality-guardian    — post-impl review + bug investigation
+  agent-skills        — skill registry, discovery
 
-MCP INTEGRATIONS (who uses what):
-  Stitch              -> designer (UI generation) [MCP]
-  Context7            -> researcher, coder (lib docs) [MCP]
-  grep_app            -> researcher (OSS code patterns) [MCP]
-  MemPalace           -> manager (primary), all agents (search before answer) [MCP]
-  Sequential-Thinking -> strategist, critic (deep reasoning) [MCP]
+MCP INTEGRATIONS (who uses what, v0.3.0):
+  grep_app            -> explore, build (OSS code patterns) [MCP]
+  Sequential-Thinking -> plan, critic (deep reasoning) [MCP]
 
 DESIGN SYSTEMS:
   open-design         -> designer (150+ brand design-systems, 48 skills, craft guidelines)
 
 CLI SKILLS (not MCP):
-  Firecrawl           -> researcher (web scraping, crawl, extract, search)
+  Firecrawl           -> explore (web scraping, crawl, extract, search)
+  Context7            -> explore, build (on-demand lib docs via skill("explore/context7"))
 
 LSP:
   typescript, svelte, eslint, bash, pyright
-  -> coder MUST run lsp_diagnostics after every edit
+  -> build MUST run lsp_diagnostics after every edit
 ```
 
 ## Known Runtime Caveats
@@ -499,7 +497,6 @@ Windows/OpenCode may fail to spawn local MCP processes with `EPERM` for `cmd` or
 This most often affects:
 
 - `sequential-thinking`
-- `mempalace`
 - local `npx`-backed MCP processes
 
 ## Closure Protocol
@@ -604,9 +601,9 @@ Key pattern: `snapshot -i --json` → @eN refs → `click @e2` / `fill @e3 "text
 
 Use `/agent-browser` skill in OpenCode for browser tasks — navigation, snapshots, screenshots, form filling, console/network inspection.
 
-### MemPalace MCP fails with "python not found"
+### MemPalace MCP fails with "python not found" (Legacy)
 
-The launcher prefers `uv`. If `uv` is not available, it falls back to `python`. Set `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` to the correct interpreter:
+MemPalace MCP was removed from the default registry in v0.3.0. If you have manually configured it, the launcher prefers `uv`. If `uv` is not available, it falls back to `python`. Set `mcp.mempalace.pythonPath` or `MEMPALACE_PYTHON` to the correct interpreter:
 
 ```json
 {

@@ -1,7 +1,7 @@
-import { type Span, SpanStatusCode, trace } from '@opentelemetry/api';
-import { isTelemetryActive } from './index';
+import { type Span, SpanStatusCode, trace } from "@opentelemetry/api";
+import { isTelemetryActive } from "./index";
 
-const TRACER_NAME = 'hiai-opencode';
+const TRACER_NAME = "hiai-opencode";
 
 function getTracer() {
   if (!isTelemetryActive()) return null;
@@ -18,14 +18,14 @@ export async function instrumentToolExecution<T>(
 
   return tracer.startActiveSpan(`tool.${tool}`, async (span) => {
     const start = Date.now();
-    span.setAttribute('tool.name', tool);
+    span.setAttribute("tool.name", tool);
     try {
       const result = await fn();
-      span.setAttribute('tool.duration_ms', Date.now() - start);
+      span.setAttribute("tool.duration_ms", Date.now() - start);
       span.setStatus({ code: SpanStatusCode.OK });
       return result;
     } catch (err) {
-      span.setAttribute('tool.duration_ms', Date.now() - start);
+      span.setAttribute("tool.duration_ms", Date.now() - start);
       recordException(span, err);
       throw err;
     } finally {
@@ -44,15 +44,15 @@ export async function instrumentLspRequest<T>(
 
   return tracer.startActiveSpan(`lsp.${serverId}.${method}`, async (span) => {
     const start = Date.now();
-    span.setAttribute('lsp.server', serverId);
-    span.setAttribute('lsp.method', method);
+    span.setAttribute("lsp.server", serverId);
+    span.setAttribute("lsp.method", method);
     try {
       const result = await fn();
-      span.setAttribute('lsp.duration_ms', Date.now() - start);
+      span.setAttribute("lsp.duration_ms", Date.now() - start);
       span.setStatus({ code: SpanStatusCode.OK });
       return result;
     } catch (err) {
-      span.setAttribute('lsp.duration_ms', Date.now() - start);
+      span.setAttribute("lsp.duration_ms", Date.now() - start);
       recordException(span, err);
       throw err;
     } finally {
@@ -71,15 +71,15 @@ export async function instrumentMcpRequest<T>(
 
   return tracer.startActiveSpan(`mcp.${serverId}.${method}`, async (span) => {
     const start = Date.now();
-    span.setAttribute('mcp.server', serverId);
-    span.setAttribute('mcp.method', method);
+    span.setAttribute("mcp.server", serverId);
+    span.setAttribute("mcp.method", method);
     try {
       const result = await fn();
-      span.setAttribute('mcp.duration_ms', Date.now() - start);
+      span.setAttribute("mcp.duration_ms", Date.now() - start);
       span.setStatus({ code: SpanStatusCode.OK });
       return result;
     } catch (err) {
-      span.setAttribute('mcp.duration_ms', Date.now() - start);
+      span.setAttribute("mcp.duration_ms", Date.now() - start);
       recordException(span, err);
       throw err;
     } finally {

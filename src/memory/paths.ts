@@ -1,19 +1,19 @@
-import { createHash } from 'node:crypto';
-import path from 'node:path';
+import { createHash } from "node:crypto";
+import path from "node:path";
 
-export type Scope = 'global' | 'projects' | 'sessions' | 'cc';
+export type Scope = "global" | "projects" | "sessions" | "cc";
 export type MemoryType =
-  | 'free'
-  | 'memory'
-  | 'checkpoint'
-  | 'progress'
-  | 'notes'
-  | 'feedback'
-  | 'project'
-  | 'reference'
-  | 'user';
+  | "free"
+  | "memory"
+  | "checkpoint"
+  | "progress"
+  | "notes"
+  | "feedback"
+  | "project"
+  | "reference"
+  | "user";
 
-export const CC_TYPES = ['feedback', 'project', 'reference', 'user'] as const;
+export const CC_TYPES = ["feedback", "project", "reference", "user"] as const;
 export type CcType = (typeof CC_TYPES)[number];
 
 export interface MemoryLocator {
@@ -29,24 +29,26 @@ const TYPE_PATTERNS: Array<{ match: RegExp; type: MemoryType }> = [
   // migration. checkpoint/tasks/notes have no legacy-casing bridge and stay
   // exact — if a writer ever drifts to CHECKPOINT.md it should NOT silently
   // classify as checkpoint.
-  { match: /^memory$/i, type: 'memory' },
-  { match: /^memory-/i, type: 'memory' },
-  { match: /^checkpoint$/, type: 'checkpoint' },
-  { match: /^checkpoint-/, type: 'checkpoint' },
-  { match: /^tasks\/[^/]+\/progress$/, type: 'progress' },
-  { match: /^tasks\/[^/]+\/notes$/, type: 'notes' },
+  { match: /^memory$/i, type: "memory" },
+  { match: /^memory-/i, type: "memory" },
+  { match: /^checkpoint$/, type: "checkpoint" },
+  { match: /^checkpoint-/, type: "checkpoint" },
+  { match: /^tasks\/[^/]+\/progress$/, type: "progress" },
+  { match: /^tasks\/[^/]+\/notes$/, type: "notes" },
 ];
 
 function detectType(key: string): MemoryType {
   for (const p of TYPE_PATTERNS) if (p.match.test(key)) return p.type;
-  return 'free';
+  return "free";
 }
 
 export function parsePath(absPath: string): MemoryLocator | null {
-  const m = absPath.match(/\/memory\/(global|projects|sessions)(?:\/([^/]+))?\/(.+)\.md$/);
+  const m = absPath.match(
+    /\/memory\/(global|projects|sessions)(?:\/([^/]+))?\/(.+)\.md$/,
+  );
   if (!m) return null;
   const [, scope, idMaybe, keyRaw] = m;
-  const scope_id = scope === 'global' ? '' : (idMaybe ?? '');
+  const scope_id = scope === "global" ? "" : (idMaybe ?? "");
   const key = keyRaw;
   return { scope: scope as Scope, scope_id, type: detectType(key), key };
 }
@@ -61,9 +63,9 @@ export function parseCcPath(absPath: string): MemoryLocator | null {
   if (!m) return null;
   const [, slug, keyRaw] = m;
   return {
-    scope: 'cc',
+    scope: "cc",
     scope_id: slug,
-    type: 'free', // type is finalized from frontmatter at index time
+    type: "free", // type is finalized from frontmatter at index time
     key: keyRaw,
   };
 }
@@ -90,16 +92,20 @@ export function parseCcFrontmatterType(body: string): CcType | null {
   const t = inner.match(METADATA_TYPE_RE);
   if (!t) return null;
   const value = t[1];
-  return (CC_TYPES as readonly string[]).includes(value) ? (value as CcType) : null;
+  return (CC_TYPES as readonly string[]).includes(value)
+    ? (value as CcType)
+    : null;
 }
 
 function assertSafeComponent(value: string) {
   // Reject any segment containing ".." or starting with "/" — guards against
   // path traversal and absolute-path injection from caller-supplied scope_id/key.
-  for (const segment of value.split('/')) {
-    if (segment === '..') throw new Error(`buildPath: invalid path component: ${value}`);
+  for (const segment of value.split("/")) {
+    if (segment === "..")
+      throw new Error(`buildPath: invalid path component: ${value}`);
   }
-  if (value.startsWith('/')) throw new Error(`buildPath: invalid path component: ${value}`);
+  if (value.startsWith("/"))
+    throw new Error(`buildPath: invalid path component: ${value}`);
 }
 
 export function buildPath(input: {
@@ -111,11 +117,11 @@ export function buildPath(input: {
   if (input.scope_id !== undefined) assertSafeComponent(input.scope_id);
   assertSafeComponent(input.key);
   const parts = [input.root, input.scope];
-  if (input.scope !== 'global') parts.push(input.scope_id ?? '');
+  if (input.scope !== "global") parts.push(input.scope_id ?? "");
   parts.push(`${input.key}.md`);
   return path.join(...parts);
 }
 
 export function resolveProjectId(absRepoPath: string): string {
-  return createHash('sha256').update(absRepoPath).digest('hex').slice(0, 12);
+  return createHash("sha256").update(absRepoPath).digest("hex").slice(0, 12);
 }

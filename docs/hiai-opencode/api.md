@@ -19,7 +19,7 @@ The user-facing config file lives at the project root (or `.opencode/hiai-openco
   "lsp": { /* LSP tool enable/disable */ },
   "skill_discovery": { /* external skill folder scanning */ },
   "subtask2": { "replace_generic": boolean },
-  "ralph_loop": { "enabled": boolean, "auto_start_threshold": number }
+  "loop": { "enabled": boolean, "auto_start_threshold": number }
 }
 ```
 
@@ -54,17 +54,17 @@ type ModelSlot =
 | Config key | Display name | Purpose | Default recommended |
 |---|---|---|---|
 | `bob` | Bob | Orchestrator, router, entry point | `high` |
-| `coder` | Coder | Deep implementation, bounded execution | `fast` |
-| `strategist` | Strategist | Planning, architecture, pre-check | `xhigh` |
+| `build` | Coder | Deep implementation, bounded execution | `high` |
+| `plan` | Strategist | Planning, architecture, pre-check | `xhigh` |
 | `manager` | Manager | Delegation orchestrator, TODO tracker, memory steward | `middle` |
 | `critic` | Critic | Review gate, high-accuracy verification | `high` |
-| `designer` | Designer | UI/visual direction via Stitch MCP | `design` |
-| `researcher` | Researcher | Local + external search | `fast` |
+| `designer` | Designer | UI/visual direction | `design` |
+| `explore` | Explorer | Local + external search (grep, firecrawl, grep_app) | `fast` |
 | `writer` | Writer | Copy, content, positioning, SEO | `writing` |
 | `vision` | Vision | PDF/image/diagram extraction, browser UI verification | `vision` |
-| `sub` | Sub | Bounded compatibility wrapper (hidden) | `fast` |
+| `general` | General | General-purpose executor (fallback) | `fast` |
 
-> **Note:** `guard` and `brainstormer` are legacy config keys preserved for migration compatibility. They map to `manager` and `writer` respectively via `src/shared/migration/agent-names.ts`. The schema still requires `guard` and `brainstormer` entries, but the runtime resolves them to the canonical slots.
+> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are handled by `src/shared/migration/agent-names.ts`. The older `guard`→`manager`, `brainstormer`→`writer`, `multimodal`→`vision` mappings are also preserved for migration compatibility.
 
 ### Recommended Effort Tiers
 
@@ -86,32 +86,19 @@ The `mcp` object in `hiai-opencode.json` is the **user-facing on/off switchboard
 }
 ```
 
-### All MCP Servers
+### All MCP Servers (v0.3.0)
 
 | Server | Config key | Default | Key env var | What it enables |
 |---|---|---|---|---|
-| Stitch | `mcp.stitch` | `true` | `STITCH_AI_API_KEY` | Designer: design systems, screen generation |
-| Sequential Thinking | `mcp.sequential-thinking` | `true` | — | Strategist + Critic: deep reasoning |
-| MemPalace | `mcp.mempalace` | `true` | `MEMPALACE_PYTHON` | Manager (primary), all agents (search before answer) |
-| Context7 | `mcp.context7` | `true` | `CONTEXT7_API_KEY` | Researcher + Coder: library API lookup |
-| grep_app | `mcp.grep_app` | `true` | — | Researcher: OSS code pattern search |
-| Agent Browser | `mcp.agentBrowser` | `true` | `AGENT_BROWSER_*` | Coder: browser automation via `/agent-browser` skill |
+| Sequential Thinking | `mcp.sequential-thinking` | `true` | — | Plan + Critic: deep reasoning |
+| grep_app | `mcp.grep_app` | `true` | — | Explore + Build: OSS code pattern search |
 
-### MemPalace Extended Config
+**Removed from default MCP registry in v0.3.0**:
+- Stitch (`mcp.stitch`) — required `STITCH_AI_API_KEY`. Designer UI generation.
+- MemPalace (`mcp.mempalace`) — required `MEMPALACE_PYTHON`. Agent memory.
+- Context7 (`mcp.context7`) — required `CONTEXT7_API_KEY`. Available as on-demand CLI skill via `skill("explore/context7")`.
 
-```json
-{
-  "mcp": {
-    "mempalace": {
-      "enabled": true,
-      "pythonPath": "{env:MEMPALACE_PYTHON:-./.venv/bin/python}"
-    }
-  }
-}
-```
-
-- `pythonPath`: optional explicit Python/Ruv interpreter. Overrides `MEMPALACE_PYTHON` env var.
-- When `HIAI_MCP_AUTO_INSTALL` is not `0`, `false`, or `no`, the launcher attempts `python -m pip install --user mempalace` on first start.
+These servers can be manually re-enabled in `hiai-opencode.json` if the corresponding env vars are set.
 
 ### Agent Browser Extended Config
 
@@ -150,14 +137,13 @@ Explicit `environment` entries are an allowlist and bypass the filter that strip
 
 ## Bundled Design Library
 
-The plugin ships a comprehensive design library sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0). The Designer agent uses these assets to ground its output in real brand systems instead of generic AI aesthetics.
+The plugin ships design skills sourced from [nexu-io/open-design](https://github.com/nexu-io/open-design) (Apache 2.0). The Designer agent uses these assets to ground its output in real brand systems instead of generic AI aesthetics.
 
 | Asset | Location | Contents |
 |---|---|---|
-| Brand design systems | `design-systems/` | 150+ brands (Apple, Linear, Stripe, Vercel, Airbnb, etc.) — each with `DESIGN.md`, `tokens.css`, `components.html` |
 | Design skills | `skills/` | 48 skills covering visual storytelling, Figma integration, canvas design, accessibility, animation |
-| Craft guidelines | `craft/` | Typography, color systems, UX patterns, anti-AI-slop references |
-| Prompt templates | `prompt-templates/` | Ready-made prompts for image generation and video production |
+
+**Note**: `design-systems/` (150+ brand DESIGN.md files), `craft/` (typography/color/UX guidelines), and `prompt-templates/` (image/video prompt templates) were removed from the plugin package in v0.3.0. These assets remain available from the upstream [nexu-io/open-design](https://github.com/nexu-io/open-design) repository (Apache 2.0).
 
 ---
 

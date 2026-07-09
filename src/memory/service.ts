@@ -1,8 +1,8 @@
-import { Database as BunDatabase } from 'bun:sqlite';
-import os from 'node:os';
-import path from 'node:path';
-import { buildFtsQuery } from './fts-query';
-import { reconcileMemory, setMemoryDbPath } from './reconcile';
+import { Database as BunDatabase } from "bun:sqlite";
+import os from "node:os";
+import path from "node:path";
+import { buildFtsQuery } from "./fts-query";
+import { reconcileMemory, setMemoryDbPath } from "./reconcile";
 
 type SearchRow = {
   path: string;
@@ -21,7 +21,7 @@ export interface MemoryServiceConfig {
   searchScoreFloor?: number;
 }
 
-const ccBaseDefault = path.join(os.homedir(), '.claude', 'projects');
+const ccBaseDefault = path.join(os.homedir(), ".claude", "projects");
 
 export function createMemoryService(config: MemoryServiceConfig) {
   setMemoryDbPath(config.dbPath);
@@ -69,18 +69,19 @@ export function createMemoryService(config: MemoryServiceConfig) {
       const conditions: string[] = [];
       const params: string[] = [];
       if (input.scope) {
-        conditions.push('memory_fts.scope = ?');
+        conditions.push("memory_fts.scope = ?");
         params.push(input.scope);
       }
       if (input.scope_id) {
-        conditions.push('memory_fts.scope_id = ?');
+        conditions.push("memory_fts.scope_id = ?");
         params.push(input.scope_id);
       }
       if (input.type) {
-        conditions.push('memory_fts.type = ?');
+        conditions.push("memory_fts.type = ?");
         params.push(input.type);
       }
-      const whereClause = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
+      const whereClause =
+        conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 
       const sql = `
         SELECT memory_fts.path, memory_fts.scope, memory_fts.scope_id, memory_fts.type,
@@ -96,7 +97,9 @@ export function createMemoryService(config: MemoryServiceConfig) {
 
       const fetchLimit = Math.min(limit * 3, 50);
       const rawDb = getRawDb();
-      const rows = rawDb.query(sql).all(ftsQuery, ...params, fetchLimit) as SearchRow[];
+      const rows = rawDb
+        .query(sql)
+        .all(ftsQuery, ...params, fetchLimit) as SearchRow[];
 
       const mapped = rows.map((r) => ({
         path: r.path,
@@ -109,8 +112,11 @@ export function createMemoryService(config: MemoryServiceConfig) {
       if (mapped.length === 0) return [];
 
       const topScore = mapped[0].score;
-      const cutoff = floorRatio > 0 ? topScore * floorRatio : Number.NEGATIVE_INFINITY;
-      return mapped.filter((r, i) => i === 0 || r.score >= cutoff).slice(0, limit);
+      const cutoff =
+        floorRatio > 0 ? topScore * floorRatio : Number.NEGATIVE_INFINITY;
+      return mapped
+        .filter((r, i) => i === 0 || r.score >= cutoff)
+        .slice(0, limit);
     },
   };
 }

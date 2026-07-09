@@ -1,11 +1,13 @@
-import type { BobConfig } from '../../types';
+import type { BobConfig } from "../../types";
 
-type TelemetryConfig = BobConfig['telemetry'];
+type TelemetryConfig = BobConfig["telemetry"];
 
 let sdk: { shutdown: () => Promise<void> } | null = null;
 let initialized = false;
 
-export async function initTelemetry(config: TelemetryConfig | undefined): Promise<void> {
+export async function initTelemetry(
+  config: TelemetryConfig | undefined,
+): Promise<void> {
   if (initialized) return;
   if (!config?.enabled) return;
 
@@ -17,24 +19,26 @@ export async function initTelemetry(config: TelemetryConfig | undefined): Promis
     // installed (we list only the API + HTTP exporter as direct deps; the
     // SDK + resources + semantic-conventions are optional peer deps).
     // @ts-ignore — optional runtime dep
-    const sdkNode = await import('@opentelemetry/sdk-node').catch(() => null);
+    const sdkNode = await import("@opentelemetry/sdk-node").catch(() => null);
+    // biome-ignore format: single-line required for @ts-ignore to suppress next line
     // @ts-ignore — optional runtime dep
-    const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http').catch(
-      () => ({}),
-    );
+    const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-http").catch(() => ({}));
+    // biome-ignore format: single-line required for @ts-ignore to suppress next line
     // @ts-ignore — optional runtime dep
-    const { Resource } = await import('@opentelemetry/resources').catch(() => ({}));
+    const { Resource } = await import("@opentelemetry/resources").catch(() => ({}));
+    // biome-ignore format: single-line required for @ts-ignore to suppress next line
     // @ts-ignore — optional runtime dep
-    const { SEMRESATTRS_SERVICE_NAME } = await import('@opentelemetry/semantic-conventions').catch(
-      () => ({}),
-    );
+    const { SEMRESATTRS_SERVICE_NAME } = await import("@opentelemetry/semantic-conventions").catch(() => ({}));
 
     if (!sdkNode) {
-      console.warn('[hiai-opencode] Telemetry disabled: @opentelemetry/sdk-node not installed');
+      console.warn(
+        "[hiai-opencode] Telemetry disabled: @opentelemetry/sdk-node not installed",
+      );
       return;
     }
 
-    const serviceName = config.serviceName ?? process.env.OTEL_SERVICE_NAME ?? 'hiai-opencode';
+    const serviceName =
+      config.serviceName ?? process.env.OTEL_SERVICE_NAME ?? "hiai-opencode";
     const sampleRate = clampSampleRate(config.sampleRate ?? 0.1);
 
     const sampler = new sdkNode.tracing.ParentBasedSampler({
@@ -62,7 +66,9 @@ export async function shutdownTelemetry(): Promise<void> {
   try {
     await sdk.shutdown();
   } catch (err) {
-    console.warn(`[hiai-opencode] Telemetry shutdown failed: ${(err as Error).message}`);
+    console.warn(
+      `[hiai-opencode] Telemetry shutdown failed: ${(err as Error).message}`,
+    );
   } finally {
     sdk = null;
     initialized = false;

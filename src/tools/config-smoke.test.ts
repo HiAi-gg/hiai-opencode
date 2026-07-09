@@ -4,17 +4,17 @@
  */
 
 import {
+  afterEach,
+  beforeAll,
+  beforeEach,
   describe,
   expect,
   test,
-  beforeAll,
-  beforeEach,
-  afterEach,
 } from "bun:test";
-import { existsSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { parseEnvFile, loadEnvFiles } from "../config";
+import { join } from "node:path";
+import { loadEnvFiles, parseEnvFile } from "../config";
 
 const TMP = join(tmpdir(), "hiai-opencode-config-test");
 
@@ -41,9 +41,9 @@ describe("config loading from documented example", () => {
     };
     const bobJsonPath = join(TMP, "bob.json");
     writeFileSync(bobJsonPath, JSON.stringify(cfg, null, 2));
-    const hooks = await (
-      await import("../index")
-    ).BobPlugin({ directory: TMP });
+    const hooks = await (await import("../index")).BobPlugin({
+      directory: TMP,
+    });
     expect(hooks).toBeDefined();
     expect(typeof hooks.dispose).toBe("function");
     await hooks.dispose?.();
@@ -84,9 +84,9 @@ describe("config loading from documented example", () => {
     };
     const bobJsonPath = join(TMP, "bob.json");
     writeFileSync(bobJsonPath, JSON.stringify(cfg, null, 2));
-    const hooks = await (
-      await import("../index")
-    ).BobPlugin({ directory: TMP });
+    const hooks = await (await import("../index")).BobPlugin({
+      directory: TMP,
+    });
     expect(hooks).toBeDefined();
     expect(typeof hooks.dispose).toBe("function");
     await hooks.dispose?.();
@@ -101,9 +101,9 @@ describe("config loading from documented example", () => {
     };
     const bobJsonPath = join(TMP, "bob.json");
     writeFileSync(bobJsonPath, JSON.stringify(cfg, null, 2));
-    const hooks = await (
-      await import("../index")
-    ).BobPlugin({ directory: TMP });
+    const hooks = await (await import("../index")).BobPlugin({
+      directory: TMP,
+    });
     expect(hooks).toBeDefined();
     await hooks.dispose?.();
   });
@@ -128,9 +128,9 @@ describe("config loading from documented example", () => {
     };
     const bobJsonPath = join(TMP, "bob.json");
     writeFileSync(bobJsonPath, JSON.stringify(cfg, null, 2));
-    const hooks = await (
-      await import("../index")
-    ).BobPlugin({ directory: TMP });
+    const hooks = await (await import("../index")).BobPlugin({
+      directory: TMP,
+    });
     expect(hooks).toBeDefined();
     await hooks.dispose?.();
   });
