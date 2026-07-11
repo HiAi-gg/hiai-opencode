@@ -1,103 +1,169 @@
-import { describe, expect, test } from "bun:test";
+import { describe, it, expect } from "bun:test";
+import { createQualityGate } from "./quality-gate";
+import type { BobConfig } from "../types";
 
-// Helper to create a quality gate instance
-// We can't import createQualityGate directly if it's not exported
-// so let's inline a minimal version
-function makeQualityGateAggressiveMessage(
-  cmd: string,
-  hasErrors: boolean,
-): string {
-  if (hasErrors) {
-    return (
-      "\n\n[hiai-opencode] ⛔ QUALITY GATE FAILED: " +
-      cmd.split(" ")[0] +
-      " detected errors." +
-      "\n⛔ You CANNOT emit CLOSURE until this command exits 0." +
-      "\n⛔ Run the failing command again after fixing and verify exit code 0." +
-      "\n⛔ If you emit CLOSURE without a passing check, your response will be REJECTED." +
-      "\n⛔ Cannot mark task done until quality gate passes."
-    );
-  }
-  return "";
+/**
+ * Unit tests for the quality-gate hook (`tool.execute.after`).
+ *
+ * The implementation (quality-gate.ts) detects errors via strict, structural
+ * patterns (word-boundary / diagnostic-signal anchored) rather than naive
+ * substring matching. Benign phrases that merely *contain* the word "error"
+ * (e.g. "no error", "handling errors correctly") must NOT trip the gate, while
+ * genuine diagnostic signals ("error:", "ERR_...", "N errors", "FAIL", etc.)
+ * must. Phase 7C finalized this hardening; the target cases below are active
+ * (unskipped) tests that lock in the intended behavior.
+ */
+
+function makeConfig(): BobConfig {
+  // `_config` is unused by createQualityGate; a minimal object satisfies the type.
+  return {} as BobConfig;
 }
 
-describe("quality-gate aggressive messaging", () => {
-  test("bun run lint failure appends QUALITY GATE FAILED", () => {
-    const msg = makeQualityGateAggressiveMessage("bun run lint", true);
-    expect(msg).toContain("QUALITY GATE FAILED");
-    expect(msg).toContain("⛔");
-    expect(msg).toContain("CLOSURE");
-  });
+async function runAfter(cmd: string, outputText: string | undefined | null) {
+  const hookSet = createQualityGate(makeConfig());
+  const after = hookSet["tool.execute.after"] as (
+    input: { tool: string; args: { command?: string } },
+    output: { output?: string | null },
+  ) => Promise<void>;
+  const input = { tool: "bash", args: { command: cmd } };
+  const output = { output: outputText };
+  await after(input, output);
+  return output;
+}
 
-  test("bun run typecheck failure appends message", () => {
-    const msg = makeQualityGateAggressiveMessage("bun run typecheck", true);
-    expect(msg).toContain("QUALITY GATE FAILED");
-  });
+const GATE_MARKER = "QUALITY GATE FAILED";
 
-  test("bun test failure appends message", () => {
-    const msg = makeQualityGateAggressiveMessage("bun test", true);
-    expect(msg).toContain("QUALITY GATE FAILED");
-  });
-
-  test("bun run check failure appends message", () => {
-    const msg = makeQualityGateAggressiveMessage("bun run check", true);
-    expect(msg).toContain("QUALITY GATE FAILED");
-  });
-
-  test("clean output does NOT append message", () => {
-    const msg = makeQualityGateAggressiveMessage("bun run lint", false);
-    expect(msg).toBe("");
-  });
-
-  test("non-quality commands pass through unchanged", () => {
-    const msg = makeQualityGateAggressiveMessage("echo hello", true);
-    expect(msg).toContain("QUALITY GATE FAILED");
-  });
-
-  test("message explicitly says cannot emit CLOSURE", () => {
-    const msg = makeQualityGateAggressiveMessage("bun run lint", true);
-    expect(msg).toContain("CANNOT emit CLOSURE");
-    expect(msg).toContain("REJECTED");
-    expect(msg).toContain("Cannot mark task done");
-  });
-
-  test("isQuality detection: bun test is detected", () => {
-    const qualityCommands = [
+describe("quality-gate: true positives (error detected)", () => {
+  it('flags lowercase "error" in quality-command output', async () => {
+    const out = await runAfter(
       "bun test",
-      "bun run lint",
-      "bun run check",
-      "bun run ci",
-      "biome check",
-      "bun run typecheck",
-      "tsc",
-    ];
-    for (const cmd of qualityCommands) {
-      const isQuality =
-        cmd.includes("bun test") ||
-        cmd.includes("bun run lint") ||
-        cmd.includes("bun run check") ||
-        cmd.includes("bun run ci") ||
-        cmd.includes("biome check") ||
-        cmd.includes("bun run format") ||
-        cmd.includes("bun run typecheck") ||
-        cmd.includes("tsc");
-      expect(isQuality).toBe(true);
-    }
+      "FAIL 1 test\nerror: expected 1 got 2",
+    );
+    expect(out.output).toContain(GATE_MARKER);
   });
 
-  test("non-quality commands not detected", () => {
-    const nonQuality = ["echo hello", "ls -la", "cd /tmp", "npm install"];
-    for (const cmd of nonQuality) {
-      const isQuality =
-        cmd.includes("bun test") ||
-        cmd.includes("bun run lint") ||
-        cmd.includes("bun run check") ||
-        cmd.includes("bun run ci") ||
-        cmd.includes("biome check") ||
-        cmd.includes("bun run format") ||
-        cmd.includes("bun run typecheck") ||
-        cmd.includes("tsc");
-      expect(isQuality).toBe(false);
-    }
+  it('flags capitalized "Error" in quality-command output', async () => {
+    const out = await runAfter(
+      "bun run lint",
+      "src/x.ts: Error: unused variable",
+    );
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags "ERR" token in quality-command output', async () => {
+    const out = await runAfter(
+      "bun run typecheck",
+      "ERR_MODULE_NOT_FOUND: ./missing",
+    );
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags "TS error" in quality-command output', async () => {
+    const out = await runAfter(
+      "bun run typecheck",
+      "TS error: 2322 type mismatch",
+    );
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it("appends the cannot-emit-CLOSURE directive on failure", async () => {
+    const out = await runAfter("bun test", "error: boom");
+    expect(out.output).toContain(
+      "You CANNOT emit CLOSURE until this command exits 0",
+    );
+  });
+});
+
+describe("quality-gate: negatives (no false gate)", () => {
+  it('does NOT gate a non-quality command even if output contains "error"', async () => {
+    const out = await runAfter("cat file.txt", "error reading file");
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+
+  it("does NOT gate a quality command whose output has no error signal", async () => {
+    const out = await runAfter("bun test", "all 12 tests passed in 1.2s");
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+
+  it("does NOT gate when output is undefined", async () => {
+    const out = await runAfter("bun test", undefined);
+    expect(out.output).toBeUndefined();
+  });
+
+  it("does NOT gate when output is null", async () => {
+    const out = await runAfter("bun test", null);
+    expect(out.output).toBeNull();
+  });
+
+  it("does NOT gate when output is an empty string", async () => {
+    const out = await runAfter("bun test", "");
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+
+  it("does NOT gate a non-bash tool", async () => {
+    const hookSet = createQualityGate(makeConfig());
+    const after = hookSet["tool.execute.after"] as (
+      input: { tool: string; args: { command?: string } },
+      output: { output?: string | null },
+    ) => Promise<void>;
+    const output = { output: "error: boom" };
+    await after({ tool: "read", args: { command: "bun test" } }, output);
+    expect(output.output).not.toContain(GATE_MARKER);
+  });
+});
+
+describe("quality-gate: 7C hardening target (strict structural detection)", () => {
+  // Benign phrases that merely *contain* the word "error" must NOT trip the
+  // gate once detection is structural/word-boundary aware.
+  it('does NOT flag "no error"', async () => {
+    const out = await runAfter("bun test", "no error occurred during the run");
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+
+  it('does NOT flag "handling errors correctly"', async () => {
+    const out = await runAfter(
+      "bun run lint",
+      "handling errors correctly is important",
+    );
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+
+  it('does NOT flag "0 errors" (passing count)', async () => {
+    const out = await runAfter("bun run typecheck", "Found 0 errors");
+    expect(out.output).not.toContain(GATE_MARKER);
+  });
+});
+
+describe("quality-gate: structural error signals (positive)", () => {
+  // Genuine diagnostic signals must still trip the gate.
+  it('flags "TypeError:" diagnostic', async () => {
+    const out = await runAfter(
+      "bun test",
+      "TypeError: Cannot read properties of undefined",
+    );
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags "Found N errors" count (N >= 1)', async () => {
+    const out = await runAfter(
+      "bun run typecheck",
+      "Found 3 errors in 2 files",
+    );
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags all-caps "ERROR" token', async () => {
+    const out = await runAfter("bun run lint", "ERROR: lint rule violated");
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags "FAIL" test-runner output', async () => {
+    const out = await runAfter("bun test", "FAIL src/x.test.ts > should work");
+    expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('flags "failed" keyword', async () => {
+    const out = await runAfter("bun test", "1 failed, 3 passed");
+    expect(out.output).toContain(GATE_MARKER);
   });
 });

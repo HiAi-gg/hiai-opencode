@@ -289,6 +289,40 @@ Current defaults cover:
 - Bash
 - Pyright
 
+## Worktree Isolation
+
+The plugin now supports Git worktree isolation for safe parallel development and testing workflows.
+
+### Components
+
+- **WorktreeManager**: Central manager class (`src/features/worktree/index.ts`) handling worktree creation, listing, removal, and cleanup operations
+- **Worktree Tools**: Four dedicated tools exposed via the plugin:
+  - `hiai_worktree_create` — Create new Git worktree with a dedicated branch
+  - `hiai_worktree_list` — List all active worktrees with status
+  - `hiai_worktree_remove` — Remove a worktree by directory path
+  - `hiai_worktree_status` — Report worktree status (branch, dirty, ahead/behind)
+- **Lifecycle Hooks**: Worktree lifecycle hooks registered via standard plugin events:
+  - `chat.message` — Detect plan-start signals and auto-create a linked worktree
+  - `tool.execute.after` — Detect CLOSURE completion and auto-remove session worktree
+- **Skill Integration**: Packaged `using-git-worktrees` skill (`skills/general/using-git-worktrees/`) provides worktree operations via skill interface for agent discovery and invocation
+- **Prompt Integration**: Worktree context and commands integrated into Bob, Manager, and Coder prompts to enable worktree-aware task execution and prevent accidental operations on main worktree
+
+### Usage Patterns
+
+Worktree isolation enables:
+- Parallel feature development without branch switching
+- Safe testing of experimental changes
+- Multi-context development sessions
+- Automated worktree lifecycle management through hooks
+
+### Files
+
+- Core: `src/features/worktree/index.ts`
+- Tools: `src/tools/worktree.ts`
+- Hooks: `src/hooks/worktree-lifecycle.ts`
+- Skill: `skills/general/using-git-worktrees/`
+- Prompt integration: `src/prompt-library/worktree.ts`
+
 ## Compatibility Layer
 
 This plugin accepts older names and maps them to current runtime behavior.

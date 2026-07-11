@@ -1,5 +1,8 @@
 import { resolveEnvVars } from "../../shared/env";
 
+// NOTE: DEFAULT_MCP_TIMEOUT is intentionally NOT part of `config.tool_settings`.
+// It is a well-named, build-time MCP wiring constant (not a runtime-tunable
+// tool default), so it stays here rather than being migrated to bob.json.
 const DEFAULT_MCP_TIMEOUT = 60_000; // 60s per request
 
 export const MCP_REGISTRY: Record<

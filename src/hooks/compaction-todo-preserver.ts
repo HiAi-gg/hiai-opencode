@@ -1,4 +1,5 @@
 import type { BobConfig, HookSet } from "../types";
+import { BlockingHookError } from "./errors";
 
 export function createCompactionTodoPreserverHook(_config: BobConfig): HookSet {
   return {
@@ -10,9 +11,17 @@ export function createCompactionTodoPreserverHook(_config: BobConfig): HookSet {
         NonNullable<HookSet["experimental.session.compacting"]>
       >[1],
     ) => {
-      if (output?.context) {
-        output.context.push(
-          "[hiai-opencode] Preserve all TODO items during compaction.",
+      try {
+        if (output?.context) {
+          output.context.push(
+            "[hiai-opencode] Preserve all TODO items during compaction.",
+          );
+        }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error(
+          "[hiai-opencode] Hook error in compaction-todo-preserver:",
+          err,
         );
       }
     },

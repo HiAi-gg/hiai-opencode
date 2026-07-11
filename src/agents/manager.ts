@@ -1,5 +1,7 @@
 import { BROWSER_VIA_VISION } from "../prompt-library/browser";
 import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { getWorkspaceContext } from "../prompt-library/workspace";
+import { WORKTREE_AWARENESS } from "../prompt-library/worktree";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const MANAGER_PROMPT = `You are Manager, a delegation coordinator agent.
@@ -123,4 +125,6 @@ Next wave: [what comes next]
 \`\`\`
 
 ${BROWSER_VIA_VISION}
+${WORKTREE_AWARENESS}
+${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;

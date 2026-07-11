@@ -1,6 +1,8 @@
 import { exec } from "node:child_process";
 import { promisify } from "node:util";
-import { tool } from "@opencode-ai/plugin";
+import { type ToolContext, tool } from "@opencode-ai/plugin";
+import { getToolSetting } from "../config";
+import { getSubprocessEnv } from "../features/shell-env";
 
 const execAsync = promisify(exec);
 
@@ -102,10 +104,14 @@ export function formatFirecrawlError(
 
 async function runFirecrawl(args: string): Promise<string> {
   try {
+    // Merge project shell_env vars into the subprocess environment when the
+    // "firecrawl" integration is enabled. Falls back to the existing default
+    // env ({ ...process.env, HOME }) when injection is disabled.
+    const shellEnv = getSubprocessEnv('firecrawl');
     const { stdout, stderr } = await execAsync(`firecrawl ${args}`, {
-      timeout: 60_000,
-      maxBuffer: 10 * 1024 * 1024,
-      env: { ...process.env, HOME: process.env.HOME },
+      timeout: getToolSetting('firecrawl_timeout_ms', 60_000),
+      maxBuffer: getToolSetting('firecrawl_max_buffer', 10 * 1024 * 1024),
+      env: shellEnv ?? { ...process.env, HOME: process.env.HOME },
     });
     return stdout || stderr;
   } catch (e: unknown) {
@@ -139,9 +145,15 @@ export const firecrawlSearchTool = tool({
     query: tool.schema.string().describe("Search query"),
     limit: tool.schema.number().optional().describe("Max results (default 5)"),
   },
-  async execute(args) {
+  async execute(args, context?: ToolContext) {
     const limit = args.limit ?? 5;
-    return runFirecrawl(`search '${shellEscape(args.query)}' --limit ${limit}`);
+    const start = performance.now();
+    const out = await runFirecrawl(`search '${shellEscape(args.query)}' --limit ${limit}`);
+    const duration_ms = Math.round(performance.now() - start);
+    context?.metadata({
+      metadata: { tool: 'firecrawl', query: args.query, duration_ms },
+    });
+    return out;
   },
 });
 
@@ -154,9 +166,15 @@ export const firecrawlScrapeTool = tool({
       .optional()
       .describe("Output format: markdown, html, text (default markdown)"),
   },
-  async execute(args) {
+  async execute(args, context?: ToolContext) {
     const fmt = args.format ?? "markdown";
-    return runFirecrawl(`scrape '${shellEscape(args.url)}' --format ${fmt}`);
+    const start = performance.now();
+    const out = await runFirecrawl(`scrape '${shellEscape(args.url)}' --format ${fmt}`);
+    const duration_ms = Math.round(performance.now() - start);
+    context?.metadata({
+      metadata: { tool: 'firecrawl', url: args.url, duration_ms },
+    });
+    return out;
   },
 });
 
@@ -166,8 +184,14 @@ export const firecrawlMapTool = tool({
     url: tool.schema.string().describe("URL to map"),
     limit: tool.schema.number().optional().describe("Max URLs (default 100)"),
   },
-  async execute(args) {
+  async execute(args, context?: ToolContext) {
     const limit = args.limit ?? 100;
-    return runFirecrawl(`map '${shellEscape(args.url)}' --limit ${limit}`);
+    const start = performance.now();
+    const out = await runFirecrawl(`map '${shellEscape(args.url)}' --limit ${limit}`);
+    const duration_ms = Math.round(performance.now() - start);
+    context?.metadata({
+      metadata: { tool: 'firecrawl', url: args.url, duration_ms },
+    });
+    return out;
   },
 });

@@ -1,4 +1,5 @@
-import { type PluginInput, tool } from "@opencode-ai/plugin";
+import { type PluginInput, type ToolContext, tool } from "@opencode-ai/plugin";
+import { getToolSetting } from "../../config";
 
 let sessionClient: PluginInput["client"] | null = null;
 
@@ -9,7 +10,7 @@ export function setSessionClient(client: PluginInput["client"]) {
 export const sessionListTool = tool({
   description: "List all sessions in the current project.",
   args: {},
-  async execute() {
+  async execute(_input, context?: ToolContext) {
     if (!sessionClient) return "Session client not initialized.";
     try {
       const result = await sessionClient.session.list();
@@ -18,6 +19,10 @@ export const sessionListTool = tool({
         title?: string;
         status?: string;
       }>;
+      const session_count = sessions.length;
+      context?.metadata({
+        metadata: { tool: "session", operation: "list", session_count },
+      });
       return (
         sessions
           .map(
@@ -27,6 +32,9 @@ export const sessionListTool = tool({
           .join("\n") || "No sessions found."
       );
     } catch (err) {
+      context?.metadata({
+        metadata: { tool: "session", operation: "list", session_count: 0 },
+      });
       return `Error listing sessions: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
@@ -38,7 +46,7 @@ export const sessionReadTool = tool({
     session_id: tool.schema.string().describe("Session ID to read"),
     limit: tool.schema.number().optional().describe("Max messages to return"),
   },
-  async execute(input) {
+  async execute(input, context?: ToolContext) {
     if (!sessionClient) return "Session client not initialized.";
     try {
       const result = await sessionClient.session.messages({
@@ -48,6 +56,10 @@ export const sessionReadTool = tool({
         info?: { role?: string };
         parts?: Array<{ type: string; text?: string }>;
       }>;
+      const session_count = messages.length;
+      context?.metadata({
+        metadata: { tool: "session", operation: "read", session_count },
+      });
       const limit = input.limit ?? 20;
       return (
         messages
@@ -59,11 +71,14 @@ export const sessionReadTool = tool({
                 ?.filter((p) => p.type === "text")
                 .map((p) => p.text ?? "")
                 .join("") ?? "";
-            return `[${role}]: ${text.slice(0, 500)}`;
+            return `[${role}]: ${text.slice(0, getToolSetting('session_text_truncation_chars', 500))}`;
           })
           .join("\n---\n") || "No messages."
       );
     } catch (err) {
+      context?.metadata({
+        metadata: { tool: "session", operation: "read", session_count: 0 },
+      });
       return `Error reading session: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
@@ -74,7 +89,7 @@ export const sessionSearchTool = tool({
   args: {
     query: tool.schema.string().describe("Search query"),
   },
-  async execute(input) {
+  async execute(input, context?: ToolContext) {
     if (!sessionClient) return "Session client not initialized.";
     try {
       const listResult = await sessionClient.session.list();
@@ -83,7 +98,7 @@ export const sessionSearchTool = tool({
         title?: string;
       }>;
       const results: string[] = [];
-      for (const session of sessions.slice(0, 50)) {
+       for (const session of sessions.slice(0, getToolSetting('session_max_list', 50))) {
         try {
           const msgs = await sessionClient.session.messages({
             path: { id: session.id },
@@ -105,10 +120,17 @@ export const sessionSearchTool = tool({
           }
         } catch {}
       }
+      const session_count = results.length;
+      context?.metadata({
+        metadata: { tool: "session", operation: "search", session_count },
+      });
       return results.length
         ? results.join("\n")
         : `No results for "${input.query}"`;
     } catch (err) {
+      context?.metadata({
+        metadata: { tool: "session", operation: "search", session_count: 0 },
+      });
       return `Error searching sessions: ${err instanceof Error ? err.message : String(err)}`;
     }
   },
@@ -119,7 +141,7 @@ export const sessionInfoTool = tool({
   args: {
     session_id: tool.schema.string().describe("Session ID"),
   },
-  async execute(input) {
+  async execute(input, context?: ToolContext) {
     if (!sessionClient) return "Session client not initialized.";
     try {
       const result = await sessionClient.session.get({
@@ -128,7 +150,15 @@ export const sessionInfoTool = tool({
       const session = result.data as
         | { id: string; title?: string; directory?: string }
         | undefined;
-      if (!session) return "Session not found.";
+      if (!session) {
+        context?.metadata({
+          metadata: { tool: "session", operation: "info", session_count: 0 },
+        });
+        return "Session not found.";
+      }
+      context?.metadata({
+        metadata: { tool: "session", operation: "info", session_count: 1 },
+      });
       return JSON.stringify(
         {
           id: session.id,
@@ -139,6 +169,9 @@ export const sessionInfoTool = tool({
         2,
       );
     } catch (err) {
+      context?.metadata({
+        metadata: { tool: "session", operation: "info", session_count: 0 },
+      });
       return `Error getting session info: ${err instanceof Error ? err.message : String(err)}`;
     }
   },

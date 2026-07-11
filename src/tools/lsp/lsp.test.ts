@@ -1,13 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type {
-  LSPDiagnostic,
-  LSPEdit,
-  LSPLocation,
-  LSPSymbol,
-} from "./lsp-client";
+import { tmpdir } from "node:os";
+
 import {
   applySingleEdit,
   applyWorkspaceEdits,
@@ -15,8 +10,11 @@ import {
   formatDiagnostic,
   formatLocation,
   formatSymbol,
+  isUriWithinDirectory,
   severityFromFilter,
 } from "./lsp-utils";
+
+import type { LSPDiagnostic, LSPEdit, LSPLocation, LSPSymbol } from "./lsp-client";
 
 // ─── formatLocation ────────────────────────────────────────────────
 
@@ -373,5 +371,80 @@ describe("applyWorkspaceEdits", () => {
     expect(result).toEqual([]);
     const { rmSync } = require("node:fs");
     rmSync(tmpDir, { recursive: true, force: true });
+  });
+});
+
+// ─── Sandbox filtering ─────────────────────────────────────────────
+//
+// LSP results (workspace symbols, definitions, references, rename changes)
+// must be filtered to the project directory so that locations inside
+// e.g. node_modules are excluded.
+
+describe("isUriWithinDirectory (sandbox filter)", () => {
+  const root = "/home/user/project";
+
+  test("matches a file:// uri inside the project", () => {
+    expect(isUriWithinDirectory("file:///home/user/project/src/index.ts", root)).toBe(true);
+  });
+
+  test("matches a bare path inside the project", () => {
+    expect(isUriWithinDirectory("/home/user/project/a/b.ts", root)).toBe(true);
+  });
+
+  test("rejects a node_modules uri outside the project", () => {
+    expect(
+      isUriWithinDirectory("file:///home/user/other/node_modules/left-pad/index.js", root),
+    ).toBe(false);
+  });
+
+  test("rejects an unrelated absolute path", () => {
+    expect(isUriWithinDirectory("file:///etc/passwd", root)).toBe(false);
+  });
+});
+
+describe("workspace symbol sandbox filtering", () => {
+  const root = "/home/user/project";
+
+  const filterSymbols = (symbols: LSPSymbol[]) =>
+    symbols.filter((s) => {
+      const loc = s.location?.uri;
+      if (!loc) return false;
+      return isUriWithinDirectory(loc, root);
+    });
+
+  const makeSymbol = (name: string, uri: string): LSPSymbol => ({
+    name,
+    kind: 12,
+    range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+    location: {
+      uri,
+      range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } },
+    },
+  });
+
+  test("filters out a workspace symbol from node_modules outside the project", () => {
+    const symbols = [
+      makeSymbol("internalHelper", "file:///home/user/project/src/helper.ts"),
+      makeSymbol("leftPad", "file:///home/user/other/node_modules/left-pad/index.js"),
+    ];
+    const filtered = filterSymbols(symbols);
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].name).toBe("internalHelper");
+  });
+
+  test("keeps a workspace symbol from within the project", () => {
+    const symbols = [
+      makeSymbol("internalHelper", "file:///home/user/project/src/helper.ts"),
+      makeSymbol("App", "file:///home/user/project/src/app.ts"),
+    ];
+    const filtered = filterSymbols(symbols);
+    expect(filtered).toHaveLength(2);
+  });
+
+  test("drops symbols without a location", () => {
+    const symbols: LSPSymbol[] = [
+      { name: "noLoc", kind: 12, range: { start: { line: 0, character: 0 }, end: { line: 0, character: 1 } } },
+    ];
+    expect(filterSymbols(symbols)).toHaveLength(0);
   });
 });

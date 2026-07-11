@@ -1,6 +1,6 @@
 import { existsSync, readdirSync, statSync } from "node:fs";
 import { extname, join, resolve } from "node:path";
-import { tool } from "@opencode-ai/plugin";
+import { type ToolContext, tool } from "@opencode-ai/plugin";
 import { LSPManager } from "./lsp-manager";
 import {
   applyWorkspaceEdits,
@@ -14,7 +14,11 @@ import { findServerForExtension } from "./server-definitions";
 
 const manager = new LSPManager();
 
-async function getClientForFile(filePath: string, directory: string) {
+async function getClientForFile(
+  filePath: string,
+  directory: string,
+  ctx: ToolContext,
+) {
   const resolved = filePath.startsWith("/")
     ? filePath
     : join(directory, filePath);
@@ -22,6 +26,7 @@ async function getClientForFile(filePath: string, directory: string) {
   const match = findServerForExtension(ext);
   if (!match) return { client: null, resolved, serverId: null };
   const client = await manager.getClient(directory, match.id);
+  client.setMetadataEmitter(ctx.metadata);
   return { client, resolved, serverId: match.id };
 }
 
@@ -87,6 +92,7 @@ export const lspDiagnosticsTool = tool({
           const { client, resolved, serverId } = await getClientForFile(
             fullPath,
             ctx.directory,
+            ctx,
           );
           if (!client || !serverId) continue;
           seenServers.add(serverId);
@@ -155,6 +161,7 @@ export const lspDiagnosticsTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         resolvedPath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {
@@ -217,6 +224,7 @@ export const lspGotoDefinitionTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         filePath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {
@@ -286,6 +294,7 @@ export const lspFindReferencesTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         filePath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {
@@ -365,6 +374,7 @@ export const lspSymbolsTool = tool({
       const serverId = input.serverId ?? "typescript";
       try {
         const client = await manager.getClient(ctx.directory, serverId);
+        client.setMetadataEmitter(ctx.metadata);
         try {
           const symbols = await client.workspaceSymbols(input.query);
           if (symbols.length === 0) {
@@ -410,6 +420,7 @@ export const lspSymbolsTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         filePath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {
@@ -466,6 +477,7 @@ export const lspPrepareRenameTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         filePath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {
@@ -536,6 +548,7 @@ export const lspRenameTool = tool({
       const { client, resolved, serverId } = await getClientForFile(
         filePath,
         ctx.directory,
+        ctx,
       );
       try {
         if (!client) {

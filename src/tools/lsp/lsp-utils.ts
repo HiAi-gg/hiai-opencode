@@ -153,6 +153,16 @@ function applyTextEdits(text: string, edits: LSPEdit[]): string {
   return result;
 }
 
+/**
+ * Check whether a file URI/path is inside a project directory (sandbox filter).
+ * Handles both `file://` prefixed and bare paths.
+ */
+export function isUriWithinDirectory(uri: string, directory: string): boolean {
+  const rawPath = uri.startsWith("file://") ? uri.slice(7) : uri;
+  const resolved = resolve(rawPath);
+  return resolved.startsWith(resolve(directory));
+}
+
 /** Apply one LSP TextEdit to a string. */
 export function applySingleEdit(text: string, edit: LSPEdit): string {
   const lines = text.split("\n");

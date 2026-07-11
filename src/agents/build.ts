@@ -1,6 +1,8 @@
 import { BROWSER_VIA_VISION } from "../prompt-library/browser";
 import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
 import { POSTGRES_RULES } from "../prompt-library/postgres-rules";
+import { getWorkspaceContext } from "../prompt-library/workspace";
+import { WORKTREE_AWARENESS } from "../prompt-library/worktree";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const BUILD_PROMPT = `You are Build, an autonomous deep worker for software engineering.
@@ -87,4 +89,6 @@ ${NATIVE_MEMORY_PROMPT}
 - **writer** — copy/SEO tasks
 
 ${BROWSER_VIA_VISION}
+${WORKTREE_AWARENESS}
+${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;

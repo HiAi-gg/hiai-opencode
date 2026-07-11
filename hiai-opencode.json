@@ -1,5 +1,5 @@
 {
-  "_description": "hiai-opencode user configuration template. Display names (shown to users): Bob, Strategist (plan), Coder (build), Explorer (explore), Manager, Critic, Designer, Writer, Vision, General. Config keys: bob, build, plan, manager, critic, designer, explore, writer, vision, general. Internal-only keys (hidden): sub, agent-skills (legacy compatibility). Source defaults: src/config/defaults.ts. MCP defaults: grep_app (explore/build), sequential-thinking (plan/critic). CLI skills: firecrawl (explore), agent-browser (build/vision). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=manager/orchestration, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. The subtask2.replace_generic flag controls the bundled subtask2 internal plugin: when true, generic task() responses are replaced with a structured return prompt before the parent agent sees them. Install agent-browser with: npm i -g agent-browser && agent-browser install",
+  "_description": "hiai-opencode user configuration template. Display names (shown to users): Bob, Strategist (plan), Coder (build), Explorer (explore), Manager, Critic, Designer, Writer, Vision, General. Config keys: bob, build, plan, manager, critic, designer, explore, writer, vision, general. Internal-only keys (hidden): sub, agent-skills (legacy compatibility). Source defaults: src/config/defaults.ts. MCP defaults: grep_app (explore/build), sequential-thinking (plan/critic). CLI skills: firecrawl (explore), agent-browser (build/vision). The recommended field maps to effort tiers: high=complex deep work, xhigh=architectural planning, middle=manager/orchestration, fast=bounded cheap tasks, design=UI/visual, writing=copy/content, vision=multimodal extraction. Install agent-browser with: npm i -g agent-browser && agent-browser install",
   "$schema": "./config/hiai-opencode.schema.json",
     "models": {
     "bob": {
@@ -80,9 +80,6 @@
     "global_claude": false,
     "project_agents": false,
     "global_agents": false
-  },
-  "subtask2": {
-    "replace_generic": true
   },
   "loop": {
     "enabled": true,

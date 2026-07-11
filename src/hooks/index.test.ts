@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import type { BobConfig } from "../types";
-import { createHooks } from "./index";
+import type { BobConfig, HookSet } from "../types";
+import { combineHookSets, createHooks } from "./index";
 import { createLegalGate } from "./legal-gate";
 
 function makeConfig(hooksDisabled?: string[]): BobConfig {
@@ -289,6 +289,125 @@ describe("createHooks", () => {
       output,
     );
     expect(output.status).toBe("ask");
+  });
+
+  // ── 3C regression: external_directory auto-allow must NOT be re-set to 'ask' ──
+  // A read-only external_directory tool is auto-allowed by the defense-in-depth
+  // guard. It must not fall through to the ASK_BEFORE_TOOLS check (which would
+  // re-set status to 'ask'). This guards against the double-set bug.
+  test('external_directory + read stays "allow" (not re-set to ask by ASK_BEFORE_TOOLS)', async () => {
+    const hookSet = createHooks(makeConfig());
+    const handler = hookSet["permission.ask"];
+    expect(handler).toBeDefined();
+
+    const output = { status: "deny" as const };
+    await handler!(
+      {
+        tool: "read",
+        permission: "external_directory",
+        args: "/outside/file.txt",
+        sessionID: "ses_test",
+        callID: "c1",
+      },
+      output,
+    );
+    // Must remain 'allow' — the ASK_BEFORE_TOOLS fall-through must not override it.
+    expect(output.status).toBe("allow");
+  });
+});
+
+// ── 3B: combineHookSets dispose error isolation ──
+
+describe("combineHookSets dispose", () => {
+  test("dispose error in first fn does not skip subsequent disposes", async () => {
+    const order: string[] = [];
+    const setA: HookSet = {
+      dispose: async () => {
+        order.push("a");
+        throw new Error("boom");
+      },
+    };
+    const setB: HookSet = {
+      dispose: async () => {
+        order.push("b");
+      },
+    };
+    const merged = combineHookSets([setA, setB]);
+    expect(typeof merged.dispose).toBe("function");
+    // Should not throw despite setA's dispose failing.
+    await merged.dispose!();
+    // Both dispose functions must have run, in order.
+    expect(order).toEqual(["a", "b"]);
+  });
+
+  test("all dispose fns run even when several throw", async () => {
+    const order: string[] = [];
+    const setA: HookSet = {
+      dispose: async () => {
+        order.push("a");
+        throw new Error("a");
+      },
+    };
+    const setB: HookSet = {
+      dispose: async () => {
+        order.push("b");
+        throw new Error("b");
+      },
+    };
+    const setC: HookSet = {
+      dispose: async () => {
+        order.push("c");
+      },
+    };
+    const merged = combineHookSets([setA, setB, setC]);
+    await merged.dispose!();
+    expect(order).toEqual(["a", "b", "c"]);
+  });
+
+  test("non-blocking hook errors are accumulated into output.errors[]", async () => {
+    const boom = new Error("handler boom");
+    const setA: HookSet = {
+      "tool.execute.before": async () => {
+        throw boom;
+      },
+    };
+    const setB: HookSet = {
+      "tool.execute.before": async () => {
+        /* succeeds */
+      },
+    };
+    const merged = combineHookSets([setA, setB]);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    const output: { errors?: Error[] } = {};
+    // Should not throw — non-blocking error is swallowed + accumulated.
+    await handler!(
+      { tool: "read", sessionID: "ses_test", callID: "c1" },
+      output,
+    );
+    expect(output.errors).toBeDefined();
+    expect(output.errors).toHaveLength(1);
+    expect(output.errors![0]).toBe(boom);
+  });
+
+  test("BlockingHookError still propagates (not accumulated)", async () => {
+    const { BlockingHookError } = await import("./errors");
+    const setA: HookSet = {
+      "tool.execute.before": async () => {
+        throw new BlockingHookError("blocked");
+      },
+    };
+    const merged = combineHookSets([setA]);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    const output: { errors?: Error[] } = {};
+    await expect(
+      handler!({ tool: "read", sessionID: "ses_test", callID: "c1" }, output),
+    ).rejects.toThrow(BlockingHookError);
+    // Blocking errors are not accumulated into output.errors.
+    expect(output.errors).toBeUndefined();
   });
 });
 

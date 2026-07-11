@@ -75,6 +75,23 @@ export interface BobConfig {
   caveman?: CavemanConfig;
   dream?: { auto?: boolean; interval_days?: number; model?: string };
   distill?: { auto?: boolean; interval_days?: number; model?: string };
+  worktreeConfig?: WorktreeConfig;
+  workspace?: {
+    enabled?: boolean;
+    cache_results?: boolean;
+  };
+  loop?: Record<string, unknown>;
+  tool_settings?: Record<string, number>;
+  shell_env?: {
+    variables?: string[];
+    inject_in?: string[];
+    env_file?: string;
+  };
+}
+
+export interface WorktreeConfig {
+  enabled: boolean;
+  base_dir: string;
 }
 
 export interface ClosureBlock {

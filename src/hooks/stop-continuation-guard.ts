@@ -8,6 +8,7 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { BlockingHookError } from "./errors";
 import { reset } from "./loop-state";
 
 /** Event types that should clear loop/continuation state. */
@@ -25,27 +26,35 @@ const recentlyReset = new Set<string>();
 export function createStopContinuationGuard(_config: BobConfig): HookSet {
   return {
     event: async ({ event }: { event: unknown }) => {
-      const evt = event as {
-        type?: string;
-        properties?: Record<string, unknown>;
-      };
-      if (!evt?.type) return;
+      try {
+        const evt = event as {
+          type?: string;
+          properties?: Record<string, unknown>;
+        };
+        if (!evt?.type) return;
 
-      if (!STOP_EVENTS.has(evt.type)) return;
+        if (!STOP_EVENTS.has(evt.type)) return;
 
-      const sessionID = (evt.properties?.sessionID as string) ?? "unknown";
+        const sessionID = (evt.properties?.sessionID as string) ?? "unknown";
 
-      // Debounce: skip if we just reset this session
-      if (recentlyReset.has(sessionID)) return;
-      recentlyReset.add(sessionID);
-      setTimeout(() => recentlyReset.delete(sessionID), 5_000);
+        // Debounce: skip if we just reset this session
+        if (recentlyReset.has(sessionID)) return;
+        recentlyReset.add(sessionID);
+        setTimeout(() => recentlyReset.delete(sessionID), 5_000);
 
-      // Clear loop/continuation state
-      reset(sessionID);
+        // Clear loop/continuation state
+        reset(sessionID);
 
-      if (evt.type === "session.stop") {
-        console.log(
-          `[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`,
+        if (evt.type === "session.stop") {
+          console.log(
+            `[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`,
+          );
+        }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error(
+          "[hiai-opencode] Hook error in stop-continuation-guard:",
+          err,
         );
       }
     },

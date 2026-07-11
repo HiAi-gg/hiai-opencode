@@ -95,5 +95,48 @@
     "stale_timeout_ms": 2700000,
     "circuit_breaker": { "enabled": true, "max_tool_calls": 4000, "consecutive_threshold": 20 }
   },
-  "telemetry": { "enabled": false, "serviceName": "hiai-opencode" }
+  "telemetry": { "enabled": false, "serviceName": "hiai-opencode" },
+  "workspace": {
+    "enabled": true,
+    "cache_results": true
+  },
+  "shell_env": {
+    "variables": ["DATABASE_URL", "REDIS_URL", "NODE_ENV"],
+    "inject_in": ["agent-browser", "firecrawl", "bash"],
+    "env_file": ".env.local"
+  },
+  "tool_settings": {
+    "agent_browser_max_buffer": 52428800,
+    "agent_browser_command_timeout_ms": 30000,
+    "agent_browser_screenshot_truncation_chars": 5000,
+    "agent_browser_snapshot_truncation_chars": 2000,
+    "firecrawl_timeout_ms": 60000,
+    "firecrawl_max_buffer": 10485760,
+    "notification_timeout_ms": 10000,
+    "cleanup_interval_ms": 60000,
+    "completed_task_retention_ms": 600000,
+    "poll_interval_ms": 5000,
+    "lsp_max_buffer_size": 10485760,
+    "lsp_request_timeout_ms": 15000,
+    "lsp_idle_timeout_ms": 300000,
+    "lsp_sweep_interval_ms": 60000,
+    "sqlite_busy_timeout_ms": 5000,
+    "session_text_truncation_chars": 500,
+    "session_max_list": 50,
+    "thinking_budget_plan": 16000,
+    "thinking_budget_build": 16000,
+    "thinking_budget_fallback": 10000,
+    "agent_temp_bob": 0.3,
+    "agent_temp_manager": 0.2,
+    "agent_temp_critic": 0.1,
+    "agent_temp_writer": 0.5,
+    "agent_temp_designer": 0.4,
+    "agent_temp_vision": 0.2,
+    "agent_temp_dream": 0.2,
+    "agent_temp_distill": 0.3,
+    "agent_temp_explore": 0.1,
+    "agent_temp_plan": 0.1,
+    "agent_temp_build": 0.2,
+    "agent_temp_general": 0.1
+  }
 }

@@ -29,6 +29,8 @@ import { createTodoContinuationHook } from "./todo-continuation";
 import { createTokenBudgetHook } from "./token-budget";
 import { createToolPairValidator } from "./tool-pair-validator";
 import { createWriteExistingFileGuard } from "./write-existing-file-guard";
+import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
+import { BlockingHookError } from "./errors";
 
 type HookFactory = (config: BobConfig) => HookSet;
 
@@ -51,8 +53,17 @@ const HOOK_POINT_KEYS: (keyof HookSet)[] = [
   "command.execute.before",
 ];
 
-function mergeHookSets(factories: HookFactory[], config: BobConfig): HookSet {
-  const allSets = factories.map((f) => f(config));
+/**
+ * Combine multiple HookSet instances into one.
+ *
+ * - Multiple handlers for the same hook point are chained sequentially.
+ * - Non-blocking errors are logged and accumulated into output.errors[]
+ * - BlockingHookError propagates immediately, ensuring safety-critical hooks
+ *   (legal gate, permission checks) can always halt the pipeline.
+ * - Dispose functions from all sources are merged and run sequentially,
+ *   with each wrapped in try/catch so one failure doesn't skip the rest.
+ */
+export function combineHookSets(allSets: HookSet[]): HookSet {
   const merged: HookSet = {};
 
   for (const point of HOOK_POINT_KEYS) {
@@ -75,10 +86,16 @@ function mergeHookSets(factories: HookFactory[], config: BobConfig): HookSet {
           try {
             await handler(input as never, output as never);
           } catch (err) {
+            if (err instanceof BlockingHookError) {
+              throw err;
+            }
             console.error(
-              `[hiai-opencode] Hook handler error in ${point}:`,
+              "[hiai-opencode] Hook handler error in " + point + ":",
               err,
             );
+            const out = output as { errors?: Error[] };
+            out.errors = out.errors ?? [];
+            out.errors.push(err as Error);
           }
         }
       };
@@ -90,11 +107,22 @@ function mergeHookSets(factories: HookFactory[], config: BobConfig): HookSet {
     .filter((d): d is NonNullable<typeof d> => d != null);
   if (disposeFns.length > 0) {
     merged.dispose = async () => {
-      for (const fn of disposeFns) await fn();
+      for (const fn of disposeFns) {
+        try {
+          await fn();
+        } catch (err) {
+          console.error("[hiai-opencode] Dispose error:", err);
+        }
+      }
     };
   }
 
   return merged;
+}
+
+function mergeHookSets(factories: HookFactory[], config: BobConfig): HookSet {
+  const allSets = factories.map((f) => f(config));
+  return combineHookSets(allSets);
 }
 
 const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
@@ -143,6 +171,7 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
     name: "context-window-limit-recovery",
     factory: createContextWindowLimitRecoveryHook,
   },
+  { name: "worktree-lifecycle", factory: createWorktreeLifecycleHook },
 ];
 
 export function createHooks(config: BobConfig): HookSet {

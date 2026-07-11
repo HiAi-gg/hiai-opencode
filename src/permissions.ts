@@ -59,6 +59,13 @@ export const TOOLS_KEYS = new Set([
   "agent_browser_batch",
   "agent_browser_set_viewport",
   "agent_browser_set_device",
+  // LSP tools — restricted per-agent; bob/manager delegate to subagents
+  "lsp_diagnostics",
+  "lsp_goto_definition",
+  "lsp_find_references",
+  "lsp_symbols",
+  "lsp_prepare_rename",
+  "lsp_rename",
 ]);
 
 export interface AgentPermissions {

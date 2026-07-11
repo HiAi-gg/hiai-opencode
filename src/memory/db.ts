@@ -3,6 +3,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import type { BunSQLiteDatabase } from "drizzle-orm/bun-sqlite";
 import { drizzle } from "drizzle-orm/bun-sqlite";
+import { getToolSetting } from "../config";
 
 let _db: BunSQLiteDatabase | null = null;
 let _dbPath: string | null = null;
@@ -11,7 +12,7 @@ let _initialized = false;
 function ensureSchema(sqlite: BunDatabase) {
   if (_initialized && _dbPath) return;
   sqlite.run("PRAGMA journal_mode = WAL");
-  sqlite.run("PRAGMA busy_timeout = 5000");
+  sqlite.run(`PRAGMA busy_timeout = ${getToolSetting('sqlite_busy_timeout_ms', 5000)}`);
 
   // Create main table
   sqlite.run(`

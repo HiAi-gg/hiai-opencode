@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { resolveEnvVars } from "./shared/env";
 import type { BobConfig } from "./types";
 
-// Plugin root: two levels up from src/config.ts (src/ → plugin-bob/)
+// Plugin root: two levels up from src/config.ts (src/ → hiai-opencode/)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
 
@@ -130,11 +130,20 @@ export const DEFAULT_CONFIG: BobConfig = {
       grep: false,
       glob: false,
       webfetch: false,
+      // LSP tools — bob delegates diagnostics/symbols to subagents
+      lsp_diagnostics: false,
+      lsp_goto_definition: false,
+      lsp_find_references: false,
+      lsp_symbols: false,
+      lsp_prepare_rename: false,
+      lsp_rename: false,
     },
     plan: { bash: false, grep: false, glob: false, webfetch: false },
     critic: {
       write: false,
       edit: false,
+      grep: false,
+      glob: false,
       // agent_browser_* restrictions are now ENFORCED at the tool-execution layer
       // in src/tools/agent-browser/index.ts via browserGateGuard(context.agent)
     },
@@ -146,6 +155,13 @@ export const DEFAULT_CONFIG: BobConfig = {
       apply_patch: false,
       grep: false,
       glob: false,
+      // LSP tools — manager delegates diagnostics/symbols to subagents
+      lsp_diagnostics: false,
+      lsp_goto_definition: false,
+      lsp_find_references: false,
+      lsp_symbols: false,
+      lsp_prepare_rename: false,
+      lsp_rename: false,
     },
     general: { task: false, webfetch: false },
   },
@@ -202,6 +218,7 @@ export const DEFAULT_CONFIG: BobConfig = {
   },
   dream: { auto: true, interval_days: 7 },
   distill: { auto: true, interval_days: 30 },
+  worktreeConfig: { enabled: true, base_dir: ".hiai-bob/worktrees" },
 };
 
 function stripJsonComments(json: string): string {
@@ -266,6 +283,36 @@ function globalConfigDir(): string {
   return join(base, "hiai-opencode");
 }
 
+/**
+ * Module-level singleton holding the most recently loaded config.
+ * Populated by `loadConfig` (the canonical entry point used by the plugin).
+ * `getToolSetting` reads tool defaults from here so any module can look up a
+ * tunable constant without threading the full `BobConfig` through every call.
+ */
+let loadedConfig: BobConfig | null = null;
+
+/** Store the active config as the process-wide singleton. */
+export function setConfig(config: BobConfig): void {
+  loadedConfig = config;
+}
+
+/** Read the active config singleton (null before `loadConfig` runs). */
+export function getConfig(): BobConfig | null {
+  return loadedConfig;
+}
+
+/**
+ * Read a tunable tool constant from `config.tool_settings`, falling back to
+ * `defaultValue` when the key is absent or config has not been loaded yet.
+ *
+ * This is the single source of truth for runtime-tunable numeric constants
+ * that were previously hardcoded across the codebase (buffer sizes, timeouts,
+ * agent temperatures, thinking budgets, etc.).
+ */
+export function getToolSetting(key: string, defaultValue: number): number {
+  return loadedConfig?.tool_settings?.[key] ?? defaultValue;
+}
+
 export function loadConfig(projectDir: string): BobConfig {
   // Load env files from multiple paths before resolving config
   loadEnvFiles(projectDir);
@@ -298,6 +345,12 @@ export function loadConfig(projectDir: string): BobConfig {
     }
   }
 
+  const merged = mergeConfig(userConfig);
+  setConfig(merged);
+  return merged;
+}
+
+export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
   const mergedModels = { ...DEFAULT_CONFIG.models, ...userConfig.models };
   validateModels(mergedModels);
   const mergedMcp = { ...DEFAULT_CONFIG.mcp, ...userConfig.mcp };
@@ -348,9 +401,11 @@ export function loadConfig(projectDir: string): BobConfig {
     lsp: mergedLsp,
     agent_restrictions: mergedAgentRestrictions,
     auth: mergedAuth,
-    background_manager:
-      userConfig.background_manager ?? DEFAULT_CONFIG.background_manager,
-    telemetry: userConfig.telemetry ?? DEFAULT_CONFIG.telemetry,
+    background_manager: {
+      ...DEFAULT_CONFIG.background_manager,
+      ...userConfig.background_manager,
+    },
+    telemetry: { ...DEFAULT_CONFIG.telemetry, ...userConfig.telemetry } as BobConfig['telemetry'],
     hooks: { disabled: allHooksDisabled },
     tools: {
       disabled: [...new Set([...defaultToolsDisabled, ...userToolsDisabled])],
@@ -363,7 +418,16 @@ export function loadConfig(projectDir: string): BobConfig {
       enabled: true,
       max_auto_continues: 25,
       require_critic: true,
-      ui_globs: [],
+      ui_globs: DEFAULT_CONFIG.completion?.ui_globs ?? [
+        "**/*.svelte",
+        "**/*.tsx",
+        "**/*.jsx",
+        "**/*.vue",
+        "**/*.css",
+        "**/*.scss",
+        "**/*.html",
+        "**/*.astro",
+      ],
       reset_on_user_message: true,
       ...userConfig.completion,
     },
@@ -371,5 +435,6 @@ export function loadConfig(projectDir: string): BobConfig {
     disabled_hooks: allHooksDisabled,
     dream: mergedDream,
     distill: mergedDistill,
+    loop: { ...DEFAULT_CONFIG.loop, ...userConfig.loop },
   });
 }

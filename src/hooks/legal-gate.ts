@@ -1,4 +1,5 @@
 import type { Hooks } from "@opencode-ai/plugin";
+import { BlockingHookError } from "./errors";
 
 // Legal gate — enforces the project ethical-use policy on the autonomy feature.
 //
@@ -274,40 +275,50 @@ export function createLegalGate(): Pick<
   return {
     // (a) Hard deny-list — runs BEFORE native permission checks.
     "tool.execute.before": async (input, output) => {
-      const hit = findDenyMatch(output.args);
-      if (hit) {
-        // Distinguish browser-automation gate from general legal gate.
-        const isBrowserAutomation = BROWSER_AUTOMATION_DENY.some(
-          (d) => d.pattern === hit.pattern,
-        );
-        const prefix = isBrowserAutomation
-          ? "[bob] BROWSER AUTOMATION GATE"
-          : "[bob] LEGAL GATE";
-        const suffix = isBrowserAutomation
-          ? " Use agent-browser via Vision, or return BLOCKED with the agent-browser error."
-          : " This use is prohibited by the project ethical-use policy and cannot be overridden.";
-        throw new Error(
-          `${prefix}: ${hit.reason}. Pattern matched in ${input.tool} args.${suffix}`,
-        );
+      try {
+        const hit = findDenyMatch(output.args);
+        if (hit) {
+          // Distinguish browser-automation gate from general legal gate.
+          const isBrowserAutomation = BROWSER_AUTOMATION_DENY.some(
+            (d) => d.pattern === hit.pattern,
+          );
+          const prefix = isBrowserAutomation
+            ? "[bob] BROWSER AUTOMATION GATE"
+            : "[bob] LEGAL GATE";
+          const suffix = isBrowserAutomation
+            ? " Use agent-browser via Vision, or return BLOCKED with the agent-browser error."
+            : " This use is prohibited by the project ethical-use policy and cannot be overridden.";
+          throw new BlockingHookError(
+            `${prefix}: ${hit.reason}. Pattern matched in ${input.tool} args.${suffix}`,
+          );
+        }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
 
     // Context7 routing advisory: if WebFetch targets library/framework docs,
     // prepend a steering advisory. This is NON-blocking — it informs, not denies.
     "tool.execute.after": async (input, output) => {
-      const toolName = (input as { tool?: string }).tool ?? "";
-      if (
-        (toolName === "webfetch" || toolName === "web_search") &&
-        output.output
-      ) {
-        const haystack = JSON.stringify(
-          (input as { args?: unknown }).args ?? {},
-        );
-        if (FRAMEWORK_KEYWORDS.test(haystack)) {
-          output.output = `[hiai-opencode] ROUTING: This looks like a library/framework docs query. Use skill("explore/context7") instead of webfetch. context7 has official, versioned docs for Svelte/React/Vue/etc.\n\n${
-            output.output ?? ""
-          }`;
+      try {
+        const toolName = (input as { tool?: string }).tool ?? "";
+        if (
+          (toolName === "webfetch" || toolName === "web_search") &&
+          output.output
+        ) {
+          const haystack = JSON.stringify(
+            (input as { args?: unknown }).args ?? {},
+          );
+          if (FRAMEWORK_KEYWORDS.test(haystack)) {
+            output.output = `[hiai-opencode] ROUTING: This looks like a library/framework docs query. Use skill("explore/context7") instead of webfetch. context7 has official, versioned docs for Svelte/React/Vue/etc.\n\n${
+              output.output ?? ""
+            }`;
+          }
         }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
 
@@ -316,22 +327,27 @@ export function createLegalGate(): Pick<
     // is read-only, auto-allow without prompting. This prevents hangs when
     // the per-agent permission config doesn't fully cover every call path.
     "permission.ask": async (input, output) => {
-      const inp = input as { tool?: string; permission?: string };
-      const toolName = inp.tool ?? "";
-      const permissionKey = inp.permission ?? "";
+      try {
+        const inp = input as { tool?: string; permission?: string };
+        const toolName = inp.tool ?? "";
+        const permissionKey = inp.permission ?? "";
 
-      // Defense-in-depth: auto-allow read-only tools for external_directory.
-      if (
-        permissionKey === "external_directory" &&
-        READONLY_EXTERNAL_DIRECTORY_TOOLS.has(toolName)
-      ) {
-        output.status = "allow";
-        return;
-      }
+        // Defense-in-depth: auto-allow read-only tools for external_directory.
+        if (
+          permissionKey === "external_directory" &&
+          READONLY_EXTERNAL_DIRECTORY_TOOLS.has(toolName)
+        ) {
+          output.status = "allow";
+          return;
+        }
 
-      // (c) Ask-before-do — high-risk tools always request human permission.
-      if (ASK_BEFORE_TOOLS.has(toolName)) {
-        output.status = "ask";
+        // (c) Ask-before-do — high-risk tools always request human permission.
+        if (ASK_BEFORE_TOOLS.has(toolName)) {
+          output.status = "ask";
+        }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
   };

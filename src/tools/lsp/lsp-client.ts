@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawn } from "bun";
+import { getToolSetting } from "../../config";
 
 export interface LSPDiagnostic {
   range: {
@@ -87,7 +88,37 @@ export class LSPClient {
       initializationOptions?: Record<string, unknown>;
       env?: Record<string, string>;
     } = {},
+    private serverId: string = "unknown",
   ) {}
+
+  /**
+   * Optional metadata emitter wired by the LSP tool layer (OpenCode
+   * ToolContext.metadata). When set, every LSP operation emits telemetry so
+   * results carry tool/server/method/duration/count data for auto-continue
+   * heuristics, cost tracking, and parent-session visibility.
+   */
+  private metadataEmitter?: (input: {
+    title?: string;
+    metadata?: Record<string, unknown>;
+  }) => void;
+
+  /** Wire an OpenCode ToolContext.metadata callback so LSP operations emit telemetry. */
+  setMetadataEmitter(
+    fn: (input: { title?: string; metadata?: Record<string, unknown> }) => void,
+  ): void {
+    this.metadataEmitter = fn;
+  }
+
+  /** Emit LSP operation telemetry (tool, server, method, duration, counts). */
+  private emitMeta(
+    method: string,
+    duration_ms: number,
+    extra: Record<string, unknown> = {},
+  ) {
+    this.metadataEmitter?.({
+      metadata: { tool: "lsp", server: this.serverId, method, duration_ms, ...extra },
+    });
+  }
 
   async start() {
     this.proc = spawn(this.command, {
@@ -122,7 +153,7 @@ export class LSPClient {
   }
 
   private processBuffer() {
-    const MAX_BUFFER_SIZE = 10 * 1024 * 1024;
+    const MAX_BUFFER_SIZE = getToolSetting('lsp_max_buffer_size', 10 * 1024 * 1024);
     if (this.buffer.length > MAX_BUFFER_SIZE) {
       this.buffer = "";
       console.error("[bob] LSP buffer exceeded max size, clearing");
@@ -178,7 +209,7 @@ export class LSPClient {
       const timer = setTimeout(() => {
         this.pendingRequests.delete(id);
         reject(new Error(`Timeout: ${method}`));
-      }, 15000);
+      }, getToolSetting('lsp_request_timeout_ms', 15000));
       this.pendingRequests.set(id, { resolve, reject, timer });
       const msg = JSON.stringify({ jsonrpc: "2.0", id, method, params });
       const header = `Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n`;
@@ -269,12 +300,20 @@ export class LSPClient {
     line: number,
     character: number,
   ): Promise<LSPLocation | LSPLocation[] | null> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     const result = await this.sendRequest("textDocument/definition", {
       textDocument: { uri },
       position: { line: line - 1, character },
     });
+    const duration_ms = Math.round(performance.now() - start);
+    const count = Array.isArray(result)
+      ? result.length
+      : result
+        ? 1
+        : 0;
+    this.emitMeta("textDocument/definition", duration_ms, { result_count: count });
     return (result as LSPLocation | LSPLocation[] | null) ?? null;
   }
 
@@ -283,6 +322,7 @@ export class LSPClient {
     line: number,
     character: number,
   ): Promise<LSPLocation[]> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     const result = await this.sendRequest("textDocument/references", {
@@ -290,38 +330,59 @@ export class LSPClient {
       position: { line: line - 1, character },
       context: { includeDeclaration: true },
     });
-    return (result as LSPLocation[]) ?? [];
+    const duration_ms = Math.round(performance.now() - start);
+    const refs = (result as LSPLocation[]) ?? [];
+    this.emitMeta("textDocument/references", duration_ms, {
+      result_count: refs.length,
+    });
+    return refs;
   }
 
   async diagnostics(filePath: string): Promise<LSPDiagnostic[]> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     await new Promise((r) => setTimeout(r, 500));
-    let result: { items?: unknown[] } | null = null;
+    let diags: LSPDiagnostic[];
     try {
-      result = (await this.sendRequest("textDocument/diagnostic", {
+      const result = (await this.sendRequest("textDocument/diagnostic", {
         textDocument: { uri },
       })) as { items?: unknown[] };
+      diags = (result?.items as LSPDiagnostic[] | undefined) ?? [];
     } catch {
-      return this.diagnosticsStore.get(uri) ?? [];
+      diags = this.diagnosticsStore.get(uri) ?? [];
     }
-    return (result?.items as LSPDiagnostic[] | undefined) ?? [];
+    const duration_ms = Math.round(performance.now() - start);
+    this.emitMeta("textDocument/diagnostic", duration_ms, {
+      diagnostics_count: diags.length,
+    });
+    return diags;
   }
 
   async symbols(filePath: string): Promise<LSPSymbol[]> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     const result = await this.sendRequest("textDocument/documentSymbol", {
       textDocument: { uri },
     });
-    return (result as LSPSymbol[]) ?? [];
+    const duration_ms = Math.round(performance.now() - start);
+    const syms = (result as LSPSymbol[]) ?? [];
+    this.emitMeta("textDocument/documentSymbol", duration_ms, {
+      result_count: syms.length,
+    });
+    return syms;
   }
 
   async workspaceSymbols(query: string): Promise<LSPSymbol[]> {
+    const start = performance.now();
     const result = await this.sendRequest("workspace/symbol", {
       query,
     });
-    return (result as LSPSymbol[]) ?? [];
+    const duration_ms = Math.round(performance.now() - start);
+    const syms = (result as LSPSymbol[]) ?? [];
+    this.emitMeta("workspace/symbol", duration_ms, { result_count: syms.length });
+    return syms;
   }
 
   async prepareRename(
@@ -329,12 +390,15 @@ export class LSPClient {
     line: number,
     character: number,
   ): Promise<LSPPrepareRename | null> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     const prepResult = await this.sendRequest("textDocument/prepareRename", {
       textDocument: { uri },
       position: { line: line - 1, character },
     });
+    const duration_ms = Math.round(performance.now() - start);
+    this.emitMeta("textDocument/prepareRename", duration_ms);
     return (prepResult as LSPPrepareRename) ?? null;
   }
 
@@ -344,6 +408,7 @@ export class LSPClient {
     character: number,
     newName: string,
   ): Promise<Record<string, LSPEdit[]> | null> {
+    const start = performance.now();
     await this.openFile(filePath);
     const uri = pathToFileURL(resolve(filePath)).href;
     const result = await this.sendRequest("textDocument/rename", {
@@ -351,10 +416,14 @@ export class LSPClient {
       position: { line: line - 1, character },
       newName,
     });
+    const duration_ms = Math.round(performance.now() - start);
     const workspaceEdit = result as {
       changes?: Record<string, LSPEdit[]>;
     } | null;
-    return workspaceEdit?.changes ?? null;
+    const changes = workspaceEdit?.changes ?? null;
+    const file_count = changes ? Object.keys(changes).length : 0;
+    this.emitMeta("textDocument/rename", duration_ms, { file_count });
+    return changes;
   }
 
   async stop() {

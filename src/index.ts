@@ -2,12 +2,16 @@ import os from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Config, Hooks, Plugin, PluginInput } from "@opencode-ai/plugin";
-import { createAllAgents } from "./agents";
+import {
+  applyPromptOverride,
+  createAllAgents,
+  resolveAgentModel,
+} from "./agents";
 import { BUILD_PROMPT } from "./agents/build";
 import { EXPLORE_PROMPT } from "./agents/explore";
 import { GENERAL_PROMPT } from "./agents/general";
 import { PLAN_PROMPT } from "./agents/plan";
-import { loadConfig } from "./config";
+import { getToolSetting, loadConfig } from "./config";
 import { BackgroundManager } from "./features/background-manager/index";
 import {
   createBobCompletionHook,
@@ -15,8 +19,13 @@ import {
 } from "./features/completion-controller";
 import { createDreamDistillHook } from "./features/dream-distill";
 import { getMcpConfig } from "./features/mcp/registry";
+import { initShellEnv } from "./features/shell-env";
 import { initTelemetry, shutdownTelemetry } from "./features/telemetry/index";
-import { createHooks } from "./hooks/index";
+import {
+  setWorkspaceAdapter,
+  WorkspaceAdapter,
+} from "./features/workspace-adapter";
+import { combineHookSets, createHooks } from "./hooks/index";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
@@ -51,7 +60,13 @@ import {
   setSessionClient,
 } from "./tools/session-manager";
 import { createSkillTool } from "./tools/skill";
-import type { BobConfig } from "./types";
+import {
+  hiai_worktree_create,
+  hiai_worktree_list,
+  hiai_worktree_remove,
+  hiai_worktree_status,
+} from "./tools/worktree";
+import type { BobConfig, HookSet } from "./types";
 
 const PLUGIN_NAME = "HiAiOpenCodePlugin";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -90,6 +105,14 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   setBackgroundManager(backgroundManager);
   backgroundManager.setClient(input.client);
 
+  // Init workspace adapter (monorepo detection + project type detection)
+  if (config.workspace?.enabled !== false) {
+    const workspaceAdapter = new WorkspaceAdapter({
+      cacheResults: config.workspace?.cache_results ?? true,
+    });
+    setWorkspaceAdapter(workspaceAdapter);
+  }
+
   // Init LSP config
   if (config.lsp) setLspConfig(config.lsp);
 
@@ -97,6 +120,9 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   if (config.telemetry?.enabled) {
     initTelemetry(config.telemetry);
   }
+
+  // Init shell-env injection (project env vars → subprocesses)
+  initShellEnv(config.shell_env, input.directory);
 
   const completionHooks =
     config.completion?.enabled !== false ? createBobCompletionHook(config) : {};
@@ -125,7 +151,7 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
 
       // Upgrade native agents with our prompts/models
       const resolveModelForAgent = (agentKey: string): string | undefined => {
-        return (config as BobConfig).models?.[agentKey]?.model;
+        return resolveAgentModel(agentKey, config as BobConfig);
       };
 
       // Helper: build default permissions for agent (read-only review agents get external_directory allow)
@@ -157,8 +183,8 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
           mode: "subagent",
           hidden: true,
           model: resolveModelForAgent("explore") ?? resolveModelForAgent("bob"),
-          prompt: EXPLORE_PROMPT,
-          temperature: 0.1,
+          prompt: applyPromptOverride("explore", EXPLORE_PROMPT, config),
+          temperature: getToolSetting("agent_temp_explore", 0.1),
           tools: restrictionTools,
           ...(Object.keys(permission).length > 0 ? { permission } : {}),
         };
@@ -178,9 +204,12 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
             "Principal Architect — deep planning, architecture analysis, phased execution graphs",
           mode: "all",
           model: resolveModelForAgent("plan") ?? resolveModelForAgent("bob"),
-          prompt: PLAN_PROMPT,
-          temperature: 0.1,
-          thinking: { type: "enabled", budgetTokens: 16000 },
+          prompt: applyPromptOverride("plan", PLAN_PROMPT, config),
+          temperature: getToolSetting("agent_temp_plan", 0.1),
+          thinking: {
+            type: "enabled",
+            budgetTokens: getToolSetting("thinking_budget_plan", 16000),
+          },
           ...(Object.keys(permission).length > 0 ? { permission } : {}),
           ...(Object.keys(tools).length > 0 ? { tools } : {}),
         };
@@ -201,9 +230,12 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
           mode: "subagent",
           hidden: true,
           model: resolveModelForAgent("build") ?? resolveModelForAgent("bob"),
-          prompt: BUILD_PROMPT,
-          temperature: 0.2,
-          thinking: { type: "enabled", budgetTokens: 16000 },
+          prompt: applyPromptOverride("build", BUILD_PROMPT, config),
+          temperature: getToolSetting("agent_temp_build", 0.2),
+          thinking: {
+            type: "enabled",
+            budgetTokens: getToolSetting("thinking_budget_build", 16000),
+          },
           ...(Object.keys(permission).length > 0 ? { permission } : {}),
           ...(Object.keys(tools).length > 0 ? { tools } : {}),
         };
@@ -224,8 +256,8 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
           mode: "all",
           model:
             resolveModelForAgent("general") ?? resolveModelForAgent("manager"),
-          prompt: GENERAL_PROMPT,
-          temperature: 0.1,
+          prompt: applyPromptOverride("general", GENERAL_PROMPT, config),
+          temperature: getToolSetting("agent_temp_general", 0.1),
           ...(Object.keys(permission).length > 0 ? { permission } : {}),
           ...(Object.keys(tools).length > 0 ? { tools } : {}),
         };
@@ -288,34 +320,18 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
     }
   };
 
-  // ── Behavioural hooks ──
+  // ── Behavioural hooks (combined using same chain-with-BlockingHookError pattern) ──
   {
+    const combined = combineHookSets([
+      bobHooks,
+      completionHooks as HookSet,
+      dreamDistillHooks as HookSet,
+    ]);
     const h = hooks as Record<string, unknown>;
-    const bh = bobHooks as Record<string, unknown>;
-    for (const key of Object.keys(bh)) {
-      const fn = bh[key];
-      if (fn && key !== "name") h[key] = fn;
-    }
-    // Completion controller hooks
-    const ch = completionHooks as Record<string, unknown>;
-    for (const key of Object.keys(ch)) {
-      const fn = ch[key];
+    for (const key of Object.keys(combined)) {
+      if (key === "dispose") continue; // dispose handled separately
+      const fn = (combined as Record<string, unknown>)[key];
       if (fn) h[key] = fn;
-    }
-    // Dream/Distill auto-trigger (event hook)
-    if (dreamDistillHooks.event) {
-      const existing = h.event as
-        | ((input: { event: unknown }) => Promise<void>)
-        | undefined;
-      const dreamEvent = dreamDistillHooks.event as (input: {
-        event: unknown;
-      }) => Promise<void>;
-      h.event = existing
-        ? async (evt: unknown) => {
-            await existing(evt as { event: unknown });
-            await dreamEvent(evt as { event: unknown });
-          }
-        : dreamEvent;
     }
   }
 
@@ -336,6 +352,10 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
     background_output: backgroundOutputTool,
     background_cancel: backgroundCancelTool,
     hiai_memory_search: createMemoryTool(memoryService),
+    hiai_worktree_create,
+    hiai_worktree_remove,
+    hiai_worktree_list,
+    hiai_worktree_status,
     firecrawl_search: firecrawlSearchTool,
     firecrawl_scrape: firecrawlScrapeTool,
     firecrawl_map: firecrawlMapTool,

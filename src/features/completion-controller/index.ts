@@ -248,58 +248,104 @@ export function createBobCompletionHook(
         },
         output: { continue?: boolean; reason?: string },
       ) => {
-        const sid = input.sessionID;
-        if (!sid) return;
+        try {
+          const sid = input.sessionID;
+          if (!sid) return;
 
-        // Critic subagent: capture the verdict for the parent session.
-        if (input.agentType === "critic") {
-          const verdict = await readLastAssistantVerdict(sid);
-          if (verdict) {
-            const parent = input.parentSessionID ?? sid;
-            st.recordCriticVerdict(parent, verdict);
+          // Resilient fallback: the actor.postStop hook is undocumented and
+          // its payload shape (including agentType) could change or be removed
+          // without notice. If the runtime agent type is missing or
+          // unrecognized, scan the last assistant message for a CLOSURE block.
+          // If the agent signalled completion (readiness done/accept), stop
+          // without auto-continuing. Otherwise fall through to the normal
+          // decide() path so an in-flight loop is never silently killed.
+          const KNOWN_AGENT_TYPES = new Set([
+            "critic",
+            "build",
+            "plan",
+            "explore",
+            "general",
+            "designer",
+            "writer",
+            "vision",
+            "manager",
+            "strategist",
+            "researcher",
+            "sub",
+            "coder",
+          ]);
+          if (!input.agentType || !KNOWN_AGENT_TYPES.has(input.agentType)) {
+            const last = await readLastAssistantMessage(sid);
+            const closure = parseClosureBlock(last?.text ?? "");
+            if (
+              closure &&
+              (closure.readiness === "done" || closure.readiness === "accept")
+            ) {
+              // Agent signalled completion — stop and inject a summary.
+              await injectSummary(sid, closure.reasoning || "decision");
+              return;
+            }
+            // No recognizable completion signal — proceed with normal logic.
           }
+
+          // Critic subagent: capture the verdict for the parent session.
+          if (input.agentType === "critic") {
+            const verdict = await readLastAssistantVerdict(sid);
+            if (verdict) {
+              const parent = input.parentSessionID ?? sid;
+              st.recordCriticVerdict(parent, verdict);
+            }
+            return;
+          }
+
+          // Non-critic subagent completed: merge changed files from the
+          // subagent's session into the parent's state, then decide whether
+          // the parent should continue, review, or stop.
+          const decideSessionID = input.parentSessionID ?? sid;
+          if (input.parentSessionID) {
+            const childState = st.get(sid);
+            for (const fp of childState.changedFiles) {
+              st.recordChangedFile(
+                decideSessionID,
+                fp,
+                matchesAnyGlob(fp, cfg.ui_globs),
+              );
+            }
+          }
+
+          const s = st.get(decideSessionID);
+          const action = decide({
+            autoContinues: s.autoContinues,
+            maxAutoContinues: cfg.max_auto_continues,
+            hasIncompleteTodos: s.hasIncompleteTodos,
+            changedFiles: s.changedFiles,
+            currentFingerprint: st.currentFingerprint(s),
+            reviewedFingerprint: s.reviewedFingerprint,
+            criticVerdict: s.criticVerdict,
+            blockerFlagged: s.blockerFlagged,
+            uiChanged: s.uiChangedSinceReview,
+            requireCritic: cfg.require_critic,
+          });
+
+          if (action.kind === "stop") {
+            // Inject the completion summary as a synthetic ignored text part
+            // on the last assistant message. The TUI picks it up via the
+            // `bob_summary` metadata flag and renders it as a stylized card.
+            await injectSummary(decideSessionID, action.reason);
+            return;
+          }
+          s.autoContinues += 1;
+          output.continue = true;
+          output.reason = action.prompt;
+        } catch (err) {
+          // Fail safe: never auto-continue on an unexpected error. The
+          // sub-helpers each have their own try/catch for I/O failures; this
+          // top-level catch guards the rest of the body (decide(), state
+          // mutations, summary injection) so a thrown error cannot wedge the
+          // auto-continue loop or leave the session in a broken state.
+          console.error("[hiai-opencode] Completion controller error:", err);
           return;
         }
-
-        // Non-critic subagent completed: merge changed files from the
-        // subagent's session into the parent's state, then decide whether
-        // the parent should continue, review, or stop.
-        const decideSessionID = input.parentSessionID ?? sid;
-        if (input.parentSessionID) {
-          const childState = st.get(sid);
-          for (const fp of childState.changedFiles) {
-            st.recordChangedFile(
-              decideSessionID,
-              fp,
-              matchesAnyGlob(fp, cfg.ui_globs),
-            );
-          }
-        }
-
-        const s = st.get(decideSessionID);
-        const action = decide({
-          autoContinues: s.autoContinues,
-          maxAutoContinues: cfg.max_auto_continues,
-          hasIncompleteTodos: s.hasIncompleteTodos,
-          changedFiles: s.changedFiles,
-          currentFingerprint: st.currentFingerprint(s),
-          reviewedFingerprint: s.reviewedFingerprint,
-          criticVerdict: s.criticVerdict,
-          blockerFlagged: s.blockerFlagged,
-          uiChanged: s.uiChangedSinceReview,
-          requireCritic: cfg.require_critic,
-        });
-
-        if (action.kind === "stop") {
-          // Inject the completion summary as a synthetic ignored text part
-          // on the last assistant message. The TUI picks it up via the
-          // `bob_summary` metadata flag and renders it as a stylized card.
-          await injectSummary(decideSessionID, action.reason);
-          return;
-        }
-        s.autoContinues += 1;
-        output.continue = true;
-        output.reason = action.prompt;
       },
     },
   };

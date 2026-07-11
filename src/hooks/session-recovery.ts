@@ -9,6 +9,7 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { BlockingHookError } from "./errors";
 import { buildRecoveryHint, classifyError, markError } from "./loop-state";
 
 function extractErrorMessage(properties: Record<string, unknown>): string {
@@ -33,38 +34,43 @@ function extractErrorMessage(properties: Record<string, unknown>): string {
 export function createSessionRecoveryHook(_config: BobConfig): HookSet {
   return {
     event: async ({ event }: { event: unknown }) => {
-      const evt = event as {
-        type?: string;
-        properties?: Record<string, unknown>;
-      };
-      if (evt?.type !== "session.error") return;
-      if (!evt.properties) return;
+      try {
+        const evt = event as {
+          type?: string;
+          properties?: Record<string, unknown>;
+        };
+        if (evt?.type !== "session.error") return;
+        if (!evt.properties) return;
 
-      const sessionID = (evt.properties.sessionID as string) ?? "unknown";
-      const errorMessage = extractErrorMessage(evt.properties);
-      const errorType = classifyError(errorMessage);
-      const hint = buildRecoveryHint(errorType);
+        const sessionID = (evt.properties.sessionID as string) ?? "unknown";
+        const errorMessage = extractErrorMessage(evt.properties);
+        const errorType = classifyError(errorMessage);
+        const hint = buildRecoveryHint(errorType);
 
-      // Record the error in loop-state for downstream hooks
-      markError(sessionID, errorMessage, errorType);
+        // Record the error in loop-state for downstream hooks
+        markError(sessionID, errorMessage, errorType);
 
-      console.log(
-        `[hiai-opencode] Session recovery: ${sessionID} — ` +
-          `type=${errorType}, hint="${hint}"`,
-      );
-
-      // For context-window errors, also log a specific suggestion
-      if (errorType === "context_window_exceeded") {
         console.log(
-          `[hiai-opencode] Session recovery: suggest compacting session ${sessionID} or reducing message history`,
+          `[hiai-opencode] Session recovery: ${sessionID} — ` +
+            `type=${errorType}, hint="${hint}"`,
         );
-      }
 
-      // For fatal errors (auth, server), request user intervention
-      if (errorType === "auth") {
-        console.log(
-          `[hiai-opencode] Session recovery: auth failure for ${sessionID} — check API keys and provider configuration`,
-        );
+        // For context-window errors, also log a specific suggestion
+        if (errorType === "context_window_exceeded") {
+          console.log(
+            `[hiai-opencode] Session recovery: suggest compacting session ${sessionID} or reducing message history`,
+          );
+        }
+
+        // For fatal errors (auth, server), request user intervention
+        if (errorType === "auth") {
+          console.log(
+            `[hiai-opencode] Session recovery: auth failure for ${sessionID} — check API keys and provider configuration`,
+          );
+        }
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error("[hiai-opencode] Hook error in session-recovery:", err);
       }
     },
   };

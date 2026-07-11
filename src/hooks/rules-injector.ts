@@ -1,11 +1,17 @@
 import type { BobConfig, HookSet } from "../types";
+import { BlockingHookError } from "./errors";
 
 export function createRulesInjector(_config: BobConfig): HookSet {
   return {
     "experimental.chat.system.transform": async (_input, output) => {
-      output.system.push(
-        "[hiai-opencode] Follow AGENTS.md rules in all file operations.",
-      );
+      try {
+        output.system.push(
+          "[hiai-opencode] Follow AGENTS.md rules in all file operations.",
+        );
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error("[hiai-opencode] Hook error in rules-injector:", err);
+      }
     },
   };
 }

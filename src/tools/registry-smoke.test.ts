@@ -81,12 +81,20 @@ describe("plugin tool registry", () => {
     expect(hooks.tool!.skill).toBeDefined();
   });
 
-  test("plugin registers all 33 tools", async () => {
+  test("plugin registers all 37 tools", async () => {
     const hooks = await BobPlugin({ directory: FAKE_DIR });
     const toolKeys = Object.keys(hooks.tool ?? {});
     // 6 LSP + 16 agent-browser + 4 session + 2 background + 3 firecrawl
-    // + 1 memory + 1 skill = 33
-    expect(toolKeys.length).toBe(33);
+    // + 1 memory + 1 skill + 4 worktree = 37
+    expect(toolKeys.length).toBe(37);
+  });
+
+  test("plugin registers worktree tools", async () => {
+    const hooks = await BobPlugin({ directory: FAKE_DIR });
+    expect(hooks.tool!.hiai_worktree_create).toBeDefined();
+    expect(hooks.tool!.hiai_worktree_remove).toBeDefined();
+    expect(hooks.tool!.hiai_worktree_list).toBeDefined();
+    expect(hooks.tool!.hiai_worktree_status).toBeDefined();
   });
 });
 

@@ -10,20 +10,21 @@
     },
     "version": {
       "type": "string",
+      "default": "0.3.5",
       "description": "Config format version. Semantic versioning; bump on breaking schema changes."
     },
     "models": {
       "type": "object",
-      "description": "The only user-facing model source of truth. Use fully qualified OpenCode model IDs.",
+      "description": "The only user-facing model source of truth. Use fully qualified OpenCode model IDs. Canonical slots: bob, build, plan, manager, critic, designer, explore, writer, vision, general.",
       "additionalProperties": false,
       "properties": {
         "bob": {
           "$ref": "#/definitions/modelSlot"
         },
-        "coder": {
+        "build": {
           "$ref": "#/definitions/modelSlot"
         },
-        "strategist": {
+        "plan": {
           "$ref": "#/definitions/modelSlot"
         },
         "manager": {
@@ -35,7 +36,7 @@
         "designer": {
           "$ref": "#/definitions/modelSlot"
         },
-        "researcher": {
+        "explore": {
           "$ref": "#/definitions/modelSlot"
         },
         "writer": {
@@ -44,36 +45,28 @@
         "vision": {
           "$ref": "#/definitions/modelSlot"
         },
-        "sub": {
+        "general": {
           "$ref": "#/definitions/modelSlot"
         }
       },
       "required": [
         "bob",
-        "coder",
-        "strategist",
+        "build",
+        "plan",
         "manager",
         "critic",
         "designer",
-        "researcher",
+        "explore",
         "writer",
         "vision",
-        "sub"
+        "general"
       ]
     },
     "auth": {
       "type": "object",
-      "description": "Service auth placeholders. Keys: stitch, context7, firecrawl.",
+      "description": "Service auth placeholders. Keys: firecrawl.",
       "additionalProperties": false,
       "properties": {
-        "stitch": {
-          "type": "string",
-          "description": "Stitch AI API key placeholder, e.g. {env:HIAI_STITCH_AUTH}"
-        },
-        "context7": {
-          "type": "string",
-          "description": "Context7 API key placeholder, e.g. {env:HIAI_CONTEXT7_AUTH}"
-        },
         "firecrawl": {
           "type": "string",
           "description": "Firecrawl API key placeholder, e.g. {env:FIRECRAWL_API_KEY}"
@@ -84,16 +77,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "stitch": {
-          "$ref": "#/definitions/toggle"
-        },
         "sequential-thinking": {
-          "$ref": "#/definitions/toggle"
-        },
-        "mempalace": {
-          "$ref": "#/definitions/mempalaceToggle"
-        },
-        "context7": {
           "$ref": "#/definitions/toggle"
         },
         "grep_app": {
@@ -157,32 +141,30 @@
         }
       }
     },
-    "subtask2": {
+    "loop": {
       "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "replace_generic": {
-          "type": "boolean"
-        }
-      }
-    },
-    "ralph_loop": {
-      "type": "object",
-      "description": "Ralph-loop continuation engine config. Auto-start threshold 0 disables auto-start.",
+      "description": "Loop continuation engine config. Auto-start threshold 0 disables auto-start.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
           "type": "boolean",
           "default": false,
-          "description": "Whether ralph-loop is enabled."
+          "description": "Whether loop is enabled."
         },
         "auto_start_threshold": {
           "type": "number",
           "minimum": 0,
           "maximum": 100,
           "default": 0,
-          "description": "Auto-start ralph-loop when this many or more open todos exist in a single session. 0 disables auto-start."
+          "description": "Auto-start loop when this many or more open todos exist in a single session. 0 disables auto-start."
         }
+      }
+    },
+    "tool_settings": {
+      "type": "object",
+      "description": "Per-tool configuration overrides keyed by tool name. Values are numeric tunables (e.g. budgets, thresholds).",
+      "additionalProperties": {
+        "type": "number"
       }
     }
   },
@@ -226,23 +208,6 @@
         "enabled": {
           "type": "boolean",
           "default": true
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "additionalProperties": false
-    },
-    "mempalaceToggle": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        },
-        "pythonPath": {
-          "type": "string",
-          "description": "Optional explicit Python executable for MemPalace (for example: ./.venv/bin/python)."
         }
       },
       "required": [

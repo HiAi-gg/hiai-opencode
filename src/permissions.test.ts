@@ -18,6 +18,7 @@ import {
   applyAgentPermissions,
   EXTERNAL_DIRECTORY_ALLOW_AGENTS,
   getDefaultExternalDirectory,
+  TOOLS_KEYS,
 } from "./permissions";
 
 // ── getDefaultExternalDirectory ─────────────────────────────────────────────
@@ -57,6 +58,44 @@ describe("getDefaultExternalDirectory", () => {
     // Bob and vision are explicitly excluded
     expect(EXTERNAL_DIRECTORY_ALLOW_AGENTS.has("bob")).toBe(false);
     expect(EXTERNAL_DIRECTORY_ALLOW_AGENTS.has("vision")).toBe(false);
+  });
+});
+
+// ── TOOLS_KEYS membership ────────────────────────────────────────────────────
+
+describe("TOOLS_KEYS membership", () => {
+  const lspKeys = [
+    "lsp_diagnostics",
+    "lsp_goto_definition",
+    "lsp_find_references",
+    "lsp_symbols",
+    "lsp_prepare_rename",
+    "lsp_rename",
+  ];
+
+  test("all 6 LSP tool keys are present in TOOLS_KEYS", () => {
+    for (const key of lspKeys) {
+      expect(TOOLS_KEYS.has(key)).toBe(true);
+    }
+  });
+
+  test("applyAgentPermissions maps lsp_diagnostics:false to tools false", () => {
+    const { tools } = applyAgentPermissions({ lsp_diagnostics: false });
+    expect(tools.lsp_diagnostics).toBe(false);
+  });
+
+  test("applyAgentPermissions maps all LSP keys to tools false", () => {
+    const { tools } = applyAgentPermissions({
+      lsp_diagnostics: false,
+      lsp_goto_definition: false,
+      lsp_find_references: false,
+      lsp_symbols: false,
+      lsp_prepare_rename: false,
+      lsp_rename: false,
+    });
+    for (const key of lspKeys) {
+      expect(tools[key]).toBe(false);
+    }
   });
 });
 

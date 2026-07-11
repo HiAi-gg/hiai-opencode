@@ -252,6 +252,10 @@ Use this table when you need to change something and want the right file immedia
 | Change environment context appended to prompts | `src/agents/builtin-agents/environment-context.ts` | Runtime environment prompt injection lives there |
 | Change skill discovery source defaults | [src/config/schema/skill-discovery.ts](src/config/schema/skill-discovery.ts), [src/plugin/skill-discovery-config.ts](src/plugin/skill-discovery-config.ts) | Controls opt-in external skill folders |
 | Change skill source loading behavior | [src/plugin/skill-context.ts](src/plugin/skill-context.ts), [src/plugin-handlers/command-config-handler.ts](src/plugin-handlers/command-config-handler.ts) | Skills and skill-backed commands must stay aligned |
+| Change worktree tools or manager | `src/features/worktree/index.ts`, `src/tools/worktree.ts` | Worktree isolation feature core |
+| Change worktree hooks | `src/hooks/worktree-lifecycle.ts` | Worktree lifecycle hook implementations |
+| Change worktree skill | `skills/general/using-git-worktrees/SKILL.md` | Packaged worktree skill definition |
+| Change worktree prompt integration | `src/prompt-library/worktree.ts` | Worktree context for agent prompts |
 | Change MCP defaults | [src/mcp/registry.ts](src/mcp/registry.ts) | Default MCP wiring lives there |
 | Change OpenCode MCP assembly | [src/mcp/index.ts](src/mcp/index.ts) | Final MCP config assembly lives there |
 | Change local MCP helper launcher logic | `assets/mcp/*` | Runtime launcher scripts live there |
@@ -731,9 +735,21 @@ Prompt assembly has 6 layers. Changing a file in `src/agents/` is necessary but 
 
 Coder MUST run `lsp_diagnostics` after every file edit. LSP errors will not surface automatically — agents must proactively call the diagnostic tool to catch TypeScript/Svelte/Bash/Python errors.
 
-## Prompt Ownership
+## Memory Systems
 
-For contributor-level detail on how prompts are assembled from source through runtime injection, see [src/agents/AGENTS.md](src/agents/AGENTS.md).
+Two memory backends coexist in hiai-opencode, each with a different indexing scope:
+
+| System | Backend | Source | Use Case |
+|--------|---------|--------|----------|
+| `memory` (native) | Full-text indexed MD files | OpenCode built-in | Session/project/global memory recall |
+| `hiai_memory_search` (plugin) | SQLite FTS5 BM25 | Plugin-managed index | Cross-session search, agent trajectories |
+
+The native `memory` tool indexes curated MD files (checkpoints, MEMORY.md, notes.md, task progress).
+`hiai_memory_search` indexes raw session transcripts and tool outputs for forensic search beyond
+what the native tool covers. It is maintained because it covers agent trajectories that the
+native memory tool does not index.
+
+## Prompt Ownership
 
 ## Root Documentation Policy
 

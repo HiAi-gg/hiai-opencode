@@ -8,6 +8,7 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { BlockingHookError } from "./errors";
 import {
   buildRecoveryContext,
   buildRecoveryHint,
@@ -55,33 +56,41 @@ export function createContextWindowLimitRecoveryHook(
 ): HookSet {
   return {
     event: async ({ event }: { event: unknown }) => {
-      if (!event || typeof event !== "object" || !("type" in event)) return;
-      const evt = event as {
-        type?: string;
-        properties?: Record<string, unknown>;
-      };
-      if (evt?.type !== "session.error") return;
+      try {
+        if (!event || typeof event !== "object" || !("type" in event)) return;
+        const evt = event as {
+          type?: string;
+          properties?: Record<string, unknown>;
+        };
+        if (evt?.type !== "session.error") return;
 
-      const sessionID = (evt.properties?.sessionID as string) ?? "unknown";
-      const errorMessage = extractErrorMessage(evt.properties ?? {});
+        const sessionID = (evt.properties?.sessionID as string) ?? "unknown";
+        const errorMessage = extractErrorMessage(evt.properties ?? {});
 
-      if (!isContextWindowError(errorMessage)) return;
+        if (!isContextWindowError(errorMessage)) return;
 
-      const errorType = classifyError(errorMessage);
-      const hint = buildRecoveryHint(errorType);
-      const context = buildRecoveryContext(hint);
+        const errorType = classifyError(errorMessage);
+        const hint = buildRecoveryHint(errorType);
+        const context = buildRecoveryContext(hint);
 
-      // Reset loop state so the next idle cycle can start fresh
-      reset(sessionID);
+        // Reset loop state so the next idle cycle can start fresh
+        reset(sessionID);
 
-      console.log(
-        `[hiai-opencode] Context-window-limit: session ${sessionID} exceeded context limit.`,
-      );
-      console.log(`[hiai-opencode] Context-window-limit: ${hint}`);
-      console.log(
-        "[hiai-opencode] Context-window-limit: compaction context injected for next compaction cycle",
-      );
-      console.log(`[hiai-opencode] Context-window-limit: ${context}`);
+        console.log(
+          `[hiai-opencode] Context-window-limit: session ${sessionID} exceeded context limit.`,
+        );
+        console.log(`[hiai-opencode] Context-window-limit: ${hint}`);
+        console.log(
+          "[hiai-opencode] Context-window-limit: compaction context injected for next compaction cycle",
+        );
+        console.log(`[hiai-opencode] Context-window-limit: ${context}`);
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error(
+          "[hiai-opencode] Hook error in context-window-limit-recovery:",
+          err,
+        );
+      }
     },
 
     /** Inject context-window recovery hints into compaction. */
@@ -93,11 +102,19 @@ export function createContextWindowLimitRecoveryHook(
         NonNullable<HookSet["experimental.session.compacting"]>
       >[1],
     ) => {
-      if (!output?.context) return;
-      output.context.push(
-        "[hiai-opencode] Context-window-limit: if the previous session ended due to a context limit error, " +
-          "prioritize summarization and remove redundant messages.",
-      );
+      try {
+        if (!output?.context) return;
+        output.context.push(
+          "[hiai-opencode] Context-window-limit: if the previous session ended due to a context limit error, " +
+            "prioritize summarization and remove redundant messages.",
+        );
+      } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
+        console.error(
+          "[hiai-opencode] Hook error in context-window-limit-recovery:",
+          err,
+        );
+      }
     },
   };
 }

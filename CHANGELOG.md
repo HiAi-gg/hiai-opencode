@@ -5,11 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.3.4] — 2026-07-09
+## [0.3.5] — 2026-07-10
 
-### 🐛 Env Checklist Bug Fix
+### 🌲 Worktree Support
 
-- **AGENTS.md bootstrap checklist corrected**: `STITCH_AI_API_KEY` and `MEMPALACE_PYTHON` removed from active key checks (were incorrectly listed as active keys despite being marked "Removed from default registry in v0.3.0"). Moved to clearly labeled legacy/removed note. Added `AGENT_BROWSER_SESSION` and `GREP_APP_API_KEY` to active checklist to match `bob.env.example` canonical template.
+- **WorktreeManager**: New manager class (`src/features/worktree/index.ts`) for isolated worktree operations and lifecycle handling
+- **4 worktree tools**: `hiai_worktree_create`, `hiai_worktree_list`, `hiai_worktree_remove`, `hiai_worktree_status` for git worktree lifecycle management
+- **Lifecycle hooks**: Added worktree lifecycle hooks (`chat.message` for auto-create on plan start, `tool.execute.after` for auto-cleanup on CLOSURE)
+- **Prompt integration**: Worktree context and commands integrated into Bob, Manager, and Coder prompts for seamless worktree-aware task execution
+- **Skill**: New `using-git-worktrees` skill (`skills/general/using-git-worktrees/`) providing worktree operations via skill interface
 
 ## [0.3.3] — 2026-07-09
 
@@ -23,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **docs/quickstart.md**: Replaced `.env.example` → `bob.env.example`, `.env` → `bob.env`.
 - **docs/CONFIG.md**: Clarified dual-config system (`bob.json` runtime + `hiai-opencode.json` user-facing + `bob.env` secrets). Fixed CONTEXT7_API_KEY required→optional (No). Fixed malformed JSON in full example (extra closing brace).
 - **ARCHITECTURE.md**: Fixed security guidance — keys go in `bob.env` with `{env:VAR}` placeholders in JSON, not raw in config files.
-- **Security**: CRITICAL finding — `plugin-bob/bob.env` contains unredacted FIRECRAWL_API_KEY and CONTEXT7_API_KEY. Flagged for separate rotation in `plugin-bob` repository.
 
 ## [0.3.2] — 2026-07-09
 

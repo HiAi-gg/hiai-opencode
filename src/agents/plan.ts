@@ -1,4 +1,6 @@
 import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
+import { getWorkspaceContext } from "../prompt-library/workspace";
+import { WORKTREE_AWARENESS } from "../prompt-library/worktree";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const PLAN_PROMPT = `You are Plan, a read-only planning and architecture agent.
@@ -157,4 +159,6 @@ Rules:
 - **CLOSURE** with readiness=done, evidence=N/A or plan file paths.
 - Bob reads this, synthesizes a clean summary for the user, and dispatches waves. The user sees Bob's synthesis, not your raw plan text.
 
+${WORKTREE_AWARENESS}
+${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;
