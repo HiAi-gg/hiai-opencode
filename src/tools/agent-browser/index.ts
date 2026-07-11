@@ -1,22 +1,22 @@
-import { spawn } from 'bun';
-import { mkdirSync, statSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { type ToolContext, tool } from '@opencode-ai/plugin';
-import { getToolSetting } from '../../config';
-import { getSubprocessEnv } from '../../features/shell-env';
+import { mkdirSync, statSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { type ToolContext, tool } from "@opencode-ai/plugin";
+import { spawn } from "bun";
+import { getToolSetting } from "../../config";
+import { getSubprocessEnv } from "../../features/shell-env";
 
 /** Log prefix for this plugin's runtime messages. */
-const LOG_PREFIX = '[hiai-opencode]';
+const LOG_PREFIX = "[hiai-opencode]";
 
 /** Agents permitted to call agent_browser_* tools at runtime. */
-const ALLOWED_BROWSER_AGENTS = new Set(['vision', 'general']);
+const ALLOWED_BROWSER_AGENTS = new Set(["vision", "general"]);
 
 /**
  * Pure guard: throws if the current agent is not allowed to call browser tools.
  * Exported for unit-testing.
  */
 export function browserGateGuard(context: ToolContext): void {
-  const agent = context.agent ?? 'unknown';
+  const agent = context.agent ?? "unknown";
   if (!ALLOWED_BROWSER_AGENTS.has(agent)) {
     throw new Error(
       `[BOB HARD GATE] agent_browser_* tools are restricted to Vision (primary) and General (fallback). Agent "${agent}" attempted to call a browser tool. This call is blocked. Delegate browser operations to Vision via task({subagent_type: "vision", ...}).`,
@@ -34,7 +34,7 @@ export function splitShellArgs(s: string): string[] {
   const out: string[] = [];
   const re = /'([^']*)'|"([^"]*)"|(\S+)/g;
   for (const m of s.matchAll(re)) {
-    out.push(m[1] ?? m[2] ?? m[3] ?? '');
+    out.push(m[1] ?? m[2] ?? m[3] ?? "");
   }
   return out;
 }
@@ -52,7 +52,12 @@ const HEADLESS_ERROR_PATTERNS: RegExp[] = [
   /\bcannot create window\b/i,
 ];
 
-const SCREENSHOT_ERROR_PATTERNS = ['error', 'failed', 'no display', 'screenshot'];
+const SCREENSHOT_ERROR_PATTERNS = [
+  "error",
+  "failed",
+  "no display",
+  "screenshot",
+];
 
 export function isHeadlessError(output: string): boolean {
   return HEADLESS_ERROR_PATTERNS.some((re) => re.test(output));
@@ -64,7 +69,7 @@ function isScreenshotError(output: string): boolean {
 }
 
 /** Cap on captured subprocess output (Bun.spawn has no maxBuffer). */
-const MAX_BUFFER = getToolSetting('agent_browser_max_buffer', 50 * 1024 * 1024);
+const MAX_BUFFER = getToolSetting("agent_browser_max_buffer", 50 * 1024 * 1024);
 
 /**
  * Read a ReadableStream of bytes into a string, capping at `max` bytes.
@@ -76,7 +81,7 @@ async function readCapped(
   stream: ReadableStream<Uint8Array> | null,
   max: number,
 ): Promise<string> {
-  if (!stream) return '';
+  if (!stream) return "";
   const reader = stream.getReader();
   const chunks: Uint8Array[] = [];
   let total = 0;
@@ -104,7 +109,7 @@ async function readCapped(
   } finally {
     reader.releaseLock();
   }
-  const text = Buffer.concat(chunks).toString('utf8');
+  const text = Buffer.concat(chunks).toString("utf8");
   return overflow ? `${text}\n... [output truncated at ${max} bytes]` : text;
 }
 
@@ -115,17 +120,17 @@ async function readCapped(
 export async function runCommand(
   cmd: string[],
   cwd: string,
-  timeoutMs = getToolSetting('agent_browser_command_timeout_ms', 30_000),
+  timeoutMs = getToolSetting("agent_browser_command_timeout_ms", 30_000),
 ): Promise<string> {
   let proc: ReturnType<typeof spawn>;
   try {
     // Merge project shell_env vars into the subprocess environment when the
     // "agent-browser" integration is enabled. Falls back to Bun's default
     // (process.env) when injection is disabled.
-    const shellEnv = getSubprocessEnv('agent-browser');
+    const shellEnv = getSubprocessEnv("agent-browser");
     proc = spawn(cmd, {
-      stdout: 'pipe',
-      stderr: 'pipe',
+      stdout: "pipe",
+      stderr: "pipe",
       cwd,
       ...(shellEnv ? { env: shellEnv } : {}),
     });
@@ -159,7 +164,7 @@ export async function runCommand(
 }
 
 async function runAgentBrowser(args: string, cwd: string): Promise<string> {
-  const raw = await runCommand(['agent-browser', ...splitShellArgs(args)], cwd);
+  const raw = await runCommand(["agent-browser", ...splitShellArgs(args)], cwd);
   if (isHeadlessError(raw)) {
     return `${raw}\n${LOG_PREFIX} [Headless/display warning: ensure DISPLAY is set or Chrome is running with --disable-gpu in headless mode]`;
   }
@@ -183,10 +188,10 @@ async function runAgentBrowserWithMeta(
   const duration_ms = Math.round(performance.now() - start);
   context.metadata({
     metadata: {
-      tool: 'agent_browser',
-      command: command.split(' ')[0],
+      tool: "agent_browser",
+      command: command.split(" ")[0],
       duration_ms,
-      output_bytes: Buffer.byteLength(out, 'utf8'),
+      output_bytes: Buffer.byteLength(out, "utf8"),
       ...extra,
     },
   });
@@ -201,7 +206,9 @@ async function runAgentBrowserWithMeta(
 function isBase64Png(raw: string): boolean {
   const trimmed = raw.trim();
   return (
-    trimmed.length > 1000 && trimmed.startsWith('iVBORw0KGgo') && /^[A-Za-z0-9+/=]+$/.test(trimmed)
+    trimmed.length > 1000 &&
+    trimmed.startsWith("iVBORw0KGgo") &&
+    /^[A-Za-z0-9+/=]+$/.test(trimmed)
   );
 }
 
@@ -211,25 +218,31 @@ function isBase64Png(raw: string): boolean {
  *
  * Exported for testing.
  */
-export function formatScreenshotOutput(stdout: string, projectDir: string): string {
+export function formatScreenshotOutput(
+  stdout: string,
+  projectDir: string,
+): string {
   const raw = stdout.trim();
-  if (!raw) return 'Screenshot: (empty output)';
+  if (!raw) return "Screenshot: (empty output)";
 
   if (isBase64Png(raw)) {
     // Persist base64 to .bob/screenshots/
-    const screenshotDir = join(projectDir, '.bob', 'screenshots');
+    const screenshotDir = join(projectDir, ".bob", "screenshots");
     mkdirSync(screenshotDir, { recursive: true });
 
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
     const filePath = join(screenshotDir, `agent-browser-${timestamp}.png`);
-    writeFileSync(filePath, Buffer.from(raw, 'base64'));
+    writeFileSync(filePath, Buffer.from(raw, "base64"));
 
     const stats = statSync(filePath);
     return `Screenshot saved: ${filePath} (${stats.size} bytes)`;
   }
 
   // Already a path / text — apply truncation guard
-  const screenshotTrunc = getToolSetting('agent_browser_screenshot_truncation_chars', 5000);
+  const screenshotTrunc = getToolSetting(
+    "agent_browser_screenshot_truncation_chars",
+    5000,
+  );
   if (raw.length > screenshotTrunc) {
     return `${raw.slice(0, screenshotTrunc)}\n... [output truncated at ${screenshotTrunc} chars]`;
   }
@@ -243,71 +256,86 @@ export function createAgentBrowserTools() {
   const cwd = process.cwd();
   return {
     agent_browser_navigate: tool({
-      description: 'Navigate to a URL',
-      args: { url: tool.schema.string().describe('URL to navigate to') },
+      description: "Navigate to a URL",
+      args: { url: tool.schema.string().describe("URL to navigate to") },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`navigate ${args.url}`, cwd, context);
       },
     }),
     agent_browser_snapshot: tool({
-      description: 'Get accessibility tree snapshot',
+      description: "Get accessibility tree snapshot",
       args: {},
       async execute(_args, context) {
         browserGateGuard(context);
-        const out = await runAgentBrowserWithMeta('snapshot', cwd, context);
-        const snapTrunc = getToolSetting('agent_browser_snapshot_truncation_chars', 2000);
-        return out?.length > snapTrunc ? `${out.slice(0, snapTrunc)}\n...` : out;
+        const out = await runAgentBrowserWithMeta("snapshot", cwd, context);
+        const snapTrunc = getToolSetting(
+          "agent_browser_snapshot_truncation_chars",
+          2000,
+        );
+        return out?.length > snapTrunc
+          ? `${out.slice(0, snapTrunc)}\n...`
+          : out;
       },
     }),
     agent_browser_click: tool({
-      description: 'Click an element by reference',
-      args: { ref: tool.schema.string().describe('Element reference like @eN') },
+      description: "Click an element by reference",
+      args: {
+        ref: tool.schema.string().describe("Element reference like @eN"),
+      },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`click ${args.ref}`, cwd, context);
       },
     }),
     agent_browser_fill: tool({
-      description: 'Fill an input field',
+      description: "Fill an input field",
       args: {
-        ref: tool.schema.string().describe('Element reference like @eN'),
-        text: tool.schema.string().describe('Text to fill'),
+        ref: tool.schema.string().describe("Element reference like @eN"),
+        text: tool.schema.string().describe("Text to fill"),
       },
       async execute(args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta(`fill ${args.ref} '${args.text}'`, cwd, context);
+        return runAgentBrowserWithMeta(
+          `fill ${args.ref} '${args.text}'`,
+          cwd,
+          context,
+        );
       },
     }),
     agent_browser_type: tool({
-      description: 'Type into an input field',
+      description: "Type into an input field",
       args: {
-        ref: tool.schema.string().describe('Element reference like @eN'),
-        text: tool.schema.string().describe('Text to type'),
+        ref: tool.schema.string().describe("Element reference like @eN"),
+        text: tool.schema.string().describe("Text to type"),
       },
       async execute(args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta(`type ${args.ref} '${args.text}'`, cwd, context);
+        return runAgentBrowserWithMeta(
+          `type ${args.ref} '${args.text}'`,
+          cwd,
+          context,
+        );
       },
     }),
     agent_browser_screenshot: tool({
-      description: 'Take a screenshot (saved to .bob/screenshots/)',
+      description: "Take a screenshot (saved to .bob/screenshots/)",
       args: {},
       async execute(_args, context) {
         browserGateGuard(context);
         const start = performance.now();
-        const stdout = await runAgentBrowser('screenshot', cwd);
+        const stdout = await runAgentBrowser("screenshot", cwd);
         const duration_ms = Math.round(performance.now() - start);
         const rawTrim = stdout.trim();
         const screenshot_bytes = isBase64Png(rawTrim)
-          ? Buffer.from(rawTrim, 'base64').length
-          : Buffer.byteLength(stdout, 'utf8');
+          ? Buffer.from(rawTrim, "base64").length
+          : Buffer.byteLength(stdout, "utf8");
         context.metadata({
           metadata: {
-            tool: 'agent_browser',
-            command: 'screenshot',
+            tool: "agent_browser",
+            command: "screenshot",
             duration_ms,
-            output_bytes: Buffer.byteLength(stdout, 'utf8'),
+            output_bytes: Buffer.byteLength(stdout, "utf8"),
             screenshot_bytes,
           },
         });
@@ -318,87 +346,113 @@ export function createAgentBrowserTools() {
       },
     }),
     agent_browser_eval: tool({
-      description: 'Evaluate JavaScript in the page',
-      args: { code: tool.schema.string().describe('JavaScript code to evaluate') },
+      description: "Evaluate JavaScript in the page",
+      args: {
+        code: tool.schema.string().describe("JavaScript code to evaluate"),
+      },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`eval '${args.code}'`, cwd, context);
       },
     }),
     agent_browser_wait: tool({
-      description: 'Wait for a specified duration',
-      args: { ms: tool.schema.number().describe('Milliseconds to wait') },
+      description: "Wait for a specified duration",
+      args: { ms: tool.schema.number().describe("Milliseconds to wait") },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`wait ${args.ms}`, cwd, context);
       },
     }),
     agent_browser_close: tool({
-      description: 'Close the browser',
+      description: "Close the browser",
       args: {},
       async execute(_args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta('close', cwd, context);
+        return runAgentBrowserWithMeta("close", cwd, context);
       },
     }),
     agent_browser_console: tool({
-      description: 'Read browser console output',
+      description: "Read browser console output",
       args: {},
       async execute(_args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta('console', cwd, context);
+        return runAgentBrowserWithMeta("console", cwd, context);
       },
     }),
     agent_browser_select: tool({
-      description: 'Select an option from a dropdown',
+      description: "Select an option from a dropdown",
       args: {
-        ref: tool.schema.string().describe('Element reference like @eN'),
-        value: tool.schema.string().describe('Option value to select'),
+        ref: tool.schema.string().describe("Element reference like @eN"),
+        value: tool.schema.string().describe("Option value to select"),
       },
       async execute(args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta(`select ${args.ref} ${args.value}`, cwd, context);
+        return runAgentBrowserWithMeta(
+          `select ${args.ref} ${args.value}`,
+          cwd,
+          context,
+        );
       },
     }),
     agent_browser_hover: tool({
-      description: 'Hover over an element',
-      args: { ref: tool.schema.string().describe('Element reference like @eN') },
+      description: "Hover over an element",
+      args: {
+        ref: tool.schema.string().describe("Element reference like @eN"),
+      },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`hover ${args.ref}`, cwd, context);
       },
     }),
     agent_browser_press: tool({
-      description: 'Press a key',
-      args: { key: tool.schema.string().describe('Key to press (e.g. Enter, Tab, Escape)') },
+      description: "Press a key",
+      args: {
+        key: tool.schema
+          .string()
+          .describe("Key to press (e.g. Enter, Tab, Escape)"),
+      },
       async execute(args, context) {
         browserGateGuard(context);
         return runAgentBrowserWithMeta(`press ${args.key}`, cwd, context);
       },
     }),
     agent_browser_batch: tool({
-      description: 'Run multiple browser commands at once',
-      args: { commands: tool.schema.string().describe('Newline-separated agent-browser commands') },
+      description: "Run multiple browser commands at once",
+      args: {
+        commands: tool.schema
+          .string()
+          .describe("Newline-separated agent-browser commands"),
+      },
       async execute(args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta(`batch '${args.commands}'`, cwd, context);
+        return runAgentBrowserWithMeta(
+          `batch '${args.commands}'`,
+          cwd,
+          context,
+        );
       },
     }),
     agent_browser_set_viewport: tool({
-      description: 'Set browser viewport size for responsive testing',
+      description: "Set browser viewport size for responsive testing",
       args: {
-        width: tool.schema.number().describe('Viewport width in pixels'),
-        height: tool.schema.number().describe('Viewport height in pixels'),
+        width: tool.schema.number().describe("Viewport width in pixels"),
+        height: tool.schema.number().describe("Viewport height in pixels"),
       },
       async execute(args, context) {
         browserGateGuard(context);
-        return runAgentBrowserWithMeta(`set viewport ${args.width} ${args.height}`, cwd, context);
+        return runAgentBrowserWithMeta(
+          `set viewport ${args.width} ${args.height}`,
+          cwd,
+          context,
+        );
       },
     }),
     agent_browser_set_device: tool({
       description: 'Set browser device emulation (e.g. "iPhone 14", "Pixel 7")',
       args: {
-        name: tool.schema.string().describe('Device name from agent-browser device list'),
+        name: tool.schema
+          .string()
+          .describe("Device name from agent-browser device list"),
       },
       async execute(args, context) {
         browserGateGuard(context);

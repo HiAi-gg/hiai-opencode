@@ -12,7 +12,9 @@ let _initialized = false;
 function ensureSchema(sqlite: BunDatabase) {
   if (_initialized && _dbPath) return;
   sqlite.run("PRAGMA journal_mode = WAL");
-  sqlite.run(`PRAGMA busy_timeout = ${getToolSetting('sqlite_busy_timeout_ms', 5000)}`);
+  sqlite.run(
+    `PRAGMA busy_timeout = ${getToolSetting("sqlite_busy_timeout_ms", 5000)}`,
+  );
 
   // Create main table
   sqlite.run(`

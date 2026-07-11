@@ -9,6 +9,7 @@ import { createContextWindowLimitRecoveryHook } from "./context-window-limit-rec
 import { createContextWindowMonitor } from "./context-window-monitor";
 import { createDirectoryAgentsInjector } from "./directory-agents-injector";
 import { createEditErrorRecovery } from "./edit-error-recovery";
+import { BlockingHookError } from "./errors";
 import { createJsonErrorRecovery } from "./json-error-recovery";
 import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
@@ -28,9 +29,8 @@ import { createThinkingBlockValidator } from "./thinking-block-validator";
 import { createTodoContinuationHook } from "./todo-continuation";
 import { createTokenBudgetHook } from "./token-budget";
 import { createToolPairValidator } from "./tool-pair-validator";
-import { createWriteExistingFileGuard } from "./write-existing-file-guard";
 import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
-import { BlockingHookError } from "./errors";
+import { createWriteExistingFileGuard } from "./write-existing-file-guard";
 
 type HookFactory = (config: BobConfig) => HookSet;
 
@@ -90,7 +90,7 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
               throw err;
             }
             console.error(
-              "[hiai-opencode] Hook handler error in " + point + ":",
+              `[hiai-opencode] Hook handler error in ${point}:`,
               err,
             );
             const out = output as { errors?: Error[] };

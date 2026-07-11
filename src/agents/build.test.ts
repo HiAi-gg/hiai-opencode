@@ -22,7 +22,7 @@ describe("BUILD_PROMPT lint gate", () => {
     expect(BUILD_PROMPT).toContain("NO EVIDENCE = NOT COMPLETE");
   });
 
-  test("no ${} template literal artifacts", () => {
+  test("no template literal artifacts", () => {
     expect(BUILD_PROMPT).not.toMatch(/\$\{/);
   });
 

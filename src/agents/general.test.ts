@@ -49,7 +49,7 @@ describe("GENERAL_PROMPT CLOSURE", () => {
     expect(GENERAL_PROMPT).toContain("<CLOSURE>");
   });
 
-  test("no ${} template literal artifacts", () => {
+  test("no template literal artifacts", () => {
     expect(GENERAL_PROMPT).not.toMatch(/\$\{/);
   });
 });

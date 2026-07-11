@@ -6,8 +6,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { createEditErrorRecovery } from "./edit-error-recovery";
 import type { BobConfig } from "../types";
+import { createEditErrorRecovery } from "./edit-error-recovery";
 
 const config = {} as BobConfig;
 

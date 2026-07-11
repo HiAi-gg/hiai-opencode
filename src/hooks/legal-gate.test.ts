@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createLegalGate } from "./legal-gate";
 import { BlockingHookError } from "./errors";
+import { createLegalGate } from "./legal-gate";
 
 // Phase 7A — legal-gate hard-deny pattern tests.
 //

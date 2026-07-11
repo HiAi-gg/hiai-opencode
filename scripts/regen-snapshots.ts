@@ -1,16 +1,16 @@
+import { mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createBobAgent } from "../src/agents/bob";
 import { createCoderAgent } from "../src/agents/coder/agent";
-import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent";
-import { createManagerAgent } from "../src/agents/manager/agent";
-import { createResearcherAgent } from "../src/agents/researcher";
-import { createDesignerAgent } from "../src/agents/designer";
-import { createWriterAgent } from "../src/agents/writer";
-import { createMultimodalLookerAgent } from "../src/agents/ui";
 import { createCriticAgent } from "../src/agents/critic/agent";
+import { createDesignerAgent } from "../src/agents/designer";
+import { createManagerAgent } from "../src/agents/manager/agent";
 import { createQualityGuardianAgent } from "../src/agents/quality-guardian";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { createResearcherAgent } from "../src/agents/researcher";
+import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent";
+import { createMultimodalLookerAgent } from "../src/agents/ui";
+import { createWriterAgent } from "../src/agents/writer";
 
 const TEST_MODEL = "test-model/snapshot";
 const SNAPSHOT_DIR = join(

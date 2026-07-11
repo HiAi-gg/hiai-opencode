@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { createNonInteractiveEnv } from "./non-interactive-env";
+import { describe, expect, it } from "bun:test";
 import type { BobConfig } from "../types";
+import { createNonInteractiveEnv } from "./non-interactive-env";
 
 /**
  * Unit tests for the non-interactive-env hook (`tool.execute.before`).

@@ -1,8 +1,8 @@
 import { existsSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
+import { getToolSetting } from "../../config";
 import { LSPClient } from "./lsp-client";
 import { getServerDef } from "./server-definitions";
-import { getToolSetting } from "../../config";
 
 const INSTALL_HINTS: Record<string, string> = {
   "typescript-language-server":
@@ -36,7 +36,7 @@ export class LSPManager {
   private sweepTimer: ReturnType<typeof setInterval> | null = null;
   private idleTimeoutMs: number;
 
-  constructor(idleTimeoutMs = getToolSetting('lsp_idle_timeout_ms', 300_000)) {
+  constructor(idleTimeoutMs = getToolSetting("lsp_idle_timeout_ms", 300_000)) {
     this.idleTimeoutMs = idleTimeoutMs;
   }
 
@@ -65,7 +65,10 @@ export class LSPManager {
   private ensureSweeper() {
     if (this.sweepTimer) return;
     // Sweep every 60s
-    this.sweepTimer = setInterval(() => this.sweepIdle(), getToolSetting('lsp_sweep_interval_ms', 60000));
+    this.sweepTimer = setInterval(
+      () => this.sweepIdle(),
+      getToolSetting("lsp_sweep_interval_ms", 60000),
+    );
     if (typeof this.sweepTimer === "object" && this.sweepTimer?.unref) {
       this.sweepTimer.unref();
     }

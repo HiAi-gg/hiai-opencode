@@ -107,10 +107,10 @@ async function runFirecrawl(args: string): Promise<string> {
     // Merge project shell_env vars into the subprocess environment when the
     // "firecrawl" integration is enabled. Falls back to the existing default
     // env ({ ...process.env, HOME }) when injection is disabled.
-    const shellEnv = getSubprocessEnv('firecrawl');
+    const shellEnv = getSubprocessEnv("firecrawl");
     const { stdout, stderr } = await execAsync(`firecrawl ${args}`, {
-      timeout: getToolSetting('firecrawl_timeout_ms', 60_000),
-      maxBuffer: getToolSetting('firecrawl_max_buffer', 10 * 1024 * 1024),
+      timeout: getToolSetting("firecrawl_timeout_ms", 60_000),
+      maxBuffer: getToolSetting("firecrawl_max_buffer", 10 * 1024 * 1024),
       env: shellEnv ?? { ...process.env, HOME: process.env.HOME },
     });
     return stdout || stderr;
@@ -148,10 +148,12 @@ export const firecrawlSearchTool = tool({
   async execute(args, context?: ToolContext) {
     const limit = args.limit ?? 5;
     const start = performance.now();
-    const out = await runFirecrawl(`search '${shellEscape(args.query)}' --limit ${limit}`);
+    const out = await runFirecrawl(
+      `search '${shellEscape(args.query)}' --limit ${limit}`,
+    );
     const duration_ms = Math.round(performance.now() - start);
     context?.metadata({
-      metadata: { tool: 'firecrawl', query: args.query, duration_ms },
+      metadata: { tool: "firecrawl", query: args.query, duration_ms },
     });
     return out;
   },
@@ -169,10 +171,12 @@ export const firecrawlScrapeTool = tool({
   async execute(args, context?: ToolContext) {
     const fmt = args.format ?? "markdown";
     const start = performance.now();
-    const out = await runFirecrawl(`scrape '${shellEscape(args.url)}' --format ${fmt}`);
+    const out = await runFirecrawl(
+      `scrape '${shellEscape(args.url)}' --format ${fmt}`,
+    );
     const duration_ms = Math.round(performance.now() - start);
     context?.metadata({
-      metadata: { tool: 'firecrawl', url: args.url, duration_ms },
+      metadata: { tool: "firecrawl", url: args.url, duration_ms },
     });
     return out;
   },
@@ -187,10 +191,12 @@ export const firecrawlMapTool = tool({
   async execute(args, context?: ToolContext) {
     const limit = args.limit ?? 100;
     const start = performance.now();
-    const out = await runFirecrawl(`map '${shellEscape(args.url)}' --limit ${limit}`);
+    const out = await runFirecrawl(
+      `map '${shellEscape(args.url)}' --limit ${limit}`,
+    );
     const duration_ms = Math.round(performance.now() - start);
     context?.metadata({
-      metadata: { tool: 'firecrawl', url: args.url, duration_ms },
+      metadata: { tool: "firecrawl", url: args.url, duration_ms },
     });
     return out;
   },

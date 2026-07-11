@@ -1,7 +1,7 @@
-import { describe, expect, test, spyOn } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createSessionRecoveryHook } from "./session-recovery";
 import { get, reset } from "./loop-state";
+import { createSessionRecoveryHook } from "./session-recovery";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

@@ -1,6 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { createQualityGate } from "./quality-gate";
+import { describe, expect, it } from "bun:test";
 import type { BobConfig } from "../types";
+import { createQualityGate } from "./quality-gate";
 
 /**
  * Unit tests for the quality-gate hook (`tool.execute.after`).

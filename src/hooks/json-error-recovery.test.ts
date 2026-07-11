@@ -6,8 +6,8 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { createJsonErrorRecovery } from "./json-error-recovery";
 import type { BobConfig } from "../types";
+import { createJsonErrorRecovery } from "./json-error-recovery";
 
 const config = {} as BobConfig;
 

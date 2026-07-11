@@ -1,13 +1,13 @@
 import { describe, expect, test } from "bun:test";
 import {
   get,
-  reset,
   markCompleted,
-  markError,
-  setContinuationPrompt,
-  recordIteration,
-  setHasIncompleteTasks,
   markContinuationInjected,
+  markError,
+  recordIteration,
+  reset,
+  setContinuationPrompt,
+  setHasIncompleteTasks,
   shouldContinue,
 } from "./loop-state";
 

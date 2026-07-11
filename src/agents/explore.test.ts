@@ -37,7 +37,7 @@ describe("EXPLORE_PROMPT context7 routing", () => {
     expect(context7Pos).toBeLessThan(grepAppPos);
   });
 
-  test("no ${} template literal artifacts", () => {
+  test("no template literal artifacts", () => {
     expect(EXPLORE_PROMPT).not.toMatch(/\$\{/);
   });
 

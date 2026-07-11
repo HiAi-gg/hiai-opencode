@@ -13,14 +13,14 @@ import { join } from "node:path";
 
 import { createBobAgent } from "../src/agents/bob";
 import { createCoderAgent } from "../src/agents/coder/agent";
-import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent";
-import { createManagerAgent } from "../src/agents/manager/agent";
-import { getStrategistPrompt } from "../src/agents/strategist/system-prompt";
-import { createResearcherAgent } from "../src/agents/researcher";
-import { createDesignerAgent } from "../src/agents/designer";
-import { createMultimodalLookerAgent } from "../src/agents/ui";
 import { createCriticAgent } from "../src/agents/critic/agent";
+import { createDesignerAgent } from "../src/agents/designer";
+import { createManagerAgent } from "../src/agents/manager/agent";
 import { createQualityGuardianAgent } from "../src/agents/quality-guardian";
+import { createResearcherAgent } from "../src/agents/researcher";
+import { getStrategistPrompt } from "../src/agents/strategist/system-prompt";
+import { createBobJuniorAgentWithOverrides } from "../src/agents/sub/agent";
+import { createMultimodalLookerAgent } from "../src/agents/ui";
 import { createWriterAgent } from "../src/agents/writer";
 
 interface Snapshot {

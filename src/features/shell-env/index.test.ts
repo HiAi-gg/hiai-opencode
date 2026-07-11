@@ -8,10 +8,10 @@ import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
-  ShellEnvContext,
   getShellEnv,
   getSubprocessEnv,
   initShellEnv,
+  ShellEnvContext,
 } from "./index";
 
 const TMP = join(tmpdir(), "hiai-opencode-shell-env-test");
@@ -33,11 +33,20 @@ afterEach(() => {
 
 describe("ShellEnvContext.loadEnvFiles", () => {
   test("reads .env.local and .env with first-file-wins precedence", () => {
-    writeFileSync(join(TMP, ".env.local"), "DATABASE_URL=from_local\nREDIS_URL=local_redis\n");
-    writeFileSync(join(TMP, ".env"), "DATABASE_URL=from_dotenv\nNODE_ENV=test\n");
+    writeFileSync(
+      join(TMP, ".env.local"),
+      "DATABASE_URL=from_local\nREDIS_URL=local_redis\n",
+    );
+    writeFileSync(
+      join(TMP, ".env"),
+      "DATABASE_URL=from_dotenv\nNODE_ENV=test\n",
+    );
 
     const ctx = new ShellEnvContext(
-      { variables: ["DATABASE_URL", "REDIS_URL", "NODE_ENV"], env_file: ".env.local" },
+      {
+        variables: ["DATABASE_URL", "REDIS_URL", "NODE_ENV"],
+        env_file: ".env.local",
+      },
       TMP,
     );
     ctx.loadEnvFiles();
@@ -85,7 +94,10 @@ describe("ShellEnvContext.shouldInjectInto / getSubprocessEnv", () => {
 
 describe("security: no secret values are logged", () => {
   test("debug output logs only variable NAMES, never values", () => {
-    writeFileSync(join(TMP, ".env.local"), "DATABASE_URL=super_secret_value\nREDIS_URL=another_secret\n");
+    writeFileSync(
+      join(TMP, ".env.local"),
+      "DATABASE_URL=super_secret_value\nREDIS_URL=another_secret\n",
+    );
     const ctx = new ShellEnvContext(
       {
         variables: ["DATABASE_URL", "REDIS_URL"],

@@ -18,16 +18,16 @@ export async function initTelemetry(
     // Optional deps — telemetry stays off when the otel packages aren't
     // installed (we list only the API + HTTP exporter as direct deps; the
     // SDK + resources + semantic-conventions are optional peer deps).
-    // @ts-ignore — optional runtime dep
+    // @ts-expect-error — optional runtime dep
     const sdkNode = await import("@opentelemetry/sdk-node").catch(() => null);
-    // biome-ignore format: single-line required for @ts-ignore to suppress next line
-    // @ts-ignore — optional runtime dep
+    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
+    // @ts-expect-error — optional runtime dep
     const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-http").catch(() => ({}));
-    // biome-ignore format: single-line required for @ts-ignore to suppress next line
-    // @ts-ignore — optional runtime dep
+    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
+    // @ts-expect-error — optional runtime dep
     const { Resource } = await import("@opentelemetry/resources").catch(() => ({}));
-    // biome-ignore format: single-line required for @ts-ignore to suppress next line
-    // @ts-ignore — optional runtime dep
+    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
+    // @ts-expect-error — optional runtime dep
     const { SEMRESATTRS_SERVICE_NAME } = await import("@opentelemetry/semantic-conventions").catch(() => ({}));
 
     if (!sdkNode) {

@@ -116,7 +116,13 @@ export class LSPClient {
     extra: Record<string, unknown> = {},
   ) {
     this.metadataEmitter?.({
-      metadata: { tool: "lsp", server: this.serverId, method, duration_ms, ...extra },
+      metadata: {
+        tool: "lsp",
+        server: this.serverId,
+        method,
+        duration_ms,
+        ...extra,
+      },
     });
   }
 
@@ -153,7 +159,10 @@ export class LSPClient {
   }
 
   private processBuffer() {
-    const MAX_BUFFER_SIZE = getToolSetting('lsp_max_buffer_size', 10 * 1024 * 1024);
+    const MAX_BUFFER_SIZE = getToolSetting(
+      "lsp_max_buffer_size",
+      10 * 1024 * 1024,
+    );
     if (this.buffer.length > MAX_BUFFER_SIZE) {
       this.buffer = "";
       console.error("[bob] LSP buffer exceeded max size, clearing");
@@ -206,10 +215,13 @@ export class LSPClient {
         return;
       }
       const id = ++this.requestId;
-      const timer = setTimeout(() => {
-        this.pendingRequests.delete(id);
-        reject(new Error(`Timeout: ${method}`));
-      }, getToolSetting('lsp_request_timeout_ms', 15000));
+      const timer = setTimeout(
+        () => {
+          this.pendingRequests.delete(id);
+          reject(new Error(`Timeout: ${method}`));
+        },
+        getToolSetting("lsp_request_timeout_ms", 15000),
+      );
       this.pendingRequests.set(id, { resolve, reject, timer });
       const msg = JSON.stringify({ jsonrpc: "2.0", id, method, params });
       const header = `Content-Length: ${Buffer.byteLength(msg)}\r\n\r\n`;
@@ -308,12 +320,10 @@ export class LSPClient {
       position: { line: line - 1, character },
     });
     const duration_ms = Math.round(performance.now() - start);
-    const count = Array.isArray(result)
-      ? result.length
-      : result
-        ? 1
-        : 0;
-    this.emitMeta("textDocument/definition", duration_ms, { result_count: count });
+    const count = Array.isArray(result) ? result.length : result ? 1 : 0;
+    this.emitMeta("textDocument/definition", duration_ms, {
+      result_count: count,
+    });
     return (result as LSPLocation | LSPLocation[] | null) ?? null;
   }
 
@@ -381,7 +391,9 @@ export class LSPClient {
     });
     const duration_ms = Math.round(performance.now() - start);
     const syms = (result as LSPSymbol[]) ?? [];
-    this.emitMeta("workspace/symbol", duration_ms, { result_count: syms.length });
+    this.emitMeta("workspace/symbol", duration_ms, {
+      result_count: syms.length,
+    });
     return syms;
   }
 

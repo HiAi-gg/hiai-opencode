@@ -405,7 +405,10 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
       ...DEFAULT_CONFIG.background_manager,
       ...userConfig.background_manager,
     },
-    telemetry: { ...DEFAULT_CONFIG.telemetry, ...userConfig.telemetry } as BobConfig['telemetry'],
+    telemetry: {
+      ...DEFAULT_CONFIG.telemetry,
+      ...userConfig.telemetry,
+    } as BobConfig["telemetry"],
     hooks: { disabled: allHooksDisabled },
     tools: {
       disabled: [...new Set([...defaultToolsDisabled, ...userToolsDisabled])],

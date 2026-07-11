@@ -1,5 +1,5 @@
-import type { AgentConfig, BobConfig } from "../types";
 import { getToolSetting } from "../config";
+import type { AgentConfig, BobConfig } from "../types";
 import { BOB_PROMPT } from "./bob";
 import { CRITIC_PROMPT } from "./critic";
 import { DESIGNER_PROMPT } from "./designer";
@@ -21,7 +21,8 @@ export function resolveAgentModel(
   config: BobConfig,
 ): string | undefined {
   return (
-    config.agent_overrides?.[agentKey]?.model ?? config.models?.[agentKey]?.model
+    config.agent_overrides?.[agentKey]?.model ??
+    config.models?.[agentKey]?.model
   );
 }
 
@@ -47,7 +48,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         mode: "primary",
         model: resolveModel("bob", config),
         prompt: BOB_PROMPT,
-        temperature: getToolSetting('agent_temp_bob', 0.3),
+        temperature: getToolSetting("agent_temp_bob", 0.3),
       },
     },
     {
@@ -60,7 +61,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         hidden: true,
         model: resolveModel("manager", config),
         prompt: MANAGER_PROMPT,
-        temperature: getToolSetting('agent_temp_manager', 0.2),
+        temperature: getToolSetting("agent_temp_manager", 0.2),
       },
     },
     {
@@ -73,7 +74,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         hidden: true,
         model: resolveModel("critic", config),
         prompt: CRITIC_PROMPT,
-        temperature: getToolSetting('agent_temp_critic', 0.1),
+        temperature: getToolSetting("agent_temp_critic", 0.1),
       },
     },
     {
@@ -86,7 +87,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         hidden: true,
         model: resolveModel("writer", config),
         prompt: WRITER_PROMPT,
-        temperature: getToolSetting('agent_temp_writer', 0.5),
+        temperature: getToolSetting("agent_temp_writer", 0.5),
       },
     },
     {
@@ -99,7 +100,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         hidden: true,
         model: resolveModel("designer", config),
         prompt: DESIGNER_PROMPT,
-        temperature: getToolSetting('agent_temp_designer', 0.4),
+        temperature: getToolSetting("agent_temp_designer", 0.4),
       },
     },
     {
@@ -112,7 +113,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         hidden: true,
         model: resolveModel("vision", config),
         prompt: VISION_PROMPT,
-        temperature: getToolSetting('agent_temp_vision', 0.2),
+        temperature: getToolSetting("agent_temp_vision", 0.2),
         thinking: { type: "disabled" },
       },
     },
@@ -127,7 +128,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         model: resolveModel("bob", config),
         prompt:
           "You are the Dream Consolidator — a memory consolidation agent for HiAi OpenCode. Your full operational protocol is injected at invocation via the dream-distill hook. Core responsibility: cross-session knowledge synthesis, memory deduplication, and durable knowledge extraction from agent trajectories.",
-        temperature: getToolSetting('agent_temp_dream', 0.2),
+        temperature: getToolSetting("agent_temp_dream", 0.2),
       },
     },
     {
@@ -141,7 +142,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
         model: resolveModel("bob", config),
         prompt:
           "You are the Distill Packager — a workflow packaging agent for HiAi OpenCode. Your full operational protocol is injected at invocation via the dream-distill hook. Core responsibility: pattern discovery, workflow distillation, and reproducible packaging of agent behaviors.",
-        temperature: getToolSetting('agent_temp_distill', 0.3),
+        temperature: getToolSetting("agent_temp_distill", 0.3),
       },
     },
   ];

@@ -1,4 +1,4 @@
-import { describe, expect, test, spyOn } from "bun:test";
+import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createSessionNotification } from "./session-notification";
 

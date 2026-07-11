@@ -71,7 +71,7 @@ export const sessionReadTool = tool({
                 ?.filter((p) => p.type === "text")
                 .map((p) => p.text ?? "")
                 .join("") ?? "";
-            return `[${role}]: ${text.slice(0, getToolSetting('session_text_truncation_chars', 500))}`;
+            return `[${role}]: ${text.slice(0, getToolSetting("session_text_truncation_chars", 500))}`;
           })
           .join("\n---\n") || "No messages."
       );
@@ -98,7 +98,10 @@ export const sessionSearchTool = tool({
         title?: string;
       }>;
       const results: string[] = [];
-       for (const session of sessions.slice(0, getToolSetting('session_max_list', 50))) {
+      for (const session of sessions.slice(
+        0,
+        getToolSetting("session_max_list", 50),
+      )) {
         try {
           const msgs = await sessionClient.session.messages({
             path: { id: session.id },

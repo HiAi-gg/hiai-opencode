@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test, spyOn } from "bun:test";
+import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createTokenBudgetHook } from "./token-budget";
 

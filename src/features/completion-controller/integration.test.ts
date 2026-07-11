@@ -11,9 +11,9 @@
 // public hook surface and asserts on observable outcomes.
 
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import type { BobConfig } from "../../types";
 import { createBobCompletionHook, setCompletionClient } from "./index";
 import * as st from "./state";
-import type { BobConfig } from "../../types";
 
 function makeConfig(
   overrides: Partial<NonNullable<BobConfig["completion"]>> = {},

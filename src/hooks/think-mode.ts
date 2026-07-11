@@ -1,6 +1,6 @@
+import { getToolSetting } from "../config";
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
-import { getToolSetting } from "../config";
 
 export function createThinkModeHook(_config: BobConfig): HookSet {
   return {

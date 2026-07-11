@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'bun:test';
+import { afterEach, describe, expect, it } from "bun:test";
 import {
   clear,
   currentFingerprint,
@@ -7,7 +7,7 @@ import {
   recordCriticVerdict,
   resetForUser,
   setHasIncompleteTodos,
-} from './state';
+} from "./state";
 
 // The module keeps a module-level singleton Map keyed by sessionID. Use a
 // unique session per test and clean up afterwards so tests stay isolated.
@@ -21,8 +21,8 @@ afterEach(() => {
   // this is a safety net for the common case.
 });
 
-describe('state: get / createDefaultSession', () => {
-  it('returns the expected default shape for a fresh session', () => {
+describe("state: get / createDefaultSession", () => {
+  it("returns the expected default shape for a fresh session", () => {
     const sid = uniqueSession();
     const s = get(sid);
     expect(s).toBeDefined();
@@ -36,7 +36,7 @@ describe('state: get / createDefaultSession', () => {
     clear(sid);
   });
 
-  it('returns the same object reference on repeated calls (no re-init)', () => {
+  it("returns the same object reference on repeated calls (no re-init)", () => {
     const sid = uniqueSession();
     const a = get(sid);
     a.autoContinues = 3;
@@ -46,7 +46,7 @@ describe('state: get / createDefaultSession', () => {
     clear(sid);
   });
 
-  it('handles partial input by always creating a full default runtime', () => {
+  it("handles partial input by always creating a full default runtime", () => {
     // get() only takes a sessionID string; there is no partial-input variant,
     // but a fresh session must always be fully populated regardless of prior
     // state. Verify a brand-new id yields a clean default.
@@ -54,45 +54,45 @@ describe('state: get / createDefaultSession', () => {
     const s = get(sid);
     expect(Object.keys(s).sort()).toEqual(
       [
-        'autoContinues',
-        'blockerFlagged',
-        'changedFiles',
-        'criticVerdict',
-        'hasIncompleteTodos',
-        'reviewedFingerprint',
-        'uiChangedSinceReview',
+        "autoContinues",
+        "blockerFlagged",
+        "changedFiles",
+        "criticVerdict",
+        "hasIncompleteTodos",
+        "reviewedFingerprint",
+        "uiChangedSinceReview",
       ].sort(),
     );
     clear(sid);
   });
 });
 
-describe('state: recordChangedFile / trackChangedFile', () => {
-  it('dedups the same file path (stored once)', () => {
+describe("state: recordChangedFile / trackChangedFile", () => {
+  it("dedups the same file path (stored once)", () => {
     const sid = uniqueSession();
-    recordChangedFile(sid, '/a/file.ts', false);
-    recordChangedFile(sid, '/a/file.ts', false);
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordChangedFile(sid, "/a/file.ts", false);
     const s = get(sid);
-    expect(s.changedFiles).toEqual(['/a/file.ts']);
+    expect(s.changedFiles).toEqual(["/a/file.ts"]);
     expect(s.changedFiles.length).toBe(1);
     clear(sid);
   });
 
-  it('keeps distinct files and marks UI change when isUi is true', () => {
+  it("keeps distinct files and marks UI change when isUi is true", () => {
     const sid = uniqueSession();
-    recordChangedFile(sid, '/a/file.ts', false);
-    recordChangedFile(sid, '/b/other.ts', true);
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordChangedFile(sid, "/b/other.ts", true);
     const s = get(sid);
-    expect(s.changedFiles).toEqual(['/a/file.ts', '/b/other.ts']);
+    expect(s.changedFiles).toEqual(["/a/file.ts", "/b/other.ts"]);
     expect(s.uiChangedSinceReview).toBe(true);
     clear(sid);
   });
 
-  it('resets criticVerdict and reviewedFingerprint when a file changes', () => {
+  it("resets criticVerdict and reviewedFingerprint when a file changes", () => {
     const sid = uniqueSession();
-    recordCriticVerdict(sid, 'approved');
-    expect(get(sid).criticVerdict).toBe('approved');
-    recordChangedFile(sid, '/a/file.ts', false);
+    recordCriticVerdict(sid, "approved");
+    expect(get(sid).criticVerdict).toBe("approved");
+    recordChangedFile(sid, "/a/file.ts", false);
     const s = get(sid);
     expect(s.criticVerdict).toBeNull();
     expect(s.reviewedFingerprint).toBeNull();
@@ -100,39 +100,39 @@ describe('state: recordChangedFile / trackChangedFile', () => {
   });
 });
 
-describe('state: recordCriticVerdict / recordFingerprint + recordVerdict', () => {
-  it('stores the verdict and computes a fingerprint of changed files', () => {
+describe("state: recordCriticVerdict / recordFingerprint + recordVerdict", () => {
+  it("stores the verdict and computes a fingerprint of changed files", () => {
     const sid = uniqueSession();
-    recordChangedFile(sid, '/a/file.ts', false);
-    recordCriticVerdict(sid, 'approved');
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
     const s = get(sid);
-    expect(s.criticVerdict).toBe('approved');
+    expect(s.criticVerdict).toBe("approved");
     // fingerprint of ['/a/file.ts'] is a non-empty sha1 hex string
     expect(s.reviewedFingerprint).toMatch(/^[0-9a-f]{40}$/);
     clear(sid);
   });
 
-  it('records a rejected verdict without clearing uiChangedSinceReview', () => {
+  it("records a rejected verdict without clearing uiChangedSinceReview", () => {
     const sid = uniqueSession();
-    recordChangedFile(sid, '/ui/comp.ts', true);
-    recordCriticVerdict(sid, 'rejected');
+    recordChangedFile(sid, "/ui/comp.ts", true);
+    recordCriticVerdict(sid, "rejected");
     const s = get(sid);
-    expect(s.criticVerdict).toBe('rejected');
+    expect(s.criticVerdict).toBe("rejected");
     expect(s.uiChangedSinceReview).toBe(true);
     clear(sid);
   });
 
-  it('clears uiChangedSinceReview when approved', () => {
+  it("clears uiChangedSinceReview when approved", () => {
     const sid = uniqueSession();
-    recordChangedFile(sid, '/ui/comp.ts', true);
-    recordCriticVerdict(sid, 'approved');
+    recordChangedFile(sid, "/ui/comp.ts", true);
+    recordCriticVerdict(sid, "approved");
     expect(get(sid).uiChangedSinceReview).toBe(false);
     clear(sid);
   });
 });
 
-describe('state: setHasIncompleteTodos', () => {
-  it('updates the incomplete-todos flag', () => {
+describe("state: setHasIncompleteTodos", () => {
+  it("updates the incomplete-todos flag", () => {
     const sid = uniqueSession();
     setHasIncompleteTodos(sid, true);
     expect(get(sid).hasIncompleteTodos).toBe(true);
@@ -142,8 +142,8 @@ describe('state: setHasIncompleteTodos', () => {
   });
 });
 
-describe('state: resetForUser / isUserInitiatedReset', () => {
-  it('resets autoContinues and blockerFlagged on user reset', () => {
+describe("state: resetForUser / isUserInitiatedReset", () => {
+  it("resets autoContinues and blockerFlagged on user reset", () => {
     const sid = uniqueSession();
     const s = get(sid);
     s.autoContinues = 5;
@@ -157,8 +157,8 @@ describe('state: resetForUser / isUserInitiatedReset', () => {
   });
 });
 
-describe('state: clear / teardownSession', () => {
-  it('removes session state so a fresh get re-initializes', () => {
+describe("state: clear / teardownSession", () => {
+  it("removes session state so a fresh get re-initializes", () => {
     const sid = uniqueSession();
     const s = get(sid);
     s.autoContinues = 9;
@@ -169,18 +169,18 @@ describe('state: clear / teardownSession', () => {
   });
 });
 
-describe('state: currentFingerprint', () => {
-  it('returns empty string for no changed files', () => {
+describe("state: currentFingerprint", () => {
+  it("returns empty string for no changed files", () => {
     const sid = uniqueSession();
     const s = get(sid);
-    expect(currentFingerprint(s)).toBe('');
+    expect(currentFingerprint(s)).toBe("");
     clear(sid);
   });
 
-  it('returns a stable sha1 fingerprint for the changed files', () => {
+  it("returns a stable sha1 fingerprint for the changed files", () => {
     const sid = uniqueSession();
     const s = get(sid);
-    s.changedFiles = ['/a.ts', '/b.ts'];
+    s.changedFiles = ["/a.ts", "/b.ts"];
     const fp = currentFingerprint(s);
     expect(fp).toMatch(/^[0-9a-f]{40}$/);
     // Stable across calls

@@ -288,7 +288,10 @@ export class BackgroundManager {
 
   private startPolling() {
     if (this.pollInterval) return;
-    this.pollInterval = setInterval(() => this.poll(), getToolSetting('poll_interval_ms', 5000));
+    this.pollInterval = setInterval(
+      () => this.poll(),
+      getToolSetting("poll_interval_ms", 5000),
+    );
     this.pollInterval.unref?.();
   }
 
@@ -389,7 +392,10 @@ export class BackgroundManager {
           : `[Background task failed: ${task.description}]\nError: ${task.error ?? "Unknown error"}`;
 
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error("Notification timeout")), getToolSetting('notification_timeout_ms', 10000)),
+        setTimeout(
+          () => reject(new Error("Notification timeout")),
+          getToolSetting("notification_timeout_ms", 10000),
+        ),
       );
       const notifyPromise = this.client.session.prompt({
         path: { id: task.parentSessionID },
@@ -408,16 +414,23 @@ export class BackgroundManager {
   }
 
   private startCleanup() {
-    this.cleanupInterval = setInterval(() => {
-      const now = Date.now();
-      for (const [_id, task] of this.tasks) {
-        if (task.status !== "running") {
-          if (task.completedAt && now - task.completedAt > getToolSetting('completed_task_retention_ms', 600000)) {
-            this.tasks.delete(_id);
+    this.cleanupInterval = setInterval(
+      () => {
+        const now = Date.now();
+        for (const [_id, task] of this.tasks) {
+          if (task.status !== "running") {
+            if (
+              task.completedAt &&
+              now - task.completedAt >
+                getToolSetting("completed_task_retention_ms", 600000)
+            ) {
+              this.tasks.delete(_id);
+            }
           }
         }
-      }
-    }, getToolSetting('cleanup_interval_ms', 60000));
+      },
+      getToolSetting("cleanup_interval_ms", 60000),
+    );
     this.cleanupInterval.unref?.();
   }
 
