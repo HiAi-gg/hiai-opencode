@@ -205,12 +205,14 @@ export class WorktreeManager {
 
     const text = await this.git(["worktree", "list", "--porcelain"]);
     const entries = this.parseWorktreeList(text);
-    // Canonicalize via realpathSync so short/long (8.3) names and separator
-    // style match the on-disk paths we compute below (Windows CI safety).
+    // Canonicalize via realpathSync.native so short/long (8.3) names and
+    // separator style match the on-disk paths we compute below (Windows CI
+    // safety). .native uses the OS-level realpath which resolves 8.3 names
+    // on Windows; the plain realpathSync wrapper does not.
     const registered = new Set(
       entries.map((e) => {
         try {
-          return fs.realpathSync(e.path);
+          return fs.realpathSync.native(e.path);
         } catch {
           return path.resolve(e.path);
         }
@@ -224,12 +226,12 @@ export class WorktreeManager {
       if (child.startsWith(".")) continue; // skip lock files and dot entries
       let full: string;
       try {
-        full = fs.realpathSync(path.resolve(worktreesDir, child));
+        full = fs.realpathSync.native(path.resolve(worktreesDir, child));
       } catch {
-        // realpathSync can throw ENOENT on Windows for paths with 8.3 / special
-        // formats. Fall back to path.resolve so the comparison against the
-        // registered set (which uses the same fallback) stays consistent and a
-        // registered worktree is never mistaken for an orphan.
+        // realpathSync.native can throw ENOENT on Windows for paths with 8.3 /
+        // special formats. Fall back to path.resolve so the comparison against
+        // the registered set (which uses the same fallback) stays consistent and
+        // a registered worktree is never mistaken for an orphan.
         full = path.resolve(worktreesDir, child);
       }
       if (registered.has(full)) continue;

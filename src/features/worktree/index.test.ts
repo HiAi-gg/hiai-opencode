@@ -26,10 +26,10 @@ beforeAll(async () => {
   originalCwd = process.cwd();
 
   // Create an isolated git repository for the whole suite.
-  repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")));
+  repoDir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")));
   // Keep worktrees OUTSIDE the repo so the main checkout stays pristine
   // (untracked worktree dirs would otherwise mark it dirty).
-  worktreesBase = fs.realpathSync(
+  worktreesBase = fs.realpathSync.native(
     fs.mkdtempSync(path.join(os.tmpdir(), "wt-trees-")),
   );
 
@@ -132,9 +132,11 @@ describe("WorktreeManager.status()", () => {
     const mgr = new WorktreeManager({ baseDir: worktreesBase });
     const st = await mgr.status();
 
-    // Canonicalize both sides through realpathSync so Windows 8.3 short
-    // names (RUNNER~1) and long names (runneradmin) compare identically.
-    expect(fs.realpathSync(st.directory)).toBe(fs.realpathSync(repoDir));
+    // Canonicalize both sides through realpathSync.native so Windows 8.3
+    // short names (RUNNER~1) and long names (runneradmin) compare
+    // identically. .native uses the OS-level realpath which resolves 8.3
+    // names; the plain realpathSync wrapper does not.
+    expect(fs.realpathSync.native(st.directory)).toBe(fs.realpathSync.native(repoDir));
     expect(st.branch).toBeTruthy();
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -148,7 +150,7 @@ describe("WorktreeManager.status()", () => {
     const info = await mgr.create({ name: "wt-status" });
 
     const st = await mgr.status(info.path);
-    expect(fs.realpathSync(st.directory)).toBe(fs.realpathSync(info.path));
+    expect(fs.realpathSync.native(st.directory)).toBe(fs.realpathSync.native(info.path));
     expect(st.branch).toBe(info.branch);
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -211,7 +213,7 @@ describe("WorktreeManager outside a git repository", () => {
 
   beforeAll(() => {
     savedCwd = process.cwd();
-    nonGitDir = fs.realpathSync(
+    nonGitDir = fs.realpathSync.native(
       fs.mkdtempSync(path.join(os.tmpdir(), "wt-nogit-")),
     );
     process.chdir(nonGitDir);
