@@ -205,14 +205,30 @@ export class WorktreeManager {
 
     const text = await this.git(["worktree", "list", "--porcelain"]);
     const entries = this.parseWorktreeList(text);
-    const registered = new Set(entries.map((e) => path.resolve(e.path)));
+    // Canonicalize via realpathSync so short/long (8.3) names and separator
+    // style match the on-disk paths we compute below (Windows CI safety).
+    const registered = new Set(
+      entries.map((e) => {
+        try {
+          return fs.realpathSync(e.path);
+        } catch {
+          return path.resolve(e.path);
+        }
+      }),
+    );
 
     const removed: string[] = [];
     if (!fs.existsSync(worktreesDir)) return removed;
 
     for (const child of fs.readdirSync(worktreesDir)) {
       if (child.startsWith(".")) continue; // skip lock files and dot entries
-      const full = path.resolve(worktreesDir, child);
+      let full: string;
+      try {
+        full = fs.realpathSync(path.resolve(worktreesDir, child));
+      } catch {
+        // Unresolvable entry — skip rather than risk a false removal.
+        continue;
+      }
       if (registered.has(full)) continue;
       try {
         fs.rmSync(full, { recursive: true, force: true });

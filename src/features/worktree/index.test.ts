@@ -29,7 +29,9 @@ beforeAll(async () => {
   repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")));
   // Keep worktrees OUTSIDE the repo so the main checkout stays pristine
   // (untracked worktree dirs would otherwise mark it dirty).
-  worktreesBase = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-trees-")));
+  worktreesBase = fs.realpathSync(
+    fs.mkdtempSync(path.join(os.tmpdir(), "wt-trees-")),
+  );
 
   await $`git -C ${repoDir} init -q`.quiet();
   await $`git -C ${repoDir} config user.email test@example.com`.quiet();
@@ -130,7 +132,7 @@ describe("WorktreeManager.status()", () => {
     const mgr = new WorktreeManager({ baseDir: worktreesBase });
     const st = await mgr.status();
 
-    expect(st.directory).toBe(path.resolve(repoDir));
+    expect(fs.realpathSync(st.directory)).toBe(repoDir);
     expect(st.branch).toBeTruthy();
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -144,7 +146,7 @@ describe("WorktreeManager.status()", () => {
     const info = await mgr.create({ name: "wt-status" });
 
     const st = await mgr.status(info.path);
-    expect(st.directory).toBe(path.resolve(info.path));
+    expect(fs.realpathSync(st.directory)).toBe(info.path);
     expect(st.branch).toBe(info.branch);
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -180,7 +182,7 @@ describe("WorktreeManager.cleanup()", () => {
     const info = await mgr.create({ name: "wt-keep" });
 
     const removed = await mgr.cleanup();
-    expect(removed).not.toContain(path.resolve(info.path));
+    expect(removed).not.toContain(fs.realpathSync(info.path));
     expect(fs.existsSync(info.path)).toBe(true);
   });
 });
@@ -205,7 +207,9 @@ describe("WorktreeManager outside a git repository", () => {
 
   beforeAll(() => {
     savedCwd = process.cwd();
-    nonGitDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-nogit-")));
+    nonGitDir = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "wt-nogit-")),
+    );
     process.chdir(nonGitDir);
   });
 

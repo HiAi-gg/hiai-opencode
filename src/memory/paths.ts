@@ -43,7 +43,10 @@ function detectType(key: string): MemoryType {
 }
 
 export function parsePath(absPath: string): MemoryLocator | null {
-  const m = absPath.match(
+  // Normalize Windows backslashes to forward slashes so the layout regex
+  // matches regardless of platform path separators.
+  const normalized = absPath.replace(/\\/g, "/");
+  const m = normalized.match(
     /\/memory\/(global|projects|sessions)(?:\/([^/]+))?\/(.+)\.md$/,
   );
   if (!m) return null;
@@ -59,7 +62,9 @@ export function parsePath(absPath: string): MemoryLocator | null {
 const CC_PATH_RE = /\/\.claude\/projects\/([^/]+)\/memory\/(.+)\.md$/;
 
 export function parseCcPath(absPath: string): MemoryLocator | null {
-  const m = absPath.match(CC_PATH_RE);
+  // Normalize Windows backslashes to forward slashes (see parsePath).
+  const normalized = absPath.replace(/\\/g, "/");
+  const m = normalized.match(CC_PATH_RE);
   if (!m) return null;
   const [, slug, keyRaw] = m;
   return {
