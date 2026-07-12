@@ -33,6 +33,8 @@ Absent passing lint+typecheck evidence → CLOSURE will be REJECTED.
 </CLOSURE_PROTOCOL>
 `;
 
+const VALID_READINESS = new Set(["done", "accept", "reject"]);
+
 export function validateClosure(text: string): {
   isValid: boolean;
   error?: string;
@@ -43,7 +45,18 @@ export function validateClosure(text: string): {
   try {
     const data = JSON.parse(match[1].trim());
     if (!data.reasoning || !data.readiness)
-      return { isValid: false, error: "Missing required fields" };
+      return { isValid: false, error: "Missing required fields (reasoning, readiness)" };
+    if (typeof data.readiness !== "string" || !VALID_READINESS.has(data.readiness)) {
+      return {
+        isValid: false,
+        error: `Invalid readiness "${data.readiness}" — must be one of: done, accept, reject`,
+      };
+    }
+    if (!Array.isArray(data.evidence)) {
+      // evidence is optional in spirit but the schema declares an array;
+      // coerce missing/Non-array to [] rather than rejecting outright.
+      data.evidence = [];
+    }
     return { isValid: true, data };
   } catch {
     return { isValid: false, error: "Invalid JSON in CLOSURE block" };

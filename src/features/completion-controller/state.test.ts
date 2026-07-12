@@ -59,6 +59,8 @@ describe("state: get / createDefaultSession", () => {
         "changedFiles",
         "criticVerdict",
         "hasIncompleteTodos",
+        "lspPending",
+        "qualityGateFailed",
         "reviewedFingerprint",
         "uiChangedSinceReview",
       ].sort(),

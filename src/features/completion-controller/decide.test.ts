@@ -12,6 +12,8 @@ const base: CompletionState = {
   blockerFlagged: false,
   uiChanged: false,
   requireCritic: true,
+  qualityGateFailed: false,
+  lspPending: false,
 };
 
 describe("decide", () => {
@@ -115,6 +117,54 @@ describe("decide", () => {
         ...base,
         changedFiles: ["a.ts"],
         currentFingerprint: "x",
+        autoContinues: 25,
+      }),
+    ).toEqual({ kind: "stop", reason: "cap" });
+  });
+
+  test("quality gate failed -> continue (fix quality)", () => {
+    const a = decide({
+      ...base,
+      changedFiles: ["a.ts"],
+      currentFingerprint: "x",
+      qualityGateFailed: true,
+    });
+    expect(a.kind).toBe("continue");
+    if (a.kind === "continue")
+      expect(a.prompt.toLowerCase()).toContain("quality");
+  });
+
+  test("quality gate failed at cap -> stop(cap)", () => {
+    expect(
+      decide({
+        ...base,
+        changedFiles: ["a.ts"],
+        currentFingerprint: "x",
+        qualityGateFailed: true,
+        autoContinues: 25,
+      }),
+    ).toEqual({ kind: "stop", reason: "cap" });
+  });
+
+  test("lsp pending after edit -> continue (run lsp_diagnostics)", () => {
+    const a = decide({
+      ...base,
+      changedFiles: ["a.ts"],
+      currentFingerprint: "x",
+      lspPending: true,
+    });
+    expect(a.kind).toBe("continue");
+    if (a.kind === "continue")
+      expect(a.prompt.toLowerCase()).toContain("lsp");
+  });
+
+  test("lsp pending at cap -> stop(cap)", () => {
+    expect(
+      decide({
+        ...base,
+        changedFiles: ["a.ts"],
+        currentFingerprint: "x",
+        lspPending: true,
         autoContinues: 25,
       }),
     ).toEqual({ kind: "stop", reason: "cap" });

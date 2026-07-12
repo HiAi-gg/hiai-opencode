@@ -5,6 +5,64 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.6] — 2026-07-12
+
+### 🔧 CLI: `bin` field & hardening
+
+- **`hiai-opencode` is now a real executable.** Added `bin` field to `package.json` mapping `hiai-opencode` → `assets/cli/hiai-opencode.mjs`. Previously the documented `hiai-opencode doctor` / `mcp-status` commands were unreachable after `npm install` (no binary on PATH).
+- **`doctor`/`mcp-status` now exit non-zero on hard failures** — usable as a CI gate.
+- **Removed undeclared CLI dependencies.** Replaced `jsonc-parser` with a native `parseJsonc` (comment/trailing-comma stripping). Made `@modelcontextprotocol/sdk` a lazy import with graceful fallback — the CLI now runs without those transitive deps.
+- **Agent roster corrected in diagnostics.** `REQUIRED_MODEL_SLOTS` and `getAgentSummary` now use the canonical slots (`bob, build, plan, manager, critic, designer, explore, writer, vision, general`) with legacy aliases (`coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general`, `guard`→`manager`, `brainstormer`→`writer`) mapped via `DEPRECATED_MODEL_KEYS`.
+- Removed dead doctor checks (pgvector with hardcoded deployment, MemPalace auto-save hook, delegation permissions) and stale `toolCount`/agent list in `diagnose`.
+
+### 🧹 MCP cleanup: 2 servers, no ghosts
+
+- **CLI `MCP_REGISTRY` aligned with runtime registry** — both now expose exactly `sequential-thinking` and `grep_app`. The CLI previously advertised 5 servers (`mempalace`, `stitch`, `context7`, `sequential-thinking`, `grep_app`) that disagreed with the runtime's 2.
+- **Fixed `export-mcp` dropping `grep_app`** and emitting ghost `stitch`/`mempalace`/`context7` entries. The generated `.mcp.json` now matches the runtime set, with validated passthrough for user-defined custom MCPs (requires `command`/`url`).
+- **Removed `assets/mcp/mempalace.mjs`** launcher (331 lines) — MemPalace is not in the runtime registry since v0.3.0.
+- **Cleaned `src/features/mcp/registry.ts`** — removed dead type fields (`install`, `optionalEnv`), normalized log prefix `[bob]` → `[hiai-opencode]`.
+- **Updated `config/.mcp.json`** to match the current 2-server shape.
+
+### ⚡ MCP auto-export at startup
+
+- **New `src/features/mcp/auto-export.ts`.** The plugin now writes `.opencode/.mcp.json` at startup so hosts whose `opencode mcp list` only reads static config can see hiai-managed servers. Controlled by `HIAI_OPENCODE_AUTO_EXPORT_MCP` (`if-missing` default | `always` | `off`), `HIAI_OPENCODE_MCP_EXPORT_PATH`, `HIAI_OPENCODE_EXPORT_MCP_MODE` (`safe` | `force`). Previously this documented feature was not implemented.
+
+### ⏲️ Circuit breaker is now live
+
+- **`BackgroundManager` is wired to `tool.execute.after`** via new `src/hooks/circuit-breaker.ts`. The consecutive-identical-call limit (default 20) and total-tool-call limit (default 4000) now actually fire — previously `launch()`/`recordToolCall()` had zero production call sites, so the entire `background_manager` config in `bob.json` was inert.
+- Added `recordSessionToolCall()` / `getTaskForSession()` APIs that auto-register a tracking task per session and abort via `client.session.abort` when a breaker trips.
+
+### 🛡️ Completion gates hardened
+
+- **`validateClosure` now enforces the `readiness` enum** (`done` | `accept` | `reject`) — previously any string passed validation despite the schema declaring the union.
+- **Removed the `agentType`-fallback self-approval bypass** in the completion controller. An unknown/missing `agentType` no longer parses a CLOSURE block to self-approve; it falls through to the normal `decide()` path so the Critic requirement still applies.
+- **Quality gate feeds the completion state machine.** `src/hooks/quality-gate.ts` now sets a `qualityGateFailed` flag on failed test/lint/typecheck runs; `decide()` blocks completion with a clear prompt until the command passes. Previously the gate was advisory-only (appended text).
+- **LSP-diagnostics gate.** Edits set `lspPending=true`; any `lsp_*` tool call clears it; `decide()` blocks completion until diagnostics have been run. `mergeChangedFiles()` transfers child-session changes to the parent without re-tripping the gate.
+- Expanded quality-command detection (added `eslint`, `vitest`, `jest`).
+
+### 🗜️ Compaction: gate state rehydration
+
+- **`compaction-context-injector` now re-injects live completion-gate state** (`qualityGateFailed`, `lspPending`, pending Critic review) into the compaction context. The in-memory gates survive compaction (keyed by sessionID), but the agent's awareness lived in message history — the rehydration ensures the post-compaction agent still knows which gates block completion.
+
+### 📚 Documentation aligned with the actual codebase
+
+- **`ARCHITECTURE.md` rewritten.** All file paths now point to files that actually exist. Removed fictional references to `src/plugin-handlers/*`, `src/agents/coder/`, `src/agents/strategist/`, `src/shared/migration/*`, `src/config/schema/skill-discovery.ts`, `src/agents/prompt-library/*`, `src/mcp/index.ts`, `buildAgentIdentitySection()`, and similar.
+- **`AGENTS.md` Change Map, Prompting Layout, MCP Rules, Closure Protocol, and troubleshooting** updated to real files. Legacy alias mapping clarified (no separate migration module — mappings live only in CLI diagnostics). Removed phantom `skill_discovery` config instructions and MemPalace taxonomy section.
+- Documented the new auto-export env vars, circuit-breaker wiring, and completion gates.
+
+### 🗑️ Removed dead code
+
+- `assets/mcp/mempalace.mjs` (331 lines)
+- `scripts/opencode_doctor.mjs` (broken ESM/require hybrid)
+- `scripts/measure-prompts.ts` (referenced non-existent module paths)
+
+### 🧪 Tests
+
+- New: `src/features/mcp/auto-export.test.ts` (10 tests)
+- New: `src/features/background-manager/circuit-breaker.test.ts` (7 tests)
+- New: compaction gate-rehydration tests (4 tests)
+- Updated: `decide.test.ts` (quality + lsp gate branches), `quality-gate.test.ts` (sessionID + new directive text), `state.test.ts` (new fields)
+
 ## [0.3.5] — 2026-07-10
 
 ### 🌲 Worktree Support

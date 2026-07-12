@@ -5,32 +5,38 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { homedir } from "node:os"
-import { parse } from "jsonc-parser"
 import { createHash } from "node:crypto"
-import { Client } from "@modelcontextprotocol/sdk/client/index.js"
-import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 
-const DEFAULT_RAG_URL = "http://localhost:9002/tools/search"
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const MCP_EXPORT_MARKER = "hiai-opencode"
 
+/**
+ * Parse JSONC (JSON with comments/trailing commas) without an external dep.
+ * Strips // line comments, /* block comments *​/, and trailing commas, then
+ * JSON.parse. Strings are preserved (their contents are never treated as
+ * comments). Equivalent to the subset of `jsonc-parser`'s `parse` we used.
+ */
+function parseJsonc(text) {
+  const stripped = text.replace(
+    /("(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')|\/\/.*$|\/\*[\s\S]*?\*\/|,(?=\s*[}\]])/gm,
+    (_m, str) => (str !== undefined ? str : ""),
+  )
+  return JSON.parse(stripped)
+}
+
+// Parse a config file that may be JSON or JSONC. Always returns an object.
+function parseConfig(text) {
+  try {
+    return parseJsonc(text) ?? {}
+  } catch {
+    return {}
+  }
+}
+
+// Source of truth for MCP servers — MUST match src/features/mcp/registry.ts (2 servers).
+// context7 is an on-demand CLI skill (skill("explore/context7")), not an MCP server.
+// stitch/mempalace were intentionally removed in v0.3.0.
 const MCP_REGISTRY = {
-  mempalace: {
-    defaultEnabled: true,
-    requiredEnv: [],
-    check: checkMempalace,
-  },
-  stitch: {
-    defaultEnabled: true,
-    requiredEnv: ["STITCH_AI_API_KEY"],
-    authFallback: "stitch",
-    check: checkRemoteKeyOnly,
-  },
-  context7: {
-    defaultEnabled: true,
-    requiredEnv: [],
-    check: checkRemoteOptionalKey,
-  },
   "sequential-thinking": {
     defaultEnabled: true,
     requiredEnv: [],
@@ -39,7 +45,7 @@ const MCP_REGISTRY = {
   grep_app: {
     defaultEnabled: true,
     requiredEnv: [],
-    check: checkRemoteOptionalKey,
+    check: checkRemoteGrepApp,
   },
 }
 
@@ -95,7 +101,7 @@ function loadConfig() {
     try {
       return {
         path,
-        config: parse(readFileSync(path, "utf-8")) ?? {},
+        config: parseConfig(readFileSync(path, "utf-8")) ?? {},
       }
     } catch (error) {
       return {
@@ -149,51 +155,11 @@ function checkFirecrawlAuth() {
   }
 }
 
-function checkPgvectorConnectivity() {
-  const result = spawnSync("docker", ["exec", "ai-core-postgres", "psql", "-U", "aiuser", "-d", "ai_orchestration", "-c", "SELECT COUNT(*) FROM pg_extension WHERE extname = 'vector';"], {
-    encoding: "utf-8",
-    timeout: 10000,
-  })
-  if (result.status === 0 && result.stdout.includes("1 row")) {
-    return { level: "ok", detail: "pgvector extension active" }
-  }
-  if (result.status === 0 && result.stdout.includes("0 rows")) {
-    return { level: "warn", detail: "pgvector extension not installed (vector search unavailable)" }
-  }
-  return { level: "error", detail: "pgvector connectivity check failed (docker exec psql)" }
-}
-
-function checkDelegationPermissions(config) {
-  const readOnly = config?.delegation?.read_only ?? []
-  const noPty = config?.delegation?.no_pty ?? []
-  const writeDenied = readOnly.filter((a) => a.toLowerCase().includes("manager"))
-  const ptyDenied = noPty.filter((a) => a.toLowerCase().includes("strategist"))
-  const detail = [
-    writeDenied.length > 0 ? `manager write deny: [${writeDenied.join(", ")}]` : null,
-    ptyDenied.length > 0 ? `strategist pty deny: [${ptyDenied.join(", ")}]` : null,
-  ].filter(Boolean).join(" | ") || "delegation permissions not configured"
-  return { level: detail.includes("deny") ? "ok" : "warn", detail }
-}
-
-function checkMemPalaceHookStatus() {
-  const hookPath = join(PACKAGE_ROOT, "src", "hooks", "mempalace-auto-save", "handler.ts")
-  const handlerPath = join(PACKAGE_ROOT, "src", "hooks", "mempalace-auto-save", "index.ts")
-  const hookExists = existsSync(hookPath)
-  const handlerExists = existsSync(handlerPath)
-  if (hookExists && handlerExists) {
-    return { level: "ok", detail: "mem palace auto-save hook installed" }
-  }
-  if (hookExists) {
-    return { level: "warn", detail: "mem palace auto-save hook partial (handler.ts only)" }
-  }
-  return { level: "warn", detail: "mem palace auto-save hook not found" }
-}
-
 function checkOpenCodePluginRegistration() {
   for (const path of candidateOpenCodeConfigPaths()) {
     if (!existsSync(path)) continue
     try {
-      const parsed = parse(readFileSync(path, "utf-8")) ?? {}
+      const parsed = parseConfig(readFileSync(path, "utf-8")) ?? {}
       const pluginEntries = Array.isArray(parsed?.plugin) ? parsed.plugin : []
       const plugins = pluginEntries
         .map((entry) => typeof entry === "string" ? entry : Array.isArray(entry) ? entry[0] : "")
@@ -245,16 +211,6 @@ function assetPath(...segments) {
 function createMcpExport(config) {
   const servers = {}
 
-  if (enabled(config, "stitch")) {
-    servers.stitch = {
-      type: "http",
-      url: "https://stitch.googleapis.com/mcp",
-      headers: {
-        "X-Goog-Api-Key": config?.auth?.stitch || "${STITCH_AI_API_KEY}",
-      },
-    }
-  }
-
   if (enabled(config, "sequential-thinking")) {
     servers["sequential-thinking"] = {
       command: "node",
@@ -265,27 +221,20 @@ function createMcpExport(config) {
     }
   }
 
-  if (enabled(config, "mempalace")) {
-    const mempalacePython =
-      process.env.MEMPALACE_PYTHON?.trim()
-      || resolveEnvTemplate(config?.mcp?.mempalace?.pythonPath?.trim())
-
-    servers.mempalace = {
-      command: "node",
-      args: [assetPath("mcp", "mempalace.mjs"), "--palace", "./.opencode/palace"],
-      env: mempalacePython
-        ? { MEMPALACE_PYTHON: mempalacePython }
-        : undefined,
+  if (enabled(config, "grep_app")) {
+    servers.grep_app = {
+      type: "http",
+      url: "https://mcp.grep.app",
     }
   }
 
-  if (enabled(config, "context7")) {
-    servers.context7 = {
-      type: "http",
-      url: "https://mcp.context7.com/mcp",
-      headers: config?.auth?.context7 || process.env.CONTEXT7_API_KEY
-        ? { "X-API-KEY": config?.auth?.context7 || "${CONTEXT7_API_KEY}" }
-        : undefined,
+  // Also pass through any user-defined MCP servers not in the registry,
+  // as long as they carry a command/url (validated shape).
+  for (const [name, entry] of Object.entries(config?.mcp ?? {})) {
+    if (servers[name]) continue
+    if (entry && entry.enabled !== false) {
+      if (entry.command) servers[name] = { command: entry.command, args: entry.args ?? [] }
+      else if (entry.url) servers[name] = { type: "http", url: entry.url }
     }
   }
 
@@ -420,116 +369,9 @@ function checkNodeNpx() {
   }
 }
 
-function resolveVenvPythonCandidates(basePath) {
-  if (!basePath) return []
-  if (process.platform === "win32") {
-    return [
-      join(basePath, ".venv", "Scripts", "python.exe"),
-      join(basePath, "venv", "Scripts", "python.exe"),
-    ]
-  }
-
-  return [
-    join(basePath, ".venv", "bin", "python"),
-    join(basePath, ".venv", "bin", "python3"),
-    join(basePath, "venv", "bin", "python"),
-    join(basePath, "venv", "bin", "python3"),
-  ]
-}
-
-function pythonCandidates(config) {
-  const configured = process.env.MEMPALACE_PYTHON?.trim()
-    || resolveEnvTemplate(config?.mcp?.mempalace?.pythonPath?.trim())
-  const candidates = []
-  if (configured) candidates.push(configured)
-
-  for (const candidate of resolveVenvPythonCandidates(process.cwd())) {
-    if (existsSync(candidate)) candidates.push(candidate)
-  }
-
-  for (const candidate of resolveVenvPythonCandidates(PACKAGE_ROOT)) {
-    if (existsSync(candidate)) candidates.push(candidate)
-  }
-
-  for (const candidate of resolveVenvPythonCandidates(join(homedir(), ".config", "opencode", "plugins", "hiai-opencode"))) {
-    if (existsSync(candidate)) candidates.push(candidate)
-  }
-
-  if (process.platform === "win32") {
-    candidates.push("py", "python", "python3")
-  } else {
-    candidates.push("python3", "python")
-  }
-  return [...new Set(candidates)]
-}
-
-function canImportMempalace(command) {
-  const args =
-    command === "py"
-      ? ["-3", "-c", "import mempalace.mcp_server"]
-      : ["-c", "import mempalace.mcp_server"]
-  const result = spawnSync(command, args, {
-    stdio: "ignore",
-    timeout: 10000,
-    shell: process.platform === "win32",
-  })
-  return result.status === 0
-}
-
-function checkMempalace(config) {
-  if (hasCommand(process.platform === "win32" ? "uv.exe" : "uv")) {
-    return { level: "ok", detail: "uv available" }
-  }
-
-  for (const candidate of pythonCandidates(config)) {
-    if (canImportMempalace(candidate)) {
-      return { level: "ok", detail: `${candidate} with mempalace available` }
-    }
-  }
-
-  const hasPython = pythonCandidates(config).some((candidate) =>
-    hasCommand(candidate, candidate === "py" ? ["-3", "--version"] : ["--version"]),
-  )
-
-  return {
-    level: "error",
-    detail: hasPython ? "mempalace Python package not found" : "python not found",
-  }
-}
-
-function checkRemoteKeyOnly() {
-  return { level: "ok", detail: "remote endpoint configured" }
-}
-
-function checkRemoteOptionalKey(_config, name) {
-  if (name === "context7" && !process.env.CONTEXT7_API_KEY?.trim()) {
-    return { level: "ok", detail: "remote endpoint configured, API key optional/missing" }
-  }
-  return { level: "ok", detail: "remote endpoint configured" }
-}
-
-function detectMempalacePythonSource(config) {
-  const envPython = process.env.MEMPALACE_PYTHON?.trim()
-  if (envPython) {
-    return { source: "env:MEMPALACE_PYTHON", value: envPython }
-  }
-
-  const cfgPython = resolveEnvTemplate(config?.mcp?.mempalace?.pythonPath?.trim())
-  if (cfgPython) {
-    return { source: "config:mcp.mempalace.pythonPath", value: cfgPython }
-  }
-
-  const candidates = pythonCandidates(config)
-  if (candidates.length > 0) {
-    const resolved = candidates.find((candidate) =>
-      hasCommand(candidate, candidate === "py" ? ["-3", "--version"] : ["--version"]),
-    )
-    if (resolved) {
-      return { source: "auto-detect", value: resolved }
-    }
-  }
-
-  return { source: "none", value: "" }
+function checkRemoteGrepApp() {
+  // grep.app requires no API key; just confirm the endpoint is reachable.
+  return { level: "ok", detail: "remote endpoint configured (no key required)" }
 }
 
 function parseProviderFromModelId(modelId) {
@@ -620,22 +462,27 @@ function checkSkillMaterialization() {
   }
 }
 
+// Canonical agent roster — MUST match REQUIRED_AGENT_KEYS in src/config.ts.
+// Legacy aliases map old slot names → canonical names (no separate migration layer exists).
 const REQUIRED_MODEL_SLOTS = [
-  "bob", "coder", "strategist", "manager", "critic",
-  "designer", "researcher", "writer", "vision", "sub"
+  "bob", "build", "plan", "manager", "critic",
+  "designer", "explore", "writer", "vision", "general",
 ]
 
 const DEPRECATED_MODEL_KEYS = {
+  "coder": "build",
+  "strategist": "plan",
+  "researcher": "explore",
+  "sub": "general",
   "guard": "manager",
-  "brainstormer": "writer"
+  "brainstormer": "writer",
 }
 
 function getAgentSummary(config) {
-  const visible = [
-    "Bob", "Coder", "Strategist", "Manager", "Critic",
-    "Designer", "Researcher", "Writer", "Vision"
-  ]
-  const hidden = ["Agent Skills", "Sub", "build", "plan"]
+  // Visible in the picker: bob (primary), plan (all), general (all).
+  const visible = ["bob", "plan", "general"]
+  // Hidden subagents.
+  const hidden = ["manager", "critic", "designer", "explore", "writer", "vision", "build"]
 
   const models = config?.models ?? {}
   const modelKeys = Object.keys(models)
@@ -649,7 +496,7 @@ function getAgentSummary(config) {
   // Check for deprecated keys
   const deprecated = modelKeys.filter(k => k in DEPRECATED_MODEL_KEYS)
   const deprecatedDetail = deprecated.length > 0
-    ? `; deprecated keys=[${deprecated.join(" → " + DEPRECATED_MODEL_KEYS[deprecated[0]] + ", ")}]`
+    ? `; deprecated keys=[${deprecated.map(k => `${k}→${DEPRECATED_MODEL_KEYS[k]}`).join(", ")}]`
     : ""
 
   // Check for empty model values
@@ -728,6 +575,19 @@ function checkLspAvailability(config) {
   }
 }
 
+// Lazy-load the MCP SDK only when stdio probing is actually requested (doctor).
+// This keeps `hiai-opencode mcp-status`/`export-mcp` working even if the SDK is
+// not installed in the consumer's environment — probing is best-effort.
+async function loadMcpSdk() {
+  try {
+    const mod = await import("@modelcontextprotocol/sdk/client/index.js")
+    const transport = await import("@modelcontextprotocol/sdk/client/stdio.js")
+    return { Client: mod.Client, StdioClientTransport: transport.StdioClientTransport }
+  } catch {
+    return null
+  }
+}
+
 async function probeStdioMcp(serverName, serverConfig) {
   const command = serverConfig?.command
   const args = serverConfig?.args ?? []
@@ -735,13 +595,21 @@ async function probeStdioMcp(serverName, serverConfig) {
     return { level: "warn", detail: `${serverName}: missing command` }
   }
 
+  const sdk = await loadMcpSdk()
+  if (!sdk) {
+    return {
+      level: "warn",
+      detail: `${serverName}: probe skipped (@modelcontextprotocol/sdk not installed; run: npm i -g @modelcontextprotocol/sdk)`,
+    }
+  }
+
   const env = { ...process.env, ...(serverConfig?.env ?? {}) }
-  const client = new Client(
+  const client = new sdk.Client(
     { name: "hiai-opencode-doctor", version: "0.1.0" },
     { capabilities: { tools: {}, prompts: {}, resources: {} } },
   )
 
-  const transport = new StdioClientTransport({
+  const transport = new sdk.StdioClientTransport({
     command,
     args,
     env,
@@ -816,9 +684,14 @@ function statusIcon(level) {
   return "❌"
 }
 
+// Aggregate check result levels so doctor/mcp-status can exit non-zero on
+// hard failures — usable as a CI gate. Returns true when healthy.
 async function mcpStatus(options = {}) {
   const { path, config, error } = loadConfig()
   const staticMcpPath = join(process.cwd(), ".opencode", ".mcp.json")
+  let sawError = false
+  const track = (level) => { if (level === "error" || level === "fail") sawError = true }
+
   console.log(options.doctor ? "hiai-opencode doctor" : "hiai-opencode mcp-status")
   console.log(`Config: ${path ?? "not found; using defaults"}`)
   if (error) console.log(`Config parse warning: ${error}`)
@@ -844,6 +717,7 @@ async function mcpStatus(options = {}) {
     }
 
     const result = await entry.check(config, name)
+    track(result.level)
     console.log(`${statusIcon(result.level)} ${name.padEnd(20)} - ${result.detail}`)
   }
 
@@ -853,49 +727,45 @@ async function mcpStatus(options = {}) {
 
     const freshness = checkStaticMcpFreshness(staticMcpPath, config)
     const freshIcon = freshness.status === "fresh" ? "✅" : freshness.status === "missing" ? "⚠️ " : "❌"
+    if (freshness.status === "stale" || freshness.status === "drift-unmanaged") sawError = true
     console.log(`${freshIcon} static .mcp.json freshness - ${freshness.detail}`)
 
     const connect = checkOpenCodeConnectVisibility(config)
+    track(connect.level)
     console.log(`${statusIcon(connect.level)} OpenCode Connect visibility - ${connect.detail}`)
 
     const pluginRegistration = checkOpenCodePluginRegistration()
+    track(pluginRegistration.level)
     console.log(`${statusIcon(pluginRegistration.level)} OpenCode plugin registration - ${pluginRegistration.detail}`)
 
     const skills = checkSkillMaterialization()
+    track(skills.level)
     console.log(`${statusIcon(skills.level)} Skill materialization - ${skills.detail}`)
 
     const agents = getAgentSummary(config)
+    track(agents.level)
     console.log(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
 
     // Model slot value validation
     const modelIssues = checkModelSlotValues(config)
     for (const issue of modelIssues) {
+      track(issue.level)
       console.log(`${statusIcon(issue.level)} ${issue.check}: ${issue.detail}`)
     }
 
     const lsp = checkLspAvailability(config)
+    track(lsp.level)
     console.log(`${statusIcon(lsp.level)} LSP runtime availability - ${lsp.detail}`)
 
-    const mempalacePython = detectMempalacePythonSource(config)
-    const mempalacePythonIcon = mempalacePython.value ? "✅" : "⚠️ "
-    console.log(`${mempalacePythonIcon} MemPalace python selection - ${mempalacePython.source}${mempalacePython.value ? ` (${mempalacePython.value})` : ""}`)
-
-    const pgvector = checkPgvectorConnectivity()
-    console.log(`${statusIcon(pgvector.level)} pgvector connectivity - ${pgvector.detail}`)
-
-    const delegation = checkDelegationPermissions(config)
-    console.log(`${statusIcon(delegation.level)} Delegation permissions - ${delegation.detail}`)
-
-    const mempalaceHook = checkMemPalaceHookStatus()
-    console.log(`${statusIcon(mempalaceHook.level)} MemPalace auto-save hook - ${mempalaceHook.detail}`)
-
     const firecrawl = checkFirecrawlAuth()
+    track(firecrawl.level)
     console.log(`${statusIcon(firecrawl.level)} Firecrawl auth - ${firecrawl.detail}`)
 
     console.log("")
     console.log("MCP Tool Probes:")
     const probeResults = await probeMcpServers(config)
     for (const probe of probeResults) {
+      track(probe.level)
       console.log(`${statusIcon(probe.level)} ${probe.detail}`)
     }
 
@@ -905,6 +775,8 @@ async function mcpStatus(options = {}) {
     console.log("  - opencode debug config")
     console.log("  - opencode mcp list --print-logs --log-level INFO")
   }
+
+  return !sawError
 }
 
 async function runDiagnose(outputPath) {
@@ -922,13 +794,17 @@ async function runDiagnose(outputPath) {
   sections.push("ENVIRONMENT (keys only, no values):")
   const requiredEnvKeys = [
     "FIRECRAWL_API_KEY",
-    "STITCH_AI_API_KEY",
-    "MEMPALACE_PYTHON",
-    "HIAI_MCP_AUTO_INSTALL",
   ]
   const optionalEnvKeys = [
+    "HIAI_MCP_AUTO_INSTALL",
+    "HIAI_OPENCODE_AUTO_EXPORT_MCP",
+    "HIAI_OPENCODE_MCP_EXPORT_PATH",
+    "HIAI_OPENCODE_EXPORT_MCP_MODE",
     "CONTEXT7_API_KEY",
-    "OPENCODE_RAG_URL",
+    "AGENT_BROWSER_SESSION",
+    "GREP_APP_API_KEY",
+    "OLLAMA_BASE_URL",
+    "OLLAMA_MODEL",
   ]
   const envKeys = [...requiredEnvKeys, ...optionalEnvKeys]
   let missingRequired = 0
@@ -953,12 +829,13 @@ async function runDiagnose(outputPath) {
   sections.push("")
 
   sections.push("TOOLS REGISTERED:")
-  const toolCount = 26
-  sections.push(`  ~${toolCount} tools (from tool-registry.ts)`)
+  // Count matches the tool registrations in src/index.ts hooks.tool object.
+  const toolCount = 24
+  sections.push(`  ~${toolCount} tools (registered in src/index.ts)`)
   sections.push("")
 
   sections.push("AGENTS:")
-  const agents = ["bob", "coder", "strategist", "guard", "critic", "designer", "researcher", "manager", "brainstormer", "vision"]
+  const agents = ["bob", "build", "plan", "manager", "critic", "designer", "explore", "writer", "vision", "general"]
   for (const agent of agents) {
     const model = config?.models?.[agent]?.model
     sections.push(`  ${agent}: ${model ? `model=${model}` : "(default)"}`)
@@ -1016,12 +893,14 @@ async function main() {
   }
 
   if (command === "mcp-status") {
-    await mcpStatus()
+    const ok = await mcpStatus()
+    if (!ok) process.exit(1)
     return
   }
 
   if (command === "doctor") {
-    await mcpStatus({ doctor: true })
+    const ok = await mcpStatus({ doctor: true })
+    if (!ok) process.exit(1)
     return
   }
 

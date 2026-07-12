@@ -89,8 +89,8 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
 - Register `@tarquinen/opencode-dcp` only when the user wants Dynamic Context Pruning; it is a separate OpenCode plugin.
 - Do not add MCP server npm packages to the OpenCode `plugin` array.
 - Use `hiai-opencode.json` as the project-level service switchboard.
-- Use `src/mcp/registry.ts` as the source of truth for default MCP launch wiring.
-- Keep skill discovery deterministic by default: packaged plugin skills, generated builtin skills, explicit config sources, and project `.opencode/skills`.
+- Use [src/features/mcp/registry.ts](src/features/mcp/registry.ts) as the source of truth for default MCP launch wiring.
+- Skill discovery is deterministic: only packaged plugin skills (the `skills/` directory) are indexed. There is no `skill_discovery` config block in the current codebase.
 - Do not enable global OpenCode, Claude, or Agents skill folders unless the user explicitly asks.
 - Use `bob.env.example` as the key template, but never print, invent, commit, or hardcode secret values.
 - Prefer user-level or project-local installs. Do not use sudo/admin rights unless the user explicitly asks.
@@ -106,15 +106,8 @@ When a user asks OpenCode or another agent to finish installing this plugin, fol
    - `uv --version` when available
 2. Check plugin registration with `opencode debug config`.
 3. Find or create `hiai-opencode.json` in the project root or `.opencode/`.
-4. Configure the `mcp` object there. Disable services that cannot run on the host.
-5. Keep `skill_discovery` clean unless the user opts into external folders:
-   - `config_sources: true`
-   - `project_opencode: true`
-   - `global_opencode: false`
-   - `project_claude: false`
-   - `global_claude: false`
-   - `project_agents: false`
-   - `global_agents: false`
+4. Configure the `mcp` object there. Disable services that cannot run on the host. Current servers: `sequential-thinking`, `grep_app`.
+5. Skills are auto-discovered from the packaged `skills/` directory only — no `skill_discovery` config is needed.
 6. Check environment variables without printing values (see `bob.env.example` for canonical list):
    - `FIRECRAWL_API_KEY` (required for Firecrawl CLI skill)
    - `CONTEXT7_API_KEY` (optional/on-demand for Context7 CLI skill)
@@ -215,14 +208,14 @@ There is one source of truth for model IDs:
 
 The runtime loader is:
 
-- [src/config/defaults.ts](src/config/defaults.ts)
+- [src/config.ts](src/config.ts) — `loadConfig()`, `mergeConfig()`, `DEFAULT_CONFIG`
 
 Users configure the 10 primary agent model slots under `models`: `bob`, `build`, `plan`, `manager`, `critic`, `designer`, `explore`, `writer`, `vision`, and `general`.
-Hidden agents and task categories are derived internally in `src/config/defaults.ts`.
+Hidden agents and task categories are derived internally in [src/config.ts](src/config.ts).
 Use fully qualified model IDs. Do not introduce local aliases like `hiai-fast`, `sonnet`, `fast`, or `high`.
 When helping a user choose model IDs, tell them to connect providers in OpenCode, run `opencode models`, and copy the exact `provider/model-id` strings into `hiai-opencode.json`. Do not invent provider prefixes.
 
-> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general` are handled by bob.json model slot aliases.
+> **Legacy name mapping**: `coder`→`build`, `strategist`→`plan`, `researcher`→`explore`, `sub`→`general`, `guard`→`manager`, `brainstormer`→`writer`. There is no separate migration module — these mappings exist only in the CLI doctor diagnostics (`DEPRECATED_MODEL_KEYS` in [assets/cli/hiai-opencode.mjs](assets/cli/hiai-opencode.mjs)).
 
 ## Change Map
 
@@ -231,86 +224,81 @@ Use this table when you need to change something and want the right file immedia
 | Goal | Edit this first | Why |
 |---|---|---|
 | Change a user-facing default model slot | [hiai-opencode.json](hiai-opencode.json) | This is the canonical model source |
-| Change how categories inherit the 10 model slots | [src/config/defaults.ts](src/config/defaults.ts) | Category routing is internal |
+| Change internal defaults (permissions, mcp, lsp, completion) | [src/config.ts](src/config.ts) | `DEFAULT_CONFIG` lives here |
 | Change MCP/LSP user-facing switches | [hiai-opencode.json](hiai-opencode.json) | Users only toggle enabled state there |
-| Change Bob behavior or prompt text | `src/agents/bob/*` | Bob prompt authoring lives there |
-| Change Coder (build slot) behavior or prompt text | `src/agents/coder/*` | Coder prompt authoring lives there |
-| Change Strategist (plan slot) behavior or prompt text | `src/agents/strategist/*` | Strategist prompt authoring lives there |
-| Change Manager behavior or prompt text | `src/agents/manager/*` | Manager prompt authoring lives there |
-| Change Critic prompt text | `src/agents/critic/*` | Critic prompt authoring lives there |
-| Change Vision prompt text | [src/agents/ui.ts](src/agents/ui.ts) | Vision lives there |
-| Change Explorer (explore slot) prompt text | `src/agents/explore.ts` | Explorer prompt authoring lives there |
-| Change reusable policy blocks used by several agents | `src/agents/prompt-library/*` | Shared prompt sections live there |
-| Change dynamic prompt sections assembled from agent/tool/category context | `src/agents/dynamic-agent-*` | Dynamic sections are built there |
-| Change runtime display names | [src/agents/index.ts](src/agents/index.ts) | Agent definitions and display names live in `createAllAgents()` |
-| Change legacy alias resolution | `src/shared/migration/*` | Compatibility mapping lives there |
-| Change which agents are visible or hidden | [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) | Final runtime visibility is forced there |
-| Change runtime fallback descriptions | [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) | Final descriptions can be injected there |
-| Change strategist prompt assembly or prompt append behavior | [src/plugin-handlers/strategist-agent-config-builder.ts](src/plugin-handlers/strategist-agent-config-builder.ts) | Strategist is assembled partly outside `src/agents` |
-| Change closure protocol appended to prompts | [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts) | It is injected after prompt construction |
-| Change prompt override / prompt_append behavior | `src/agents/builtin-agents/agent-overrides.ts` | Override merge logic lives there |
-| Change environment context appended to prompts | `src/agents/builtin-agents/environment-context.ts` | Runtime environment prompt injection lives there |
-| Change skill discovery source defaults | [src/config/schema/skill-discovery.ts](src/config/schema/skill-discovery.ts), [src/plugin/skill-discovery-config.ts](src/plugin/skill-discovery-config.ts) | Controls opt-in external skill folders |
-| Change skill source loading behavior | [src/plugin/skill-context.ts](src/plugin/skill-context.ts), [src/plugin-handlers/command-config-handler.ts](src/plugin-handlers/command-config-handler.ts) | Skills and skill-backed commands must stay aligned |
-| Change worktree tools or manager | `src/features/worktree/index.ts`, `src/tools/worktree.ts` | Worktree isolation feature core |
-| Change worktree hooks | `src/hooks/worktree-lifecycle.ts` | Worktree lifecycle hook implementations |
-| Change worktree skill | `skills/general/using-git-worktrees/SKILL.md` | Packaged worktree skill definition |
-| Change worktree prompt integration | `src/prompt-library/worktree.ts` | Worktree context for agent prompts |
-| Change MCP defaults | [src/mcp/registry.ts](src/mcp/registry.ts) | Default MCP wiring lives there |
-| Change OpenCode MCP assembly | [src/mcp/index.ts](src/mcp/index.ts) | Final MCP config assembly lives there |
-| Change local MCP helper launcher logic | `assets/mcp/*` | Runtime launcher scripts live there |
+| Change Bob behavior or prompt text | [src/agents/bob.ts](src/agents/bob.ts) | Bob prompt authoring lives there |
+| Change Coder (build slot) behavior or prompt text | [src/agents/build.ts](src/agents/build.ts) | Build prompt authoring lives there |
+| Change Strategist (plan slot) behavior or prompt text | [src/agents/plan.ts](src/agents/plan.ts) | Plan prompt authoring lives there |
+| Change Manager behavior or prompt text | [src/agents/manager.ts](src/agents/manager.ts) | Manager prompt authoring lives there |
+| Change Critic prompt text | [src/agents/critic.ts](src/agents/critic.ts) | Critic prompt authoring lives there |
+| Change Designer prompt text | [src/agents/designer.ts](src/agents/designer.ts) | Designer prompt authoring lives there |
+| Change Writer prompt text | [src/agents/writer.ts](src/agents/writer.ts) | Writer prompt authoring lives there |
+| Change Vision prompt text | [src/agents/vision.ts](src/agents/vision.ts) | Vision prompt authoring lives there |
+| Change Explorer (explore slot) prompt text | [src/agents/explore.ts](src/agents/explore.ts) | Explore prompt authoring lives there |
+| Change General slot prompt text | [src/agents/general.ts](src/agents/general.ts) | General prompt authoring lives there |
+| Change reusable policy blocks used by several agents | [src/prompt-library/*](src/prompt-library) | Shared prompt sections live there |
+| Change runtime display names, visibility, mode | [src/agents/index.ts](src/agents/index.ts) + [src/index.ts](src/index.ts) | `createAllAgents()` defines 8 agents; native upgrades for explore/plan/build/general in `hooks.config` |
+| Change per-agent permissions/tool restrictions | [src/permissions.ts](src/permissions.ts) | `applyAgentPermissions()` maps restrictions to deny/disable |
+| Change closure protocol appended to prompts | [src/shared/closure.ts](src/shared/closure.ts) | `CLOSURE_SCHEMA_PROMPT` + `validateClosure()` live there |
+| Change prompt override / prompt_append behavior | [src/agents/index.ts](src/agents/index.ts) | `applyPromptOverride()` lives there |
+| Change skill tool behavior | [src/tools/skill.ts](src/tools/skill.ts) | `createSkillTool()` loads and serves SKILL.md files |
+| Change worktree tools or manager | [src/features/worktree/index.ts](src/features/worktree/index.ts), [src/tools/worktree.ts](src/tools/worktree.ts) | Worktree isolation feature core |
+| Change worktree hooks | [src/hooks/worktree-lifecycle.ts](src/hooks/worktree-lifecycle.ts) | Worktree lifecycle hook implementations |
+| Change worktree skill | [skills/general/using-git-worktrees/SKILL.md](skills/general/using-git-worktrees/SKILL.md) | Packaged worktree skill definition |
+| Change worktree prompt integration | [src/prompt-library/worktree.ts](src/prompt-library/worktree.ts) | Worktree context for agent prompts |
+| Change MCP defaults (server set) | [src/features/mcp/registry.ts](src/features/mcp/registry.ts) | `MCP_REGISTRY` + `getMcpConfig()` live there |
+| Change MCP auto-export behavior | [src/features/mcp/auto-export.ts](src/features/mcp/auto-export.ts) | `autoExportStaticMcp()` writes `.opencode/.mcp.json` |
+| Change MCP assembly into OpenCode config | [src/index.ts](src/index.ts) `hooks.config` | Final MCP dict assembly happens inline there |
 | Change npm bootstrap behavior for MCP/LSP tools | [assets/runtime/npm-package-runner.mjs](assets/runtime/npm-package-runner.mjs) | Shared npm bootstrap logic lives there |
-| Change LSP defaults | [src/config/defaults.ts](src/config/defaults.ts) | LSP defaults live there |
+| Change LSP defaults | [src/config.ts](src/config.ts) | `DEFAULT_CONFIG.lsp` lives there |
+| Change completion-controller gates | [src/features/completion-controller/](src/features/completion-controller) | `decide()`, state, signals live there |
+| Change circuit breaker thresholds | [src/features/background-manager/index.ts](src/features/background-manager/index.ts) | `BackgroundManager` circuit breaker config |
+| Change CLI commands (doctor, mcp-status, export-mcp) | [assets/cli/hiai-opencode.mjs](assets/cli/hiai-opencode.mjs) | CLI implementation lives there |
 
 ## Prompting Layout
 
-Prompting is layered.
+Prompting is layered. Each agent prompt is a template literal assembled from imported fragments.
 
-### Layer 1: Agent Factory Entry
+### Layer 1: Agent Prompt Source Files
 
-These decide the high-level config object for each agent:
+Each agent's prompt is authored in a single flat file under `src/agents/`:
 
-- Bob: `src/agents/bob/*`
-- Coder: `src/agents/coder/*`
-- Strategist: `src/agents/strategist/*`
-- Manager: `src/agents/manager/*`
-- Critic: `src/agents/critic/*`
-- Vision: [src/agents/ui.ts](src/agents/ui.ts)
-- Researcher: [src/agents/researcher.ts](src/agents/researcher.ts)
+- Bob: [src/agents/bob.ts](src/agents/bob.ts)
+- Build (Coder): [src/agents/build.ts](src/agents/build.ts)
+- Plan (Strategist): [src/agents/plan.ts](src/agents/plan.ts)
+- Manager: [src/agents/manager.ts](src/agents/manager.ts)
+- Critic: [src/agents/critic.ts](src/agents/critic.ts)
+- Designer: [src/agents/designer.ts](src/agents/designer.ts)
+- Writer: [src/agents/writer.ts](src/agents/writer.ts)
+- Vision: [src/agents/vision.ts](src/agents/vision.ts)
+- Explore: [src/agents/explore.ts](src/agents/explore.ts)
+- General: [src/agents/general.ts](src/agents/general.ts)
 
-### Layer 2: Model-Specific Prompt Variants
+There are no model-specific prompt variants — each agent has a single unified prompt.
 
-Examples:
+### Layer 2: Shared Prompt Fragments
 
-- Bob: `src/agents/bob/agent.ts` (unified model-agnostic factory, no model-specific variants)
-- Coder: `src/agents/coder/agent.ts`, `src/agents/coder/core.ts` (model routing via index.ts)
-- Strategist: `src/agents/strategist/index.ts` (mode variants via sub-directory files)
-- Manager: `src/agents/manager/agent.ts`, `src/agents/manager/default.ts`, `src/agents/manager/default-prompt-sections.ts`
+Reusable policy/behavior blocks imported by the agent prompts, living under `src/prompt-library/`:
 
-### Layer 3: Shared Prompt Sections
+- [src/prompt-library/browser.ts](src/prompt-library/browser.ts) — `BROWSER_VIA_VISION`
+- [src/prompt-library/caveman.ts](src/prompt-library/caveman.ts) — caveman protocol fragments
+- [src/prompt-library/native-memory.ts](src/prompt-library/native-memory.ts) — native memory/tasks reminders
+- [src/prompt-library/postgres-rules.ts](src/prompt-library/postgres-rules.ts) — DB query rules
+- [src/prompt-library/workspace.ts](src/prompt-library/workspace.ts) — `getWorkspaceContext()`
+- [src/prompt-library/worktree.ts](src/prompt-library/worktree.ts) — `WORKTREE_AWARENESS`
 
-These are the reusable policy/prompt building blocks:
+### Layer 3: Runtime Prompt Injection
 
-- `src/agents/prompt-library/*`
-- `src/agents/dynamic-agent-prompt-builder.ts`
-- `src/agents/dynamic-agent-policy-sections.ts`
+Prompt content appended/transformed after the source prompt is built:
 
-### Layer 3.5: Runtime Prompt Injection
-
-Prompt content can also be appended after the source prompt is built:
-
-- `src/agents/builtin-agents/agent-overrides.ts`
-- `src/agents/builtin-agents/environment-context.ts`
-- [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts)
-- [src/plugin-handlers/strategist-agent-config-builder.ts](src/plugin-handlers/strategist-agent-config-builder.ts)
+- [src/shared/closure.ts](src/shared/closure.ts) — `CLOSURE_SCHEMA_PROMPT` + `validateClosure()`
+- [src/hooks/closure-injector.ts](src/hooks/closure-injector.ts) — appends closure schema when missing
+- [src/hooks/caveman-system-injector.ts](src/hooks/caveman-system-injector.ts) — resolves agent identity and injects caveman protocol
+- [src/agents/index.ts](src/agents/index.ts) — `applyPromptOverride()` applies `prompt_append`
 
 ### Layer 4: Runtime Assembly
 
-This is where names, visibility, descriptions, and compatibility are normalized:
-
-- [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
-
-If an agent prompt seems correct in source but wrong in runtime, inspect layer 4 first.
+Final agent registration into OpenCode's `cfg.agent` dict happens in the `hooks.config` callback in [src/index.ts](src/index.ts). This is where model resolution, visibility, mode, temperature, thinking budgets, and per-agent permissions (`applyAgentPermissions`) are applied. If an agent prompt looks correct in source but wrong at runtime, inspect the `hooks.config` callback first.
 
 ## Prompting Truth Model
 
@@ -318,10 +306,10 @@ Do not treat `src/agents` as the only source of truth for the final runtime prom
 
 The correct model is:
 
-1. `src/agents` is the main prompt authoring layer
-2. shared prompt-library and dynamic-agent files contribute reusable sections
-3. runtime injections can append or alter the prompt after source construction
-4. plugin handlers can still change final runtime behavior, naming, visibility, and descriptions
+1. `src/agents/*.ts` is the main prompt authoring layer
+2. `src/prompt-library/*.ts` contributes reusable fragments imported by agent prompts
+3. runtime hooks (closure-injector, caveman-system-injector) can append or alter prompts
+4. `hooks.config` in [src/index.ts](src/index.ts) applies model, visibility, permissions
 
 So:
 
@@ -332,23 +320,30 @@ So:
 
 Default MCP wiring lives in:
 
-- [src/mcp/registry.ts](src/mcp/registry.ts)
+- [src/features/mcp/registry.ts](src/features/mcp/registry.ts) — `MCP_REGISTRY` (2 servers) + `getMcpConfig()`
 
-OpenCode MCP config assembly lives in:
+OpenCode MCP config assembly happens inline in:
 
-- [src/mcp/index.ts](src/mcp/index.ts)
+- [src/index.ts](src/index.ts) `hooks.config` callback
+
+Static `.opencode/.mcp.json` auto-export:
+
+- [src/features/mcp/auto-export.ts](src/features/mcp/auto-export.ts) — `autoExportStaticMcp()` writes the file at startup (controlled by `HIAI_OPENCODE_AUTO_EXPORT_MCP`)
 
 Runtime helper assets live in:
 
-- [assets/mcp](assets/mcp)
-- [assets/runtime](assets/runtime)
+- [assets/runtime/npm-package-runner.mjs](assets/runtime/npm-package-runner.mjs) — shared npm bootstrap
 
-Current MCP set (v0.3.0):
+> **Note**: The `assets/mcp/` directory was removed in v0.3.6 — the mempalace launcher is gone.
 
-- `sequential-thinking`
-- `grep_app`
+Current MCP set (v0.3.0+):
+
+- `sequential-thinking` — local, npx-backed
+- `grep_app` — remote, no key required
 
 **Removed in v0.3.0**: `mempalace`, `stitch`, `context7` (removed from default MCP registry). Context7 is available as an on-demand CLI skill via `skill("explore/context7")`.
+
+The CLI's `MCP_REGISTRY` in [assets/cli/hiai-opencode.mjs](assets/cli/hiai-opencode.mjs) must mirror the runtime registry — keep them in sync when adding/removing servers.
 
 ## Writing And Website Copy
 
@@ -446,19 +441,9 @@ Common service keys:
 - `HIAI_OPENCODE_MCP_EXPORT_PATH`
 - `HIAI_OPENCODE_EXPORT_MCP_MODE`
 
-## MemPalace (Legacy Reference)
+## MemPalace (Removed)
 
-**Canonical taxonomy**: `src/agents/prompt-library/mempalace-taxonomy.ts` (single source of truth — 14 rooms). Note: MemPalace MCP was removed from the default MCP registry in v0.3.0. This section documents the legacy taxonomy for manual setup.
-
-Wing conventions:
-- `wing: "hiai-opencode"` — global/plugin-wide memory
-- `wing: "<project-name>"` — per-project memory (e.g., "amigo", "webs")
-- `wing: "wing_<agent>"` — agent-specific career diaries
-
-Rooms: decisions, bugs, config, agents, architecture, plans, tasks, reviews, designs, sessions, errors, patterns, constraints, failed-approaches, diary.
-
-Use `mempalace_add_drawer(wing, room, content)` for structured data.
-Use `mempalace_diary_write(agent_name, entry)` for free-form session summaries.
+MemPalace MCP was removed from the default registry in v0.3.0, and the bundled launcher (`assets/mcp/mempalace.mjs`) was removed in v0.3.6. The host runtime provides a native `memory` tool. Do not re-add a memory MCP unless the user explicitly asks.
 
 ## Mental Map
 
@@ -509,7 +494,7 @@ This most often affects:
 
 ## Closure Protocol
 
-All agents MUST wrap their final response in a structured `<CLOSURE>` block. This is injected into every agent prompt via `buildAgentIdentitySection()` in [src/agents/prompt-library/identity.ts](src/agents/prompt-library/identity.ts).
+All agents MUST wrap their final response in a structured `<CLOSURE>` block. The schema prompt is injected into agent prompts via `CLOSURE_SCHEMA_PROMPT` from [src/shared/closure.ts](src/shared/closure.ts), and the `closure-injector` hook ([src/hooks/closure-injector.ts](src/hooks/closure-injector.ts)) appends it when missing.
 
 ### Schema
 
@@ -528,27 +513,27 @@ All agents MUST wrap their final response in a structured `<CLOSURE>` block. Thi
 | Value | Meaning | Used By |
 |-------|---------|---------|
 | `done` | Task completed successfully | All agents |
-| `accept` | Reviewer approved the proposed changes | Critic, Quality Guardian |
-| `reject` | Reviewer denied the changes with feedback | Critic, Quality Guardian |
+| `accept` | Reviewer approved the proposed changes | Critic |
+| `reject` | Reviewer denied the changes with feedback | Critic |
 
-**WARNING**: Responses without a valid `<CLOSURE>` block will be automatically REJECTED by the system.
+The `readiness` value is validated against this enum by `validateClosure()` in [src/shared/closure.ts](src/shared/closure.ts).
 
 ### Relationship to `<promise>DONE</promise>`
 
-The ralph-loop and ULW loop continuation systems use `<promise>DONE</promise>` as their signal to stop iterating. This is separate from `<CLOSURE>`:
+The loop continuation system uses `<promise>DONE</promise>` as its signal to stop iterating. This is separate from `<CLOSURE>`:
 
 - `<CLOSURE>` — task completion marker, required on every agent response
-- `<promise>DONE</promise>` — ralph-loop/ULW loop continuation signal, stops the loop when emitted
+- `<promise>DONE</promise>` — loop continuation signal, stops the loop when emitted
 
-Both can appear together; they do not conflict. The closure validator lives in [src/shared/closure-protocol.ts](src/shared/closure-protocol.ts).
+Both can appear together; they do not conflict.
 
 ### When to Inspect Closure Injection
 
 If an agent response is missing `<CLOSURE>` at runtime but the source prompts look correct, check in order:
 
-1. Does the agent factory call `buildAgentIdentitySection()`? (located in [src/agents/prompt-library/identity.ts](src/agents/prompt-library/identity.ts))
-2. Does `src/shared/closure-protocol.ts` export the correct `CLOSURE_SCHEMA_PROMPT`?
-3. Does `src/agents/builtin-agents/agent-overrides.ts` or [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts) strip or override the closure injection?
+1. Does the agent prompt import and interpolate `CLOSURE_SCHEMA_PROMPT` from [src/shared/closure.ts](src/shared/closure.ts)?
+2. Is the `closure-injector` hook disabled in config (`hooks.disabled`)?
+3. Does `validateClosure()` in [src/shared/closure.ts](src/shared/closure.ts) correctly parse the block?
 
 ## Troubleshooting
 
@@ -556,7 +541,7 @@ If an agent response is missing `<CLOSURE>` at runtime but the source prompts lo
 
 1. Run `hiai-opencode doctor` and look for the specific missing or unknown key
 2. Check your `hiai-opencode.json` against the schema in [config/hiai-opencode.schema.json](config/hiai-opencode.schema.json)
-3. Verify all keys in `models`, `mcp`, and `skill_discovery` match documented shapes
+3. Verify all keys in `models` and `mcp` match documented shapes
 4. Run `opencode debug config` to confirm the plugin is registered
 
 ### `hiai-opencode mcp-status` shows all services as ⚠️ missing
@@ -628,16 +613,15 @@ If `HIAI_MCP_AUTO_INSTALL` is not disabled, the launcher will attempt `python -m
 
 ### Agent prompt looks correct in source but wrong at runtime
 
-The final runtime prompt is assembled from multiple layers beyond `src/agents/`:
+The final runtime prompt is assembled from multiple layers:
 
-1. Source prompt in `src/agents/<agent>/*.ts`
-2. Model-specific variant in `src/agents/<agent>/<model>.ts`
-3. Shared prompt-library blocks in `src/agents/prompt-library/*`
-4. Runtime injection from `src/agents/builtin-agents/agent-overrides.ts` and `src/agents/builtin-agents/environment-context.ts`
-5. Closure protocol from `src/shared/closure-protocol.ts`
-6. Plugin handler normalization in [src/plugin-handlers/agent-config-handler.ts](src/plugin-handlers/agent-config-handler.ts)
+1. Source prompt in `src/agents/<agent>.ts` (flat files, no subdirectories)
+2. Shared prompt fragments from `src/prompt-library/*.ts` (imported by agent prompts)
+3. Runtime injection from `src/hooks/closure-injector.ts` and `src/hooks/caveman-system-injector.ts`
+4. Closure protocol from [src/shared/closure.ts](src/shared/closure.ts)
+5. Agent registration assembly in [src/index.ts](src/index.ts) `hooks.config` (model, visibility, permissions)
 
-Inspect layer 6 first when runtime output diverges from source.
+Inspect the `hooks.config` callback in [src/index.ts](src/index.ts) first when runtime output diverges from source.
 
 ### Background task disappeared / circuit breaker triggered
 

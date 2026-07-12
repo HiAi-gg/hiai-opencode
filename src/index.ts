@@ -19,6 +19,7 @@ import {
 } from "./features/completion-controller";
 import { createDreamDistillHook } from "./features/dream-distill";
 import { getMcpConfig } from "./features/mcp/registry";
+import { autoExportStaticMcp } from "./features/mcp/auto-export";
 import { initShellEnv } from "./features/shell-env";
 import { initTelemetry, shutdownTelemetry } from "./features/telemetry/index";
 import {
@@ -26,6 +27,7 @@ import {
   WorkspaceAdapter,
 } from "./features/workspace-adapter";
 import { combineHookSets, createHooks } from "./hooks/index";
+import { createCircuitBreakerHook } from "./hooks/circuit-breaker";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
@@ -139,6 +141,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   // ── Agent registration via config hook ──
   hooks.config = async (cfg: Config) => {
     try {
+      // Auto-export a static .opencode/.mcp.json so hosts whose `opencode mcp
+      // list` only reads static config can see hiai-managed servers. Controlled
+      // by HIAI_OPENCODE_AUTO_EXPORT_MCP (if-missing | always | off). Best-effort.
+      autoExportStaticMcp(config, input.directory);
+
       const agentCfg = ((cfg as Record<string, unknown>).agent ?? {}) as Record<
         string,
         Record<string, unknown>
@@ -326,6 +333,9 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
       bobHooks,
       completionHooks as HookSet,
       dreamDistillHooks as HookSet,
+      // Circuit breaker: feeds tool calls into BackgroundManager so the
+      // consecutive-identical and total-call limits can abort runaway sessions.
+      createCircuitBreakerHook(config as BobConfig, backgroundManager),
     ]);
     const h = hooks as Record<string, unknown>;
     for (const key of Object.keys(combined)) {

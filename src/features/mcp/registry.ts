@@ -5,6 +5,18 @@ import { resolveEnvVars } from "../../shared/env";
 // tool default), so it stays here rather than being migrated to bob.json.
 const DEFAULT_MCP_TIMEOUT = 60_000; // 60s per request
 
+/**
+ * Default MCP registry — the single source of truth for hiai-opencode's
+ * always-on MCP servers. The CLI (assets/cli/hiai-opencode.mjs) mirrors this
+ * set; keep them in sync.
+ *
+ * Current set (v0.3.0+):
+ *   - sequential-thinking : local npx-backed reasoning server
+ *   - grep_app            : remote code-search endpoint (no key required)
+ *
+ * Removed: context7 (on-demand CLI skill via skill("explore/context7")),
+ * stitch (UI gen), mempalace (external memory — host provides native `memory`).
+ */
 export const MCP_REGISTRY: Record<
   string,
   {
@@ -13,9 +25,7 @@ export const MCP_REGISTRY: Record<
     url?: string;
     environment?: Record<string, string>;
     headers?: Record<string, string>;
-    install?: "bundled" | "npm" | "python" | "remote";
     requiredEnv?: string[];
-    optionalEnv?: string[];
     timeout?: number;
   }
 > = {
@@ -23,23 +33,14 @@ export const MCP_REGISTRY: Record<
     type: "local",
     command: ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
     requiredEnv: [],
-    optionalEnv: [],
     timeout: DEFAULT_MCP_TIMEOUT,
   },
   grep_app: {
     type: "remote",
     url: "https://mcp.grep.app",
     requiredEnv: [],
-    optionalEnv: [],
     timeout: DEFAULT_MCP_TIMEOUT,
   },
-  // NOTE: context7 was removed from the MCP registry (per the original fork plan).
-  // Library docs lookups are now on-demand via the `context7` skill/CLI
-  // (see bob/skills/context7/SKILL.md) — no always-on MCP process.
-  //
-  // NOTE: Stitch (UI gen) and MemPalace (external memory) were intentionally removed.
-  // The host runtime provides a native `memory` tool (persistent + FTS-indexed);
-  // design uses the bundled design-systems/. Do not re-add a memory MCP.
 };
 
 export function getMcpConfig(
@@ -49,26 +50,27 @@ export function getMcpConfig(
   const result: Record<string, unknown> = {};
   for (const [name, registry] of Object.entries(MCP_REGISTRY)) {
     const userToggle = enabledMcp[name];
-    if (userToggle && !userToggle.enabled) continue;
+    // A user entry that omits `enabled` is treated as enabled. Only an explicit
+    // `{ enabled: false }` disables a registry server.
+    if (userToggle && userToggle.enabled === false) continue;
 
     if (registry.requiredEnv && registry.requiredEnv.length > 0) {
       const missing = registry.requiredEnv.filter((k) => !process.env[k]);
       if (missing.length > 0) {
         console.log(
-          `[bob] MCP ${name} skipped: missing env: ${missing.join(", ")}`,
+          `[hiai-opencode] MCP ${name} skipped: missing env: ${missing.join(", ")}`,
         );
         continue;
       }
     }
 
-    const headers = { ...registry.headers };
-    if (authConfig?.[name]) {
-      if (Object.keys(headers).length === 0) {
-        console.log(`[bob] MCP ${name} has auth but no header template`);
-      } else {
-        for (const key of Object.keys(headers)) {
-          headers[key] = authConfig[name];
-        }
+    const headers = resolveEnvVars({ ...registry.headers });
+    if (authConfig?.[name] && Object.keys(headers).length > 0) {
+      // When auth is configured for a server, inject the token into every
+      // declared header key. (No current registry entry uses headers/auth,
+      // but this keeps custom remote servers supported.)
+      for (const key of Object.keys(headers)) {
+        headers[key] = authConfig[name];
       }
     }
 
@@ -85,9 +87,7 @@ export function getMcpConfig(
       result[name] = {
         type: "remote",
         url: registry.url,
-        ...(Object.keys(headers).length > 0
-          ? { headers: resolveEnvVars(headers) }
-          : {}),
+        ...(Object.keys(headers).length > 0 ? { headers } : {}),
         ...(registry.timeout ? { timeout: registry.timeout } : {}),
       };
     }

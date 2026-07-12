@@ -8,7 +8,7 @@
     "sequential-thinking": {
       "command": "node",
       "args": [
-        "{pluginRoot}/assets/runtime/npm-package-runner.mjs",
+        "assets/runtime/npm-package-runner.mjs",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },

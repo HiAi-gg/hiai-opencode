@@ -1,5 +1,6 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
+import * as st from "../features/completion-controller/state";
 import { createCompactionContextInjector } from "./compaction-context-injector";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
@@ -95,5 +96,91 @@ describe("compaction-context-injector", () => {
     expect(joined).toContain("File paths");
     expect(joined).toContain("Loop iteration state");
     expect(joined).toContain("Continuation prompts");
+  });
+});
+
+describe("compaction-context-injector: gate rehydration", () => {
+  afterEach(() => {
+    // Best-effort cleanup of any sessions these tests create.
+    // state.ts doesn't expose a clear-all, so individual clears are enough
+    // because each test uses a unique sessionID.
+  });
+
+  test("re-injects qualityGateFailed state when set", async () => {
+    const config = makeConfig();
+    const hookSet = createCompactionContextInjector(config);
+    const compacting = hookSet["experimental.session.compacting"];
+    const sid = "compaction-test-quality";
+    st.setQualityGateFailed(sid, true);
+    try {
+      const context: string[] = [];
+      await compacting!(
+        { sessionID: sid } as Parameters<NonNullable<typeof compacting>>[0],
+        { context } as unknown as Parameters<NonNullable<typeof compacting>>[1],
+      );
+      const joined = context.join(" ");
+      expect(joined).toContain("GATE");
+      expect(joined.toLowerCase()).toContain("quality command");
+    } finally {
+      st.clear(sid);
+    }
+  });
+
+  test("re-injects lspPending state when set", async () => {
+    const config = makeConfig();
+    const hookSet = createCompactionContextInjector(config);
+    const compacting = hookSet["experimental.session.compacting"];
+    const sid = "compaction-test-lsp";
+    st.setLspPending(sid, true);
+    try {
+      const context: string[] = [];
+      await compacting!(
+        { sessionID: sid } as Parameters<NonNullable<typeof compacting>>[0],
+        { context } as unknown as Parameters<NonNullable<typeof compacting>>[1],
+      );
+      const joined = context.join(" ");
+      expect(joined).toContain("GATE");
+      expect(joined.toLowerCase()).toContain("lsp_diagnostics");
+    } finally {
+      st.clear(sid);
+    }
+  });
+
+  test("re-injects pending-critic-review state when changes unapproved", async () => {
+    const config = makeConfig();
+    const hookSet = createCompactionContextInjector(config);
+    const compacting = hookSet["experimental.session.compacting"];
+    const sid = "compaction-test-critic";
+    st.recordChangedFile(sid, "/src/x.ts", false);
+    try {
+      const context: string[] = [];
+      await compacting!(
+        { sessionID: sid } as Parameters<NonNullable<typeof compacting>>[0],
+        { context } as unknown as Parameters<NonNullable<typeof compacting>>[1],
+      );
+      const joined = context.join(" ");
+      expect(joined).toContain("GATE");
+      expect(joined).toContain("Critic");
+    } finally {
+      st.clear(sid);
+    }
+  });
+
+  test("does not inject gate hints when gates are clean", async () => {
+    const config = makeConfig();
+    const hookSet = createCompactionContextInjector(config);
+    const compacting = hookSet["experimental.session.compacting"];
+    const sid = "compaction-test-clean";
+    try {
+      const context: string[] = [];
+      await compacting!(
+        { sessionID: sid } as Parameters<NonNullable<typeof compacting>>[0],
+        { context } as unknown as Parameters<NonNullable<typeof compacting>>[1],
+      );
+      const joined = context.join(" ");
+      expect(joined).not.toContain("GATE:");
+    } finally {
+      st.clear(sid);
+    }
   });
 });

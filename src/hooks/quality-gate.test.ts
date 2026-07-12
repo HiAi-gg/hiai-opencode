@@ -22,10 +22,10 @@ function makeConfig(): BobConfig {
 async function runAfter(cmd: string, outputText: string | undefined | null) {
   const hookSet = createQualityGate(makeConfig());
   const after = hookSet["tool.execute.after"] as (
-    input: { tool: string; args: { command?: string } },
+    input: { tool: string; sessionID?: string; args: { command?: string } },
     output: { output?: string | null },
   ) => Promise<void>;
-  const input = { tool: "bash", args: { command: cmd } };
+  const input = { tool: "bash", sessionID: "test-session", args: { command: cmd } };
   const output = { output: outputText };
   await after(input, output);
   return output;
@@ -66,10 +66,10 @@ describe("quality-gate: true positives (error detected)", () => {
     expect(out.output).toContain(GATE_MARKER);
   });
 
-  it("appends the cannot-emit-CLOSURE directive on failure", async () => {
+  it("appends the completion-blocked directive on failure", async () => {
     const out = await runAfter("bun test", "error: boom");
     expect(out.output).toContain(
-      "You CANNOT emit CLOSURE until this command exits 0",
+      "Task completion is blocked until the quality gate passes",
     );
   });
 });

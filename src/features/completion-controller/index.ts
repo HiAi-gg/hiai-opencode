@@ -6,6 +6,14 @@ import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
 import { buildSummary, parseClosureBlock } from "./summary-builder";
 
+/** LSP tool names that satisfy the post-edit lsp_diagnostics requirement. */
+const LSP_TOOL_NAMES = new Set([
+  "lsp_diagnostics",
+  "lsp_goto_definition",
+  "lsp_find_references",
+  "lsp_symbols",
+]);
+
 let client: PluginInput["client"] | null = null;
 
 // Local type — @opencode-ai/plugin doesn't export this
@@ -197,6 +205,11 @@ export function createBobCompletionHook(
     "tool.execute.after": async (input, _output) => {
       const sid = input.sessionID;
       if (!sid) return;
+      // An LSP tool call satisfies the post-edit diagnostics requirement.
+      if (LSP_TOOL_NAMES.has(input.tool)) {
+        st.setLspPending(sid, false);
+        return;
+      }
       if (
         input.tool !== "write" &&
         input.tool !== "edit" &&
@@ -255,10 +268,10 @@ export function createBobCompletionHook(
           // Resilient fallback: the actor.postStop hook is undocumented and
           // its payload shape (including agentType) could change or be removed
           // without notice. If the runtime agent type is missing or
-          // unrecognized, scan the last assistant message for a CLOSURE block.
-          // If the agent signalled completion (readiness done/accept), stop
-          // without auto-continuing. Otherwise fall through to the normal
-          // decide() path so an in-flight loop is never silently killed.
+          // unrecognized, we must NOT self-approve by parsing a CLOSURE block
+          // (that was a bypass: a subagent could emit readiness=done and skip
+          // the Critic gate). Instead, log and fall through to the normal
+          // decide() path so the configured review requirements still apply.
           const KNOWN_AGENT_TYPES = new Set([
             "critic",
             "build",
@@ -269,23 +282,11 @@ export function createBobCompletionHook(
             "writer",
             "vision",
             "manager",
-            "strategist",
-            "researcher",
-            "sub",
-            "coder",
           ]);
           if (!input.agentType || !KNOWN_AGENT_TYPES.has(input.agentType)) {
-            const last = await readLastAssistantMessage(sid);
-            const closure = parseClosureBlock(last?.text ?? "");
-            if (
-              closure &&
-              (closure.readiness === "done" || closure.readiness === "accept")
-            ) {
-              // Agent signalled completion — stop and inject a summary.
-              await injectSummary(sid, closure.reasoning || "decision");
-              return;
-            }
-            // No recognizable completion signal — proceed with normal logic.
+            console.log(
+              `[hiai-opencode] completion: unknown/missing agentType "${input.agentType ?? ""}" for ${sid.slice(0, 8)} — falling through to decide() without self-approval`,
+            );
           }
 
           // Critic subagent: capture the verdict for the parent session.
@@ -304,13 +305,11 @@ export function createBobCompletionHook(
           const decideSessionID = input.parentSessionID ?? sid;
           if (input.parentSessionID) {
             const childState = st.get(sid);
-            for (const fp of childState.changedFiles) {
-              st.recordChangedFile(
-                decideSessionID,
-                fp,
-                matchesAnyGlob(fp, cfg.ui_globs),
-              );
-            }
+            st.mergeChangedFiles(
+              decideSessionID,
+              childState.changedFiles,
+              (fp) => matchesAnyGlob(fp, cfg.ui_globs),
+            );
           }
 
           const s = st.get(decideSessionID);
@@ -325,6 +324,8 @@ export function createBobCompletionHook(
             blockerFlagged: s.blockerFlagged,
             uiChanged: s.uiChangedSinceReview,
             requireCritic: cfg.require_critic,
+            qualityGateFailed: s.qualityGateFailed,
+            lspPending: s.lspPending,
           });
 
           if (action.kind === "stop") {

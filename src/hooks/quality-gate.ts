@@ -1,4 +1,5 @@
 import type { BobConfig, HookSet } from "../types";
+import { setQualityGateFailed } from "../features/completion-controller/state";
 import { BlockingHookError } from "./errors";
 
 /**
@@ -25,33 +26,45 @@ const ERROR_PATTERNS: RegExp[] = [
   /[✗✘×]/,
 ];
 
+function isQualityCommand(cmd: string): boolean {
+  return (
+    cmd.includes("bun test") ||
+    cmd.includes("bun run lint") ||
+    cmd.includes("bun run check") ||
+    cmd.includes("bun run ci") ||
+    cmd.includes("biome check") ||
+    cmd.includes("bun run format") ||
+    cmd.includes("bun run typecheck") ||
+    cmd.includes("tsc") ||
+    cmd.includes("eslint") ||
+    cmd.includes("vitest") ||
+    cmd.includes("jest")
+  );
+}
+
 export function createQualityGate(_config: BobConfig): HookSet {
   return {
     "tool.execute.after": async (input, output) => {
       try {
-        if (input.tool === "bash") {
-          const args = input.args as { command?: string };
-          const cmd = args?.command ?? "";
-          const isQuality =
-            cmd.includes("bun test") ||
-            cmd.includes("bun run lint") ||
-            cmd.includes("bun run check") ||
-            cmd.includes("bun run ci") ||
-            cmd.includes("biome check") ||
-            cmd.includes("bun run format") ||
-            cmd.includes("bun run typecheck") ||
-            cmd.includes("tsc");
-          if (isQuality) {
-            const text = output.output ?? "";
-            const hasErrors = ERROR_PATTERNS.some((re) => re.test(text));
-            if (hasErrors) {
-              console.log(
-                `[hiai-opencode] QUALITY GATE FAILED: ${cmd.split(" ")[0]}`,
-              );
-              const cmdName = cmd.split(" ")[0];
-              output.output += `\n\n[hiai-opencode] ⛔ QUALITY GATE FAILED: ${cmdName} detected errors.\n⛔ You CANNOT emit CLOSURE until this command exits 0.\n⛔ Run the failing command again after fixing and verify exit code 0.\n⛔ If you emit CLOSURE without a passing check, your response will be REJECTED.\n⛔ Cannot mark task done until quality gate passes.`;
-            }
-          }
+        if (input.tool !== "bash" || !input.sessionID) return;
+        const args = input.args as { command?: string };
+        const cmd = args?.command ?? "";
+        if (!isQualityCommand(cmd)) return;
+
+        const text = output.output ?? "";
+        const hasErrors = ERROR_PATTERNS.some((re) => re.test(text));
+
+        // Drive the completion-controller state machine: a failed quality
+        // command blocks task completion until it passes again. A passing
+        // command clears any prior failure flag for this session.
+        setQualityGateFailed(input.sessionID, hasErrors);
+
+        if (hasErrors) {
+          const cmdName = cmd.split(" ")[0];
+          console.log(
+            `[hiai-opencode] QUALITY GATE FAILED: ${cmdName}`,
+          );
+          output.output += `\n\n[hiai-opencode] ⛔ QUALITY GATE FAILED: ${cmdName} detected errors.\n⛔ Fix the reported errors and re-run until exit code 0.\n⛔ Task completion is blocked until the quality gate passes.`;
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;

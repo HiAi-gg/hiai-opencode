@@ -121,6 +121,8 @@ export function formatBackgroundResultForParent(raw: string): string {
 
 export class BackgroundManager {
   private tasks = new Map<string, BackgroundTask>();
+  /** Reverse index: sessionID → taskID, for circuit-breaker tool-call tracking. */
+  private sessionTaskIndex = new Map<string, string>();
   private client: PluginInput["client"] | null = null;
   private pollInterval: ReturnType<typeof setInterval> | null = null;
   private cleanupInterval: ReturnType<typeof setInterval> | null = null;
@@ -226,6 +228,58 @@ export class BackgroundManager {
     return this.tasks.get(id);
   }
 
+  /**
+   * Track a tool call for the circuit breaker, keyed by sessionID.
+   *
+   * This is the integration point between the plugin's `tool.execute.after`
+   * hook and the background manager. When a session makes its first tool call,
+   * a lightweight BackgroundTask is auto-registered so subsequent calls can be
+   * counted. If the circuit breaker trips (N consecutive identical calls, or
+   * total tool calls exceed the cap), the session is aborted via the SDK client.
+   *
+   * This works without `actor.postStop` / `parentSessionID` because OpenCode's
+   * documented `tool.execute.after` hook always carries `sessionID`.
+   *
+   * @returns The task after recording, or undefined if the breaker is disabled
+   *          or the session is unknown to the manager.
+   */
+  recordSessionToolCall(
+    sessionID: string,
+    toolName: string,
+    toolInput?: Record<string, unknown>,
+  ): BackgroundTask | undefined {
+    if (!this.circuitBreaker.enabled) return undefined;
+    if (!sessionID) return undefined;
+
+    // Auto-register a tracking task for this session if none exists yet.
+    let taskId = this.sessionTaskIndex.get(sessionID);
+    if (!taskId) {
+      const task: BackgroundTask = {
+        id: `bg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        sessionID,
+        parentSessionID: sessionID,
+        status: "running",
+        description: `session ${sessionID.slice(0, 8)}`,
+        createdAt: Date.now(),
+        startedAt: Date.now(),
+        progress: { toolCalls: 0, lastUpdate: new Date() },
+      };
+      this.tasks.set(task.id, task);
+      this.sessionTaskIndex.set(sessionID, task.id);
+      taskId = task.id;
+    }
+
+    this.recordToolCall(taskId, toolName, toolInput);
+    return this.tasks.get(taskId);
+  }
+
+  /** Look up the task currently tracking a session (if any). */
+  getTaskForSession(sessionID: string): BackgroundTask | undefined {
+    const taskId = this.sessionTaskIndex.get(sessionID);
+    if (!taskId) return undefined;
+    return this.tasks.get(taskId);
+  }
+
   recordToolCall(
     taskId: string,
     toolName: string,
@@ -278,10 +332,20 @@ export class BackgroundManager {
         Math.max(0, count - 1),
       );
     }
+    // Keep the session index consistent so a cancelled session can be
+    // re-tracked only via a fresh auto-registration.
+    if (task.sessionID && this.sessionTaskIndex.get(task.sessionID) === id) {
+      this.sessionTaskIndex.delete(task.sessionID);
+    }
     if (this.client && task.sessionID) {
       this.client.session
         .abort({ path: { id: task.sessionID } })
         .catch(() => {});
+      if (reason) {
+        console.log(
+          `[hiai-opencode] [background-agent] Circuit breaker: cancelled session ${task.sessionID.slice(0, 8)} — ${reason}`,
+        );
+      }
     }
     return true;
   }
