@@ -54,8 +54,8 @@ User input
 
 **Key wiring rules:**
 - OpenCode plugins are NOT MCP servers. `hiai-opencode` only provides the OpenCode-side launch wiring for MCP servers through its `mcp` config and helper launchers.
-- Model credentials go through OpenCode Connect, not `hiai-opencode.json`.
-- Service keys (e.g. `FIRECRAWL_API_KEY`) are configured in `bob.env` (env file) or as shell variables. Use `{env:VAR_NAME}` placeholders in `hiai-opencode.json` — never put raw API keys there.
+- Model credentials go through OpenCode Connect, not `bob.json`.
+- Service keys (e.g. `FIRECRAWL_API_KEY`) are configured in `bob.env` (env file) or as shell variables. Use `{env:VAR_NAME}` placeholders in `bob.json` — never put raw API keys there.
 
 ## Repository Layout
 
@@ -113,7 +113,7 @@ There is **no** separate migration module. Legacy agent keys are mapped only in 
 
 User-facing model IDs live in one place:
 
-- [hiai-opencode.json](hiai-opencode.json) (project) / `bob.json` (plugin defaults)
+- [bob.json](bob.json) — the single config file. The plugin ships bundled defaults; a `bob.json` in the project root or `.opencode/` overrides them.
 
 The runtime loader is:
 
@@ -166,7 +166,7 @@ Final agent registration into OpenCode's `cfg.agent` dict happens in the `hooks.
 
 ### Prompting Change Rules
 
-- change [hiai-opencode.json](hiai-opencode.json) / `bob.json` when a model slot should change
+- change [bob.json](bob.json) when a model slot should change
 - change [src/config.ts](src/config.ts) (`DEFAULT_CONFIG`) when defaults (permissions, mcp, lsp, completion, etc.) should change
 - change `src/agents/*.ts` when prompt content or behavior should change
 - change `src/prompt-library/*.ts` when a shared prompt fragment should change
@@ -300,7 +300,7 @@ Avoid adding more root docs unless they serve a genuinely new role.
 
 When changing the plugin, keep these invariants:
 
-- [hiai-opencode.json](hiai-opencode.json) / `bob.json` is the source of truth for user-facing runtime defaults and model IDs
+- [bob.json](bob.json) is the source of truth for user-facing runtime defaults and model IDs
 - [src/config.ts](src/config.ts) `DEFAULT_CONFIG` is the loader for internal defaults — not a second model map
 - root docs should use canonical runtime names (`bob`, `build`, `plan`, `explore`, `general`), not stale aliases
 - the CLI's `MCP_REGISTRY` must mirror [src/features/mcp/registry.ts](src/features/mcp/registry.ts) — keep them in sync

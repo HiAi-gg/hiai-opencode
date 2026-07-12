@@ -29,7 +29,7 @@ When asked to finish setup in a workspace:
 
 1. **Tool availability**: `opencode --version`, `node --version` (≥20), `bun --version` (≥1.3), `npx --version`.
 2. **Plugin registration**: `opencode debug config`.
-3. **Config**: find/create `hiai-opencode.json` in project root or `.opencode/`. Configure `models` (10 slots) and `mcp` (2 servers: `sequential-thinking`, `grep_app`).
+3. **Config**: find/create `bob.json` in project root or `.opencode/`. Configure `models` (10 slots) and `mcp` (2 servers: `sequential-thinking`, `grep_app`).
 4. **Env keys** (without printing values — see [bob.env.example](bob.env.example)):
    - `FIRECRAWL_API_KEY` — required for the Firecrawl CLI skill
    - `CONTEXT7_API_KEY` — optional, on-demand via `skill("explore/context7")`
@@ -72,7 +72,7 @@ When you need to change something, edit the right file first.
 
 | Goal | Edit |
 |---|---|
-| User-facing model slot | [hiai-opencode.json](hiai-opencode.json) |
+| User-facing model slot | [bob.json](bob.json) |
 | Internal defaults (permissions, mcp, lsp, completion) | [src/config.ts](src/config.ts) — `DEFAULT_CONFIG` |
 | Agent prompt (any) | `src/agents/<agent>.ts` (flat: bob, build, plan, manager, critic, designer, writer, vision, explore, general) |
 | Shared prompt fragments | [src/prompt-library/](src/prompt-library) (browser, caveman, native-memory, postgres-rules, workspace, worktree) |
@@ -94,7 +94,7 @@ When you need to change something, edit the right file first.
 
 ## Environment Variables
 
-Use [bob.env.example](bob.env.example) as the canonical template. Model provider credentials go through OpenCode Connect — do **not** put `OPENROUTER_API_KEY`/`OPENAI_API_KEY`/`ANTHROPIC_API_KEY` into `hiai-opencode.json`.
+Use [bob.env.example](bob.env.example) as the canonical template. Model provider credentials go through OpenCode Connect — do **not** put `OPENROUTER_API_KEY`/`OPENAI_API_KEY`/`ANTHROPIC_API_KEY` into `bob.json`.
 
 | Variable | Purpose |
 |---|---|
@@ -107,7 +107,7 @@ Use [bob.env.example](bob.env.example) as the canonical template. Model provider
 | `HIAI_OPENCODE_MCP_EXPORT_PATH` | Override `.opencode/.mcp.json` output path |
 | `HIAI_OPENCODE_EXPORT_MCP_MODE` | `safe` (default) \| `force` (overwrite policy) |
 
-Use `{env:VAR_NAME}` placeholders in config JSON — never raw keys, never `${VAR}` (blocked for names containing `KEY`/`TOKEN`/`SECRET`). Check with `grep -E '(fc-\|ctx7sk-\|sk-\|key-)' hiai-opencode.json` — should return 0 matches.
+Use `{env:VAR_NAME}` placeholders in config JSON — never raw keys, never `${VAR}` (blocked for names containing `KEY`/`TOKEN`/`SECRET`). Check with `grep -E '(fc-\|ctx7sk-\|sk-\|key-)' bob.json` — should return 0 matches.
 
 ## Mental Map
 
@@ -140,7 +140,7 @@ If an agent response is missing `<CLOSURE>` at runtime: (1) check the agent prom
 Since v0.3.6 the CLI installs via the `bin` field in [package.json](package.json). If it's missing, reinstall: `opencode plugin @hiai-gg/hiai-opencode@latest --global`. For dev: `npm link` from the plugin dir.
 
 ### `doctor` reports schema errors
-Check `hiai-opencode.json` against [config/hiai-opencode.schema.json](config/hiai-opencode.schema.json). Verify `models` and `mcp` keys match documented shapes. Run `opencode debug config`.
+Check your `bob.json` against [config/hiai-opencode.schema.json](config/hiai-opencode.schema.json). Verify `models` and `mcp` keys match documented shapes. Run `opencode debug config`.
 
 ### `mcp-status` shows all services ⚠️ missing
 The plugin can't find its bundled config. Run `bun run build` to populate `dist/`, or reinstall from npm.

@@ -45,7 +45,7 @@ In OpenCode, connect your providers (Anthropic, OpenAI, OpenRouter, etc.) and ru
 opencode models
 ```
 
-Copy the exact `provider/model-id` strings into `hiai-opencode.json` (see [Configuration](#configuration)).
+Copy the exact `provider/model-id` strings into your `bob.json` override (see [Configuration](#configuration)).
 
 ### 3. (Optional) Set API keys for CLI skills
 
@@ -141,23 +141,25 @@ Plus **Dream** (7-day) and **Distill** (30-day) auto-consolidation that promotes
 
 ## Configuration
 
-Two files. Copy templates, edit, done.
+The plugin ships sane defaults in [bob.json](bob.json). To customize, drop a `bob.json` in your project root (or `.opencode/`) — it merges over the bundled defaults.
 
-### `hiai-opencode.json` — models & switches (project root or `.opencode/`)
+### `bob.json` — models & behaviour
+
+The 10 model slots: `bob`, `build`, `plan`, `manager`, `critic`, `designer`, `explore`, `writer`, `vision`, `general`. Defaults ship in the plugin; override only what you want to change:
 
 ```jsonc
 {
   "models": {
-    "bob": { "model": "anthropic/claude-sonnet-4.5" },
-    "build": { "model": "anthropic/claude-sonnet-4.5" },
-    "plan": { "model": "openai/o3" },
-    "explore": { "model": "openai/gpt-4.1-mini" },
-    "critic": { "model": "openai/gpt-4.1" },
-    "general": { "model": "openai/gpt-4.1-mini" },
-    "manager": { "model": "openai/gpt-4.1-mini" },
-    "designer": { "model": "anthropic/claude-sonnet-4.5" },
-    "writer": { "model": "openai/gpt-4.1-mini" },
-    "vision": { "model": "openai/gpt-4.1" }
+    "bob": { "model": "openai/gpt-5.5" },
+    "build": { "model": "opencode-go/deepseek-v4-pro" },
+    "plan": { "model": "opencode-go/deepseek-v4-pro" },
+    "manager": { "model": "opencode-go/deepseek-v4-flash" },
+    "critic": { "model": "opencode-go/mimo-v2.5-pro" },
+    "designer": { "model": "opencode-go/kimi-k2.7-code" },
+    "explore": { "model": "opencode-go/deepseek-v4-flash" },
+    "writer": { "model": "opencode-go/deepseek-v4-flash" },
+    "vision": { "model": "opencode-go/mimo-v2.5" },
+    "general": { "model": "opencode-go/deepseek-v4-flash" }
   },
   "mcp": {
     "sequential-thinking": { "enabled": true },
@@ -166,11 +168,11 @@ Two files. Copy templates, edit, done.
 }
 ```
 
-The 10 model slots: `bob`, `build`, `plan`, `manager`, `critic`, `designer`, `explore`, `writer`, `vision`, `general`. Use exact `provider/model-id` strings from `opencode models` — don't invent prefixes.
+Connect providers in OpenCode, run `opencode models`, and copy exact `provider/model-id` strings — don't invent prefixes. Model provider credentials live in OpenCode Connect, not in `bob.json`.
 
-Full schema: [config/hiai-opencode.schema.json](config/hiai-opencode.schema.json).
+Config resolution order (first found wins): bundled `bob.json` → `<project>/bob.json` → `<project>/.opencode/bob.json` → `<project>/bob.jsonc` → `<project>/.opencode/bob.jsonc` → global config dir.
 
-### `bob.env` — API keys (git-ignored)
+### `bob.env` — service keys (git-ignored)
 
 ```bash
 cp bob.env.example bob.env
@@ -205,7 +207,7 @@ bun test               # 986 tests
 
 ## Roadmap
 
-- Configurable agent roster from `hiai-opencode.json`
+- Configurable agent roster from `bob.json`
 - Background-task persistence (SQLite journal — currently in-memory)
 - Optional telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe)
 - Skill marketplace + agent analytics

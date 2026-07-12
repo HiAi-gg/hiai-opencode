@@ -78,16 +78,27 @@ function resolveEnvTemplate(value) {
 
 function candidateConfigPaths() {
   const cwd = process.cwd()
+  // bob.json is the runtime config the plugin actually loads (src/config.ts).
+  // List it first so the CLI reads the same file the plugin uses; fall back to
+  // hiai-opencode.json for backward compatibility.
   const paths = [
+    join(cwd, "bob.json"),
+    join(cwd, "bob.jsonc"),
+    join(cwd, ".opencode", "bob.json"),
+    join(cwd, ".opencode", "bob.jsonc"),
     join(cwd, "hiai-opencode.json"),
     join(cwd, "hiai-opencode.jsonc"),
     join(cwd, ".opencode", "hiai-opencode.json"),
     join(cwd, ".opencode", "hiai-opencode.jsonc"),
+    join(homedir(), ".config", "opencode", "bob.json"),
+    join(homedir(), ".config", "opencode", "bob.jsonc"),
     join(homedir(), ".config", "opencode", "hiai-opencode.json"),
     join(homedir(), ".config", "opencode", "hiai-opencode.jsonc"),
   ]
 
   if (process.platform === "win32" && process.env.APPDATA) {
+    paths.push(join(process.env.APPDATA, "opencode", "bob.json"))
+    paths.push(join(process.env.APPDATA, "opencode", "bob.jsonc"))
     paths.push(join(process.env.APPDATA, "opencode", "hiai-opencode.json"))
     paths.push(join(process.env.APPDATA, "opencode", "hiai-opencode.jsonc"))
   }
