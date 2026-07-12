@@ -8,8 +8,8 @@ const DOCS = [
   "AGENTS.md",
   "ARCHITECTURE.md",
   "LICENSE.md",
-  "hiai-opencode.json",
-  ".env.example",
+  "bob.json",
+  "bob.env.example",
 ];
 
 const DELETED_DOCS = [
@@ -17,6 +17,8 @@ const DELETED_DOCS = [
   "REGISTRY.md",
   "AGENTS_INFO.md",
   "docs/phase8-prompt-diet-report.md",
+  "hiai-opencode.json",
+  ".env.example",
 ];
 
 const PRIVATE_PATTERNS = [
@@ -62,7 +64,11 @@ for (const doc of DOCS) {
   }
 
   for (const deleted of DELETED_DOCS) {
-    if (content.includes(deleted)) {
+    // Use regex with word boundaries to avoid false positives
+    // (e.g. "bob.env.example" matching ".env.example")
+    const escaped = deleted.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const re = new RegExp(`(?<!bob)${escaped}`, "g");
+    if (re.test(content)) {
       console.log(`ERROR: ${doc}: References deleted doc: ${deleted}`);
       hasError = true;
     }

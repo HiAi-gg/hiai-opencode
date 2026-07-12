@@ -18,63 +18,51 @@ bun run build
 | Build | `bun run build` |
 | Typecheck | `bun run typecheck` |
 | Test | `bun test` |
-| Prompt snapshots | `bun run prompts:measure` |
 | Lint | `bun run lint` |
+| Check docs for private paths / Cyrillic | `bun run scripts/check-docs.ts` |
 
 ## PR Guidelines
 
 1. Run `bun run typecheck` and `bun test` before submitting.
-2. If you changed agent prompts, run `bun run prompts:measure` and commit the updated snapshot.
-3. Keep PRs focused — one logical change per PR.
-4. Follow existing naming conventions in the directory you are editing.
-5. Do not add Node.js-specific dependencies — this is a Bun-first project.
+2. Keep PRs focused — one logical change per PR.
+3. Follow existing naming conventions in the directory you are editing.
+4. Do not add Node.js-specific dependencies — this is a Bun-first project.
 
 ## Adding a New Agent
 
-Agents touch multiple files. Here is the checklist:
+Agents are authored as flat files under `src/agents/`. Checklist:
 
-1. **Agent factory** — Create `src/agents/<name>.ts` (or a directory `src/agents/<name>/` for multi-file agents).
-2. **Prompt library** — Add shared policy blocks in `src/agents/prompt-library/` if the agent has reusable prompt sections.
-3. **Dynamic prompt builder** — Update `src/agents/dynamic-agent-prompt-builder.ts` if the agent needs context-driven prompt assembly.
-4. **Agent registration** — Add the agent to `src/agents/index.ts` in `createAllAgents()`.
-5. **Default config** — Add the model slot to `src/config/defaults.ts` (if it is a visible primary agent).
-6. **Agent config handler** — Register the agent in `src/plugin-handlers/agent-config-handler.ts` for runtime normalization.
-7. **Migration** — If replacing a deprecated agent, add a migration entry in `src/shared/migration/agent-names.ts`.
-8. **hiai-opencode.json** — Add the model slot to the bundled canonical config.
-9. **README.md** — Update the agent table in the Agents section.
-10. **Tests** — Add prompt snapshot tests in `tests/`.
+1. **Agent prompt** — Create `src/agents/<name>.ts` exporting the prompt string (assembled from `src/prompt-library/*` fragments).
+2. **Shared fragments** — Add reusable policy blocks in [src/prompt-library/](src/prompt-library) if the agent has shared prompt sections.
+3. **Registration** — Add the agent to `createAllAgents()` in [src/agents/index.ts](src/agents/index.ts), OR native-upgrade it inline in the `hooks.config` callback in [src/index.ts](src/index.ts) (as `explore`/`plan`/`build`/`general` do).
+4. **Default config** — Add the model slot to `DEFAULT_CONFIG` in [src/config.ts](src/config.ts) and to the 10-slot validation in `REQUIRED_AGENT_KEYS`.
+5. **Permissions** — Add per-agent restrictions to `DEFAULT_CONFIG.agent_restrictions` in [src/config.ts](src/config.ts) (resolved by `applyAgentPermissions` in [src/permissions.ts](src/permissions.ts)).
+6. **bob.json** — Add the model slot to [bob.json](bob.json) (the bundled canonical config).
+7. **README.md** — Update the agent table in the Agents section.
+8. **Tests** — Add a prompt snapshot test next to the source: `src/agents/<name>.test.ts`.
 
 ## Adding a New Tool
 
-Tools require four files:
-
-1. **Tool factory** — Create the tool implementation in `src/tools/<name>.ts`.
-2. **Tool registration** — Register the tool in `src/tools/index.ts` (the tool registry).
-3. **Type declaration** — Add the tool name to the `ToolsRecord` type in `src/plugin/types.ts`.
-4. **Tests** — Add unit tests in `tests/`.
+1. **Tool factory** — Create the tool implementation in `src/tools/<name>.ts` (or `src/tools/<name>/index.ts` for multi-file tools).
+2. **Tool registration** — Register the tool in the `hooks.tool` object in [src/index.ts](src/index.ts).
+3. **Permissions** — If the tool needs per-agent restrictions, add its key to `TOOLS_KEYS` in [src/permissions.ts](src/permissions.ts).
+4. **Tests** — Add unit tests next to the source: `src/tools/<name>.test.ts`.
 
 ## Adding a New Hook
 
-Hooks are organized in three tiers. Pick the tier that matches your hook's purpose:
-
-- **Core** (`src/plugin/hooks/create-session-hooks.ts`, `create-tool-guard-hooks.ts`, or `create-transform-hooks.ts`) — Session lifecycle, tool guards, message transforms.
-- **Continuation** (`src/plugin/hooks/create-continuation-hooks.ts`) — Todo enforcement, compaction, session recovery.
-- **Skill** (`src/plugin/hooks/create-skill-hooks.ts`) — Skill-related hooks.
-
-Steps:
+Hooks live as flat files in [src/hooks/](src/hooks). Each exports a `create<Name>Hook(config: BobConfig): HookSet` factory.
 
 1. **Create the hook factory** in `src/hooks/<hook-name>.ts`.
-2. **Add the hook name** to the `HookName` union in `src/config/index.ts`.
-3. **Register the hook** in the appropriate tier's `create*Hooks()` function.
-4. **Add the hook to the return type** of that function.
-5. **Write tests** in `tests/`.
+2. **Register it** in `ALL_NAMED_HOOK_FACTORIES` in [src/hooks/index.ts](src/hooks/index.ts).
+3. **Write tests** next to the source: `src/hooks/<hook-name>.test.ts`.
 
-Use the `safeCreateHook()` wrapper to isolate failures. See existing hooks in `src/hooks/` for patterns.
+Hooks are chained via `combineHookSets`. Throw `BlockingHookError` (from `src/hooks/errors.ts`) for hard gates that must halt the pipeline; regular errors are logged and swallowed.
 
 ## Code Style
 
 - **TypeScript strict mode** — no `any` unless unavoidable.
 - **ESM-only** — use `import`/`export`, no `require()`.
-- **Zod** for runtime validation of config and user inputs.
+- **Bun runtime** — `Bun.$`, `bun:test`, `bun build` are all available.
 - **Descriptive variable names** — prefer clarity over brevity.
-- **Small, focused functions** — if a function exceeds ~80 lines, consider splitting it.
+- **Small, focused functions** — if a function exceeds ~80 lines, consider splitting.
+- **Co-locate tests** — `foo.ts` and `foo.test.ts` live side by side.
