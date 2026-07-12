@@ -132,7 +132,9 @@ describe("WorktreeManager.status()", () => {
     const mgr = new WorktreeManager({ baseDir: worktreesBase });
     const st = await mgr.status();
 
-    expect(fs.realpathSync(st.directory)).toBe(repoDir);
+    // Canonicalize both sides through realpathSync so Windows 8.3 short
+    // names (RUNNER~1) and long names (runneradmin) compare identically.
+    expect(fs.realpathSync(st.directory)).toBe(fs.realpathSync(repoDir));
     expect(st.branch).toBeTruthy();
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -146,7 +148,7 @@ describe("WorktreeManager.status()", () => {
     const info = await mgr.create({ name: "wt-status" });
 
     const st = await mgr.status(info.path);
-    expect(fs.realpathSync(st.directory)).toBe(info.path);
+    expect(fs.realpathSync(st.directory)).toBe(fs.realpathSync(info.path));
     expect(st.branch).toBe(info.branch);
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -182,7 +184,9 @@ describe("WorktreeManager.cleanup()", () => {
     const info = await mgr.create({ name: "wt-keep" });
 
     const removed = await mgr.cleanup();
-    expect(removed).not.toContain(fs.realpathSync(info.path));
+    // info.path was already removed by cleanup(), so realpathSync would throw
+    // ENOENT. Use path.resolve, which does not require the file to exist.
+    expect(removed).not.toContain(path.resolve(info.path));
     expect(fs.existsSync(info.path)).toBe(true);
   });
 });
