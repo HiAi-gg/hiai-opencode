@@ -226,8 +226,11 @@ export class WorktreeManager {
       try {
         full = fs.realpathSync(path.resolve(worktreesDir, child));
       } catch {
-        // Unresolvable entry — skip rather than risk a false removal.
-        continue;
+        // realpathSync can throw ENOENT on Windows for paths with 8.3 / special
+        // formats. Fall back to path.resolve so the comparison against the
+        // registered set (which uses the same fallback) stays consistent and a
+        // registered worktree is never mistaken for an orphan.
+        full = path.resolve(worktreesDir, child);
       }
       if (registered.has(full)) continue;
       try {
