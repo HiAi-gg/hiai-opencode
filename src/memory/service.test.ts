@@ -7,17 +7,19 @@
  */
 
 import { afterEach, describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, realpathSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { resetDb } from "./db";
 import { createMemoryService } from "./service";
 
 function makeTestDir() {
-  const dir = join(
+  const rawDir = join(
     tmpdir(),
     `hiai-memory-test-${Date.now()}-${Math.random().toString(36).slice(2)}`,
   );
+  mkdirSync(rawDir, { recursive: true });
+  const dir = realpathSync(rawDir);
   const memoryRoot = join(dir, "memory");
   const dbPath = join(dir, "test.db");
   mkdirSync(memoryRoot, { recursive: true });

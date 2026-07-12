@@ -26,10 +26,10 @@ beforeAll(async () => {
   originalCwd = process.cwd();
 
   // Create an isolated git repository for the whole suite.
-  repoDir = fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-"));
+  repoDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")));
   // Keep worktrees OUTSIDE the repo so the main checkout stays pristine
   // (untracked worktree dirs would otherwise mark it dirty).
-  worktreesBase = fs.mkdtempSync(path.join(os.tmpdir(), "wt-trees-"));
+  worktreesBase = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-trees-")));
 
   await $`git -C ${repoDir} init -q`.quiet();
   await $`git -C ${repoDir} config user.email test@example.com`.quiet();
