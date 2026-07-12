@@ -205,7 +205,7 @@ describe("WorktreeManager outside a git repository", () => {
 
   beforeAll(() => {
     savedCwd = process.cwd();
-    nonGitDir = fs.mkdtempSync(path.join(os.tmpdir(), "wt-nogit-"));
+    nonGitDir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "wt-nogit-")));
     process.chdir(nonGitDir);
   });
 

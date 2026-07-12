@@ -5,6 +5,52 @@ type TelemetryConfig = BobConfig["telemetry"];
 let sdk: { shutdown: () => Promise<void> } | null = null;
 let initialized = false;
 
+// Optional deps — telemetry stays off when the otel packages aren't
+// installed. We list only the API as a direct dep; the SDK, HTTP exporter,
+// resources, and semantic-conventions are optional peer deps. The dynamic
+// imports use a non-literal specifier so TypeScript does not require the
+// modules to be present at type-check time, and the try/catch handles their
+// runtime absence gracefully.
+async function loadSdkNode() {
+  try {
+    return await import("@opentelemetry/sdk-node" as string);
+  } catch {
+    console.warn("[hiai-opencode] @opentelemetry/sdk-node not available");
+    return null;
+  }
+}
+
+async function loadOtlpExporter() {
+  try {
+    return await import("@opentelemetry/exporter-trace-otlp-http" as string);
+  } catch {
+    console.warn(
+      "[hiai-opencode] @opentelemetry/exporter-trace-otlp-http not available",
+    );
+    return null;
+  }
+}
+
+async function loadResources() {
+  try {
+    return await import("@opentelemetry/resources" as string);
+  } catch {
+    console.warn("[hiai-opencode] @opentelemetry/resources not available");
+    return null;
+  }
+}
+
+async function loadSemanticConventions() {
+  try {
+    return await import("@opentelemetry/semantic-conventions" as string);
+  } catch {
+    console.warn(
+      "[hiai-opencode] @opentelemetry/semantic-conventions not available",
+    );
+    return null;
+  }
+}
+
 export async function initTelemetry(
   config: TelemetryConfig | undefined,
 ): Promise<void> {
@@ -15,27 +61,21 @@ export async function initTelemetry(
   if (!endpoint) return;
 
   try {
-    // Optional deps — telemetry stays off when the otel packages aren't
-    // installed (we list only the API + HTTP exporter as direct deps; the
-    // SDK + resources + semantic-conventions are optional peer deps).
-    // @ts-expect-error — optional runtime dep
-    const sdkNode = await import("@opentelemetry/sdk-node").catch(() => null);
-    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
-    // @ts-expect-error — optional runtime dep
-    const { OTLPTraceExporter } = await import("@opentelemetry/exporter-trace-otlp-http").catch(() => ({}));
-    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
-    // @ts-expect-error — optional runtime dep
-    const { Resource } = await import("@opentelemetry/resources").catch(() => ({}));
-    // biome-ignore format: single-line required for @ts-expect-error to suppress next line
-    // @ts-expect-error — optional runtime dep
-    const { SEMRESATTRS_SERVICE_NAME } = await import("@opentelemetry/semantic-conventions").catch(() => ({}));
-
+    const sdkNode = await loadSdkNode();
     if (!sdkNode) {
       console.warn(
         "[hiai-opencode] Telemetry disabled: @opentelemetry/sdk-node not installed",
       );
       return;
     }
+
+    const otlp = (await loadOtlpExporter()) ?? {};
+    const resources = (await loadResources()) ?? {};
+    const semconv = (await loadSemanticConventions()) ?? {};
+
+    const OTLPTraceExporter = otlp.OTLPTraceExporter;
+    const Resource = resources.Resource;
+    const SEMRESATTRS_SERVICE_NAME = semconv.SEMRESATTRS_SERVICE_NAME;
 
     const serviceName =
       config.serviceName ?? process.env.OTEL_SERVICE_NAME ?? "hiai-opencode";

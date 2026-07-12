@@ -749,6 +749,39 @@ The native `memory` tool indexes curated MD files (checkpoints, MEMORY.md, notes
 what the native tool covers. It is maintained because it covers agent trajectories that the
 native memory tool does not index.
 
+### Memory Tools: hiai_memory_search vs Native Memory
+
+The plugin provides two memory-search mechanisms:
+
+#### hiai_memory_search (plugin tool)
+- Registers as `hiai_memory_search` tool in the MCP registry
+- Searches the plugin-managed SQLite FTS5 BM25 index
+- **Use when**: You need to recall cross-session context, agent trajectories, or tool outputs
+- **Returns**: Ranked file paths with scores; use Read to load full content
+- **Scope**: Cross-session agent trajectories, tool outputs, and transcripts
+- **Note**: This is a plugin feature specific to hiai-opencode environments
+
+#### Native Memory (OpenCode built-in)
+- Built into OpenCode runtime
+- Accessed via `memory()` tool or memory MCP endpoint
+- **Use when**: You need OpenCode's default memory behavior for curated knowledge
+- **Scope**: Curated MD files (MEMORY.md, checkpoints, notes.md, task progress)
+
+#### Key Differences
+
+| Aspect | hiai_memory_search | Native Memory |
+|--------|-------------------|---------------|
+| Availability | hiai-opencode plugin | OpenCode core |
+| Backend | SQLite FTS5 BM25 | Full-text indexed MD files |
+| Scope | Agent trajectories, tool outputs, transcripts | Curated facts, decisions, patterns |
+| Use Case | Forensic search, cross-session recall | Durable knowledge retrieval |
+| Latency | Low | Low |
+
+#### Recommendation
+- Use `hiai_memory_search` for searching agent trajectories and tool outputs
+- Use native `memory` for recalling curated durable facts and decisions
+- Both tools can coexist and complement each other
+
 ## Prompt Ownership
 
 ## Root Documentation Policy

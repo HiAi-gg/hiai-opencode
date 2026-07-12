@@ -17,7 +17,7 @@ let originalCwd: string;
 
 beforeAll(() => {
   originalCwd = process.cwd();
-  tmp = fs.mkdtempSync(path.join(os.tmpdir(), "ws-adapter-"));
+  tmp = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ws-adapter-")));
 });
 
 afterAll(() => {
