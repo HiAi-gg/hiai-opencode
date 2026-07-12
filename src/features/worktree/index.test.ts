@@ -17,6 +17,15 @@ let repoDir: string;
 let worktreesBase: string;
 let originalCwd: string;
 
+/**
+ * Normalize a path for cross-platform comparison: resolve relative segments
+ * and lower-case so Windows 8.3 short names, forward/back slash separators,
+ * and case differences never cause spurious assertion mismatches.
+ */
+function norm(p: string): string {
+  return path.resolve(p).toLowerCase();
+}
+
 /** Run a git command in a specific directory and return its stdout. */
 async function gitIn(cwd: string, args: string[]): Promise<string> {
   return (await $`git -C ${cwd} ${args}`.text()).toString();
@@ -63,7 +72,7 @@ describe("WorktreeManager.create()", () => {
     expect(info.isLinked).toBe(true);
     // slug of "Feature X Plan" -> "feature-x-plan" -> sliced to 8 -> "feature-"
     expect(info.branch).toBe("hiai-bob/feature-");
-    expect(info.path).toBe(path.resolve(worktreesBase, "feature-x"));
+    expect(norm(info.path)).toBe(norm(path.resolve(worktreesBase, "feature-x")));
 
     // The worktree directory must exist on disk.
     expect(fs.existsSync(info.path)).toBe(true);
@@ -132,11 +141,11 @@ describe("WorktreeManager.status()", () => {
     const mgr = new WorktreeManager({ baseDir: worktreesBase });
     const st = await mgr.status();
 
-    // Canonicalize both sides through realpathSync.native so Windows 8.3
-    // short names (RUNNER~1) and long names (runneradmin) compare
-    // identically. .native uses the OS-level realpath which resolves 8.3
-    // names; the plain realpathSync wrapper does not.
-    expect(fs.realpathSync.native(st.directory)).toBe(fs.realpathSync.native(repoDir));
+    // Normalize both sides through path.resolve() + toLowerCase() so Windows
+    // 8.3 short names (RUNNER~1) and long names (runneradmin), forward/back
+    // slash separators, and case differences compare identically. This avoids
+    // realpathSync, which throws ENOENT and has platform-specific quirks.
+    expect(norm(st.directory)).toBe(norm(repoDir));
     expect(st.branch).toBeTruthy();
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -150,7 +159,7 @@ describe("WorktreeManager.status()", () => {
     const info = await mgr.create({ name: "wt-status" });
 
     const st = await mgr.status(info.path);
-    expect(fs.realpathSync.native(st.directory)).toBe(fs.realpathSync.native(info.path));
+    expect(norm(st.directory)).toBe(norm(info.path));
     expect(st.branch).toBe(info.branch);
     expect(st.dirty).toBe(false);
     expect(st.hasConflicts).toBe(false);
@@ -177,7 +186,7 @@ describe("WorktreeManager.cleanup()", () => {
     expect(fs.existsSync(orphan)).toBe(true);
 
     const removed = await mgr.cleanup();
-    expect(removed).toContain(path.resolve(orphan));
+    expect(removed.map(norm)).toContain(norm(path.resolve(orphan)));
     expect(fs.existsSync(orphan)).toBe(false);
   });
 
@@ -186,9 +195,10 @@ describe("WorktreeManager.cleanup()", () => {
     const info = await mgr.create({ name: "wt-keep" });
 
     const removed = await mgr.cleanup();
-    // info.path was already removed by cleanup(), so realpathSync would throw
-    // ENOENT. Use path.resolve, which does not require the file to exist.
-    expect(removed).not.toContain(path.resolve(info.path));
+    // Normalize both sides so Windows separator/case/8.3 differences do not
+    // cause a false positive. info.path is still registered with git, so it
+    // must not appear in the removed set.
+    expect(removed.map(norm)).not.toContain(norm(path.resolve(info.path)));
     expect(fs.existsSync(info.path)).toBe(true);
   });
 });

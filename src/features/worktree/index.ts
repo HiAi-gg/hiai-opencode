@@ -124,7 +124,7 @@ export class WorktreeManager {
     const entries = this.parseWorktreeList(text);
     const rootCanon = path.resolve(await this.resolveRepoRoot());
     return entries.map((e) => {
-      const isMain = path.resolve(e.path) === rootCanon;
+      const isMain = pathsEqual(e.path, rootCanon);
       return {
         name: path.basename(e.path),
         path: e.path,
@@ -205,18 +205,14 @@ export class WorktreeManager {
 
     const text = await this.git(["worktree", "list", "--porcelain"]);
     const entries = this.parseWorktreeList(text);
-    // Canonicalize via realpathSync.native so short/long (8.3) names and
-    // separator style match the on-disk paths we compute below (Windows CI
-    // safety). .native uses the OS-level realpath which resolves 8.3 names
-    // on Windows; the plain realpathSync wrapper does not.
+    // Normalize every registered path through path.resolve() + toLowerCase()
+    // so that Windows 8.3 short names, forward/back slash separators, and case
+    // differences never cause a registered worktree to be mistaken for an
+    // orphan. path.resolve() does not require the path to exist on disk, so it
+    // is safe even when git reports a worktree whose directory was already
+    // removed.
     const registered = new Set(
-      entries.map((e) => {
-        try {
-          return fs.realpathSync.native(e.path);
-        } catch {
-          return path.resolve(e.path);
-        }
-      }),
+      entries.map((e) => path.resolve(e.path).toLowerCase()),
     );
 
     const removed: string[] = [];
@@ -224,17 +220,8 @@ export class WorktreeManager {
 
     for (const child of fs.readdirSync(worktreesDir)) {
       if (child.startsWith(".")) continue; // skip lock files and dot entries
-      let full: string;
-      try {
-        full = fs.realpathSync.native(path.resolve(worktreesDir, child));
-      } catch {
-        // realpathSync.native can throw ENOENT on Windows for paths with 8.3 /
-        // special formats. Fall back to path.resolve so the comparison against
-        // the registered set (which uses the same fallback) stays consistent and
-        // a registered worktree is never mistaken for an orphan.
-        full = path.resolve(worktreesDir, child);
-      }
-      if (registered.has(full)) continue;
+      const full = path.resolve(worktreesDir, child);
+      if (registered.has(full.toLowerCase())) continue;
       try {
         fs.rmSync(full, { recursive: true, force: true });
         removed.push(full);
@@ -294,7 +281,7 @@ export class WorktreeManager {
     dir: string,
   ): RawEntry | undefined {
     const target = path.resolve(dir);
-    return entries.find((e) => path.resolve(e.path) === target);
+    return entries.find((e) => pathsEqual(e.path, target));
   }
 
   // --- internals ---------------------------------------------------------
@@ -349,6 +336,23 @@ export class WorktreeManager {
       // ignore
     }
   }
+}
+
+/**
+ * Compare two filesystem paths for equality in a cross-platform way.
+ *
+ * Both sides are passed through `path.resolve()` (which normalizes relative
+ * segments and forward/back slash separators on Windows) and lowercased before
+ * comparison. This makes the check robust against:
+ *   - forward vs back slash separator styles (git returns `/`, Node returns `\`)
+ *   - case differences (e.g. `RUNNER~1` vs `runneradmin` on Windows)
+ *   - 8.3 short-name vs long-name forms
+ *
+ * `path.resolve()` does not require the path to exist on disk, so this is safe
+ * for paths that may have been removed.
+ */
+function pathsEqual(a: string, b: string): boolean {
+  return path.resolve(a).toLowerCase() === path.resolve(b).toLowerCase();
 }
 
 /** Normalize a plan name into an 8-char slug: `[^a-z0-9]+` -> `-`. */
