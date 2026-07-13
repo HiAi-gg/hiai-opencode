@@ -54,24 +54,28 @@ function usage() {
   console.log(`hiai-opencode
 
 Usage:
+  hiai-opencode                         # launch opencode serve + web (same as 'up')
+  hiai-opencode up [--serve-port N] [--web-port N] [--host H]
+  hiai-opencode down
+  hiai-opencode restart [--serve-port N] [--web-port N] [--host H]
+  hiai-opencode status
   hiai-opencode doctor
   hiai-opencode mcp-status
   hiai-opencode export-mcp [path]
   hiai-opencode diagnose [path]
   hiai-opencode task-status <task_id>
-  hiai-opencode up [--serve-port N] [--web-port N] [--host H]
-  hiai-opencode down
-  hiai-opencode status
 
 Commands:
-  doctor       Full install/runtime diagnostic: MCP status + static export freshness + provider/skills/agents/LSP checks + MCP tool probes.
-  mcp-status   Check hiai-opencode MCP configuration, keys, and local runtimes.
-  export-mcp   Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
-  diagnose     Collect full diagnostic bundle to file (local only, no remote sending).
-  task-status  Show status of a background task (requires OpenCode process to be running; task state is in-memory only).
-  up           Start opencode serve (headless) + opencode web (frontend). Cline bridge = plugin providers (no extra process).
-  down         Stop the stack started by 'up'.
-  status       Show running serve/web processes and ports.
+  (no args)   Launch opencode serve (headless) + opencode web (frontend). Cline bridge = plugin providers (no extra process).
+  up          Start the stack (alias for bare command).
+  down        Stop the stack started by 'up'.
+  restart     Stop then start the stack.
+  status      Show running serve/web processes and ports.
+  doctor      Full install/runtime diagnostic: MCP status + static export freshness + provider/skills/agents/LSP checks + MCP tool probes.
+  mcp-status  Check hiai-opencode MCP configuration, keys, and local runtimes.
+  export-mcp  Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
+  diagnose    Collect full diagnostic bundle to file (local only, no remote sending).
+  task-status Show status of a background task (requires OpenCode process to be running; task state is in-memory only).
 `)
 }
 
@@ -906,7 +910,12 @@ function showTaskStatus(taskId) {
 async function main() {
   const command = process.argv[2]
   if (!command || command === "-h" || command === "--help") {
-    usage()
+    // Bare `hiai-opencode` (or --help) launches the stack by default.
+    if (command === "-h" || command === "--help") {
+      usage()
+      return
+    }
+    await cmdUp(process.argv.slice(3))
     return
   }
 
@@ -944,6 +953,12 @@ async function main() {
 
   if (command === "down") {
     await cmdDown()
+    return
+  }
+
+  if (command === "restart") {
+    await cmdDown()
+    await cmdUp(process.argv.slice(3))
     return
   }
 
