@@ -78,7 +78,6 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   const agents = createAllAgents(config);
   const bobHooks = createHooks(config as BobConfig);
   const skillsDir = join(__dirname, "..", "skills");
-  const promptsDir = join(__dirname, "features", "dream-distill");
   const memoryDataDir = join(os.homedir(), ".hiai-opencode", "data", "memory");
   const memoryDbPath = join(
     os.homedir(),
@@ -130,11 +129,7 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
     config.completion?.enabled !== false ? createBobCompletionHook(config) : {};
 
   // Init dream/distill auto-trigger
-  const dreamDistillHooks = createDreamDistillHook(
-    config,
-    input.client,
-    promptsDir,
-  );
+  const dreamDistillHooks = createDreamDistillHook(config, input.client);
 
   const hooks: Hooks = {};
 

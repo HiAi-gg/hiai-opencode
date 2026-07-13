@@ -1,17 +1,15 @@
 /**
  * dream-distill/index.test.ts — Tests for the dream/distill auto-consolidation hook.
  *
- * Verifies event filtering, timing logic, session creation, and error handling.
+ * Verifies event filtering, timing logic, session creation, error handling,
+ * and bundled prompt constants.
  */
 
-import { beforeEach, describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../../types";
 import { createDreamDistillHook } from "./index";
-
-let promptsDir = "";
+import { DREAM_PROMPT } from "./dream";
+import { DISTILL_PROMPT } from "./distill";
 
 function makeConfig(overrides?: Partial<BobConfig>): BobConfig {
   return {
@@ -35,18 +33,45 @@ function makeClient() {
 }
 
 describe("dream-distill", () => {
-  beforeEach(() => {
-    promptsDir = join(tmpdir(), `hiai-test-dream-${Date.now()}`);
-    mkdirSync(promptsDir, { recursive: true });
-    writeFileSync(join(promptsDir, "dream.txt"), "Dream prompt content");
-    writeFileSync(join(promptsDir, "distill.txt"), "Distill prompt content");
+  describe("bundled prompts", () => {
+    test("DREAM_PROMPT is a non-empty string", () => {
+      expect(typeof DREAM_PROMPT).toBe("string");
+      expect(DREAM_PROMPT.length).toBeGreaterThan(500);
+      expect(DREAM_PROMPT).toContain("Dream: Memory Consolidation");
+    });
+
+    test("DISTILL_PROMPT is a non-empty string", () => {
+      expect(typeof DISTILL_PROMPT).toBe("string");
+      expect(DISTILL_PROMPT.length).toBeGreaterThan(500);
+      expect(DISTILL_PROMPT).toContain("Distill: Workflow Packaging");
+    });
+
+    test("hook works without filesystem dependency", () => {
+      const hook = createDreamDistillHook(
+        makeConfig(),
+        makeClient() as any,
+      );
+      expect(typeof hook.event).toBe("function");
+    });
+
+    test("does not throw when promptsDir is absent", async () => {
+      const client = makeClient();
+      const hook = createDreamDistillHook(
+        makeConfig(),
+        client as any,
+      ) as any;
+      const fn = hook.event as (input: { event: any }) => Promise<void>;
+
+      await expect(
+        fn({ event: { type: "session.created" } }),
+      ).resolves.toBeUndefined();
+    });
   });
 
   test("returns an event hook", () => {
     const hook = createDreamDistillHook(
       makeConfig(),
       makeClient() as any,
-      promptsDir,
     );
     expect(typeof hook.event).toBe("function");
   });
@@ -55,7 +80,6 @@ describe("dream-distill", () => {
     const hook = createDreamDistillHook(
       makeConfig(),
       makeClient() as any,
-      promptsDir,
     ) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
@@ -76,7 +100,6 @@ describe("dream-distill", () => {
     const hook = createDreamDistillHook(
       makeConfig(),
       client as any,
-      promptsDir,
     ) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
@@ -98,7 +121,6 @@ describe("dream-distill", () => {
     const hook = createDreamDistillHook(
       makeConfig(),
       client as any,
-      promptsDir,
     ) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
@@ -123,7 +145,6 @@ describe("dream-distill", () => {
     const hook = createDreamDistillHook(
       config,
       makeClient() as any,
-      promptsDir,
     ) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
@@ -149,7 +170,6 @@ describe("dream-distill", () => {
     const hook = createDreamDistillHook(
       makeConfig(),
       failingClient as any,
-      promptsDir,
     ) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
@@ -168,18 +188,26 @@ describe("dream-distill", () => {
     }
   });
 
-  test("handles prompt creation failure gracefully", async () => {
-    const client = makeClient();
-    const hook = createDreamDistillHook(
-      makeConfig(),
-      client as any,
-      "/nonexistent/dir",
-    ) as any;
+  test("respects interval-days: initial call creates session", async () => {
+    // interval_days: 0 means "always trigger". Verify it works.
+    let createCount = 0;
+    const client = {
+      session: {
+        create: async () => {
+          createCount++;
+          return { data: { id: `sess-${createCount}` } };
+        },
+        prompt: async () => {},
+      },
+    };
+    const config = makeConfig({
+      dream: { auto: true, interval_days: 0 },
+      distill: { auto: false },
+    });
+    const hook = createDreamDistillHook(config, client as any) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
-    // Should not throw — errors are caught and logged
-    await expect(
-      fn({ event: { type: "session.created" } }),
-    ).resolves.toBeUndefined();
+    await fn({ event: { type: "session.idle" } });
+    expect(createCount).toBe(1);
   });
 });

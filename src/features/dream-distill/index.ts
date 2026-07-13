@@ -1,17 +1,17 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import type { BobConfig } from "../../types";
-
-const lastRun = new Map<string, number>();
+import { DREAM_PROMPT } from "./dream";
+import { DISTILL_PROMPT } from "./distill";
+import { getLastRun, markFatal, save } from "./state";
 
 export function createDreamDistillHook(
   config: BobConfig,
   client: PluginInput["client"],
-  promptsDir: string,
 ): Pick<Hooks, "event"> {
   const dreamCfg = config.dream ?? { auto: true, interval_days: 7 };
   const distillCfg = config.distill ?? { auto: true, interval_days: 30 };
+
+  const SENTINEL_FATAL = -1;
 
   return {
     event: async (input) => {
@@ -23,6 +23,7 @@ export function createDreamDistillHook(
 
       const now = Date.now();
       const dayMs = 24 * 60 * 60 * 1000;
+      const lastRun = getLastRun();
 
       const checkAndRun = async (
         kind: "dream" | "distill",
@@ -30,16 +31,31 @@ export function createDreamDistillHook(
         auto: boolean,
       ) => {
         if (!auto) return;
+
         const key = `last_${kind}_run`;
+
+        // Fatal error: prompt constant is missing from the bundle.
+        if (lastRun.get(key) === SENTINEL_FATAL) return;
+
         const last = lastRun.get(key) ?? 0;
         if (now - last < intervalDays * dayMs) return;
 
         lastRun.set(key, now);
+        save();
+
+        const prompt = kind === "dream" ? DREAM_PROMPT : DISTILL_PROMPT;
+
+        if (!prompt) {
+          console.error(
+            `[hiai-opencode] Auto-${kind}: prompt constant is empty — packaging defect. ` +
+              "Dream/Distill will not attempt again until the plugin is reloaded.",
+          );
+          markFatal(key);
+          save();
+          return;
+        }
 
         try {
-          const promptFile = join(promptsDir, `${kind}.txt`);
-          const prompt = readFileSync(promptFile, "utf-8");
-
           const created = await client.session.create({
             body: { title: `Auto ${kind === "dream" ? "Dream" : "Distill"}` },
           });
@@ -66,7 +82,8 @@ export function createDreamDistillHook(
           );
         } catch (err) {
           console.error(`[hiai-opencode] Auto-${kind} failed:`, err);
-          lastRun.delete(key); // retry next idle event
+          lastRun.delete(key);
+          save();
         }
       };
 

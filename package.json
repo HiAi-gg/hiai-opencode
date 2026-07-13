@@ -67,7 +67,7 @@
     "clean:dist": "rm -rf dist",
     "build:bundle": "bun build --target bun --outdir ./dist --entrypoints ./src/index.ts",
     "build:types": "tsc --emitDeclarationOnly --project tsconfig.json",
-    "build": "bun run clean:dist && bun run build:bundle && bun run build:types",
+    "build": "bun run clean:dist && bun run build:bundle && bun run build:types && bun run scripts/verify-bundle.ts",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "bun test",
     "lint": "biome lint src/",
