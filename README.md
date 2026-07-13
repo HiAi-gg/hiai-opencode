@@ -139,6 +139,48 @@ Plus **Dream** (7-day) and **Distill** (30-day) auto-consolidation that promotes
 
 ---
 
+## CLI — `hiai-opencode`
+
+The package ships a `hiai-opencode` binary (also the OpenCode plugin name). It wraps diagnostics **and** stack management for the OpenCode server + web UI.
+
+### Run the server + web UI
+
+```bash
+hiai-opencode              # same as `up` — launches the stack
+hiai-opencode up            # opencode serve (headless) + opencode web (frontend)
+hiai-opencode down          # stop the stack
+hiai-opencode restart       # down, then up
+hiai-opencode status        # show running serve/web PIDs + ports
+```
+
+- **Server** runs `opencode serve` (headless API) on port `4096` by default.
+- **Frontend** runs `opencode web` (built-in web UI) on port `4097` by default.
+- PIDs and ports are tracked in `~/.hiai-opencode/run/opencode-stack.json` so `down` / `status` can manage the spawned processes.
+
+Override ports or host:
+
+```bash
+hiai-opencode up --serve-port 5000 --web-port 5001 --host 0.0.0.0
+# or via env
+HIAI_OPENCODE_SERVE_PORT=5000 HIAI_OPENCODE_WEB_PORT=5001 hiai-opencode
+```
+
+> **Cline bridge** is an OpenCode *provider* entry (configured in `opencode.jsonc` / `bob.json`), **not** a separate process. `up` does not start any bridge — it only ensures the plugin is registered and launches `serve` + `web`.
+
+### Diagnostics
+
+```bash
+hiai-opencode doctor        # full install/runtime diagnostic (exits non-zero on hard failures)
+hiai-opencode mcp-status    # MCP server config + tool probes
+hiai-opencode export-mcp [path]   # write static .mcp.json for hosts that ignore plugin MCP
+hiai-opencode diagnose [path]    # collect diagnostic bundle (local only)
+hiai-opencode task-status <id>    # status of a background task
+```
+
+`doctor` checks: plugin registration, MCP servers, LSP runtimes (TypeScript/Svelte/ESLint/Bash/Pyright), CLI skills (Firecrawl / Context7 / agent-browser), model-slot assignment from `bob.json`, and the static `.mcp.json` freshness. Use it as a CI gate.
+
+---
+
 ## Configuration
 
 The plugin ships sane defaults in [bob.json](bob.json). To customize, drop a `bob.json` in your project root (or `.opencode/`) — it merges over the bundled defaults.
