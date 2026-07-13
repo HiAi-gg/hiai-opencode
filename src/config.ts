@@ -318,9 +318,12 @@ export function loadConfig(projectDir: string): BobConfig {
   loadEnvFiles(projectDir);
 
   const cfgDir = globalConfigDir();
-  // Plugin's own bob.json — ALWAYS loaded first, user config overwrites
+  // NOTE: the plugin's own bob.json is NOT a candidate here. Its values are
+  // already the DEFAULT_CONFIG baseline (hardcoded in mergeConfig). User
+  // configs below OVERRIDE that baseline. Loading the plugin's bob.json
+  // as a candidate would shadow the user's .opencode/bob.json because the
+  // old code did `break` on the first match.
   const candidates = [
-    join(PLUGIN_ROOT, "bob.json"),
     join(projectDir, "bob.json"),
     join(projectDir, ".opencode", "bob.json"),
     join(projectDir, "bob.jsonc"),
@@ -329,19 +332,20 @@ export function loadConfig(projectDir: string): BobConfig {
     join(cfgDir, "bob.jsonc"),
   ];
 
+  // Collect ALL user configs; later entries (more specific / global-last)
+  // override earlier ones, and the whole merged result overrides DEFAULT_CONFIG.
   let userConfig: Partial<BobConfig> = {};
   for (const candidate of candidates) {
-    if (existsSync(candidate)) {
-      try {
-        const raw = readFileSync(candidate, "utf-8");
-        const cleaned = stripJsonComments(raw);
-        userConfig = JSON.parse(cleaned);
-        break;
-      } catch (err) {
-        console.warn(
-          `[hiai-opencode] Failed to parse config: ${candidate} (${err instanceof Error ? err.message : String(err)})`,
-        );
-      }
+    if (!existsSync(candidate)) continue;
+    try {
+      const raw = readFileSync(candidate, "utf-8");
+      const cleaned = stripJsonComments(raw);
+      const parsed = JSON.parse(cleaned) ?? {};
+      userConfig = { ...userConfig, ...parsed };
+    } catch (err) {
+      console.warn(
+        `[hiai-opencode] Failed to parse config: ${candidate} (${err instanceof Error ? err.message : String(err)})`,
+      );
     }
   }
 
