@@ -39,7 +39,7 @@ describe("todo-continuation", () => {
     expect(get("ses_test").continuationPrompt).toContain("incomplete task");
   });
 
-  test("session.idle with zero incomplete tasks logs no-tasks message", async () => {
+  test("session.idle with zero incomplete tasks stays silent (no noisy hint)", async () => {
     const hookSet = createTodoContinuationHook(config);
     await hookSet.event!({
       event: {
@@ -50,7 +50,9 @@ describe("todo-continuation", () => {
 
     expect(get("ses_test").hasIncompleteTasks).toBe(false);
     const logLine = logSpy.mock.calls.map((c) => String(c[0])).join("\n");
-    expect(logLine).toContain("no incomplete tasks");
+    // No-op branch must not log — avoids flooding the TUI on every idle session.
+    expect(logLine).not.toContain("no incomplete tasks");
+    expect(logLine).not.toContain("has incomplete tasks");
   });
 
   test("session.idle uses existing hasIncompleteTasks flag when no count provided", async () => {

@@ -62,11 +62,9 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
 
               // Record the prompt in loop-state so other hooks can use it
               setContinuationPrompt(sessionID, prompt);
-            } else {
-              console.log(
-                `[hiai-opencode] Todo-continuation: session ${sessionID} idle, no incomplete tasks detected. Enable bob completion-controller for task-aware continuation.`,
-              );
             }
+            // No incomplete tasks: nothing to continue. Stay silent to avoid
+            // flooding the TUI with a hint on every idle session.
             break;
           }
 
