@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createSessionNotification(_config: BobConfig): HookSet {
   return {
@@ -11,11 +12,11 @@ export function createSessionNotification(_config: BobConfig): HookSet {
         };
         if (evt?.type === "session.idle" || evt?.type === "session.question") {
           const sid = evt.properties?.sessionID as string | undefined;
-          console.log(`[hiai-opencode] Session event: ${evt?.type} (${sid})`);
+          logger.log(`[hiai-opencode] Session event: ${evt?.type} (${sid})`);
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in session-notification:",
           err,
         );

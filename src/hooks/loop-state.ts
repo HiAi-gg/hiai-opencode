@@ -16,6 +16,7 @@
 
 // ── Types ──
 
+import { logger } from "../util/log";
 export interface LoopSessionState {
   /** Number of loop iterations executed */
   iterations: number;
@@ -101,7 +102,7 @@ function dispatch<T>(sid: string, fn: () => T): T {
 // (e.g. a lost-update race) and would break the loop's termination logic.
 function assertInvariants(sessionID: string, s: LoopSessionState): void {
   if (s.iterations < 0 || s.maxIterations < 0) {
-    console.warn(
+    logger.warn(
       `[hiai-opencode] loop-state: invariant violation for session ${sessionID}: ` +
         `iterations=${s.iterations}, maxIterations=${s.maxIterations} ` +
         `(both must be >= 0)`,

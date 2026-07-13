@@ -1,5 +1,6 @@
 import type { PluginInput } from "@opencode-ai/plugin";
 import { getToolSetting } from "../../config";
+import { logger } from "../../util/log";
 
 interface ToolCallWindow {
   lastSignature: string;
@@ -182,7 +183,7 @@ export class BackgroundManager {
   checkSpawnLimits(parentSessionID: string): boolean {
     const count = this.rootDescendantCounts.get(parentSessionID) ?? 0;
     if (count >= this.maxDescendants) {
-      console.log(
+      logger.log(
         `[hiai-opencode] Spawn limit: ${count} descendants for ${parentSessionID}`,
       );
       return false;
@@ -342,7 +343,7 @@ export class BackgroundManager {
         .abort({ path: { id: task.sessionID } })
         .catch(() => {});
       if (reason) {
-        console.log(
+        logger.log(
           `[hiai-opencode] [background-agent] Circuit breaker: cancelled session ${task.sessionID.slice(0, 8)} — ${reason}`,
         );
       }
@@ -467,7 +468,7 @@ export class BackgroundManager {
       });
       await Promise.race([notifyPromise, timeoutPromise]);
     } catch {
-      console.log("[hiai-opencode] Notification failed or timed out");
+      logger.log("[hiai-opencode] Notification failed or timed out");
     }
   }
 

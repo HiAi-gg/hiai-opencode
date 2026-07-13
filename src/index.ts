@@ -69,6 +69,7 @@ import {
   hiai_worktree_status,
 } from "./tools/worktree";
 import type { BobConfig, HookSet } from "./types";
+import { logger } from "./util/log";
 
 const PLUGIN_NAME = "HiAiOpenCodePlugin";
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -318,7 +319,7 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
           ...config.distill,
         };
     } catch (e) {
-      console.error("[HiAiOpenCodePlugin] config hook error:", e);
+      logger.error("[HiAiOpenCodePlugin] config hook error:", e);
     }
   };
 
@@ -369,10 +370,10 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   hooks.dispose = async () => {
     if (bobHooks.dispose) await bobHooks.dispose();
     await shutdownTelemetry();
-    console.log(`[${PLUGIN_NAME}] disposed`);
+    logger.log(`[${PLUGIN_NAME}] disposed`);
   };
 
-  console.log(
+  logger.log(
     `[${PLUGIN_NAME}] loaded: ${agents.length} agents, ${Object.keys(hooks.tool ?? {}).length} tools, hooks ready`,
   );
 

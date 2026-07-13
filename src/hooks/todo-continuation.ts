@@ -18,6 +18,7 @@ import {
   setContinuationPrompt,
   setHasIncompleteTasks,
 } from "./loop-state";
+import { logger } from "../util/log";
 
 const COOLDOWN_MS = 30_000;
 
@@ -56,7 +57,7 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
             if (s.hasIncompleteTasks) {
               // Generate a continuation prompt for the remaining work
               const prompt = buildContinuationPrompt(sessionID, 1);
-              console.log(
+              logger.log(
                 `[hiai-opencode] Todo-continuation: session ${sessionID} has incomplete tasks — ${prompt}`,
               );
 
@@ -73,14 +74,14 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
             const errorStr = evt.properties?.error
               ? String(evt.properties.error)
               : "unknown error";
-            console.log(
+            logger.log(
               `[hiai-opencode] Todo-continuation: session ${sessionID} errored — ${errorStr}. Continuation state reset.`,
             );
             break;
           }
 
           case "session.deleted": {
-            console.log(
+            logger.log(
               `[hiai-opencode] Todo-continuation: session ${sessionID} deleted — cleanup`,
             );
             break;
@@ -88,7 +89,7 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in todo-continuation:", err);
+        logger.error("[hiai-opencode] Hook error in todo-continuation:", err);
       }
     },
   };

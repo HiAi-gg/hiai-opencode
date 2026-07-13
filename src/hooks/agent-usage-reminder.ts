@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createAgentUsageReminder(_config: BobConfig): HookSet {
   const callCounts = new Map<string, number>();
@@ -16,7 +17,7 @@ export function createAgentUsageReminder(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in agent-usage-reminder:",
           err,
         );

@@ -15,6 +15,7 @@ import {
   classifyError,
   reset,
 } from "./loop-state";
+import { logger } from "../util/log";
 
 /** Errors that explicitly say the context window was hit. */
 const CONTEXT_WINDOW_PATTERNS = [
@@ -76,17 +77,17 @@ export function createContextWindowLimitRecoveryHook(
         // Reset loop state so the next idle cycle can start fresh
         reset(sessionID);
 
-        console.log(
+        logger.log(
           `[hiai-opencode] Context-window-limit: session ${sessionID} exceeded context limit.`,
         );
-        console.log(`[hiai-opencode] Context-window-limit: ${hint}`);
-        console.log(
+        logger.log(`[hiai-opencode] Context-window-limit: ${hint}`);
+        logger.log(
           "[hiai-opencode] Context-window-limit: compaction context injected for next compaction cycle",
         );
-        console.log(`[hiai-opencode] Context-window-limit: ${context}`);
+        logger.log(`[hiai-opencode] Context-window-limit: ${context}`);
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in context-window-limit-recovery:",
           err,
         );
@@ -110,7 +111,7 @@ export function createContextWindowLimitRecoveryHook(
         );
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in context-window-limit-recovery:",
           err,
         );

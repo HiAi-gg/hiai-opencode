@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 const INTERACTIVE_CMDS = [
   "vim",
@@ -21,7 +22,7 @@ export function createNonInteractiveEnv(_config: BobConfig): HookSet {
         const args = output.args as { command?: string };
         const cmd = (args?.command ?? "").trim().split(/\s+/)[0]?.toLowerCase();
         if (cmd && INTERACTIVE_CMDS.includes(cmd)) {
-          console.log(
+          logger.log(
             `[hiai-opencode] Non-interactive command detected: ${cmd}`,
           );
           output.args = {
@@ -31,7 +32,7 @@ export function createNonInteractiveEnv(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in non-interactive-env:",
           err,
         );

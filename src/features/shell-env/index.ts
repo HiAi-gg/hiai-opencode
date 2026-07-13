@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { parseEnvFile } from "../../config";
 import type { BobConfig } from "../../types";
+import { logger } from "../../util/log";
 
 /** Log prefix for this plugin's runtime messages. */
 const LOG_PREFIX = "[hiai-opencode]";
@@ -65,7 +66,7 @@ export class ShellEnvContext {
         }
         loadedFrom.push(name);
       } catch (err) {
-        console.warn(
+        logger.warn(
           `${LOG_PREFIX} shell-env: failed to read ${path}: ${(err as Error).message}`,
         );
       }
@@ -76,7 +77,7 @@ export class ShellEnvContext {
 
     // SECURITY: log only file NAMES, never contents/values.
     if (loadedFrom.length > 0) {
-      console.log(
+      logger.log(
         `${LOG_PREFIX} shell-env: loaded env files: ${loadedFrom.join(", ")}`,
       );
     }
@@ -110,7 +111,7 @@ export class ShellEnvContext {
 
     // SECURITY: log only variable NAMES, never values.
     if (injected.length > 0) {
-      console.log(
+      logger.log(
         `${LOG_PREFIX} shell-env: injecting env vars: ${injected.join(", ")}`,
       );
     }

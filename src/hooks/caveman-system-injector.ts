@@ -5,6 +5,7 @@ import {
   SUBAGENT_INTERNAL,
 } from "../prompt-library/caveman";
 import type { BobConfig, CavemanConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 
 /**
  * Caveman System Injector — injects internal communication protocol
@@ -113,7 +114,7 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
           output.system.push(SUBAGENT_INTERNAL);
         }
       } catch (err) {
-        console.error("[hiai-opencode] caveman-system-injector error:", err);
+        logger.error("[hiai-opencode] caveman-system-injector error:", err);
       }
     },
   };

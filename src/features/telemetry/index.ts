@@ -1,4 +1,5 @@
 import type { BobConfig } from "../../types";
+import { logger } from "../../util/log";
 
 type TelemetryConfig = BobConfig["telemetry"];
 
@@ -15,7 +16,7 @@ async function loadSdkNode() {
   try {
     return await import("@opentelemetry/sdk-node" as string);
   } catch {
-    console.warn("[hiai-opencode] @opentelemetry/sdk-node not available");
+    logger.warn("[hiai-opencode] @opentelemetry/sdk-node not available");
     return null;
   }
 }
@@ -24,7 +25,7 @@ async function loadOtlpExporter() {
   try {
     return await import("@opentelemetry/exporter-trace-otlp-http" as string);
   } catch {
-    console.warn(
+    logger.warn(
       "[hiai-opencode] @opentelemetry/exporter-trace-otlp-http not available",
     );
     return null;
@@ -35,7 +36,7 @@ async function loadResources() {
   try {
     return await import("@opentelemetry/resources" as string);
   } catch {
-    console.warn("[hiai-opencode] @opentelemetry/resources not available");
+    logger.warn("[hiai-opencode] @opentelemetry/resources not available");
     return null;
   }
 }
@@ -44,7 +45,7 @@ async function loadSemanticConventions() {
   try {
     return await import("@opentelemetry/semantic-conventions" as string);
   } catch {
-    console.warn(
+    logger.warn(
       "[hiai-opencode] @opentelemetry/semantic-conventions not available",
     );
     return null;
@@ -63,7 +64,7 @@ export async function initTelemetry(
   try {
     const sdkNode = await loadSdkNode();
     if (!sdkNode) {
-      console.warn(
+      logger.warn(
         "[hiai-opencode] Telemetry disabled: @opentelemetry/sdk-node not installed",
       );
       return;
@@ -95,7 +96,7 @@ export async function initTelemetry(
     sdk = instance;
     initialized = true;
   } catch (err) {
-    console.warn(
+    logger.warn(
       `[hiai-opencode] Telemetry init failed (continuing without): ${(err as Error).message}`,
     );
   }
@@ -106,7 +107,7 @@ export async function shutdownTelemetry(): Promise<void> {
   try {
     await sdk.shutdown();
   } catch (err) {
-    console.warn(
+    logger.warn(
       `[hiai-opencode] Telemetry shutdown failed: ${(err as Error).message}`,
     );
   } finally {

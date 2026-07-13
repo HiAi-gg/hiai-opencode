@@ -9,10 +9,11 @@ import {
   parseCcPath,
   parsePath,
 } from "./paths";
+import { logger } from "../util/log";
 
 const log = {
   warn: (msg: string, extra?: unknown) =>
-    console.warn(`[memory.reconcile] ${msg}`, extra ?? ""),
+    logger.warn(`[memory.reconcile] ${msg}`, extra ?? ""),
 };
 
 let _dbPath: string | null = null;

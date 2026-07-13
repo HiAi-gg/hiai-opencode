@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createPreemptiveCompaction(_config: BobConfig): HookSet {
   return {
@@ -17,13 +18,13 @@ export function createPreemptiveCompaction(_config: BobConfig): HookSet {
           0,
         );
         if (totalParts > 200) {
-          console.log(
+          logger.log(
             `[hiai-opencode] High message count (${totalParts}) — consider compacting`,
           );
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in preemptive-compaction:",
           err,
         );

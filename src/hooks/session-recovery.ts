@@ -11,6 +11,7 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
 import { buildRecoveryHint, classifyError, markError } from "./loop-state";
+import { logger } from "../util/log";
 
 function extractErrorMessage(properties: Record<string, unknown>): string {
   // Try common shapes: error string, error object with message, or APIError
@@ -50,27 +51,27 @@ export function createSessionRecoveryHook(_config: BobConfig): HookSet {
         // Record the error in loop-state for downstream hooks
         markError(sessionID, errorMessage, errorType);
 
-        console.log(
+        logger.log(
           `[hiai-opencode] Session recovery: ${sessionID} — ` +
             `type=${errorType}, hint="${hint}"`,
         );
 
         // For context-window errors, also log a specific suggestion
         if (errorType === "context_window_exceeded") {
-          console.log(
+          logger.log(
             `[hiai-opencode] Session recovery: suggest compacting session ${sessionID} or reducing message history`,
           );
         }
 
         // For fatal errors (auth, server), request user intervention
         if (errorType === "auth") {
-          console.log(
+          logger.log(
             `[hiai-opencode] Session recovery: auth failure for ${sessionID} — check API keys and provider configuration`,
           );
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in session-recovery:", err);
+        logger.error("[hiai-opencode] Hook error in session-recovery:", err);
       }
     },
   };

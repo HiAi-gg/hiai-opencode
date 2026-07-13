@@ -10,6 +10,7 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
 import { reset } from "./loop-state";
+import { logger } from "../util/log";
 
 /** Event types that should clear loop/continuation state. */
 const STOP_EVENTS = new Set([
@@ -46,13 +47,13 @@ export function createStopContinuationGuard(_config: BobConfig): HookSet {
         reset(sessionID);
 
         if (evt.type === "session.stop") {
-          console.log(
+          logger.log(
             `[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`,
           );
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in stop-continuation-guard:",
           err,
         );

@@ -3,6 +3,7 @@ import { dirname, isAbsolute, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveEnvVars } from "./shared/env";
 import type { BobConfig } from "./types";
+import { logger } from "./util/log";
 
 // Plugin root: two levels up from src/config.ts (src/ → hiai-opencode/)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -79,7 +80,7 @@ export function loadEnvFiles(projectDir: string): void {
         }
       }
     } catch (err) {
-      console.warn(
+      logger.warn(
         "[hiai-opencode] Failed to load env from",
         envPath,
         ":",
@@ -98,7 +99,7 @@ export function loadEnvFiles(projectDir: string): void {
       process.env[key] = value;
       if (hadShellValue) {
         // Log presence + source file only — never the value itself
-        console.log(`[hiai-opencode] env override for ${key} from ${path}`);
+        logger.log(`[hiai-opencode] env override for ${key} from ${path}`);
       }
     } else {
       // Non-managed key: preserve any existing shell value
@@ -249,14 +250,14 @@ function validateModels(models: BobConfig["models"]): void {
   for (const key of REQUIRED_AGENT_KEYS) {
     const model = m[key]?.model;
     if (typeof model !== "string" || model.trim() === "") {
-      console.warn(
+      logger.warn(
         `[hiai-opencode] agent "${key}" has no model — set models.${key}.model in bob.json`,
       );
       continue;
     }
     const slash = model.trim().indexOf("/");
     if (slash <= 0 || slash === model.trim().length - 1) {
-      console.warn(
+      logger.warn(
         `[hiai-opencode] agent "${key}" model "${model}" is not "<provider>/<model>"`,
       );
     }
@@ -265,7 +266,7 @@ function validateModels(models: BobConfig["models"]): void {
     if (
       !REQUIRED_AGENT_KEYS.includes(key as (typeof REQUIRED_AGENT_KEYS)[number])
     ) {
-      console.warn(
+      logger.warn(
         `[hiai-opencode] models.${key} is not a known agent — ignored`,
       );
     }
@@ -343,7 +344,7 @@ export function loadConfig(projectDir: string): BobConfig {
       const parsed = JSON.parse(cleaned) ?? {};
       userConfig = { ...userConfig, ...parsed };
     } catch (err) {
-      console.warn(
+      logger.warn(
         `[hiai-opencode] Failed to parse config: ${candidate} (${err instanceof Error ? err.message : String(err)})`,
       );
     }

@@ -1,5 +1,6 @@
 import type { Hooks } from "@opencode-ai/plugin";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 // Legal gate — enforces the project ethical-use policy on the autonomy feature.
 //
@@ -294,7 +295,7 @@ export function createLegalGate(): Pick<
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in legal-gate:", err);
+        logger.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
 
@@ -318,7 +319,7 @@ export function createLegalGate(): Pick<
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in legal-gate:", err);
+        logger.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
 
@@ -347,7 +348,7 @@ export function createLegalGate(): Pick<
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in legal-gate:", err);
+        logger.error("[hiai-opencode] Hook error in legal-gate:", err);
       }
     },
   };

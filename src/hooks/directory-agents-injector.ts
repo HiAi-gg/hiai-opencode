@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createDirectoryAgentsInjector(_config: BobConfig): HookSet {
   return {
@@ -10,7 +11,7 @@ export function createDirectoryAgentsInjector(_config: BobConfig): HookSet {
         );
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in directory-agents-injector:",
           err,
         );

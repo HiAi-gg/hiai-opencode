@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 /** Max number of sessions tracked before oldest entries are evicted. */
 const MAX_SESSIONS = 200;
@@ -40,12 +41,12 @@ export function createWriteExistingFileGuard(_config: BobConfig): HookSet {
           const args = output.args as { filePath?: string; path?: string };
           const fp = args?.filePath ?? args?.path;
           if (fp && !recentReads.get(sid)?.has(fp)) {
-            console.log(`[hiai-opencode] Write/edit without prior Read: ${fp}`);
+            logger.log(`[hiai-opencode] Write/edit without prior Read: ${fp}`);
           }
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in write-existing-file-guard:",
           err,
         );
@@ -63,7 +64,7 @@ export function createWriteExistingFileGuard(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in write-existing-file-guard:",
           err,
         );

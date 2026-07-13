@@ -1,6 +1,7 @@
 import { CLOSURE_SCHEMA_PROMPT, validateClosure } from "../shared/closure";
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createClosureInjector(_config: BobConfig): HookSet {
   return {
@@ -29,7 +30,7 @@ export function createClosureInjector(_config: BobConfig): HookSet {
           } else {
             const validation = validateClosure(lastPart.text);
             if (!validation.isValid) {
-              console.log(
+              logger.log(
                 `[hiai-opencode] Invalid CLOSURE: ${validation.error}`,
               );
             }
@@ -37,7 +38,7 @@ export function createClosureInjector(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in closure-injector:", err);
+        logger.error("[hiai-opencode] Hook error in closure-injector:", err);
       }
     },
   };

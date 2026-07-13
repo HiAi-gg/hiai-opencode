@@ -2,6 +2,7 @@ import type { BobConfig, HookSet } from "../types";
 import type { BackgroundManager } from "../features/background-manager/index";
 import { setBackgroundManager } from "../tools/background-task";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 /**
  * Circuit-breaker hook: feeds every tool call into the BackgroundManager so the
@@ -33,7 +34,7 @@ export function createCircuitBreakerHook(
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
         // Circuit-breaker accounting must never break a tool result.
-        console.error("[hiai-opencode] Hook error in circuit-breaker:", err);
+        logger.error("[hiai-opencode] Hook error in circuit-breaker:", err);
       }
     },
   };

@@ -31,6 +31,7 @@ import { createTokenBudgetHook } from "./token-budget";
 import { createToolPairValidator } from "./tool-pair-validator";
 import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
 import { createWriteExistingFileGuard } from "./write-existing-file-guard";
+import { logger } from "../util/log";
 
 type HookFactory = (config: BobConfig) => HookSet;
 
@@ -89,7 +90,7 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
             if (err instanceof BlockingHookError) {
               throw err;
             }
-            console.error(
+            logger.error(
               `[hiai-opencode] Hook handler error in ${point}:`,
               err,
             );
@@ -111,7 +112,7 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
         try {
           await fn();
         } catch (err) {
-          console.error("[hiai-opencode] Dispose error:", err);
+          logger.error("[hiai-opencode] Dispose error:", err);
         }
       }
     };

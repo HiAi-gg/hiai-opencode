@@ -3,6 +3,7 @@ import type { BobConfig } from "../../types";
 import { DREAM_PROMPT } from "./dream";
 import { DISTILL_PROMPT } from "./distill";
 import { getLastRun, markFatal, save } from "./state";
+import { logger } from "../../util/log";
 
 export function createDreamDistillHook(
   config: BobConfig,
@@ -46,7 +47,7 @@ export function createDreamDistillHook(
         const prompt = kind === "dream" ? DREAM_PROMPT : DISTILL_PROMPT;
 
         if (!prompt) {
-          console.error(
+          logger.error(
             `[hiai-opencode] Auto-${kind}: prompt constant is empty — packaging defect. ` +
               "Dream/Distill will not attempt again until the plugin is reloaded.",
           );
@@ -62,7 +63,7 @@ export function createDreamDistillHook(
           const session =
             "data" in created && created.data ? created.data : null;
           if (!session) {
-            console.error(
+            logger.error(
               `[hiai-opencode] Auto-${kind} failed: session.create returned no data`,
             );
             return;
@@ -77,11 +78,11 @@ export function createDreamDistillHook(
             },
           });
 
-          console.log(
+          logger.log(
             `[hiai-opencode] Auto-${kind} triggered: session ${session.id}`,
           );
         } catch (err) {
-          console.error(`[hiai-opencode] Auto-${kind} failed:`, err);
+          logger.error(`[hiai-opencode] Auto-${kind} failed:`, err);
           lastRun.delete(key);
           save();
         }

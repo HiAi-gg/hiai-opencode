@@ -13,6 +13,7 @@
 
 import { WorktreeManager } from "../features/worktree";
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 
 /** Phrases that signal the start of a plan / phase and should spawn a worktree. */
 const PLAN_START_PATTERNS: RegExp[] = [
@@ -66,11 +67,11 @@ export function createWorktreeLifecycleHook(config: BobConfig): HookSet {
       try {
         const info = await manager.create({ planName: text.slice(0, 64) });
         sessionWorktrees.set(sessionID, info.path);
-        console.log(
+        logger.log(
           `[hiai-opencode] worktree-lifecycle: created worktree ${info.path} for session ${sessionID}`,
         );
       } catch (err) {
-        console.error(
+        logger.error(
           `[hiai-opencode] worktree-lifecycle: failed to create worktree for session ${sessionID}:`,
           err,
         );
@@ -90,13 +91,13 @@ export function createWorktreeLifecycleHook(config: BobConfig): HookSet {
       try {
         const removed = await manager.remove(dir);
         if (removed) {
-          console.log(
+          logger.log(
             `[hiai-opencode] worktree-lifecycle: removed worktree ${dir} for session ${sessionID}`,
           );
         }
         sessionWorktrees.delete(sessionID);
       } catch (err) {
-        console.error(
+        logger.error(
           `[hiai-opencode] worktree-lifecycle: failed to remove worktree ${dir} for session ${sessionID}:`,
           err,
         );
@@ -108,7 +109,7 @@ export function createWorktreeLifecycleHook(config: BobConfig): HookSet {
       for (const [sessionID, dir] of sessionWorktrees) {
         try {
           await manager.remove(dir);
-          console.log(
+          logger.log(
             `[hiai-opencode] worktree-lifecycle: removed worktree ${dir} for session ${sessionID} on dispose`,
           );
         } catch {

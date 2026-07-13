@@ -15,6 +15,7 @@ import {
   setContinuationPrompt,
   shouldContinue,
 } from "./loop-state";
+import { logger } from "../util/log";
 
 export function createLoopHook(config: BobConfig): HookSet {
   const rawCfg = config as Record<string, unknown>;
@@ -52,7 +53,7 @@ export function createLoopHook(config: BobConfig): HookSet {
             if (!shouldContinue(sessionID)) return;
 
             recordIteration(sessionID);
-            console.log(
+            logger.log(
               `[hiai-opencode] Loop: session ${sessionID} idle ` +
                 `(iteration ${s.iterations}/${s.maxIterations})`,
             );
@@ -69,7 +70,7 @@ export function createLoopHook(config: BobConfig): HookSet {
           case "session.error": {
             // Reset loop state so recovery can start fresh
             reset(sessionID);
-            console.log(
+            logger.log(
               `[hiai-opencode] Loop: session ${sessionID} error — state reset`,
             );
             break;
@@ -82,7 +83,7 @@ export function createLoopHook(config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in loop:", err);
+        logger.error("[hiai-opencode] Hook error in loop:", err);
       }
     },
 
@@ -107,14 +108,14 @@ export function createLoopHook(config: BobConfig): HookSet {
           if (detectCompletionMarker(lastPart.text)) {
             // Completion detected — we can't get sessionID here,
             // but we log the detection event for observability.
-            console.log(
+            logger.log(
               "[hiai-opencode] Loop: completion marker detected in outgoing messages",
             );
           }
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in loop:", err);
+        logger.error("[hiai-opencode] Hook error in loop:", err);
       }
     },
   };

@@ -3,6 +3,7 @@ import { extname, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { spawn } from "bun";
 import { getToolSetting } from "../../config";
+import { logger } from "../../util/log";
 
 export interface LSPDiagnostic {
   range: {
@@ -165,7 +166,7 @@ export class LSPClient {
     );
     if (this.buffer.length > MAX_BUFFER_SIZE) {
       this.buffer = "";
-      console.error("[bob] LSP buffer exceeded max size, clearing");
+      logger.error("[bob] LSP buffer exceeded max size, clearing");
       return;
     }
     while (true) {

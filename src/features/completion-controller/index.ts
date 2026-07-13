@@ -5,6 +5,7 @@ import { aggregateEndpoints } from "./port-scanner";
 import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
 import { buildSummary, parseClosureBlock } from "./summary-builder";
+import { logger } from "../../util/log";
 
 /** LSP tool names that satisfy the post-edit lsp_diagnostics requirement. */
 const LSP_TOOL_NAMES = new Set([
@@ -284,7 +285,7 @@ export function createBobCompletionHook(
             "manager",
           ]);
           if (!input.agentType || !KNOWN_AGENT_TYPES.has(input.agentType)) {
-            console.log(
+            logger.log(
               `[hiai-opencode] completion: unknown/missing agentType "${input.agentType ?? ""}" for ${sid.slice(0, 8)} — falling through to decide() without self-approval`,
             );
           }
@@ -344,7 +345,7 @@ export function createBobCompletionHook(
           // top-level catch guards the rest of the body (decide(), state
           // mutations, summary injection) so a thrown error cannot wedge the
           // auto-continue loop or leave the session in a broken state.
-          console.error("[hiai-opencode] Completion controller error:", err);
+          logger.error("[hiai-opencode] Completion controller error:", err);
           return;
         }
       },

@@ -1,6 +1,7 @@
 import type { BobConfig, HookSet } from "../types";
 import { setQualityGateFailed } from "../features/completion-controller/state";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 /**
  * Strict error-signal patterns. These target *structural* diagnostic signals
@@ -61,14 +62,14 @@ export function createQualityGate(_config: BobConfig): HookSet {
 
         if (hasErrors) {
           const cmdName = cmd.split(" ")[0];
-          console.log(
+          logger.log(
             `[hiai-opencode] QUALITY GATE FAILED: ${cmdName}`,
           );
           output.output += `\n\n[hiai-opencode] ⛔ QUALITY GATE FAILED: ${cmdName} detected errors.\n⛔ Fix the reported errors and re-run until exit code 0.\n⛔ Task completion is blocked until the quality gate passes.`;
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in quality-gate:", err);
+        logger.error("[hiai-opencode] Hook error in quality-gate:", err);
       }
     },
   };

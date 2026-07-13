@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createTokenBudgetHook(_config: BobConfig): HookSet {
   return {
@@ -13,11 +14,11 @@ export function createTokenBudgetHook(_config: BobConfig): HookSet {
     ) => {
       try {
         if (output?.messages?.length > 100) {
-          console.log("[hiai-opencode] Token budget: high message count");
+          logger.log("[hiai-opencode] Token budget: high message count");
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in token-budget:", err);
+        logger.error("[hiai-opencode] Hook error in token-budget:", err);
       }
     },
   };

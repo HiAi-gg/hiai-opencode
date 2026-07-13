@@ -19,6 +19,7 @@
 import type { BobConfig, HookSet } from "../types";
 import * as st from "../features/completion-controller/state";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createCompactionContextInjector(_config: BobConfig): HookSet {
   return {
@@ -82,7 +83,7 @@ export function createCompactionContextInjector(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error(
+        logger.error(
           "[hiai-opencode] Hook error in compaction-context-injector:",
           err,
         );

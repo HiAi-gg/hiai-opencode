@@ -1,4 +1,5 @@
 import { resolveEnvVars } from "../../shared/env";
+import { logger } from "../../util/log";
 
 // NOTE: DEFAULT_MCP_TIMEOUT is intentionally NOT part of `config.tool_settings`.
 // It is a well-named, build-time MCP wiring constant (not a runtime-tunable
@@ -57,7 +58,7 @@ export function getMcpConfig(
     if (registry.requiredEnv && registry.requiredEnv.length > 0) {
       const missing = registry.requiredEnv.filter((k) => !process.env[k]);
       if (missing.length > 0) {
-        console.log(
+        logger.log(
           `[hiai-opencode] MCP ${name} skipped: missing env: ${missing.join(", ")}`,
         );
         continue;

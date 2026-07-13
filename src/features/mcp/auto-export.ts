@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import type { BobConfig } from "../../types";
 import { getMcpConfig } from "./registry";
+import { logger } from "../../util/log";
 
 const MCP_EXPORT_MARKER = "hiai-opencode";
 
@@ -122,7 +123,7 @@ export function autoExportStaticMcp(
   if (mode === "always" && exists) {
     const overwriteMode = process.env.HIAI_OPENCODE_EXPORT_MCP_MODE?.trim().toLowerCase() || "safe";
     if (overwriteMode !== "force" && !isManagedStaticMcpFile(outputPath)) {
-      console.log(
+      logger.log(
         `[hiai-opencode] auto-export: refusing to overwrite non-managed ${outputPath} (set HIAI_OPENCODE_EXPORT_MCP_MODE=force to override)`,
       );
       return;
@@ -135,11 +136,11 @@ export function autoExportStaticMcp(
     writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`);
     const servers = payload.mcpServers as Record<string, unknown>;
     const count = Object.keys(servers).length;
-    console.log(
+    logger.log(
       `[hiai-opencode] auto-export: wrote ${outputPath} (${count} servers, mode=${mode})`,
     );
   } catch (err) {
-    console.error(
+    logger.error(
       `[hiai-opencode] auto-export: failed to write ${outputPath}:`,
       err instanceof Error ? err.message : String(err),
     );

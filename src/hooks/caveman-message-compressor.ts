@@ -1,4 +1,5 @@
 import type { BobConfig, CavemanConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 
 /**
  * Caveman Message Compressor — optional conservative message/history
@@ -96,7 +97,7 @@ export function createCavemanMessageCompressor(config: BobConfig): HookSet {
         }
       } catch (err) {
         // Fail-safe: log and continue without breaking messages
-        console.error("[hiai-opencode] caveman-message-compressor error:", err);
+        logger.error("[hiai-opencode] caveman-message-compressor error:", err);
       }
     },
   };

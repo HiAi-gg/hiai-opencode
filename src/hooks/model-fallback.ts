@@ -1,5 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
+import { logger } from "../util/log";
 
 export function createModelFallbackHook(_config: BobConfig): HookSet {
   return {
@@ -22,14 +23,14 @@ export function createModelFallbackHook(_config: BobConfig): HookSet {
             error.includes("503") ||
             error.includes("rate_limit")
           ) {
-            console.log(
+            logger.log(
               "[hiai-opencode] Model fallback: rate limit detected — switching to fallback model",
             );
           }
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        console.error("[hiai-opencode] Hook error in model-fallback:", err);
+        logger.error("[hiai-opencode] Hook error in model-fallback:", err);
       }
     },
   };
