@@ -8,7 +8,7 @@
 // State: PIDs + ports are written to $HOME/.hiai-opencode/run/ so `down` and
 // `status` can manage the spawned processes.
 
-import { spawn } from "node:child_process"
+import { spawn, spawnSync } from "node:child_process"
 import {
   existsSync,
   mkdirSync,
