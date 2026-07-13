@@ -177,6 +177,38 @@ function checkFirecrawlAuth() {
   }
 }
 
+function checkContext7() {
+  // context7 ships without a bin entry; resolve via npx -y.
+  const result = spawnSync("npx", ["-y", "context7", "--help"], {
+    encoding: "utf-8",
+    timeout: 15000,
+    shell: process.platform === "win32",
+  })
+  if (result.status === 0) {
+    return { level: "ok", detail: "context7 CLI available (npx -y context7)" }
+  }
+  return {
+    level: "warn",
+    detail: `context7 CLI not found — install via skill("explore/context7") or npm i -g context7`,
+  }
+}
+
+function checkAgentBrowser() {
+  const binary = process.platform === "win32" ? "agent-browser.cmd" : "agent-browser"
+  const result = spawnSync(binary, ["--help"], {
+    encoding: "utf-8",
+    timeout: 10000,
+    shell: process.platform === "win32",
+  })
+  if (result.status === 0) {
+    return { level: "ok", detail: `agent-browser CLI available (${binary})` }
+  }
+  return {
+    level: "warn",
+    detail: `agent-browser CLI not found — install via bun/npm i -g agent-browser`,
+  }
+}
+
 function checkOpenCodePluginRegistration() {
   for (const path of candidateOpenCodeConfigPaths()) {
     if (!existsSync(path)) continue
@@ -782,6 +814,14 @@ async function mcpStatus(options = {}) {
     const firecrawl = checkFirecrawlAuth()
     track(firecrawl.level)
     console.log(`${statusIcon(firecrawl.level)} Firecrawl auth - ${firecrawl.detail}`)
+
+    const context7 = checkContext7()
+    track(context7.level)
+    console.log(`${statusIcon(context7.level)} Context7 CLI - ${context7.detail}`)
+
+    const agentBrowser = checkAgentBrowser()
+    track(agentBrowser.level)
+    console.log(`${statusIcon(agentBrowser.level)} Agent-browser CLI - ${agentBrowser.detail}`)
 
     console.log("")
     console.log("MCP Tool Probes:")
