@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createManagerGuard } from "./manager-guard";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -24,7 +25,7 @@ describe("manager-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -36,7 +37,7 @@ describe("manager-guard", () => {
       expect(logs.some((l) => l.includes("Manager guard"))).toBe(true);
       expect(logs.some((l) => l.includes("coder"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -46,7 +47,7 @@ describe("manager-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -57,7 +58,7 @@ describe("manager-guard", () => {
       });
       expect(logs.some((l) => l.includes("Manager guard"))).toBe(false);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -67,7 +68,7 @@ describe("manager-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -80,7 +81,7 @@ describe("manager-guard", () => {
       // but should not throw
       await expect(Promise.resolve()).resolves.toBeUndefined();
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 });

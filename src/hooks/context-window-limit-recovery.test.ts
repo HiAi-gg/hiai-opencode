@@ -2,6 +2,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createContextWindowLimitRecoveryHook } from "./context-window-limit-recovery";
 import { get, markError, reset } from "./loop-state";
+import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {
@@ -30,7 +31,7 @@ describe("context-window-limit-recovery", () => {
 
   test("ignores non session.error events", async () => {
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!({ event: { type: "session.idle", properties: {} } });
       expect(logSpy).not.toHaveBeenCalled();
@@ -41,7 +42,7 @@ describe("context-window-limit-recovery", () => {
 
   test("ignores events without a type field", async () => {
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!({ event: { foo: "bar" } });
       expect(logSpy).not.toHaveBeenCalled();
@@ -54,7 +55,7 @@ describe("context-window-limit-recovery", () => {
     const sid = "cwl_nonctx_1";
     reset(sid);
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "rate_limit exceeded") as never);
       expect(logSpy).not.toHaveBeenCalled();
@@ -69,7 +70,7 @@ describe("context-window-limit-recovery", () => {
     // Pre-populate state so we can verify reset() clears it.
     markError(sid, "old error", "auth");
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "context_length_exceeded") as never,
@@ -91,7 +92,7 @@ describe("context-window-limit-recovery", () => {
     const sid = "cwl_maxtok_1";
     reset(sid);
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "max_tokens exceeded") as never);
       expect(logSpy).toHaveBeenCalled();
@@ -105,7 +106,7 @@ describe("context-window-limit-recovery", () => {
     const sid = "cwl_toklim_1";
     reset(sid);
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "token limit reached") as never);
       expect(logSpy).toHaveBeenCalled();
@@ -119,7 +120,7 @@ describe("context-window-limit-recovery", () => {
     const sid = "cwl_ctxwin_1";
     reset(sid);
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "context window is full") as never,
@@ -135,7 +136,7 @@ describe("context-window-limit-recovery", () => {
     const sid = "cwl_toolong_1";
     reset(sid);
     const hookSet = createContextWindowLimitRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "prompt is too long") as never);
       expect(logSpy).toHaveBeenCalled();

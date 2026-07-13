@@ -10,6 +10,7 @@ import type { BobConfig } from "../../types";
 import { createDreamDistillHook } from "./index";
 import { DREAM_PROMPT } from "./dream";
 import { DISTILL_PROMPT } from "./distill";
+import { logger } from "../../util/log";
 
 function makeConfig(overrides?: Partial<BobConfig>): BobConfig {
   return {
@@ -85,13 +86,13 @@ describe("dream-distill", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({ event: { type: "session.error" } });
       expect(logs).toHaveLength(0);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -105,14 +106,14 @@ describe("dream-distill", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({ event: { type: "session.idle" } });
       expect(logs.some((l) => l.includes("Auto-dream"))).toBe(true);
       expect(logs.some((l) => l.includes("Auto-distill"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -126,14 +127,14 @@ describe("dream-distill", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({ event: { type: "session.created" } });
       expect(logs.some((l) => l.includes("Auto-dream"))).toBe(true);
       expect(logs.some((l) => l.includes("Auto-distill"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -150,13 +151,13 @@ describe("dream-distill", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({ event: { type: "session.idle" } });
       expect(logs).toHaveLength(0);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -175,16 +176,16 @@ describe("dream-distill", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
     const origErr = console.error;
-    console.error = (msg: string) => logs.push(msg);
+    logger.error = (msg: string) => logs.push(msg);
 
     try {
       await fn({ event: { type: "session.idle" } });
       expect(logs.some((l) => l.includes("failed"))).toBe(true);
     } finally {
-      console.log = origLog;
-      console.error = origErr;
+      logger.log = origLog;
+      logger.error = origErr;
     }
   });
 

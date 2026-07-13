@@ -2,6 +2,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 import type { BobConfig } from "../types";
 import { createClosureInjector } from "./closure-injector";
+import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {
@@ -115,7 +116,7 @@ describe("closure-injector", () => {
     const hookSet = createClosureInjector(config);
     const transform = hookSet["experimental.chat.messages.transform"]!;
 
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       const malformed =
         "Done.\n\n<CLOSURE>\n{ this is not valid json }\n</CLOSURE>";
@@ -143,7 +144,7 @@ describe("closure-injector", () => {
     const hookSet = createClosureInjector(config);
     const transform = hookSet["experimental.chat.messages.transform"]!;
 
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       const malformed = 'Done.\n\n<CLOSURE>\n{ "foo": "bar" }\n</CLOSURE>';
       const output = makeOutput(malformed);

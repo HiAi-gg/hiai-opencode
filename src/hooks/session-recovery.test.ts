@@ -2,6 +2,7 @@ import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { get, reset } from "./loop-state";
 import { createSessionRecoveryHook } from "./session-recovery";
+import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {
@@ -28,7 +29,7 @@ describe("session-recovery", () => {
 
   test("ignores non session.error events", async () => {
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!({ event: { type: "session.idle", properties: {} } });
       expect(logSpy).not.toHaveBeenCalled();
@@ -39,7 +40,7 @@ describe("session-recovery", () => {
 
   test("ignores session.error events without properties", async () => {
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!({ event: { type: "session.error" } });
       expect(logSpy).not.toHaveBeenCalled();
@@ -52,7 +53,7 @@ describe("session-recovery", () => {
     const sid = "rec_rate_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "HTTP 429 Too Many Requests") as never,
@@ -72,7 +73,7 @@ describe("session-recovery", () => {
     const sid = "rec_auth_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "401 Unauthorized") as never);
       expect(get(sid).lastErrorType).toBe("auth");
@@ -88,7 +89,7 @@ describe("session-recovery", () => {
     const sid = "rec_timeout_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(makeErrorEvent(sid, "Request timed out") as never);
       expect(get(sid).lastErrorType).toBe("timeout");
@@ -102,7 +103,7 @@ describe("session-recovery", () => {
     const sid = "rec_empty_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "empty response received") as never,
@@ -118,7 +119,7 @@ describe("session-recovery", () => {
     const sid = "rec_server_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "500 Internal Server Error") as never,
@@ -134,7 +135,7 @@ describe("session-recovery", () => {
     const sid = "rec_ctx_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "context_length_exceeded") as never,
@@ -152,7 +153,7 @@ describe("session-recovery", () => {
     const sid = "rec_unknown_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, "something totally weird") as never,
@@ -168,7 +169,7 @@ describe("session-recovery", () => {
     const sid = "rec_objmsg_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, { message: "Rate limit reached" }) as never,
@@ -184,7 +185,7 @@ describe("session-recovery", () => {
     const sid = "rec_datamsg_1";
     reset(sid);
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!(
         makeErrorEvent(sid, {
@@ -200,7 +201,7 @@ describe("session-recovery", () => {
 
   test('falls back to sessionID "unknown" when missing', async () => {
     const hookSet = createSessionRecoveryHook(makeConfig());
-    const logSpy = spyOn(console, "log").mockImplementation(() => {});
+    const logSpy = spyOn(logger, "log").mockImplementation(() => {});
     try {
       await hookSet.event!({
         event: { type: "session.error", properties: { error: "timeout" } },

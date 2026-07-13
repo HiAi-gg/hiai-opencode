@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createModelFallbackHook } from "./model-fallback";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -24,7 +25,7 @@ describe("model-fallback", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -36,7 +37,7 @@ describe("model-fallback", () => {
       expect(logs.some((l) => l.includes("Model fallback"))).toBe(true);
       expect(logs.some((l) => l.includes("rate limit"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -46,7 +47,7 @@ describe("model-fallback", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -57,7 +58,7 @@ describe("model-fallback", () => {
       });
       expect(logs.some((l) => l.includes("Model fallback"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -67,7 +68,7 @@ describe("model-fallback", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -78,7 +79,7 @@ describe("model-fallback", () => {
       });
       expect(logs.some((l) => l.includes("Model fallback"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -88,7 +89,7 @@ describe("model-fallback", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -99,7 +100,7 @@ describe("model-fallback", () => {
       });
       expect(logs.some((l) => l.includes("Model fallback"))).toBe(false);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -116,9 +117,9 @@ describe("model-fallback", () => {
     const fn = hook.event as (input: { event: unknown }) => Promise<void>;
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
     const origErr = console.error;
-    console.error = (msg: string) => logs.push(msg);
+    logger.error = (msg: string) => logs.push(msg);
 
     try {
       // Real opencode emits error as an object, not a string.
@@ -133,8 +134,8 @@ describe("model-fallback", () => {
       // Object error with 429 inside should still trigger fallback detection.
       expect(logs.some((l) => l.includes("Model fallback"))).toBe(true);
     } finally {
-      console.log = origLog;
-      console.error = origErr;
+      logger.log = origLog;
+      logger.error = origErr;
     }
   });
 });

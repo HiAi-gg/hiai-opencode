@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { get } from "./loop-state";
 import { createStopContinuationGuard } from "./stop-continuation-guard";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -81,7 +82,7 @@ describe("stop-continuation-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn({
@@ -93,7 +94,7 @@ describe("stop-continuation-guard", () => {
       expect(logs.some((l) => l.includes("Stop-guard"))).toBe(true);
       expect(logs.some((l) => l.includes("s-stop-test"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 

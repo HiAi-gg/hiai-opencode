@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createWriteExistingFileGuard } from "./write-existing-file-guard";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -27,7 +28,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn(
@@ -39,7 +40,7 @@ describe("write-existing-file-guard", () => {
       ).toBe(true);
       expect(logs.some((l) => l.includes("/new/file.ts"))).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -50,7 +51,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       // Read first
@@ -67,7 +68,7 @@ describe("write-existing-file-guard", () => {
         logs.some((l) => l.includes("Write/edit without prior Read")),
       ).toBe(false);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -77,7 +78,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn(
@@ -88,7 +89,7 @@ describe("write-existing-file-guard", () => {
         logs.some((l) => l.includes("Write/edit without prior Read")),
       ).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -99,7 +100,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       await fn(
@@ -114,7 +115,7 @@ describe("write-existing-file-guard", () => {
         logs.some((l) => l.includes("Write/edit without prior Read")),
       ).toBe(false);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -124,7 +125,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       // Read in session A
@@ -149,7 +150,7 @@ describe("write-existing-file-guard", () => {
       expect(warnedCount).toBe(1);
       expect(logs.some((l) => l.includes("sB"))).toBe(false); // sessionID not typically in log msg
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 
@@ -160,7 +161,7 @@ describe("write-existing-file-guard", () => {
 
     const logs: string[] = [];
     const origLog = console.log;
-    console.log = (msg: string) => logs.push(msg);
+    logger.log = (msg: string) => logs.push(msg);
 
     try {
       // Read + write should be clean
@@ -186,7 +187,7 @@ describe("write-existing-file-guard", () => {
         logs.some((l) => l.includes("Write/edit without prior Read")),
       ).toBe(true);
     } finally {
-      console.log = origLog;
+      logger.log = origLog;
     }
   });
 });

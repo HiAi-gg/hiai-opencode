@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createPreemptiveCompaction } from "./preemptive-compaction";
+import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {
@@ -38,8 +39,8 @@ describe("preemptive-compaction", () => {
     ];
 
     let logCalled = false;
-    const originalLog = console.log;
-    console.log = (...args: unknown[]) => {
+    const originalLog = logger.log;
+    logger.log = (...args: unknown[]) => {
       logCalled = true;
       originalLog(...args);
     };
@@ -53,7 +54,7 @@ describe("preemptive-compaction", () => {
       );
       expect(logCalled).toBe(false);
     } finally {
-      console.log = originalLog;
+      logger.log = originalLog;
     }
   });
 
@@ -75,8 +76,8 @@ describe("preemptive-compaction", () => {
 
     let logCalled = false;
     let logMessage = "";
-    const originalLog = console.log;
-    console.log = (...args: unknown[]) => {
+    const originalLog = logger.log;
+    logger.log = (...args: unknown[]) => {
       logCalled = true;
       logMessage = args.join(" ");
       originalLog(...args);
@@ -92,7 +93,7 @@ describe("preemptive-compaction", () => {
       expect(logCalled).toBe(true);
       expect(logMessage).toContain("High message count");
     } finally {
-      console.log = originalLog;
+      logger.log = originalLog;
     }
   });
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { get, reset } from "./loop-state";
 import { createTodoContinuationHook } from "./todo-continuation";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -9,7 +10,7 @@ describe("todo-continuation", () => {
   let logSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
+    logSpy = spyOn(logger, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {

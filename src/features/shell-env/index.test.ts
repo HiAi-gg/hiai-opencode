@@ -13,6 +13,7 @@ import {
   initShellEnv,
   ShellEnvContext,
 } from "./index";
+import { logger } from "../../util/log";
 
 const TMP = join(tmpdir(), "hiai-opencode-shell-env-test");
 
@@ -108,14 +109,14 @@ describe("security: no secret values are logged", () => {
     );
 
     const logs: string[] = [];
-    const originalLog = console.log;
-    console.log = (...args: unknown[]) => {
+    const originalLog = logger.log;
+    logger.log = (...args: unknown[]) => {
       logs.push(args.map((a) => String(a)).join(" "));
     };
     try {
       ctx.getShellEnv();
     } finally {
-      console.log = originalLog;
+      logger.log = originalLog;
     }
 
     const logged = logs.join("\n");

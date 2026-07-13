@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
 import { createTokenBudgetHook } from "./token-budget";
+import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 
@@ -23,7 +24,7 @@ describe("token-budget", () => {
   let logSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    logSpy = spyOn(console, "log").mockImplementation(() => {});
+    logSpy = spyOn(logger, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {
