@@ -110,4 +110,31 @@ describe("model-fallback", () => {
       fn({ event: { type: "session.error", properties: {} } }),
     ).resolves.toBeUndefined();
   });
+
+  test("does not throw when error is an object (regression: error.includes crash)", async () => {
+    const hook = createModelFallbackHook(config) as any;
+    const fn = hook.event as (input: { event: unknown }) => Promise<void>;
+    const logs: string[] = [];
+    const origLog = console.log;
+    console.log = (msg: string) => logs.push(msg);
+    const origErr = console.error;
+    console.error = (msg: string) => logs.push(msg);
+
+    try {
+      // Real opencode emits error as an object, not a string.
+      await expect(
+        fn({
+          event: {
+            type: "session.error",
+            properties: { error: { message: "429 Too Many Requests" } },
+          },
+        }),
+      ).resolves.toBeUndefined();
+      // Object error with 429 inside should still trigger fallback detection.
+      expect(logs.some((l) => l.includes("Model fallback"))).toBe(true);
+    } finally {
+      console.log = origLog;
+      console.error = origErr;
+    }
+  });
 });

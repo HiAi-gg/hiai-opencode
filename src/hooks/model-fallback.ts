@@ -10,7 +10,13 @@ export function createModelFallbackHook(_config: BobConfig): HookSet {
           properties?: Record<string, unknown>;
         };
         if (evt?.type === "session.error") {
-          const error = (evt.properties?.error as string) ?? "";
+          const raw = evt.properties?.error;
+          const error =
+            typeof raw === "string"
+              ? raw
+              : raw && typeof raw === "object"
+                ? JSON.stringify(raw)
+                : String(raw ?? "");
           if (
             error.includes("429") ||
             error.includes("503") ||
