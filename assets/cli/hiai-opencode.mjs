@@ -586,8 +586,8 @@ function checkLspAvailability(config) {
       continue
     }
     const binary = command[0]
-    const args = binary === "node" ? ["--version"] : ["--version"]
-    const ok = hasCommand(binary, args)
+    // pyright-langserver rejects --version (needs --stdio); check presence only.
+    const ok = hasCommand(binary)
     results.push(`${ok ? "✅" : "⚠️ "} ${name}: ${ok ? "runtime available" : `${binary} not found`}`)
   }
 
