@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.3.16",
+  "version": "0.3.17",
   "description": "HiAi OpenCode Plugin — multi-agent orchestration for OpenCode with 10 agents, LSP tools, browser automation, Memory, Session management, and Caveman protocol",
   "type": "module",
   "main": "dist/index.js",

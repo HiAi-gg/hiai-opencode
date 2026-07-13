@@ -405,6 +405,18 @@ function hasCommand(command, args = ["--version"]) {
   return result.status === 0
 }
 
+function hasBinary(binary) {
+  try {
+    const res = spawnSync(process.platform === "win32" ? "where" : "which", [binary], {
+      stdio: "ignore",
+      timeout: 5000,
+    })
+    return res.status === 0
+  } catch {
+    return false
+  }
+}
+
 function hasNode() {
   return hasCommand(process.platform === "win32" ? "node.exe" : "node")
 }
@@ -618,8 +630,10 @@ function checkLspAvailability(config) {
       continue
     }
     const binary = command[0]
-    // pyright-langserver rejects --version (needs --stdio); check presence only.
-    const ok = hasCommand(binary)
+    // pyright-langserver exits non-zero without --stdio/--node-ipc, so a
+    // plain spawnSync returns false even when present. Check presence via
+    // `command -v` instead of executing.
+    const ok = hasBinary(binary)
     results.push(`${ok ? "✅" : "⚠️ "} ${name}: ${ok ? "runtime available" : `${binary} not found`}`)
   }
 
