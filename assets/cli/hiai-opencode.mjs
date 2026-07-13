@@ -6,6 +6,7 @@ import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { homedir } from "node:os"
 import { createHash } from "node:crypto"
+import { up as cmdUp, down as cmdDown, status as cmdStatus } from "./up.mjs"
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const MCP_EXPORT_MARKER = "hiai-opencode"
@@ -58,6 +59,9 @@ Usage:
   hiai-opencode export-mcp [path]
   hiai-opencode diagnose [path]
   hiai-opencode task-status <task_id>
+  hiai-opencode up [--serve-port N] [--web-port N] [--host H]
+  hiai-opencode down
+  hiai-opencode status
 
 Commands:
   doctor       Full install/runtime diagnostic: MCP status + static export freshness + provider/skills/agents/LSP checks + MCP tool probes.
@@ -65,6 +69,9 @@ Commands:
   export-mcp   Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
   diagnose     Collect full diagnostic bundle to file (local only, no remote sending).
   task-status  Show status of a background task (requires OpenCode process to be running; task state is in-memory only).
+  up           Start opencode serve (headless) + opencode web (frontend). Cline bridge = plugin providers (no extra process).
+  down         Stop the stack started by 'up'.
+  status       Show running serve/web processes and ports.
 `)
 }
 
@@ -927,6 +934,21 @@ async function main() {
 
   if (command === "task-status") {
     showTaskStatus(process.argv[3])
+    return
+  }
+
+  if (command === "up") {
+    await cmdUp(process.argv.slice(3))
+    return
+  }
+
+  if (command === "down") {
+    await cmdDown()
+    return
+  }
+
+  if (command === "status") {
+    await cmdStatus()
     return
   }
 
