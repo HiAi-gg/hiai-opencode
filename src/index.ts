@@ -74,6 +74,26 @@ import { logger } from "./util/log";
 const PLUGIN_NAME = "HiAiOpenCodePlugin";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
+// Globally redirect console.* → file logger.
+// Other plugins (e.g. opencode-dcp) also emit to console — catch it all.
+(function installConsoleGuard() {
+  const orig = {
+    log: console.log.bind(console),
+    warn: console.warn.bind(console),
+    error: console.error.bind(console),
+  };
+  const forward = (level: "LOG" | "WARN" | "ERROR", args: unknown[]) => {
+    try {
+      logger[level === "LOG" ? "log" : level === "WARN" ? "warn" : "error"](...args);
+    } catch {
+      // File write failed — silently drop (don't leak back into TUI)
+    }
+  };
+  console.log = (...a: unknown[]) => forward("LOG", a);
+  console.warn = (...a: unknown[]) => forward("WARN", a);
+  console.error = (...a: unknown[]) => forward("ERROR", a);
+})();
+
 export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   const config = loadConfig(input.directory);
   const agents = createAllAgents(config);
