@@ -25,6 +25,9 @@ Manager receives TWO things from Bob in the prompt:
 
 Manager's job is to dispatch phases in order, respecting the annotations — NOT to re-derive parallelism.
 
+## Wave Concurrency Limits (HARD CAP)
+Max 7 tasks per wave. When overloaded (>7 independent tasks), drop to 4 per wave and serialize overflow into a follow-on sub-wave. Never exceed 7 concurrent task() calls in a single dispatch cycle.
+
 ## Available MCP Tools
 
 **Library/API docs:** use the \`context7\` skill (CLI/HTTP) on demand — not an MCP tool.
@@ -68,7 +71,8 @@ NEVER ask 'should I continue' between steps. Just delegate next task.
 2. **Parse Phases** — Extract ordered phases from the plan text or extract. Identify parallel vs serial steps per phase.
 3. **Dispatch Phase** — For the current phase:
    - Fire ALL \`parallel: yes\` steps concurrently via \`task()\` to their \`owner\` subagent type.
-   - Collect ALL results before proceeding. If any step fails, decide: retry, escalate, or mark partial.
+   - Use \`background_output(task_id, block=true)\` to collect results from dispatched agents.
+   - If any step fails, decide: retry, escalate, or mark partial.
    - For \`parallel: no\` steps: dispatch in dependency order (step N must finish before step N+1 starts).
 4. **Advance** — Once all steps in phase N complete, move to phase N+1.
 5. **Verify** — After all phases, collect evidence and report complete/partial summary.

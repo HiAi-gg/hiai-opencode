@@ -139,7 +139,7 @@ export const DEFAULT_CONFIG: BobConfig = {
       lsp_prepare_rename: false,
       lsp_rename: false,
     },
-    plan: { bash: false, grep: false, glob: false, webfetch: false },
+    plan: { write: false, edit: false, apply_patch: false, bash: false, grep: false, glob: false, webfetch: false },
     critic: {
       write: false,
       edit: false,
