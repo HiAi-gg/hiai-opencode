@@ -1,48 +1,55 @@
-import { appendFileSync, mkdirSync } from "node:fs";
+import { openSync, writeSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-const LOG_DIR = join(homedir(), ".hiai-opencode", "logs");
-const LOG_FILE = join(LOG_DIR, "hiai-opencode.log");
+const LOG_PATH = join(homedir(), ".hiai-opencode", "logs", "hiai-opencode.log");
 
-let initialized = false;
-
-function ensureDir() {
-  if (!initialized) {
-    mkdirSync(LOG_DIR, { recursive: true });
-    initialized = true;
+// Open the log file once at module init — if it fails, route to /dev/null.
+// Bun plugin context breaks appendFileSync, but a raw fd works.
+let fd: number;
+try {
+  fd = openSync(LOG_PATH, "a");
+} catch {
+  try {
+    fd = openSync("/dev/null", "w");
+  } catch {
+    // Last resort — if even /dev/null fails, use a dummy function
   }
 }
 
-function formatMessage(level: string, ...args: unknown[]): string {
+function format(level: string, args: unknown[]): string {
   const ts = new Date().toISOString();
   const msg = args
-    .map((a) => (typeof a === "string" ? a : a instanceof Error ? a.stack ?? a.message : JSON.stringify(a)))
+    .map((a) =>
+      typeof a === "string"
+        ? a
+        : a instanceof Error
+          ? a.stack ?? a.message
+          : JSON.stringify(a),
+    )
     .join(" ");
   return `[${ts}] [${level}] ${msg}\n`;
 }
 
-export function log(...args: unknown[]) {
-  ensureDir();
+function writeLog(level: string, args: unknown[]) {
+  if (fd! === undefined) return;
   try {
-    appendFileSync(LOG_FILE, formatMessage("LOG", ...args), "utf-8");
+    writeSync(fd!, format(level, args));
   } catch {
-    // File write failed — silently ignored (stderr also leaks into TUI)
+    // Nothing we can do — don't fall back to console/stderr
   }
 }
 
+export function log(...args: unknown[]) {
+  writeLog("LOG", args);
+}
+
 export function warn(...args: unknown[]) {
-  ensureDir();
-  try {
-    appendFileSync(LOG_FILE, formatMessage("WARN", ...args), "utf-8");
-  } catch {}
+  writeLog("WARN", args);
 }
 
 export function error(...args: unknown[]) {
-  ensureDir();
-  try {
-    appendFileSync(LOG_FILE, formatMessage("ERROR", ...args), "utf-8");
-  } catch {}
+  writeLog("ERROR", args);
 }
 
 export const logger = { log, warn, error };
