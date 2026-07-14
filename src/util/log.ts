@@ -22,27 +22,27 @@ function formatMessage(level: string, ...args: unknown[]): string {
   return `[${ts}] [${level}] ${msg}\n`;
 }
 
-function writeWithFallback(level: string, msg: string) {
-  try {
-    appendFileSync(LOG_FILE, msg, "utf-8");
-  } catch (e) {
-    process.stderr.write(`[log-fallback] ${msg}`);
-  }
-}
-
 export function log(...args: unknown[]) {
   ensureDir();
-  writeWithFallback("LOG", formatMessage("LOG", ...args));
+  try {
+    appendFileSync(LOG_FILE, formatMessage("LOG", ...args), "utf-8");
+  } catch {
+    // File write failed — silently ignored (stderr also leaks into TUI)
+  }
 }
 
 export function warn(...args: unknown[]) {
   ensureDir();
-  writeWithFallback("WARN", formatMessage("WARN", ...args));
+  try {
+    appendFileSync(LOG_FILE, formatMessage("WARN", ...args), "utf-8");
+  } catch {}
 }
 
 export function error(...args: unknown[]) {
   ensureDir();
-  writeWithFallback("ERROR", formatMessage("ERROR", ...args));
+  try {
+    appendFileSync(LOG_FILE, formatMessage("ERROR", ...args), "utf-8");
+  } catch {}
 }
 
 export const logger = { log, warn, error };
