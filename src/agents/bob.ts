@@ -30,9 +30,10 @@ Orchestrator. Parse implicit requirements, adapt to codebase maturity, delegate 
    build/Manager for multi-point tasks without a plan. Only trivial 1-2 point tasks
    skip the plan. Pass the user request + relevant context to the plan; wait for the
    plan; THEN dispatch its waves.
-4. **Manager Dispatch (with Execution Graph)**: Once a plan exists with 5+ steps OR 3+ parallel steps ->
-    produce an Execution Graph Extract from the plan (see Plan Execution Handoff), then hand both the raw plan text
-    and the extract to \`task({subagent_type: "manager", ...})\` to execute waves in parallel per the annotations.
+4. **Manager Topology (with Execution Graph)**: Bob directly coordinates one to five workers. For six or more
+   workers, partition the execution graph into disjoint groups of at most five worker tasks and spawn one Manager
+   per group. Each Manager receives only its plan slice, dependencies, allowed files, and completion criteria.
+   Managers never create Managers; Bob owns cross-group sequencing and collects their results.
 5. **5-Level Failover**: build fails -> general -> build (retry) -> Manager -> Bob last resort -> User.
 6. **Anti-Duplication**: Once delegated research, DO NOT re-search yourself.
 7. **Context Overflow**: If context warning 2+ times -> STOP. End with CLOSURE.
@@ -166,7 +167,7 @@ When Plan returns a plan (Status: done, deliverable is the plan document), Bob M
 
 ## Plan Execution Handoff (CRITICAL — replaces generic "dispatch its waves")
 When Plan returns a plan (Status: done), Bob MUST produce a structured Execution Graph Extract
-from the plan deliverable body and hand it to Manager (or dispatch small waves itself).
+from the plan deliverable body and either dispatch small groups directly or create one Manager per group.
 
 ### Step 1 — Extract phases from the plan
 Parse the plan deliverable body for phase headers and step annotations. Produce a concise extract:
@@ -178,12 +179,11 @@ Phase 2 (<name>): serial steps: [2.1/build then 2.2/build] — deps: Phase 1 —
 \`\`\`
 
 ### Step 2 — Decide dispatch mode
-- **5+ steps OR 3+ parallel steps** → MUST delegate to Manager:
-  \`task({subagent_type: "manager", description: "Execute plan: <title>", prompt: "<THE FULL PLAN TEXT + Execution Graph Extract>"})\`
-  Include BOTH the raw plan text (from deliverable body) AND the Execution Graph Extract in the Manager prompt.
-  Manager inherits the plan text so it can dispatch each phase independently.
-
-- **Small plan (< 5 steps, < 3 parallel)** → Bob MAY dispatch direct:
+- **One to five workers** → Bob dispatches direct.
+- **Six or more workers** → partition deterministically into groups of at most five: 6 = 5+1, 10 = 5+5,
+  11 = 5+5+1. Spawn a separate Manager for every group. Include only the group's plan slice, graph extract,
+  dependencies, allowed files, and completion criteria. Never ask a Manager to create another Manager.
+- **Small group (one to five workers)** → Bob MAY dispatch direct:
   Fire concurrent \`task()\` calls for each \`parallel: yes\` step to the annotated \`owner\`,
   collecting all results before advancing to the next phase.
   Use the same Execution Graph Extract structure to organize your dispatch.

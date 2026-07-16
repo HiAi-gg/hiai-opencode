@@ -202,7 +202,7 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     st.clear(child);
   });
 
-  test("stop path injects a summary containing the detected endpoint", async () => {
+  test("stop path does not inject a synthetic summary turn", async () => {
     const sid = uniqueSession();
     // No incomplete todos and no changed files -> decide() returns stop(done)
     // without requiring a critic review.
@@ -214,19 +214,11 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
 
     // Stop path must NOT set output.continue.
     expect(output.continue).toBeUndefined();
-    // Exactly one synthetic summary prompt should have been injected.
-    expect(captured.length).toBe(1);
-    const summary = captured[0].text;
-    expect(summary).toContain("## Bob Summary");
-    expect(summary).toContain("**Status:** completed");
-    expect(summary).toContain("All tasks completed");
-    expect(summary).toContain("Open endpoints");
-    expect(summary).toContain("localhost:3000");
-    expect(summary).toContain("3000");
+    expect(captured).toEqual([]);
     st.clear(sid);
   });
 
-  test("stop path summary still renders when no endpoint is present", async () => {
+  test("stop path does not create a turn when no endpoint is present", async () => {
     const sid = uniqueSession();
     const { client, captured } = makeMockClient([
       {
@@ -245,14 +237,11 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     await run({ sessionID: sid, agentType: "build" }, output);
 
     expect(output.continue).toBeUndefined();
-    expect(captured.length).toBe(1);
-    expect(captured[0].text).toContain("## Bob Summary");
-    // No endpoint section when nothing was bound.
-    expect(captured[0].text).not.toContain("Open endpoints");
+    expect(captured).toEqual([]);
     st.clear(sid);
   });
 
-  test("missing agentType with CLOSURE done -> stop (no continue), summary injected", async () => {
+  test("missing agentType with CLOSURE done -> stop without a synthetic turn", async () => {
     const sid = uniqueSession();
     const { client, captured } = makeMockClient([
       {
@@ -273,9 +262,7 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
 
     // Fallback must NOT auto-continue when the agent signalled completion.
     expect(output.continue).toBeUndefined();
-    // A completion summary should still be injected.
-    expect(captured.length).toBe(1);
-    expect(captured[0].text).toContain("## Bob Summary");
+    expect(captured).toEqual([]);
     st.clear(sid);
   });
 
@@ -315,7 +302,7 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     await run({ sessionID: sid, agentType: "some-future-agent" }, output);
 
     expect(output.continue).toBeUndefined();
-    expect(captured.length).toBe(1);
+    expect(captured).toEqual([]);
     st.clear(sid);
   });
 

@@ -17,10 +17,7 @@ export function createJsonErrorRecovery(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        logger.error(
-          "[hiai-opencode] Hook error in json-error-recovery:",
-          err,
-        );
+        logger.error("[hiai-opencode] Hook error in json-error-recovery:", err);
       }
     },
   };

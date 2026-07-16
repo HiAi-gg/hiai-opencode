@@ -63,7 +63,6 @@ Usage:
   hiai-opencode mcp-status
   hiai-opencode export-mcp [path]
   hiai-opencode diagnose [path]
-  hiai-opencode task-status <task_id>
 
 Commands:
   (no args)   Launch opencode serve (headless) + opencode web (frontend). Cline bridge = plugin providers (no extra process).
@@ -75,7 +74,6 @@ Commands:
   mcp-status  Check hiai-opencode MCP configuration, keys, and local runtimes.
   export-mcp  Write a static .mcp.json for hosts whose mcp list ignores plugin runtime MCP.
   diagnose    Collect full diagnostic bundle to file (local only, no remote sending).
-  task-status Show status of a background task (requires OpenCode process to be running; task state is in-memory only).
 `)
 }
 
@@ -609,6 +607,17 @@ function checkModelSlotValues(config) {
   return results
 }
 
+function checkSubagentDepth(config) {
+  const depth = config?.subagent_depth ?? 2
+  if (!Number.isInteger(depth) || depth < 1) {
+    return { level: "fail", detail: `invalid subagent_depth=${String(depth)}; expected a positive integer` }
+  }
+  if (depth < 2) {
+    return { level: "warn", detail: `subagent_depth=${depth}; Bob → Manager → worker requires 2` }
+  }
+  return { level: "ok", detail: `subagent_depth=${depth}; nested Bob → Manager → worker delegation enabled` }
+}
+
 function getLspDefaults() {
   return {
     typescript: ["typescript-language-server", "--stdio"],
@@ -814,6 +823,10 @@ async function mcpStatus(options = {}) {
     track(agents.level)
     console.log(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
 
+    const depth = checkSubagentDepth(config)
+    track(depth.level)
+    console.log(`${statusIcon(depth.level)} Delegation depth - ${depth.detail}`)
+
     // Model slot value validation
     const modelIssues = checkModelSlotValues(config)
     for (const issue of modelIssues) {
@@ -943,24 +956,6 @@ async function runDiagnose(outputPath) {
   console.log(`Diagnose written to: ${defaultPath}`)
 }
 
-function showTaskStatus(taskId) {
-  if (!taskId) {
-    console.error("Usage: hiai-opencode task-status <task_id>")
-    process.exit(1)
-  }
-
-  console.log(`Task status for: ${taskId}`)
-  console.log("")
-  console.log("Background task state is stored in-memory only.")
-  console.log("To check task status, use the background_output tool inside OpenCode:")
-  console.log(`  background_output(task_id: "${taskId}")`)
-  console.log("")
-  console.log("Or check the OpenCode logs for circuit breaker messages:")
-  console.log(`  grep "${taskId}" ~/.config/opencode/logs/opencode.log`)
-  console.log("")
-  console.log("Note: If the OpenCode process has restarted, all task state is lost.")
-}
-
 async function main() {
   const command = process.argv[2]
   if (!command || command === "-h" || command === "--help") {
@@ -995,10 +990,6 @@ async function main() {
     return
   }
 
-  if (command === "task-status") {
-    showTaskStatus(process.argv[3])
-    return
-  }
 
   if (command === "up") {
     await cmdUp(process.argv.slice(3))

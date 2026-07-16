@@ -14,13 +14,19 @@ const MCP_EXPORT_MARKER = "hiai-opencode";
  * sync. Registry servers are emitted first, then any user-defined MCP servers
  * (under `config.mcp`) that carry a `command`/`url` are passed through.
  */
-export function buildStaticMcpPayload(config: BobConfig): Record<string, unknown> {
+export function buildStaticMcpPayload(
+  config: BobConfig,
+): Record<string, unknown> {
   const validated = getMcpConfig(config.mcp ?? {}, config.auth);
   const servers: Record<string, Record<string, unknown>> = {};
 
   for (const [name, entry] of Object.entries(validated)) {
     const e = entry as Record<string, unknown>;
-    if (e.type === "local" && Array.isArray(e.command) && e.command.length > 0) {
+    if (
+      e.type === "local" &&
+      Array.isArray(e.command) &&
+      e.command.length > 0
+    ) {
       // Registry local commands are full argv arrays (e.g.
       // ["npx","-y","@modelcontextprotocol/server-sequential-thinking"]).
       // Split into command + args for the static .mcp.json shape.
@@ -105,10 +111,15 @@ export function autoExportStaticMcp(
   config: BobConfig,
   projectDir: string,
 ): void {
-  const rawMode = process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP?.trim().toLowerCase();
-  const mode =
-    rawMode === "" || rawMode === undefined ? "if-missing" : rawMode;
-  if (mode === "off" || mode === "0" || mode === "false" || mode === "disabled") {
+  const rawMode =
+    process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP?.trim().toLowerCase();
+  const mode = rawMode === "" || rawMode === undefined ? "if-missing" : rawMode;
+  if (
+    mode === "off" ||
+    mode === "0" ||
+    mode === "false" ||
+    mode === "disabled"
+  ) {
     return;
   }
 
@@ -121,7 +132,8 @@ export function autoExportStaticMcp(
 
   // `always` mode: respect safe/force overwrite policy.
   if (mode === "always" && exists) {
-    const overwriteMode = process.env.HIAI_OPENCODE_EXPORT_MCP_MODE?.trim().toLowerCase() || "safe";
+    const overwriteMode =
+      process.env.HIAI_OPENCODE_EXPORT_MCP_MODE?.trim().toLowerCase() || "safe";
     if (overwriteMode !== "force" && !isManagedStaticMcpFile(outputPath)) {
       logger.log(
         `[hiai-opencode] auto-export: refusing to overwrite non-managed ${outputPath} (set HIAI_OPENCODE_EXPORT_MCP_MODE=force to override)`,

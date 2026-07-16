@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { buildStaticMcpPayload, autoExportStaticMcp } from "./auto-export";
 import type { BobConfig } from "../../types";
@@ -25,7 +31,10 @@ function resetTmp() {
 describe("buildStaticMcpPayload", () => {
   test("emits both registry servers with correct shapes", () => {
     const payload = buildStaticMcpPayload(baseConfig());
-    const servers = payload.mcpServers as Record<string, Record<string, unknown>>;
+    const servers = payload.mcpServers as Record<
+      string,
+      Record<string, unknown>
+    >;
     expect(servers["sequential-thinking"]).toBeDefined();
     expect(servers["sequential-thinking"].command).toBe("npx");
     expect(Array.isArray(servers["sequential-thinking"].args)).toBe(true);
@@ -39,7 +48,12 @@ describe("buildStaticMcpPayload", () => {
 
   test("respects explicit { enabled: false }", () => {
     const payload = buildStaticMcpPayload(
-      baseConfig({ mcp: { "sequential-thinking": { enabled: false }, grep_app: { enabled: true } } }),
+      baseConfig({
+        mcp: {
+          "sequential-thinking": { enabled: false },
+          grep_app: { enabled: true },
+        },
+      }),
     );
     const servers = payload.mcpServers as Record<string, unknown>;
     expect(servers["sequential-thinking"]).toBeUndefined();
@@ -52,11 +66,18 @@ describe("buildStaticMcpPayload", () => {
         mcp: {
           "sequential-thinking": { enabled: true },
           grep_app: { enabled: true },
-          custom: { enabled: true, command: "node", args: ["server.js"] } as never,
+          custom: {
+            enabled: true,
+            command: "node",
+            args: ["server.js"],
+          } as never,
         },
       }),
     );
-    const servers = payload.mcpServers as Record<string, Record<string, unknown>>;
+    const servers = payload.mcpServers as Record<
+      string,
+      Record<string, unknown>
+    >;
     expect(servers.custom).toBeDefined();
     expect(servers.custom.command).toBe("node");
   });
@@ -117,7 +138,10 @@ describe("autoExportStaticMcp", () => {
     mkdirSync(join(TMP, ".opencode"), { recursive: true });
     writeFileSync(
       out,
-      JSON.stringify({ _meta: { generatedBy: "hiai-opencode" }, mcpServers: {} }),
+      JSON.stringify({
+        _meta: { generatedBy: "hiai-opencode" },
+        mcpServers: {},
+      }),
     );
     autoExportStaticMcp(baseConfig(), TMP);
     const parsed = JSON.parse(readFileSync(out, "utf-8"));

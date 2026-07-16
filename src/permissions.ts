@@ -40,7 +40,6 @@ export const TOOLS_KEYS = new Set([
   "write",
   "grep",
   "glob",
-  "task",
   "apply_patch",
   // agent_browser_* tools — restricted per-agent to enforce Vision ownership
   "agent_browser_navigate",
@@ -69,8 +68,55 @@ export const TOOLS_KEYS = new Set([
 ]);
 
 export interface AgentPermissions {
-  permission: Record<string, string>;
+  permission: Record<string, unknown>;
   tools: Record<string, boolean>;
+}
+
+const WORKER_AGENTS = [
+  "explore",
+  "plan",
+  "build",
+  "general",
+  "critic",
+  "designer",
+  "writer",
+  "vision",
+] as const;
+
+/** OpenCode granular Task permissions. Deny-by-default keeps leaf agents leaf. */
+export function getTaskPermissions(
+  agentKey: string,
+): Record<string, "allow" | "deny"> {
+  const denyAll = (allowed: readonly string[]) =>
+    Object.fromEntries(
+      [
+        "bob",
+        "manager",
+        "dream-consolidator",
+        "distill-packager",
+        ...WORKER_AGENTS,
+      ].map((candidate) => [
+        candidate,
+        allowed.includes(candidate) ? "allow" : "deny",
+      ]),
+    ) as Record<string, "allow" | "deny">;
+
+  if (agentKey === "bob") return denyAll(["manager", ...WORKER_AGENTS]);
+  if (agentKey === "manager") return denyAll(WORKER_AGENTS);
+  if (
+    [
+      "plan",
+      "explore",
+      "build",
+      "critic",
+      "designer",
+      "writer",
+      "vision",
+    ].includes(agentKey)
+  ) {
+    return denyAll(WORKER_AGENTS);
+  }
+  return denyAll([]);
 }
 
 /**
@@ -102,7 +148,7 @@ export function applyAgentPermissions(
   extraTools: Record<string, boolean> = {},
   defaultPermissions: Record<string, string> = {},
 ): AgentPermissions {
-  const permission: Record<string, string> = { ...defaultPermissions };
+  const permission: Record<string, unknown> = { ...defaultPermissions };
   const tools: Record<string, boolean> = { ...extraTools };
 
   if (restrictions) {

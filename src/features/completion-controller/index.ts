@@ -1,10 +1,8 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import type { BobConfig } from "../../types";
 import { decide } from "./decide";
-import { aggregateEndpoints } from "./port-scanner";
 import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
-import { buildSummary, parseClosureBlock } from "./summary-builder";
 import { logger } from "../../util/log";
 
 /** LSP tool names that satisfy the post-edit lsp_diagnostics requirement. */
@@ -72,133 +70,6 @@ export function createBobCompletionHook(
       return parseCriticVerdict(text);
     } catch {
       return null;
-    }
-  }
-
-  async function readLastAssistantMessage(
-    sessionID: string,
-  ): Promise<{ messageID: string; text: string } | null> {
-    if (!client) return null;
-    try {
-      const res = await client.session.messages({ path: { id: sessionID } });
-      const msgs = (res.data ?? []) as Array<{
-        info?: { id?: string; role?: string };
-        parts?: Array<{
-          type?: string;
-          text?: string;
-          tool?: string;
-          state?: { output?: string };
-        }>;
-      }>;
-      const lastAssistant = [...msgs]
-        .reverse()
-        .find((m) => m.info?.role === "assistant");
-      const id = lastAssistant?.info?.id;
-      if (!id) return null;
-      const text = (lastAssistant?.parts ?? [])
-        .filter((p) => p.type === "text")
-        .map((p) => p.text ?? "")
-        .join("");
-      return { messageID: id, text };
-    } catch {
-      return null;
-    }
-  }
-
-  async function readRecentToolOutputs(
-    sessionID: string,
-  ): Promise<Array<{ tool: string; output: string }>> {
-    if (!client) return [];
-    try {
-      const res = await client.session.messages({ path: { id: sessionID } });
-      const msgs = (res.data ?? []) as Array<{
-        info?: { role?: string; id?: string };
-        parts?: Array<{
-          type?: string;
-          tool?: string;
-          state?: { status?: string; output?: string };
-        }>;
-      }>;
-      const lastAssistantIdx = [...msgs]
-        .reverse()
-        .findIndex((m) => m.info?.role === "assistant");
-      if (lastAssistantIdx < 0) return [];
-      // Walk backwards from the last assistant message — recent bash/read tool
-      // outputs are the most likely source of "the user started something".
-      const startIdx = msgs.length - 1 - lastAssistantIdx;
-      const window = msgs.slice(Math.max(0, startIdx - 4), startIdx + 1);
-      return window.flatMap((m) =>
-        (m.parts ?? []).flatMap((p) => {
-          if (p.type !== "tool") return [];
-          if (!p.tool) return [];
-          const output = p.state?.output;
-          if (!output) return [];
-          return [{ tool: p.tool, output }];
-        }),
-      );
-    } catch {
-      return [];
-    }
-  }
-
-  async function readRemainingTodos(sessionID: string): Promise<string[]> {
-    if (!client) return [];
-    try {
-      // Try the typed session.todos endpoint when available; otherwise fall
-      // back to scanning the last assistant message for a TODO list. Either
-      // way we keep this resilient to schema drift.
-      const api = client.session as unknown as {
-        todos?: (input: { path: { id: string } }) => Promise<{
-          data?: Array<{ content?: string; status?: string }>;
-        }>;
-      };
-      if (typeof api.todos === "function") {
-        const res = await api.todos({ path: { id: sessionID } });
-        const list = res.data ?? [];
-        return list
-          .filter(
-            (t) =>
-              t.status && t.status !== "completed" && t.status !== "cancelled",
-          )
-          .map((t) => t.content ?? "")
-          .filter(Boolean);
-      }
-    } catch {
-      // fall through
-    }
-    return [];
-  }
-
-  async function injectSummary(
-    sessionID: string,
-    reason: string,
-  ): Promise<void> {
-    if (!client) return;
-    try {
-      const lastAssistant = await readLastAssistantMessage(sessionID);
-      const _messageID = lastAssistant?.messageID;
-      const closure = parseClosureBlock(lastAssistant?.text ?? "");
-      const endpoints = aggregateEndpoints(
-        await readRecentToolOutputs(sessionID),
-      );
-      const remaining = await readRemainingTodos(sessionID);
-      const text = buildSummary({
-        closure,
-        endpoints,
-        remaining,
-        sessionLabel: reason ? `decision: ${reason}` : undefined,
-      });
-      // Post summary as synthetic user message via SDK (avoids core deps)
-      if (client) {
-        await client.session.prompt({
-          path: { id: sessionID },
-          body: {
-            parts: [{ type: "text", text, metadata: { bob_summary: true } }],
-          },
-        });
-      }
-    } catch {
-      // Summary injection is best-effort; never break the stop path.
     }
   }
 
@@ -330,10 +201,8 @@ export function createBobCompletionHook(
           });
 
           if (action.kind === "stop") {
-            // Inject the completion summary as a synthetic ignored text part
-            // on the last assistant message. The TUI picks it up via the
-            // `bob_summary` metadata flag and renders it as a stylized card.
-            await injectSummary(decideSessionID, action.reason);
+            // Bob's ordinary final answer is the only summary. A synthetic
+            // session.prompt creates a real turn and can cause a TUI loop.
             return;
           }
           s.autoContinues += 1;

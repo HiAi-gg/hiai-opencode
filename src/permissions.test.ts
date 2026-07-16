@@ -18,6 +18,7 @@ import {
   applyAgentPermissions,
   EXTERNAL_DIRECTORY_ALLOW_AGENTS,
   getDefaultExternalDirectory,
+  getTaskPermissions,
   TOOLS_KEYS,
 } from "./permissions";
 
@@ -58,6 +59,27 @@ describe("getDefaultExternalDirectory", () => {
     // Bob and vision are explicitly excluded
     expect(EXTERNAL_DIRECTORY_ALLOW_AGENTS.has("bob")).toBe(false);
     expect(EXTERNAL_DIRECTORY_ALLOW_AGENTS.has("vision")).toBe(false);
+  });
+});
+
+describe("granular task permissions", () => {
+  test("Bob can call Manager and workers", () => {
+    const permissions = getTaskPermissions("bob");
+    expect(permissions.manager).toBe("allow");
+    expect(permissions.build).toBe("allow");
+  });
+
+  test("Manager can call workers but never Bob or Manager", () => {
+    const permissions = getTaskPermissions("manager");
+    expect(permissions.build).toBe("allow");
+    expect(permissions.general).toBe("allow");
+    expect(permissions.bob).toBe("deny");
+    expect(permissions.manager).toBe("deny");
+  });
+
+  test("General and service agents are leaves", () => {
+    expect(getTaskPermissions("general").build).toBe("deny");
+    expect(getTaskPermissions("dream-consolidator").build).toBe("deny");
   });
 });
 
@@ -151,15 +173,15 @@ describe("applyAgentPermissions — no external_directory by default", () => {
     }
   });
 
-  test("general: when passed defaultPerms, gets external_directory", () => {
+  test("general remains a task leaf while keeping external_directory", () => {
     // general IS in the allow set, so defaultPerms will include it
     const { permission, tools } = applyAgentPermissions(
-      { task: false },
+      {},
       {},
       { external_directory: "allow" },
     );
     expect(permission.external_directory).toBe("allow");
-    expect(tools.task).toBe(false);
+    expect(tools.task).toBeUndefined();
   });
 
   test("bob/vision: no external_directory even with allow default passed", () => {

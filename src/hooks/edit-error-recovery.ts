@@ -16,10 +16,7 @@ export function createEditErrorRecovery(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        logger.error(
-          "[hiai-opencode] Hook error in edit-error-recovery:",
-          err,
-        );
+        logger.error("[hiai-opencode] Hook error in edit-error-recovery:", err);
       }
     },
   };

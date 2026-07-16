@@ -32,13 +32,9 @@ import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
   getDefaultExternalDirectory,
+  getTaskPermissions,
 } from "./permissions";
 import { createAgentBrowserTools } from "./tools/agent-browser";
-import {
-  backgroundCancelTool,
-  backgroundOutputTool,
-  setBackgroundManager,
-} from "./tools/background-task";
 import {
   firecrawlMapTool,
   firecrawlScrapeTool,
@@ -69,335 +65,377 @@ import {
   hiai_worktree_status,
 } from "./tools/worktree";
 import type { BobConfig, HookSet } from "./types";
-import { logger } from "./util/log";
+import { acquireLogger, logger, releaseLogger } from "./util/log";
 
 const PLUGIN_NAME = "HiAiOpenCodePlugin";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// Globally redirect console.* → file logger.
-// Other plugins (e.g. opencode-dcp) also emit to console — catch it all.
-(function installConsoleGuard() {
-  const orig = {
-    log: console.log.bind(console),
-    warn: console.warn.bind(console),
-    error: console.error.bind(console),
+let consoleUsers = 0;
+let originalConsole: Pick<Console, "log" | "warn" | "error"> | null = null;
+let installedConsole: Pick<Console, "log" | "warn" | "error"> | null = null;
+
+/** Reference-counted console guard: never restore over a later owner. */
+export function acquireConsoleGuard(): void {
+  if (consoleUsers++ > 0) return;
+  originalConsole = {
+    log: console.log,
+    warn: console.warn,
+    error: console.error,
   };
   const forward = (level: "LOG" | "WARN" | "ERROR", args: unknown[]) => {
     try {
-      logger[level === "LOG" ? "log" : level === "WARN" ? "warn" : "error"](...args);
+      logger[level === "LOG" ? "log" : level === "WARN" ? "warn" : "error"](
+        ...args,
+      );
     } catch {
       // File write failed — silently drop (don't leak back into TUI)
     }
   };
-  console.log = (...a: unknown[]) => forward("LOG", a);
-  console.warn = (...a: unknown[]) => forward("WARN", a);
-  console.error = (...a: unknown[]) => forward("ERROR", a);
-})();
+  installedConsole = {
+    log: (...a: unknown[]) => forward("LOG", a),
+    warn: (...a: unknown[]) => forward("WARN", a),
+    error: (...a: unknown[]) => forward("ERROR", a),
+  };
+  console.log = installedConsole.log;
+  console.warn = installedConsole.warn;
+  console.error = installedConsole.error;
+}
+
+export function releaseConsoleGuard(): void {
+  if (consoleUsers === 0 || --consoleUsers > 0) return;
+  if (originalConsole && installedConsole) {
+    if (console.log === installedConsole.log) console.log = originalConsole.log;
+    if (console.warn === installedConsole.warn)
+      console.warn = originalConsole.warn;
+    if (console.error === installedConsole.error)
+      console.error = originalConsole.error;
+  }
+  originalConsole = null;
+  installedConsole = null;
+}
 
 export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
-  const config = loadConfig(input.directory);
-  const agents = createAllAgents(config);
-  const bobHooks = createHooks(config as BobConfig);
-  const skillsDir = join(__dirname, "..", "skills");
-  const memoryDataDir = join(os.homedir(), ".hiai-opencode", "data", "memory");
-  const memoryDbPath = join(
-    os.homedir(),
-    ".hiai-opencode",
-    "data",
-    "hiai-memory.db",
-  );
+  acquireLogger();
+  acquireConsoleGuard();
+  try {
+    const config = loadConfig(input.directory);
+    const agents = createAllAgents(config);
+    const bobHooks = createHooks(config as BobConfig);
+    const skillsDir = join(__dirname, "..", "skills");
+    const memoryDataDir = join(
+      os.homedir(),
+      ".hiai-opencode",
+      "data",
+      "memory",
+    );
+    const memoryDbPath = join(
+      os.homedir(),
+      ".hiai-opencode",
+      "data",
+      "hiai-memory.db",
+    );
 
-  // Init memory service
-  const memoryService = createMemoryService({
-    memoryRoot: memoryDataDir,
-    dbPath: memoryDbPath,
-    ccIndex: false,
-    reconcileOnSearch: true,
-    searchScoreFloor: config.completion ? 0.15 : 0.15,
-  });
-
-  // Init completion controller
-  setCompletionClient(input.client);
-
-  // Init session tools
-  setSessionClient(input.client);
-
-  // Init background manager
-  const backgroundManager = new BackgroundManager(config.background_manager);
-  setBackgroundManager(backgroundManager);
-  backgroundManager.setClient(input.client);
-
-  // Init workspace adapter (monorepo detection + project type detection)
-  if (config.workspace?.enabled !== false) {
-    const workspaceAdapter = new WorkspaceAdapter({
-      cacheResults: config.workspace?.cache_results ?? true,
+    // Init memory service
+    const memoryService = createMemoryService({
+      memoryRoot: memoryDataDir,
+      dbPath: memoryDbPath,
+      ccIndex: false,
+      reconcileOnSearch: true,
+      searchScoreFloor: config.completion ? 0.15 : 0.15,
     });
-    setWorkspaceAdapter(workspaceAdapter);
-  }
 
-  // Init LSP config
-  if (config.lsp) setLspConfig(config.lsp);
+    // Init completion controller
+    setCompletionClient(input.client);
 
-  // Init telemetry
-  if (config.telemetry?.enabled) {
-    initTelemetry(config.telemetry);
-  }
+    // Init session tools
+    setSessionClient(input.client);
 
-  // Init shell-env injection (project env vars → subprocesses)
-  initShellEnv(config.shell_env, input.directory);
+    // Init background manager
+    const backgroundManager = new BackgroundManager(config.background_manager);
+    backgroundManager.setClient(input.client);
 
-  const completionHooks =
-    config.completion?.enabled !== false ? createBobCompletionHook(config) : {};
+    // Init workspace adapter (monorepo detection + project type detection)
+    if (config.workspace?.enabled !== false) {
+      const workspaceAdapter = new WorkspaceAdapter({
+        cacheResults: config.workspace?.cache_results ?? true,
+      });
+      setWorkspaceAdapter(workspaceAdapter);
+    }
 
-  // Init dream/distill auto-trigger
-  const dreamDistillHooks = createDreamDistillHook(config, input.client);
+    // Init LSP config
+    if (config.lsp) setLspConfig(config.lsp);
 
-  const hooks: Hooks = {};
+    // Init telemetry
+    if (config.telemetry?.enabled) {
+      initTelemetry(config.telemetry);
+    }
 
-  // ── Agent registration via config hook ──
-  hooks.config = async (cfg: Config) => {
-    try {
-      // Auto-export a static .opencode/.mcp.json so hosts whose `opencode mcp
-      // list` only reads static config can see hiai-managed servers. Controlled
-      // by HIAI_OPENCODE_AUTO_EXPORT_MCP (if-missing | always | off). Best-effort.
-      autoExportStaticMcp(config, input.directory);
+    // Init shell-env injection (project env vars → subprocesses)
+    initShellEnv(config.shell_env, input.directory);
 
-      const agentCfg = ((cfg as Record<string, unknown>).agent ?? {}) as Record<
-        string,
-        Record<string, unknown>
-      >;
-      const c = cfg as Record<string, unknown>;
-      let agentsDict = c.agent as Record<string, unknown>;
-      agentsDict ??= {};
-      c.agent = agentsDict;
-      let mcpDict = c.mcp as Record<string, unknown> | undefined;
+    const completionHooks =
+      config.completion?.enabled !== false
+        ? createBobCompletionHook(config)
+        : {};
 
-      // Upgrade native agents with our prompts/models
-      const resolveModelForAgent = (agentKey: string): string | undefined => {
-        return resolveAgentModel(agentKey, config as BobConfig);
-      };
+    // Init dream/distill auto-trigger
+    const dreamDistillHooks = createDreamDistillHook(config, input.client);
 
-      // Helper: build default permissions for agent (read-only review agents get external_directory allow)
-      const defaultPermsForAgent = (
-        agentKey: string,
-      ): Record<string, string> => {
-        const perms: Record<string, string> = {};
-        const ext = getDefaultExternalDirectory(agentKey);
-        if (ext) perms.external_directory = ext;
-        return perms;
-      };
+    const hooks: Hooks = {};
 
-      // Upgrade explore — firecrawl + grep_app + context7 for deep codebase exploration
-      {
-        const existing = agentCfg.explore ?? {};
-        const { permission, tools: restrictionTools } = applyAgentPermissions(
-          config.agent_restrictions?.explore,
-          {
-            firecrawl_search: true,
-            firecrawl_scrape: true,
-            firecrawl_map: true,
-          },
-          defaultPermsForAgent("explore"),
-        );
-        agentsDict.explore = {
-          ...existing,
-          description:
-            "Explore Agent — firecrawl + grep_app + context7 for deep codebase exploration",
-          mode: "subagent",
-          hidden: true,
-          model: resolveModelForAgent("explore") ?? resolveModelForAgent("bob"),
-          prompt: applyPromptOverride("explore", EXPLORE_PROMPT, config),
-          temperature: getToolSetting("agent_temp_explore", 0.1),
-          tools: restrictionTools,
-          ...(Object.keys(permission).length > 0 ? { permission } : {}),
+    // ── Agent registration via config hook ──
+    hooks.config = async (cfg: Config) => {
+      try {
+        // Auto-export a static .opencode/.mcp.json so hosts whose `opencode mcp
+        // list` only reads static config can see hiai-managed servers. Controlled
+        // by HIAI_OPENCODE_AUTO_EXPORT_MCP (if-missing | always | off). Best-effort.
+        autoExportStaticMcp(config, input.directory);
+
+        const agentCfg = ((cfg as Record<string, unknown>).agent ??
+          {}) as Record<string, Record<string, unknown>>;
+        const c = cfg as Record<string, unknown>;
+        c.subagent_depth = config.subagent_depth;
+        let agentsDict = c.agent as Record<string, unknown>;
+        agentsDict ??= {};
+        c.agent = agentsDict;
+        let mcpDict = c.mcp as Record<string, unknown> | undefined;
+
+        // Upgrade native agents with our prompts/models
+        const resolveModelForAgent = (agentKey: string): string | undefined => {
+          return resolveAgentModel(agentKey, config as BobConfig);
         };
-      }
 
-      // Upgrade plan → plan-level architect with thinking
-      {
-        const existing = agentCfg.plan ?? {};
-        const { permission, tools } = applyAgentPermissions(
-          config.agent_restrictions?.plan,
-          {},
-          defaultPermsForAgent("plan"),
-        );
-        agentsDict.plan = {
-          ...existing,
-          description:
-            "Principal Architect — deep planning, architecture analysis, phased execution graphs",
-          mode: "all",
-          model: resolveModelForAgent("plan") ?? resolveModelForAgent("bob"),
-          prompt: applyPromptOverride("plan", PLAN_PROMPT, config),
-          temperature: getToolSetting("agent_temp_plan", 0.1),
-          thinking: {
-            type: "enabled",
-            budgetTokens: getToolSetting("thinking_budget_plan", 16000),
-          },
-          ...(Object.keys(permission).length > 0 ? { permission } : {}),
-          ...(Object.keys(tools).length > 0 ? { tools } : {}),
+        // Helper: build default permissions for agent (read-only review agents get external_directory allow)
+        const defaultPermsForAgent = (
+          agentKey: string,
+        ): Record<string, string> => {
+          const perms: Record<string, string> = {};
+          const ext = getDefaultExternalDirectory(agentKey);
+          if (ext) perms.external_directory = ext;
+          return perms;
         };
-      }
 
-      // Upgrade build → build-level builder with verification gates
-      {
-        const existing = agentCfg.build ?? {};
-        const { permission, tools } = applyAgentPermissions(
-          config.agent_restrictions?.build,
-          {},
-          defaultPermsForAgent("build"),
-        );
-        agentsDict.build = {
-          ...existing,
-          description:
-            "Senior Staff Engineer — implements from plans with mandatory verification gates",
-          mode: "subagent",
-          hidden: true,
-          model: resolveModelForAgent("build") ?? resolveModelForAgent("bob"),
-          prompt: applyPromptOverride("build", BUILD_PROMPT, config),
-          temperature: getToolSetting("agent_temp_build", 0.2),
-          thinking: {
-            type: "enabled",
-            budgetTokens: getToolSetting("thinking_budget_build", 16000),
-          },
-          ...(Object.keys(permission).length > 0 ? { permission } : {}),
-          ...(Object.keys(tools).length > 0 ? { tools } : {}),
-        };
-      }
-
-      // Upgrade general → general-level cheap executor
-      {
-        const existing = agentCfg.general ?? {};
-        const { permission, tools } = applyAgentPermissions(
-          config.agent_restrictions?.general,
-          {},
-          defaultPermsForAgent("general"),
-        );
-        agentsDict.general = {
-          ...existing,
-          description:
-            "Cheap bounded executor — fast, simple tasks, fallback for failed agents",
-          mode: "all",
-          model:
-            resolveModelForAgent("general") ?? resolveModelForAgent("manager"),
-          prompt: applyPromptOverride("general", GENERAL_PROMPT, config),
-          temperature: getToolSetting("agent_temp_general", 0.1),
-          ...(Object.keys(permission).length > 0 ? { permission } : {}),
-          ...(Object.keys(tools).length > 0 ? { tools } : {}),
-        };
-      }
-
-      for (const agent of agents) {
-        const name = agent.key;
-        const existing = agentCfg[name] ?? {};
-
-        const { permission, tools } = applyAgentPermissions(
-          config.agent_restrictions?.[agent.key],
-          {},
-          defaultPermsForAgent(name),
-        );
-
-        agentsDict[name] = {
-          ...existing,
-          description: agent.config.description,
-          mode: agent.config.mode,
-          ...(agent.config.model ? { model: agent.config.model } : {}),
-          prompt: agent.config.prompt,
-          ...(agent.config.temperature !== undefined
-            ? { temperature: agent.config.temperature }
-            : {}),
-          ...(agent.config.thinking ? { thinking: agent.config.thinking } : {}),
-          ...(Object.keys(permission).length > 0 ? { permission } : {}),
-          ...(Object.keys(tools).length > 0 ? { tools } : {}),
-          ...(agent.config.hidden ? { hidden: true } : {}),
-        };
-      }
-
-      // Validate and register MCP config
-      if (Object.keys(config.mcp ?? {}).length > 0) {
-        mcpDict ??= {};
-        c.mcp = mcpDict;
-        const validated = getMcpConfig(config.mcp ?? {}, config.auth);
-        for (const [key, value] of Object.entries(validated)) {
-          mcpDict[key] = value;
+        // Upgrade explore — firecrawl + grep_app + context7 for deep codebase exploration
+        {
+          const existing = agentCfg.explore ?? {};
+          const { permission, tools: restrictionTools } = applyAgentPermissions(
+            config.agent_restrictions?.explore,
+            {
+              firecrawl_search: true,
+              firecrawl_scrape: true,
+              firecrawl_map: true,
+            },
+            defaultPermsForAgent("explore"),
+          );
+          agentsDict.explore = {
+            ...existing,
+            description:
+              "Explore Agent — firecrawl + grep_app + context7 for deep codebase exploration",
+            mode: "subagent",
+            hidden: true,
+            model:
+              resolveModelForAgent("explore") ?? resolveModelForAgent("bob"),
+            prompt: applyPromptOverride("explore", EXPLORE_PROMPT, config),
+            temperature: getToolSetting("agent_temp_explore", 0.1),
+            tools: restrictionTools,
+            permission: { ...permission, task: getTaskPermissions("explore") },
+          };
         }
-        // Also pass through any user MCP configs not in the registry
-        for (const [key, value] of Object.entries(config.mcp ?? {})) {
-          if (value.enabled && !validated[key]) {
+
+        // Upgrade plan → plan-level architect with thinking
+        {
+          const existing = agentCfg.plan ?? {};
+          const { permission, tools } = applyAgentPermissions(
+            config.agent_restrictions?.plan,
+            {},
+            defaultPermsForAgent("plan"),
+          );
+          agentsDict.plan = {
+            ...existing,
+            description:
+              "Principal Architect — deep planning, architecture analysis, phased execution graphs",
+            mode: "all",
+            model: resolveModelForAgent("plan") ?? resolveModelForAgent("bob"),
+            prompt: applyPromptOverride("plan", PLAN_PROMPT, config),
+            temperature: getToolSetting("agent_temp_plan", 0.1),
+            thinking: {
+              type: "enabled",
+              budgetTokens: getToolSetting("thinking_budget_plan", 16000),
+            },
+            permission: { ...permission, task: getTaskPermissions("plan") },
+            ...(Object.keys(tools).length > 0 ? { tools } : {}),
+          };
+        }
+
+        // Upgrade build → build-level builder with verification gates
+        {
+          const existing = agentCfg.build ?? {};
+          const { permission, tools } = applyAgentPermissions(
+            config.agent_restrictions?.build,
+            {},
+            defaultPermsForAgent("build"),
+          );
+          agentsDict.build = {
+            ...existing,
+            description:
+              "Senior Staff Engineer — implements from plans with mandatory verification gates",
+            mode: "subagent",
+            hidden: true,
+            model: resolveModelForAgent("build") ?? resolveModelForAgent("bob"),
+            prompt: applyPromptOverride("build", BUILD_PROMPT, config),
+            temperature: getToolSetting("agent_temp_build", 0.2),
+            thinking: {
+              type: "enabled",
+              budgetTokens: getToolSetting("thinking_budget_build", 16000),
+            },
+            permission: { ...permission, task: getTaskPermissions("build") },
+            ...(Object.keys(tools).length > 0 ? { tools } : {}),
+          };
+        }
+
+        // Upgrade general → general-level cheap executor
+        {
+          const existing = agentCfg.general ?? {};
+          const { permission, tools } = applyAgentPermissions(
+            config.agent_restrictions?.general,
+            {},
+            defaultPermsForAgent("general"),
+          );
+          agentsDict.general = {
+            ...existing,
+            description:
+              "Cheap bounded executor — fast, simple tasks, fallback for failed agents",
+            mode: "all",
+            model:
+              resolveModelForAgent("general") ??
+              resolveModelForAgent("manager"),
+            prompt: applyPromptOverride("general", GENERAL_PROMPT, config),
+            temperature: getToolSetting("agent_temp_general", 0.1),
+            permission: { ...permission, task: getTaskPermissions("general") },
+            ...(Object.keys(tools).length > 0 ? { tools } : {}),
+          };
+        }
+
+        for (const agent of agents) {
+          const name = agent.key;
+          const existing = agentCfg[name] ?? {};
+
+          const { permission, tools } = applyAgentPermissions(
+            config.agent_restrictions?.[agent.key],
+            {},
+            defaultPermsForAgent(name),
+          );
+
+          agentsDict[name] = {
+            ...existing,
+            description: agent.config.description,
+            mode: agent.config.mode,
+            ...(agent.config.model ? { model: agent.config.model } : {}),
+            prompt: agent.config.prompt,
+            ...(agent.config.temperature !== undefined
+              ? { temperature: agent.config.temperature }
+              : {}),
+            ...(agent.config.thinking
+              ? { thinking: agent.config.thinking }
+              : {}),
+            permission: { ...permission, task: getTaskPermissions(name) },
+            ...(Object.keys(tools).length > 0 ? { tools } : {}),
+            ...(agent.config.hidden ? { hidden: true } : {}),
+          };
+        }
+
+        // Validate and register MCP config
+        if (Object.keys(config.mcp ?? {}).length > 0) {
+          mcpDict ??= {};
+          c.mcp = mcpDict;
+          const validated = getMcpConfig(config.mcp ?? {}, config.auth);
+          for (const [key, value] of Object.entries(validated)) {
             mcpDict[key] = value;
           }
+          // Also pass through any user MCP configs not in the registry
+          for (const [key, value] of Object.entries(config.mcp ?? {})) {
+            if (value.enabled && !validated[key]) {
+              mcpDict[key] = value;
+            }
+          }
         }
+
+        if (config.dream)
+          c.dream = {
+            ...((c.dream ?? {}) as Record<string, unknown>),
+            ...config.dream,
+          };
+        if (config.distill)
+          c.distill = {
+            ...((c.distill ?? {}) as Record<string, unknown>),
+            ...config.distill,
+          };
+      } catch (e) {
+        logger.error("[HiAiOpenCodePlugin] config hook error:", e);
       }
+    };
 
-      if (config.dream)
-        c.dream = {
-          ...((c.dream ?? {}) as Record<string, unknown>),
-          ...config.dream,
-        };
-      if (config.distill)
-        c.distill = {
-          ...((c.distill ?? {}) as Record<string, unknown>),
-          ...config.distill,
-        };
-    } catch (e) {
-      logger.error("[HiAiOpenCodePlugin] config hook error:", e);
+    // ── Behavioural hooks (combined using same chain-with-BlockingHookError pattern) ──
+    {
+      const combined = combineHookSets([
+        bobHooks,
+        completionHooks as HookSet,
+        dreamDistillHooks as HookSet,
+        // Circuit breaker: feeds tool calls into BackgroundManager so the
+        // consecutive-identical and total-call limits can abort runaway sessions.
+        createCircuitBreakerHook(config as BobConfig, backgroundManager),
+      ]);
+      const h = hooks as Record<string, unknown>;
+      for (const key of Object.keys(combined)) {
+        if (key === "dispose") continue; // dispose handled separately
+        const fn = (combined as Record<string, unknown>)[key];
+        if (fn) h[key] = fn;
+      }
     }
-  };
 
-  // ── Behavioural hooks (combined using same chain-with-BlockingHookError pattern) ──
-  {
-    const combined = combineHookSets([
-      bobHooks,
-      completionHooks as HookSet,
-      dreamDistillHooks as HookSet,
-      // Circuit breaker: feeds tool calls into BackgroundManager so the
-      // consecutive-identical and total-call limits can abort runaway sessions.
-      createCircuitBreakerHook(config as BobConfig, backgroundManager),
-    ]);
-    const h = hooks as Record<string, unknown>;
-    for (const key of Object.keys(combined)) {
-      if (key === "dispose") continue; // dispose handled separately
-      const fn = (combined as Record<string, unknown>)[key];
-      if (fn) h[key] = fn;
-    }
+    // ── Tools ──
+    hooks.tool = {
+      skill: createSkillTool(skillsDir),
+      ...createAgentBrowserTools(),
+      lsp_diagnostics: lspDiagnosticsTool,
+      lsp_goto_definition: lspGotoDefinitionTool,
+      lsp_find_references: lspFindReferencesTool,
+      lsp_symbols: lspSymbolsTool,
+      lsp_prepare_rename: lspPrepareRenameTool,
+      lsp_rename: lspRenameTool,
+      session_list: sessionListTool,
+      session_read: sessionReadTool,
+      session_search: sessionSearchTool,
+      session_info: sessionInfoTool,
+      hiai_memory_search: createMemoryTool(memoryService),
+      hiai_worktree_create,
+      hiai_worktree_remove,
+      hiai_worktree_list,
+      hiai_worktree_status,
+      firecrawl_search: firecrawlSearchTool,
+      firecrawl_scrape: firecrawlScrapeTool,
+      firecrawl_map: firecrawlMapTool,
+    };
+
+    hooks.dispose = async () => {
+      if (bobHooks.dispose) await bobHooks.dispose();
+      backgroundManager.dispose();
+      await shutdownTelemetry();
+      logger.log(`[${PLUGIN_NAME}] disposed`);
+      releaseConsoleGuard();
+      releaseLogger();
+    };
+
+    logger.log(
+      `[${PLUGIN_NAME}] loaded: ${agents.length} agents, ${Object.keys(hooks.tool ?? {}).length} tools, hooks ready`,
+    );
+
+    return hooks;
+  } catch (error) {
+    releaseConsoleGuard();
+    releaseLogger();
+    throw error;
   }
-
-  // ── Tools ──
-  hooks.tool = {
-    skill: createSkillTool(skillsDir),
-    ...createAgentBrowserTools(),
-    lsp_diagnostics: lspDiagnosticsTool,
-    lsp_goto_definition: lspGotoDefinitionTool,
-    lsp_find_references: lspFindReferencesTool,
-    lsp_symbols: lspSymbolsTool,
-    lsp_prepare_rename: lspPrepareRenameTool,
-    lsp_rename: lspRenameTool,
-    session_list: sessionListTool,
-    session_read: sessionReadTool,
-    session_search: sessionSearchTool,
-    session_info: sessionInfoTool,
-    background_output: backgroundOutputTool,
-    background_cancel: backgroundCancelTool,
-    hiai_memory_search: createMemoryTool(memoryService),
-    hiai_worktree_create,
-    hiai_worktree_remove,
-    hiai_worktree_list,
-    hiai_worktree_status,
-    firecrawl_search: firecrawlSearchTool,
-    firecrawl_scrape: firecrawlScrapeTool,
-    firecrawl_map: firecrawlMapTool,
-  };
-
-  hooks.dispose = async () => {
-    if (bobHooks.dispose) await bobHooks.dispose();
-    await shutdownTelemetry();
-    logger.log(`[${PLUGIN_NAME}] disposed`);
-  };
-
-  logger.log(
-    `[${PLUGIN_NAME}] loaded: ${agents.length} agents, ${Object.keys(hooks.tool ?? {}).length} tools, hooks ready`,
-  );
-
-  return hooks;
 };
 
 const plugin = {

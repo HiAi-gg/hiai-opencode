@@ -96,7 +96,7 @@ Bob routes work; the rest execute. Three are visible in the picker (you can invo
 | **Vision** | Browser operator, multimodal analysis, screenshots | `browser` / visual verification |
 | **Manager** | Delegation orchestrator, TODO tracker, memory steward | Complex multi-wave tasks |
 
-### Tools — 24 registered
+### Tools — 35 registered
 
 - **LSP (6)** — `lsp_diagnostics`, `lsp_goto_definition`, `lsp_find_references`, `lsp_symbols`, `lsp_prepare_rename`, `lsp_rename`. TypeScript, Svelte, ESLint, Python, Bash.
 - **Agent Browser (14)** — Navigate, snapshot, click, fill, screenshot, eval, console, and more. Native Chrome via CDP — no Playwright. Restricted to Vision/General agents.
@@ -174,7 +174,6 @@ hiai-opencode doctor        # full install/runtime diagnostic (exits non-zero on
 hiai-opencode mcp-status    # MCP server config + tool probes
 hiai-opencode export-mcp [path]   # write static .mcp.json for hosts that ignore plugin MCP
 hiai-opencode diagnose [path]    # collect diagnostic bundle (local only)
-hiai-opencode task-status <id>    # status of a background task
 ```
 
 `doctor` checks: plugin registration, MCP servers, LSP runtimes (TypeScript/Svelte/ESLint/Bash/Pyright), CLI skills (Firecrawl / Context7 / agent-browser), model-slot assignment from `bob.json`, and the static `.mcp.json` freshness. Use it as a CI gate.
@@ -250,7 +249,7 @@ bun test               # 986 tests
 ## Roadmap
 
 - Configurable agent roster from `bob.json`
-- Background-task persistence (SQLite journal — currently in-memory)
+- Native Task lifecycle visibility (provided by OpenCode)
 - Optional telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe)
 - Skill marketplace + agent analytics
 

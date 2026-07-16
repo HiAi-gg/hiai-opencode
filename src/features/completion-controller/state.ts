@@ -91,10 +91,7 @@ export function setHasIncompleteTodos(
 }
 
 /** Mark that a quality command failed in this session (blocks completion). */
-export function setQualityGateFailed(
-  sessionID: string,
-  failed: boolean,
-): void {
+export function setQualityGateFailed(sessionID: string, failed: boolean): void {
   get(sessionID).qualityGateFailed = failed;
 }
 

@@ -44,7 +44,6 @@ describe("PLAN_PROMPT", () => {
       "plan",
       "build",
       "general",
-      "manager",
       "critic",
       "designer",
       "writer",
@@ -59,8 +58,9 @@ describe("PLAN_PROMPT", () => {
     expect(PLAN_PROMPT).toContain("NEVER assign an owner not in this list");
   });
 
-  test("mentions max 5 concurrent tasks per wave", () => {
-    expect(PLAN_PROMPT).toContain("Max 5 concurrent");
+  test("requires manager-ready groups of at most five", () => {
+    expect(PLAN_PROMPT).toContain("manager-ready groups");
+    expect(PLAN_PROMPT).toContain("at most 5");
   });
 
   test("requires plan file path in Evidence section", () => {

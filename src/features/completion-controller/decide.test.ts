@@ -154,8 +154,7 @@ describe("decide", () => {
       lspPending: true,
     });
     expect(a.kind).toBe("continue");
-    if (a.kind === "continue")
-      expect(a.prompt.toLowerCase()).toContain("lsp");
+    if (a.kind === "continue") expect(a.prompt.toLowerCase()).toContain("lsp");
   });
 
   test("lsp pending at cap -> stop(cap)", () => {

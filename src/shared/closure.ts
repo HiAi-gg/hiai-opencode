@@ -45,8 +45,14 @@ export function validateClosure(text: string): {
   try {
     const data = JSON.parse(match[1].trim());
     if (!data.reasoning || !data.readiness)
-      return { isValid: false, error: "Missing required fields (reasoning, readiness)" };
-    if (typeof data.readiness !== "string" || !VALID_READINESS.has(data.readiness)) {
+      return {
+        isValid: false,
+        error: "Missing required fields (reasoning, readiness)",
+      };
+    if (
+      typeof data.readiness !== "string" ||
+      !VALID_READINESS.has(data.readiness)
+    ) {
       return {
         isValid: false,
         error: `Invalid readiness "${data.readiness}" — must be one of: done, accept, reject`,

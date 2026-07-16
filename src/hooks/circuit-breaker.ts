@@ -1,6 +1,5 @@
 import type { BobConfig, HookSet } from "../types";
 import type { BackgroundManager } from "../features/background-manager/index";
-import { setBackgroundManager } from "../tools/background-task";
 import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
 
@@ -27,10 +26,11 @@ export function createCircuitBreakerHook(
         // The `task` tool itself is excluded — spawning a subagent is not a
         // repetitive action the breaker should count against the parent.
         if (input.tool === "task") return;
-        manager.recordSessionToolCall(sid, input.tool, input.args as Record<
-          string,
-          unknown
-        > | undefined);
+        manager.recordSessionToolCall(
+          sid,
+          input.tool,
+          input.args as Record<string, unknown> | undefined,
+        );
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
         // Circuit-breaker accounting must never break a tool result.
@@ -39,7 +39,3 @@ export function createCircuitBreakerHook(
     },
   };
 }
-
-// Re-export so callers that already import the setter from background-task
-// don't need a second import site. Keeps the wiring in one place.
-export { setBackgroundManager };

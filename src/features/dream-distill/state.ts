@@ -37,7 +37,10 @@ export function save() {
   ensureLoaded();
   try {
     if (!existsSync(STATE_DIR)) mkdirSync(STATE_DIR, { recursive: true });
-    writeFileSync(STATE_FILE, JSON.stringify(Object.fromEntries(lastRun), null, 2));
+    writeFileSync(
+      STATE_FILE,
+      JSON.stringify(Object.fromEntries(lastRun), null, 2),
+    );
   } catch {
     // Best-effort persistence.
   }

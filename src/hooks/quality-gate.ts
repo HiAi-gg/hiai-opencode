@@ -62,9 +62,7 @@ export function createQualityGate(_config: BobConfig): HookSet {
 
         if (hasErrors) {
           const cmdName = cmd.split(" ")[0];
-          logger.log(
-            `[hiai-opencode] QUALITY GATE FAILED: ${cmdName}`,
-          );
+          logger.log(`[hiai-opencode] QUALITY GATE FAILED: ${cmdName}`);
           output.output += `\n\n[hiai-opencode] ⛔ QUALITY GATE FAILED: ${cmdName} detected errors.\n⛔ Fix the reported errors and re-run until exit code 0.\n⛔ Task completion is blocked until the quality gate passes.`;
         }
       } catch (err) {

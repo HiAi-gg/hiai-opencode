@@ -269,13 +269,13 @@ Git worktree-based task isolation for parallel work.
 
 Gated on `config.worktreeConfig?.enabled === true` (default: enabled).
 
-## Background Tasks
+## Native Background Delegation and Circuit Breaker
 
-- **BackgroundManager** — [src/features/background-manager/index.ts](src/features/background-manager/index.ts): in-memory task tracking, circuit breaker (consecutive-identical + total-call limits), stale timeout, concurrency limit
-- **Tools** — [src/tools/background-task/index.ts](src/tools/background-task/index.ts): `background_output`, `background_cancel`
-- **Hook wiring** — [src/hooks/circuit-breaker.ts](src/hooks/circuit-breaker.ts): feeds `tool.execute.after` into the manager
+- OpenCode's native `Task` lifecycle owns background delegation and task output.
+- **BackgroundManager** — [src/features/background-manager/index.ts](src/features/background-manager/index.ts): circuit-breaker state only (consecutive-identical and total-call limits).
+- **Hook wiring** — [src/hooks/circuit-breaker.ts](src/hooks/circuit-breaker.ts): feeds `tool.execute.after` into the circuit breaker.
 
-> State is in-memory only. If the OpenCode process restarts, all task state is lost.
+The deprecated `background_output` / `background_cancel` tools and task-status CLI command were removed because they could not manage native OpenCode task IDs.
 
 ## CLI
 

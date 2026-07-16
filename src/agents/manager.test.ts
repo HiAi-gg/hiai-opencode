@@ -23,7 +23,6 @@ describe("MANAGER_PROMPT", () => {
       "plan",
       "build",
       "general",
-      "manager",
       "critic",
       "designer",
       "writer",
@@ -49,8 +48,13 @@ describe("MANAGER_PROMPT", () => {
     expect(MANAGER_PROMPT).toContain("Collect ALL results");
   });
 
-  test("mentions max 5 concurrent dispatches", () => {
-    expect(MANAGER_PROMPT).toContain("up to 5 at once");
+  test("caps dispatches at five and forbids Manager nesting", () => {
+    expect(MANAGER_PROMPT).toContain(
+      "Never dispatch more than five active workers",
+    );
+    expect(MANAGER_PROMPT).toContain(
+      "Manager → Manager delegation is forbidden",
+    );
   });
 
   test("serializes parallel: no and overlapping file steps", () => {

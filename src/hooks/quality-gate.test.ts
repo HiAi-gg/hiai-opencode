@@ -25,7 +25,11 @@ async function runAfter(cmd: string, outputText: string | undefined | null) {
     input: { tool: string; sessionID?: string; args: { command?: string } },
     output: { output?: string | null },
   ) => Promise<void>;
-  const input = { tool: "bash", sessionID: "test-session", args: { command: cmd } };
+  const input = {
+    tool: "bash",
+    sessionID: "test-session",
+    args: { command: cmd },
+  };
   const output = { output: outputText };
   await after(input, output);
   return output;

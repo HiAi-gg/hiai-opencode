@@ -1,219 +1,39 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "hiai-opencode Configuration",
-  "description": "User-facing hiai-opencode config. Users choose 10+ primary agent models, service auth placeholders, and enable/disable MCP/LSP integrations. Internal routing derives hidden agents and task categories from these model slots.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "$schema": {
-      "type": "string"
-    },
-    "version": {
-      "type": "string",
-      "default": "0.3.5",
-      "description": "Config format version. Semantic versioning; bump on breaking schema changes."
-    },
-    "models": {
-      "type": "object",
-      "description": "The only user-facing model source of truth. Use fully qualified OpenCode model IDs. Canonical slots: bob, build, plan, manager, critic, designer, explore, writer, vision, general.",
-      "additionalProperties": false,
-      "properties": {
-        "bob": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "build": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "plan": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "manager": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "critic": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "designer": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "explore": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "writer": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "vision": {
-          "$ref": "#/definitions/modelSlot"
-        },
-        "general": {
-          "$ref": "#/definitions/modelSlot"
-        }
-      },
-      "required": [
-        "bob",
-        "build",
-        "plan",
-        "manager",
-        "critic",
-        "designer",
-        "explore",
-        "writer",
-        "vision",
-        "general"
-      ]
-    },
-    "auth": {
-      "type": "object",
-      "description": "Service auth placeholders. Keys: firecrawl.",
-      "additionalProperties": false,
-      "properties": {
-        "firecrawl": {
-          "type": "string",
-          "description": "Firecrawl API key placeholder, e.g. {env:FIRECRAWL_API_KEY}"
-        }
-      }
-    },
-    "mcp": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "sequential-thinking": {
-          "$ref": "#/definitions/toggle"
-        },
-        "grep_app": {
-          "$ref": "#/definitions/toggle"
-        }
-      }
-    },
-    "lsp": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "typescript": {
-          "$ref": "#/definitions/toggle"
-        },
-        "svelte": {
-          "$ref": "#/definitions/toggle"
-        },
-        "eslint": {
-          "$ref": "#/definitions/toggle"
-        },
-        "bash": {
-          "$ref": "#/definitions/toggle"
-        },
-        "pyright": {
-          "$ref": "#/definitions/toggle"
-        }
-      }
-    },
-    "skill_discovery": {
-      "type": "object",
-      "description": "Controls external skill folder scanning. Defaults keep installs deterministic.",
-      "additionalProperties": false,
-      "properties": {
-        "config_sources": {
-          "type": "boolean",
-          "default": true
-        },
-        "project_opencode": {
-          "type": "boolean",
-          "default": true
-        },
-        "global_opencode": {
-          "type": "boolean",
-          "default": false
-        },
-        "project_claude": {
-          "type": "boolean",
-          "default": false
-        },
-        "global_claude": {
-          "type": "boolean",
-          "default": false
-        },
-        "project_agents": {
-          "type": "boolean",
-          "default": false
-        },
-        "global_agents": {
-          "type": "boolean",
-          "default": false
-        }
-      }
-    },
-    "loop": {
-      "type": "object",
-      "description": "Loop continuation engine config. Auto-start threshold 0 disables auto-start.",
-      "additionalProperties": false,
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": false,
-          "description": "Whether loop is enabled."
-        },
-        "auto_start_threshold": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 100,
-          "default": 0,
-          "description": "Auto-start loop when this many or more open todos exist in a single session. 0 disables auto-start."
-        }
-      }
-    },
-    "tool_settings": {
-      "type": "object",
-      "description": "Per-tool configuration overrides keyed by tool name. Values are numeric tunables (e.g. budgets, thresholds).",
-      "additionalProperties": {
-        "type": "number"
-      }
-    }
+    "$schema": { "type": "string" },
+    "version": { "type": "string" },
+    "subagent_depth": { "type": "integer", "minimum": 1, "default": 2, "description": "Use 2 for Bob → Manager → worker." },
+    "models": { "type": "object", "additionalProperties": { "$ref": "#/definitions/modelSlot" } },
+    "mcp": { "type": "object", "additionalProperties": { "$ref": "#/definitions/toggle" } },
+    "lsp": { "type": "object", "additionalProperties": { "$ref": "#/definitions/lsp" } },
+    "agent_restrictions": { "type": "object", "additionalProperties": { "type": "object", "additionalProperties": { "type": "boolean" } } },
+    "hooks": { "$ref": "#/definitions/disabledList" },
+    "tools": { "$ref": "#/definitions/disabledList" },
+    "agent_overrides": { "type": "object", "additionalProperties": { "type": "object", "properties": { "model": { "type": "string" }, "prompt_append": { "type": "string" } }, "additionalProperties": false } },
+    "disabled_agents": { "type": "array", "items": { "type": "string" } },
+    "disabled_hooks": { "type": "array", "items": { "type": "string" } },
+    "auth": { "type": "object", "additionalProperties": { "type": "string" } },
+    "background_manager": { "type": "object", "properties": { "concurrency_limit": { "type": "integer", "minimum": 1, "description": "Deprecated no-op." }, "stale_timeout_ms": { "type": "integer", "minimum": 1, "description": "Deprecated no-op." }, "circuit_breaker": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "max_tool_calls": { "type": "integer", "minimum": 1 }, "consecutive_threshold": { "type": "integer", "minimum": 1 } }, "additionalProperties": false } }, "additionalProperties": false },
+    "telemetry": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "endpoint": { "type": "string" }, "serviceName": { "type": "string" }, "sampleRate": { "type": "number", "minimum": 0, "maximum": 1 } }, "required": ["enabled"], "additionalProperties": false },
+    "completion": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "max_auto_continues": { "type": "integer", "minimum": 0 }, "require_critic": { "type": "boolean" }, "ui_globs": { "type": "array", "items": { "type": "string" } }, "reset_on_user_message": { "type": "boolean" } }, "additionalProperties": false },
+    "caveman": { "type": "object", "additionalProperties": true },
+    "dream": { "$ref": "#/definitions/periodic" },
+    "distill": { "$ref": "#/definitions/periodic" },
+    "worktreeConfig": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "base_dir": { "type": "string" } }, "additionalProperties": false },
+    "workspace": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "cache_results": { "type": "boolean" } }, "additionalProperties": false },
+    "loop": { "type": "object", "additionalProperties": true },
+    "tool_settings": { "type": "object", "additionalProperties": { "type": "number" } },
+    "shell_env": { "type": "object", "properties": { "variables": { "type": "array", "items": { "type": "string" } }, "inject_in": { "type": "array", "items": { "type": "string" } }, "env_file": { "type": "string" } }, "additionalProperties": false }
   },
-  "required": [
-    "models"
-  ],
   "definitions": {
-    "modelSlot": {
-      "oneOf": [
-        {
-          "type": "string"
-        },
-        {
-          "type": "object",
-          "properties": {
-            "model": {
-              "type": "string"
-            },
-            "recommended": {
-              "enum": [
-                "xhigh",
-                "high",
-                "middle",
-                "fast",
-                "vision",
-                "writing",
-                "design"
-              ]
-            }
-          },
-          "required": [
-            "model"
-          ],
-          "additionalProperties": false
-        }
-      ]
-    },
-    "toggle": {
-      "type": "object",
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "default": true
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "additionalProperties": false
-    }
+    "modelSlot": { "type": "object", "properties": { "model": { "type": "string" }, "recommended": { "type": "string" } }, "required": ["model"], "additionalProperties": false },
+    "toggle": { "type": "object", "properties": { "enabled": { "type": "boolean" } }, "required": ["enabled"], "additionalProperties": false },
+    "lsp": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "command": { "type": "string" }, "args": { "type": "array", "items": { "type": "string" } }, "initializationOptions": { "type": "object" }, "env": { "type": "object", "additionalProperties": { "type": "string" } } }, "additionalProperties": false },
+    "disabledList": { "type": "object", "properties": { "disabled": { "type": "array", "items": { "type": "string" } } }, "additionalProperties": false },
+    "periodic": { "type": "object", "properties": { "auto": { "type": "boolean" }, "interval_days": { "type": "number", "minimum": 1 }, "model": { "type": "string" } }, "additionalProperties": false }
   }
 }

@@ -80,12 +80,7 @@ export function loadEnvFiles(projectDir: string): void {
         }
       }
     } catch (err) {
-      logger.warn(
-        "[hiai-opencode] Failed to load env from",
-        envPath,
-        ":",
-        err,
-      );
+      logger.warn("[hiai-opencode] Failed to load env from", envPath, ":", err);
     }
   }
 
@@ -111,6 +106,7 @@ export function loadEnvFiles(projectDir: string): void {
 }
 
 export const DEFAULT_CONFIG: BobConfig = {
+  subagent_depth: 2,
   models: {},
   mcp: {
     "sequential-thinking": { enabled: true },
@@ -139,7 +135,15 @@ export const DEFAULT_CONFIG: BobConfig = {
       lsp_prepare_rename: false,
       lsp_rename: false,
     },
-    plan: { write: false, edit: false, apply_patch: false, bash: false, grep: false, glob: false, webfetch: false },
+    plan: {
+      write: false,
+      edit: false,
+      apply_patch: false,
+      bash: false,
+      grep: false,
+      glob: false,
+      webfetch: false,
+    },
     critic: {
       write: false,
       edit: false,
@@ -164,7 +168,7 @@ export const DEFAULT_CONFIG: BobConfig = {
       lsp_prepare_rename: false,
       lsp_rename: false,
     },
-    general: { task: false, webfetch: false },
+    general: { webfetch: false },
   },
   hooks: { disabled: [] },
   tools: { disabled: [] },
@@ -333,8 +337,8 @@ export function loadConfig(projectDir: string): BobConfig {
     join(cfgDir, "bob.jsonc"),
   ];
 
-  // Collect ALL user configs; later entries (more specific / global-last)
-  // override earlier ones, and the whole merged result overrides DEFAULT_CONFIG.
+  // First config wins. This mirrors the documented source order and prevents a
+  // global file from unexpectedly changing a project-local topology.
   let userConfig: Partial<BobConfig> = {};
   for (const candidate of candidates) {
     if (!existsSync(candidate)) continue;
@@ -342,7 +346,8 @@ export function loadConfig(projectDir: string): BobConfig {
       const raw = readFileSync(candidate, "utf-8");
       const cleaned = stripJsonComments(raw);
       const parsed = JSON.parse(cleaned) ?? {};
-      userConfig = { ...userConfig, ...parsed };
+      userConfig = parsed;
+      break;
     } catch (err) {
       logger.warn(
         `[hiai-opencode] Failed to parse config: ${candidate} (${err instanceof Error ? err.message : String(err)})`,
@@ -361,19 +366,44 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
   const mergedMcp = { ...DEFAULT_CONFIG.mcp, ...userConfig.mcp };
   const mergedLsp = { ...DEFAULT_CONFIG.lsp, ...userConfig.lsp };
   const mergedAgentRestrictions = {
-    ...DEFAULT_CONFIG.agent_restrictions,
-    ...userConfig.agent_restrictions,
+    ...Object.fromEntries(
+      new Set([
+        ...Object.keys(DEFAULT_CONFIG.agent_restrictions ?? {}),
+        ...Object.keys(userConfig.agent_restrictions ?? {}),
+      ])
+        .values()
+        .map((agent) => [
+          agent,
+          {
+            ...(DEFAULT_CONFIG.agent_restrictions?.[agent] ?? {}),
+            ...(userConfig.agent_restrictions?.[agent] ?? {}),
+          },
+        ]),
+    ),
   };
   const mergedAuth = { ...DEFAULT_CONFIG.auth, ...userConfig.auth };
 
   const bobModel = mergedModels.bob?.model;
+  // A per-feature model is an explicit user choice; Bob is only its fallback.
   const pin = bobModel ? { model: bobModel } : {};
-  const mergedDream = { ...DEFAULT_CONFIG.dream, ...userConfig.dream, ...pin };
+  const mergedDream = { ...DEFAULT_CONFIG.dream, ...pin, ...userConfig.dream };
   const mergedDistill = {
     ...DEFAULT_CONFIG.distill,
-    ...userConfig.distill,
     ...pin,
+    ...userConfig.distill,
   };
+
+  const depth = userConfig.subagent_depth ?? DEFAULT_CONFIG.subagent_depth ?? 2;
+  if (!Number.isInteger(depth) || depth < 1) {
+    throw new Error(
+      `[hiai-opencode] subagent_depth must be a positive integer, got ${String(depth)}`,
+    );
+  }
+  if (depth < 2) {
+    logger.warn(
+      "[hiai-opencode] subagent_depth below 2 disables Bob → Manager → worker delegation",
+    );
+  }
 
   const defaultHooksDisabled = DEFAULT_CONFIG.hooks?.disabled ?? [];
   const userHooksDisabled = userConfig.hooks?.disabled ?? [];
@@ -401,6 +431,7 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
   return resolveEnvVars({
     ...DEFAULT_CONFIG,
     ...userConfig,
+    subagent_depth: depth,
     models: mergedModels,
     mcp: mergedMcp,
     lsp: mergedLsp,
@@ -409,6 +440,10 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
     background_manager: {
       ...DEFAULT_CONFIG.background_manager,
       ...userConfig.background_manager,
+      circuit_breaker: {
+        ...DEFAULT_CONFIG.background_manager?.circuit_breaker,
+        ...userConfig.background_manager?.circuit_breaker,
+      },
     },
     telemetry: {
       ...DEFAULT_CONFIG.telemetry,

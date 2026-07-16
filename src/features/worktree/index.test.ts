@@ -35,7 +35,9 @@ beforeAll(async () => {
   originalCwd = process.cwd();
 
   // Create an isolated git repository for the whole suite.
-  repoDir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")));
+  repoDir = fs.realpathSync.native(
+    fs.mkdtempSync(path.join(os.tmpdir(), "wt-repo-")),
+  );
   // Keep worktrees OUTSIDE the repo so the main checkout stays pristine
   // (untracked worktree dirs would otherwise mark it dirty).
   worktreesBase = fs.realpathSync.native(
@@ -72,7 +74,9 @@ describe("WorktreeManager.create()", () => {
     expect(info.isLinked).toBe(true);
     // slug of "Feature X Plan" -> "feature-x-plan" -> sliced to 8 -> "feature-"
     expect(info.branch).toBe("hiai-bob/feature-");
-    expect(norm(info.path)).toBe(norm(path.resolve(worktreesBase, "feature-x")));
+    expect(norm(info.path)).toBe(
+      norm(path.resolve(worktreesBase, "feature-x")),
+    );
 
     // The worktree directory must exist on disk.
     expect(fs.existsSync(info.path)).toBe(true);

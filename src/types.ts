@@ -46,6 +46,8 @@ export interface LspServerConfig {
 }
 
 export interface BobConfig {
+  /** Maximum nested Task depth accepted by OpenCode. Bob → Manager → worker needs 2. */
+  subagent_depth?: number;
   models?: Record<string, { model: string; recommended?: string }>;
   mcp?: Record<string, { enabled: boolean }>;
   lsp?: Record<string, LspServerConfig>;

@@ -32,10 +32,7 @@ export function createNonInteractiveEnv(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        logger.error(
-          "[hiai-opencode] Hook error in non-interactive-env:",
-          err,
-        );
+        logger.error("[hiai-opencode] Hook error in non-interactive-env:", err);
       }
     },
   };

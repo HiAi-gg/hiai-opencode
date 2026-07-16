@@ -48,12 +48,13 @@ describe("BOB_PROMPT", () => {
     expect(BOB_PROMPT).toContain("Execution Graph Extract");
   });
 
-  test("describes two dispatch modes (Manager vs direct)", () => {
-    expect(BOB_PROMPT).toContain("5+ steps OR 3+ parallel steps");
+  test("describes direct and manager-group dispatch modes", () => {
+    expect(BOB_PROMPT).toContain("Six or more workers");
+    expect(BOB_PROMPT).toContain("6 = 5+1");
   });
 
-  test("instructs to include full plan text in Manager prompt", () => {
-    expect(BOB_PROMPT).toContain("Include BOTH the raw plan text");
+  test("instructs Manager slices rather than whole-plan delegation", () => {
+    expect(BOB_PROMPT).toContain("only the group's plan slice");
   });
 
   test("says Bob does not read .bob/plans/ directly", () => {

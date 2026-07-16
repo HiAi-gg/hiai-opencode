@@ -13,7 +13,6 @@ import { BlockingHookError } from "./errors";
 import { createJsonErrorRecovery } from "./json-error-recovery";
 import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
-import { createManagerGuard } from "./manager-guard";
 import { createModelFallbackHook } from "./model-fallback";
 import { createNonInteractiveEnv } from "./non-interactive-env";
 import { createPreemptiveCompaction } from "./preemptive-compaction";
@@ -152,7 +151,6 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
 
   { name: "directory-agents-injector", factory: createDirectoryAgentsInjector },
   { name: "loop", factory: createLoopHook },
-  { name: "manager-guard", factory: createManagerGuard },
   {
     name: "compaction-context-injector",
     factory: createCompactionContextInjector,

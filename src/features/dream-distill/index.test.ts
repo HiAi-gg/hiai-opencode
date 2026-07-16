@@ -48,19 +48,13 @@ describe("dream-distill", () => {
     });
 
     test("hook works without filesystem dependency", () => {
-      const hook = createDreamDistillHook(
-        makeConfig(),
-        makeClient() as any,
-      );
+      const hook = createDreamDistillHook(makeConfig(), makeClient() as any);
       expect(typeof hook.event).toBe("function");
     });
 
     test("does not throw when promptsDir is absent", async () => {
       const client = makeClient();
-      const hook = createDreamDistillHook(
-        makeConfig(),
-        client as any,
-      ) as any;
+      const hook = createDreamDistillHook(makeConfig(), client as any) as any;
       const fn = hook.event as (input: { event: any }) => Promise<void>;
 
       await expect(
@@ -70,10 +64,7 @@ describe("dream-distill", () => {
   });
 
   test("returns an event hook", () => {
-    const hook = createDreamDistillHook(
-      makeConfig(),
-      makeClient() as any,
-    );
+    const hook = createDreamDistillHook(makeConfig(), makeClient() as any);
     expect(typeof hook.event).toBe("function");
   });
 
@@ -98,10 +89,7 @@ describe("dream-distill", () => {
 
   test("triggers dream and distill on session.idle", async () => {
     const client = makeClient();
-    const hook = createDreamDistillHook(
-      makeConfig(),
-      client as any,
-    ) as any;
+    const hook = createDreamDistillHook(makeConfig(), client as any) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
     const logs: string[] = [];
@@ -119,10 +107,7 @@ describe("dream-distill", () => {
 
   test("triggers dream and distill on session.created", async () => {
     const client = makeClient();
-    const hook = createDreamDistillHook(
-      makeConfig(),
-      client as any,
-    ) as any;
+    const hook = createDreamDistillHook(makeConfig(), client as any) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
     const logs: string[] = [];
@@ -143,10 +128,7 @@ describe("dream-distill", () => {
       dream: { auto: false },
       distill: { auto: false },
     });
-    const hook = createDreamDistillHook(
-      config,
-      makeClient() as any,
-    ) as any;
+    const hook = createDreamDistillHook(config, makeClient() as any) as any;
     const fn = hook.event as (input: { event: any }) => Promise<void>;
 
     const logs: string[] = [];

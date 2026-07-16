@@ -30,10 +30,7 @@ export function createToolPairValidator(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        logger.error(
-          "[hiai-opencode] Hook error in tool-pair-validator:",
-          err,
-        );
+        logger.error("[hiai-opencode] Hook error in tool-pair-validator:", err);
       }
     },
   };
