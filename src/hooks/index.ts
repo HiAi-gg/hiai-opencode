@@ -1,5 +1,4 @@
 import type { BobConfig, HookSet } from "../types";
-import { createAgentUsageReminder } from "./agent-usage-reminder";
 import { createCavemanMessageCompressor } from "./caveman-message-compressor";
 import { createCavemanSystemInjector } from "./caveman-system-injector";
 import { createClosureInjector } from "./closure-injector";
@@ -154,7 +153,6 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
     name: "compaction-context-injector",
     factory: createCompactionContextInjector,
   },
-  { name: "agent-usage-reminder", factory: createAgentUsageReminder },
   { name: "session-recovery", factory: createSessionRecoveryHook },
   { name: "think-mode", factory: createThinkModeHook },
   { name: "token-budget", factory: createTokenBudgetHook },
