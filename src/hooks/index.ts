@@ -20,7 +20,6 @@ import { createQualityGate } from "./quality-gate";
 import { createReasoningContentCacheHook } from "./reasoning-content-cache";
 import { createRulesInjector } from "./rules-injector";
 import { createRuntimeFallback } from "./runtime-fallback";
-import { createSessionNotification } from "./session-notification";
 import { createSessionRecoveryHook } from "./session-recovery";
 import { createStopContinuationGuard } from "./stop-continuation-guard";
 import { createThinkModeHook } from "./think-mode";
@@ -155,8 +154,6 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
     name: "compaction-context-injector",
     factory: createCompactionContextInjector,
   },
-  { name: "session-notification", factory: createSessionNotification },
-
   { name: "agent-usage-reminder", factory: createAgentUsageReminder },
   { name: "session-recovery", factory: createSessionRecoveryHook },
   { name: "think-mode", factory: createThinkModeHook },

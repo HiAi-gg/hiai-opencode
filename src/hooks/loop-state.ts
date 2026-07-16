@@ -274,11 +274,11 @@ export function buildContinuationPrompt(
   incompleteTasks: number,
 ): string {
   return dispatch(sessionID, () => {
-    return `[hiai-opencode] Session ${sessionID} has ${incompleteTasks} incomplete task(s). Continue working on remaining items.`;
+    return `Session ${sessionID} has ${incompleteTasks} incomplete task(s). Continue working on the remaining items.`;
   });
 }
 
 /** Build an error-recovery context string for compaction injection. */
 export function buildRecoveryContext(hint: string): string {
-  return `[hiai-opencode] RECOVERY: ${hint}`;
+  return `RECOVERY: ${hint}`;
 }

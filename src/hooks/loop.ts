@@ -53,11 +53,6 @@ export function createLoopHook(config: BobConfig): HookSet {
             if (!shouldContinue(sessionID)) return;
 
             recordIteration(sessionID);
-            logger.log(
-              `[hiai-opencode] Loop: session ${sessionID} idle ` +
-                `(iteration ${s.iterations}/${s.maxIterations})`,
-            );
-
             // Build and record a continuation prompt so downstream
             // hooks (eg todo-continuation) can pick it up.
             setContinuationPrompt(
@@ -70,9 +65,6 @@ export function createLoopHook(config: BobConfig): HookSet {
           case "session.error": {
             // Reset loop state so recovery can start fresh
             reset(sessionID);
-            logger.log(
-              `[hiai-opencode] Loop: session ${sessionID} error — state reset`,
-            );
             break;
           }
 
@@ -108,9 +100,6 @@ export function createLoopHook(config: BobConfig): HookSet {
           if (detectCompletionMarker(lastPart.text)) {
             // Completion detected — we can't get sessionID here,
             // but we log the detection event for observability.
-            logger.log(
-              "[hiai-opencode] Loop: completion marker detected in outgoing messages",
-            );
           }
         }
       } catch (err) {

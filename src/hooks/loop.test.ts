@@ -185,6 +185,6 @@ describe("buildRecoveryContext", () => {
     const ctx = buildRecoveryContext("Rate limited");
     expect(ctx).toContain("RECOVERY");
     expect(ctx).toContain("Rate limited");
-    expect(ctx).toContain("[hiai-opencode]");
+    expect(ctx).not.toContain("[hiai-opencode]");
   });
 });
