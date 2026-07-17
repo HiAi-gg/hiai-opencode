@@ -193,4 +193,107 @@ describe("dream-distill", () => {
     await fn({ event: { type: "session.idle" } });
     expect(createCount).toBe(1);
   });
+
+  describe("anti-replay / rate-limit guard (burst session.idle)", () => {
+    test("bursty session.idle triggers dream only once per cooldown", async () => {
+      let createCount = 0;
+      const client = {
+        session: {
+          create: async () => {
+            createCount++;
+            return { data: { id: `sess-${createCount}` } };
+          },
+          prompt: async () => {},
+        },
+      };
+      const config = makeConfig({
+        dream: { auto: true, interval_days: 0, burst_cooldown_ms: 60_000 },
+        distill: { auto: false },
+      });
+      const hook = createDreamDistillHook(config, client as any) as any;
+      const fn = hook.event as (input: { event: any }) => Promise<void>;
+
+      // Simulate a burst of idle pings.
+      for (let i = 0; i < 5; i++) {
+        await fn({ event: { type: "session.idle" } });
+      }
+      // Only the first idle in the burst should have spawned a session.
+      expect(createCount).toBe(1);
+    });
+
+    test("bursty session.created triggers dream only once per cooldown", async () => {
+      let createCount = 0;
+      const client = {
+        session: {
+          create: async () => {
+            createCount++;
+            return { data: { id: `sess-${createCount}` } };
+          },
+          prompt: async () => {},
+        },
+      };
+      const config = makeConfig({
+        dream: { auto: true, interval_days: 0, burst_cooldown_ms: 60_000 },
+        distill: { auto: false },
+      });
+      const hook = createDreamDistillHook(config, client as any) as any;
+      const fn = hook.event as (input: { event: any }) => Promise<void>;
+
+      for (let i = 0; i < 4; i++) {
+        await fn({ event: { type: "session.created" } });
+      }
+      expect(createCount).toBe(1);
+    });
+
+    test("session.idle and session.created are guarded independently", async () => {
+      let createCount = 0;
+      const client = {
+        session: {
+          create: async () => {
+            createCount++;
+            return { data: { id: `sess-${createCount}` } };
+          },
+          prompt: async () => {},
+        },
+      };
+      const config = makeConfig({
+        dream: { auto: true, interval_days: 0, burst_cooldown_ms: 60_000 },
+        distill: { auto: false },
+      });
+      const hook = createDreamDistillHook(config, client as any) as any;
+      const fn = hook.event as (input: { event: any }) => Promise<void>;
+
+      // One idle burst + one created burst → each trigger type fires once.
+      await fn({ event: { type: "session.idle" } });
+      await fn({ event: { type: "session.idle" } });
+      await fn({ event: { type: "session.created" } });
+      await fn({ event: { type: "session.created" } });
+      expect(createCount).toBe(2);
+    });
+
+    test("idempotent: repeated identical idle events do not duplicate sessions", async () => {
+      let createCount = 0;
+      const client = {
+        session: {
+          create: async () => {
+            createCount++;
+            return { data: { id: `sess-${createCount}` } };
+          },
+          prompt: async () => {},
+        },
+      };
+      const config = makeConfig({
+        dream: { auto: true, interval_days: 0, burst_cooldown_ms: 60_000 },
+        distill: { auto: false },
+      });
+      const hook = createDreamDistillHook(config, client as any) as any;
+      const fn = hook.event as (input: { event: any }) => Promise<void>;
+
+      // 10 identical idle events in a row.
+      for (let i = 0; i < 10; i++) {
+        await fn({ event: { type: "session.idle" } });
+      }
+      expect(createCount).toBe(1);
+    });
+  });
 });

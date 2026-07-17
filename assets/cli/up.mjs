@@ -122,7 +122,7 @@ export async function up(argv = []) {
   const configPath = findOpenCodeConfig()
   const pluginOk = hasPlugin(configPath)
   if (!pluginOk) {
-    console.warn(
+    console.error(
       `⚠️  @hiai-gg/hiai-opencode not found in ${configPath || "any opencode config"}. ` +
         "Install it with: opencode plugin @hiai-gg/hiai-opencode@latest --global",
     )
@@ -133,17 +133,17 @@ export async function up(argv = []) {
     const serveAlive = isAlive(existing.servePid)
     const webAlive = isAlive(existing.webPid)
     if (serveAlive || webAlive) {
-      console.log("ℹ️  Stack already running:")
+      console.error("ℹ️  Stack already running:")
       if (serveAlive)
-        console.log(`   serve  pid=${existing.servePid}  http://${host}:${existing.servePort}`)
+        console.error(`   serve  pid=${existing.servePid}  http://${host}:${existing.servePort}`)
       if (webAlive)
-        console.log(`   web    pid=${existing.webPid}  http://${host}:${existing.webPort}`)
-      console.log("   Run `hiai-opencode down` first to restart.")
+        console.error(`   web    pid=${existing.webPid}  http://${host}:${existing.webPort}`)
+      console.error("   Run `hiai-opencode down` first to restart.")
       return
     }
   }
 
-  console.log(`Starting opencode serve on ${host}:${args.servePort} ...`)
+  console.error(`Starting opencode serve on ${host}:${args.servePort} ...`)
   const serve = spawn(
     bin,
     ["serve", "--port", String(args.servePort), "--hostname", host],
@@ -151,7 +151,7 @@ export async function up(argv = []) {
   )
   serve.unref()
 
-  console.log(`Starting opencode web on ${host}:${args.webPort} ...`)
+  console.error(`Starting opencode web on ${host}:${args.webPort} ...`)
   const web = spawn(
     bin,
     ["web", "--port", String(args.webPort), "--hostname", host],
@@ -169,16 +169,16 @@ export async function up(argv = []) {
     bin,
   })
 
-  console.log("✅ Stack launched:")
-  console.log(`   serve  pid=${serve.pid}  http://${host}:${args.servePort}`)
-  console.log(`   web    pid=${web.pid}  http://${host}:${args.webPort}`)
-  console.log("\nManage with: hiai-opencode status | hiai-opencode down")
+  console.error("✅ Stack launched:")
+  console.error(`   serve  pid=${serve.pid}  http://${host}:${args.servePort}`)
+  console.error(`   web    pid=${web.pid}  http://${host}:${args.webPort}`)
+  console.error("\nManage with: hiai-opencode status | hiai-opencode down")
 }
 
 export async function down() {
   const state = loadState()
   if (!state) {
-    console.log("ℹ️  No running stack found.")
+    console.error("ℹ️  No running stack found.")
     return
   }
 
@@ -196,14 +196,14 @@ export async function down() {
   }
 
   rmSync(STATE_FILE, { force: true })
-  if (killed > 0) console.log(`✅ Stopped ${killed} process(es).`)
-  else console.log("ℹ️  No live processes to stop (stale state cleared).")
+  if (killed > 0) console.error(`✅ Stopped ${killed} process(es).`)
+  else console.error("ℹ️  No live processes to stop (stale state cleared).")
 }
 
 export async function status() {
   const state = loadState()
   if (!state) {
-    console.log("ℹ️  Stack is down. Run `hiai-opencode up` to start.")
+    console.error("ℹ️  Stack is down. Run `hiai-opencode up` to start.")
     return
   }
 
@@ -211,16 +211,16 @@ export async function status() {
   const webAlive = isAlive(state.webPid)
   const host = state.host || HOSTNAME
 
-  console.log("hiai-opencode stack status:")
-  console.log(
+  console.error("hiai-opencode stack status:")
+  console.error(
     `   serve  ${serveAlive ? "● running" : "○ stopped"}  pid=${state.servePid ?? "-"}  http://${host}:${state.servePort}`,
   )
-  console.log(
+  console.error(
     `   web    ${webAlive ? "● running" : "○ stopped"}  pid=${state.webPid ?? "-"}  http://${host}:${state.webPort}`,
   )
-  console.log(`   started: ${state.startedAt ?? "unknown"}`)
+  console.error(`   started: ${state.startedAt ?? "unknown"}`)
 
   if (!serveAlive && !webAlive) {
-    console.log("\nℹ️  Stale state — run `hiai-opencode down` to clean up.")
+    console.error("\nℹ️  Stale state — run `hiai-opencode down` to clean up.")
   }
 }

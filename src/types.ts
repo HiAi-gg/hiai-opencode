@@ -75,7 +75,12 @@ export interface BobConfig {
   };
   completion?: CompletionConfig;
   caveman?: CavemanConfig;
-  dream?: { auto?: boolean; interval_days?: number; model?: string };
+  dream?: {
+    auto?: boolean;
+    interval_days?: number;
+    model?: string;
+    burst_cooldown_ms?: number;
+  };
   distill?: { auto?: boolean; interval_days?: number; model?: string };
   worktreeConfig?: WorktreeConfig;
   workspace?: {

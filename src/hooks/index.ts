@@ -8,7 +8,12 @@ import { createContextWindowLimitRecoveryHook } from "./context-window-limit-rec
 import { createContextWindowMonitor } from "./context-window-monitor";
 import { createDirectoryAgentsInjector } from "./directory-agents-injector";
 import { createEditErrorRecovery } from "./edit-error-recovery";
-import { BlockingHookError } from "./errors";
+import {
+  BlockingHookError,
+  MAX_HOOK_ERRORS,
+  sanitizeHookError,
+  type HookErrorDTO,
+} from "./errors";
 import { createJsonErrorRecovery } from "./json-error-recovery";
 import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
@@ -73,31 +78,49 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
       );
     if (handlers.length === 0) continue;
 
-    if (handlers.length === 1) {
-      (merged as Record<string, unknown>)[point] = handlers[0];
-    } else {
-      (merged as Record<string, unknown>)[point] = async (
-        input: unknown,
-        output: unknown,
-      ) => {
-        for (const handler of handlers) {
+    // Always wrap handlers in the safe chain so a single handler also gets
+    // error sanitization (no raw error/payload leak) and BlockingHookError
+    // still propagates. The wrapper is identical for 1 or N handlers.
+    (merged as Record<string, unknown>)[point] = async (
+      input: unknown,
+      output: unknown,
+    ) => {
+      const out = output as { errors?: HookErrorDTO[] };
+      out.errors = out.errors ?? [];
+      const seen = new Set<string>();
+      for (const handler of handlers) {
+        try {
+          await handler(input as never, output as never);
+        } catch (err) {
+          if (err instanceof BlockingHookError) {
+            throw err;
+          }
+          // Convert the raw error into a TUI-safe DTO first. Never push the
+          // raw error/payload — it may embed the full session/event object
+          // and is not serializable. Logging the raw value can also throw
+          // (e.g. on huge/circular payloads), so we log the DTO instead.
+          const dto = sanitizeHookError(err, point);
           try {
-            await handler(input as never, output as never);
-          } catch (err) {
-            if (err instanceof BlockingHookError) {
-              throw err;
-            }
             logger.error(
               `[hiai-opencode] Hook handler error in ${point}:`,
-              err,
+              dto,
             );
-            const out = output as { errors?: Error[] };
-            out.errors = out.errors ?? [];
-            out.errors.push(err as Error);
+          } catch {
+            /* logging must never break the hook chain */
           }
+          // Lazily initialize the errors array so a BlockingHookError (which
+          // propagates) never leaves a spurious empty `errors: []` behind.
+          out.errors = out.errors ?? [];
+          // Dedup identical errors (same code + summary + hook point).
+          const key = `${dto.code}|${dto.summary}|${dto.hookPoint ?? ""}`;
+          if (seen.has(key)) continue;
+          seen.add(key);
+          // Cap the number of retained errors to avoid unbounded growth.
+          if (out.errors.length >= MAX_HOOK_ERRORS) continue;
+          out.errors.push(dto);
         }
-      };
-    }
+      }
+    };
   }
 
   const disposeFns = allSets

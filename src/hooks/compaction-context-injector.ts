@@ -34,29 +34,12 @@ export function createCompactionContextInjector(_config: BobConfig): HookSet {
       try {
         if (!output?.context) return;
 
-        // Core preservation instructions
+        // Minimal, single-line preservation instruction. The previous version
+        // pushed seven separate PRESERVE lines per compaction — pure noise
+        // that diluted the genuinely useful gate rehydration below. We keep
+        // one compact instruction instead.
         output.context.push(
-          "[hiai-opencode] PRESERVE: Task IDs (T1, T2, etc.) and their status (open/in_progress/done/blocked).",
-        );
-        output.context.push(
-          "[hiai-opencode] PRESERVE: Progress markers, completion markers (<promise>DONE</promise>, <CLOSURE>).",
-        );
-        output.context.push(
-          "[hiai-opencode] PRESERVE: Agent names and their current assignments.",
-        );
-        output.context.push(
-          "[hiai-opencode] PRESERVE: Any recovery context or error information if the session previously errored.",
-        );
-        output.context.push(
-          "[hiai-opencode] PRESERVE: File paths that were recently edited or created.",
-        );
-
-        // Loop/recovery state markers
-        output.context.push(
-          "[hiai-opencode] PRESERVE: Loop iteration state if the session was in a multi-step workflow.",
-        );
-        output.context.push(
-          "[hiai-opencode] PRESERVE: Continuation prompts and pending instructions.",
+          "[hiai-opencode] Preserve: task IDs+status, progress/completion markers, agent assignments, recent file paths, loop/continuation state.",
         );
 
         // Re-inject live completion-gate state so the post-compaction agent
@@ -67,17 +50,17 @@ export function createCompactionContextInjector(_config: BobConfig): HookSet {
           const s = st.get(sid);
           if (s.qualityGateFailed) {
             output.context.push(
-              "[hiai-opencode] GATE: A quality command (test/lint/typecheck) failed earlier — you MUST re-run it until exit 0 before completing.",
+              "[hiai-opencode] GATE: quality command (test/lint/typecheck) failed — re-run until exit 0 before completing.",
             );
           }
           if (s.lspPending) {
             output.context.push(
-              "[hiai-opencode] GATE: lsp_diagnostics is pending on edited files — you MUST run lsp_diagnostics and confirm zero errors before completing.",
+              "[hiai-opencode] GATE: lsp_diagnostics pending on edited files — run it and confirm zero errors before completing.",
             );
           }
           if (s.changedFiles.length > 0 && s.criticVerdict !== "approved") {
             output.context.push(
-              "[hiai-opencode] GATE: Changes are pending Critic review — do not report the task done until Critic returns APPROVED.",
+              "[hiai-opencode] GATE: changes pending Critic review — do not report done until Critic returns APPROVED.",
             );
           }
         }

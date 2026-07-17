@@ -12,6 +12,17 @@ const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const MCP_EXPORT_MARKER = "hiai-opencode"
 
 /**
+ * Output helpers.
+ *
+ * Phase 2.1: human-facing diagnostic/status strings go to stderr so that
+ * stdout stays clean for machine-readable output (e.g. future `--json`
+ * flags). `outInfo` is the canonical stderr sink for status/diagnostic text.
+ */
+function outInfo(...args) {
+  console.error(...args)
+}
+
+/**
  * Parse JSONC (JSON with comments/trailing commas) without an external dep.
  * Strips // line comments, /* block comments *​/, and trailing commas, then
  * JSON.parse. Strings are preserved (their contents are never treated as
@@ -51,7 +62,7 @@ const MCP_REGISTRY = {
 }
 
 function usage() {
-  console.log(`hiai-opencode
+  outInfo(`hiai-opencode
 
 Usage:
   hiai-opencode                         # launch opencode serve + web (same as 'up')
@@ -389,9 +400,9 @@ function exportMcp(outputPath = join(process.cwd(), ".opencode", ".mcp.json")) {
 
   mkdirSync(dirname(outputPath), { recursive: true })
   writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`)
-  console.log(`Wrote ${outputPath}`)
-  console.log(`Source config: ${path ?? "defaults"}`)
-  console.log(`Servers: ${Object.keys(output.mcpServers).join(", ") || "(none)"}`)
+  outInfo(`Wrote ${outputPath}`)
+  outInfo(`Source config: ${path ?? "defaults"}`)
+  outInfo(`Servers: ${Object.keys(output.mcpServers).join(", ") || "(none)"}`)
 }
 
 function hasCommand(command, args = ["--version"]) {
@@ -769,18 +780,18 @@ async function mcpStatus(options = {}) {
   let sawError = false
   const track = (level) => { if (level === "error" || level === "fail") sawError = true }
 
-  console.log(options.doctor ? "hiai-opencode doctor" : "hiai-opencode mcp-status")
-  console.log(`Config: ${path ?? "not found; using defaults"}`)
-  if (error) console.log(`Config parse warning: ${error}`)
-  console.log(`Static MCP export: ${staticMcpPath}`)
-  console.log("")
-  console.log("MCP Servers:")
+  outInfo(options.doctor ? "hiai-opencode doctor" : "hiai-opencode mcp-status")
+  outInfo(`Config: ${path ?? "not found; using defaults"}`)
+  if (error) outInfo(`Config parse warning: ${error}`)
+  outInfo(`Static MCP export: ${staticMcpPath}`)
+  outInfo("")
+  outInfo("MCP Servers:")
 
   for (const [name, entry] of Object.entries(MCP_REGISTRY)) {
     const userEntry = config?.mcp?.[name]
     const enabled = userEntry?.enabled ?? entry.defaultEnabled
     if (!enabled) {
-      console.log(`⚪ ${name.padEnd(20)} - disabled`)
+      outInfo(`⚪ ${name.padEnd(20)} - disabled`)
       continue
     }
 
@@ -789,80 +800,80 @@ async function mcpStatus(options = {}) {
     )
 
     if (missingEnv.length > 0) {
-      console.log(`⚠️  ${name.padEnd(20)} - enabled, API key missing (${missingEnv.join(", ")})`)
+      outInfo(`⚠️  ${name.padEnd(20)} - enabled, API key missing (${missingEnv.join(", ")})`)
       continue
     }
 
     const result = await entry.check(config, name)
     track(result.level)
-    console.log(`${statusIcon(result.level)} ${name.padEnd(20)} - ${result.detail}`)
+    outInfo(`${statusIcon(result.level)} ${name.padEnd(20)} - ${result.detail}`)
   }
 
   if (options.doctor) {
-    console.log("")
-    console.log("Doctor Checks:")
+    outInfo("")
+    outInfo("Doctor Checks:")
 
     const freshness = checkStaticMcpFreshness(staticMcpPath, config)
     const freshIcon = freshness.status === "fresh" ? "✅" : freshness.status === "missing" ? "⚠️ " : "❌"
     if (freshness.status === "stale" || freshness.status === "drift-unmanaged") sawError = true
-    console.log(`${freshIcon} static .mcp.json freshness - ${freshness.detail}`)
+    outInfo(`${freshIcon} static .mcp.json freshness - ${freshness.detail}`)
 
     const connect = checkOpenCodeConnectVisibility(config)
     track(connect.level)
-    console.log(`${statusIcon(connect.level)} OpenCode Connect visibility - ${connect.detail}`)
+    outInfo(`${statusIcon(connect.level)} OpenCode Connect visibility - ${connect.detail}`)
 
     const pluginRegistration = checkOpenCodePluginRegistration()
     track(pluginRegistration.level)
-    console.log(`${statusIcon(pluginRegistration.level)} OpenCode plugin registration - ${pluginRegistration.detail}`)
+    outInfo(`${statusIcon(pluginRegistration.level)} OpenCode plugin registration - ${pluginRegistration.detail}`)
 
     const skills = checkSkillMaterialization()
     track(skills.level)
-    console.log(`${statusIcon(skills.level)} Skill materialization - ${skills.detail}`)
+    outInfo(`${statusIcon(skills.level)} Skill materialization - ${skills.detail}`)
 
     const agents = getAgentSummary(config)
     track(agents.level)
-    console.log(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
+    outInfo(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
 
     const depth = checkSubagentDepth(config)
     track(depth.level)
-    console.log(`${statusIcon(depth.level)} Delegation depth - ${depth.detail}`)
+    outInfo(`${statusIcon(depth.level)} Delegation depth - ${depth.detail}`)
 
     // Model slot value validation
     const modelIssues = checkModelSlotValues(config)
     for (const issue of modelIssues) {
       track(issue.level)
-      console.log(`${statusIcon(issue.level)} ${issue.check}: ${issue.detail}`)
+      outInfo(`${statusIcon(issue.level)} ${issue.check}: ${issue.detail}`)
     }
 
     const lsp = checkLspAvailability(config)
     track(lsp.level)
-    console.log(`${statusIcon(lsp.level)} LSP runtime availability - ${lsp.detail}`)
+    outInfo(`${statusIcon(lsp.level)} LSP runtime availability - ${lsp.detail}`)
 
     const firecrawl = checkFirecrawlAuth()
     track(firecrawl.level)
-    console.log(`${statusIcon(firecrawl.level)} Firecrawl auth - ${firecrawl.detail}`)
+    outInfo(`${statusIcon(firecrawl.level)} Firecrawl auth - ${firecrawl.detail}`)
 
     const context7 = checkContext7()
     track(context7.level)
-    console.log(`${statusIcon(context7.level)} Context7 CLI - ${context7.detail}`)
+    outInfo(`${statusIcon(context7.level)} Context7 CLI - ${context7.detail}`)
 
     const agentBrowser = checkAgentBrowser()
     track(agentBrowser.level)
-    console.log(`${statusIcon(agentBrowser.level)} Agent-browser CLI - ${agentBrowser.detail}`)
+    outInfo(`${statusIcon(agentBrowser.level)} Agent-browser CLI - ${agentBrowser.detail}`)
 
-    console.log("")
-    console.log("MCP Tool Probes:")
+    outInfo("")
+    outInfo("MCP Tool Probes:")
     const probeResults = await probeMcpServers(config)
     for (const probe of probeResults) {
       track(probe.level)
-      console.log(`${statusIcon(probe.level)} ${probe.detail}`)
+      outInfo(`${statusIcon(probe.level)} ${probe.detail}`)
     }
 
-    console.log("")
-    console.log("Recommended follow-ups:")
-    console.log("  - hiai-opencode export-mcp .opencode/.mcp.json")
-    console.log("  - opencode debug config")
-    console.log("  - opencode mcp list --print-logs --log-level INFO")
+    outInfo("")
+    outInfo("Recommended follow-ups:")
+    outInfo("  - hiai-opencode export-mcp .opencode/.mcp.json")
+    outInfo("  - opencode debug config")
+    outInfo("  - opencode mcp list --print-logs --log-level INFO")
   }
 
   return !sawError
@@ -953,7 +964,7 @@ async function runDiagnose(outputPath) {
 
   mkdirSync(dirname(defaultPath), { recursive: true })
   writeFileSync(defaultPath, sections.join("\n") + "\n")
-  console.log(`Diagnose written to: ${defaultPath}`)
+  outInfo(`Diagnose written to: ${defaultPath}`)
 }
 
 async function main() {

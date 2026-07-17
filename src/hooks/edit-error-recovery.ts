@@ -11,8 +11,10 @@ export function createEditErrorRecovery(_config: BobConfig): HookSet {
           (output.output?.includes("oldString not found") ||
             output.output?.includes("No match"))
         ) {
+          // Single-line recovery hint. The original error text is preserved in
+          // output.output; we only append a concise, actionable directive.
           output.output +=
-            "\n\n[hiai-opencode] Edit target not found. Re-read the file first, then retry with the exact current content.";
+            "\n[hiai-opencode] edit failed: re-read the file, then retry with the exact current content.";
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;

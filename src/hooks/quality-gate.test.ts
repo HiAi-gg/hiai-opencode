@@ -35,7 +35,7 @@ async function runAfter(cmd: string, outputText: string | undefined | null) {
   return output;
 }
 
-const GATE_MARKER = "QUALITY GATE FAILED";
+const GATE_MARKER = "quality gate failed";
 
 describe("quality-gate: true positives (error detected)", () => {
   it('flags lowercase "error" in quality-command output', async () => {
@@ -70,9 +70,12 @@ describe("quality-gate: true positives (error detected)", () => {
     expect(out.output).toContain(GATE_MARKER);
   });
 
-  it("appends the completion-blocked directive on failure", async () => {
+  it("appends a compact completion-blocked directive on failure", async () => {
     const out = await runAfter("bun test", "error: boom");
-    expect(out.output).toContain(
+    expect(out.output).toContain("quality gate failed");
+    expect(out.output).toContain("completion blocked");
+    // Noise-reduced: the old multi-line boilerplate is gone.
+    expect(out.output).not.toContain(
       "Task completion is blocked until the quality gate passes",
     );
   });

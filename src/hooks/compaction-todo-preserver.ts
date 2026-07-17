@@ -14,8 +14,11 @@ export function createCompactionTodoPreserverHook(_config: BobConfig): HookSet {
     ) => {
       try {
         if (output?.context) {
+          // Single minimal line. The verbose "Preserve all TODO items during
+          // compaction." boilerplate was redundant with the context-injector's
+          // preservation instruction; keep only a compact reminder.
           output.context.push(
-            "[hiai-opencode] Preserve all TODO items during compaction.",
+            "[hiai-opencode] Preserve open TODO items and their status.",
           );
         }
       } catch (err) {

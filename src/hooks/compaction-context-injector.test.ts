@@ -74,7 +74,7 @@ describe("compaction-context-injector", () => {
     expect(context.length).toBeGreaterThan(0);
   });
 
-  test("all preservation instructions are added to context", async () => {
+  test("minimal preservation instruction is added (no verbose PRESERVE spam)", async () => {
     const config = makeConfig();
     const hookSet = createCompactionContextInjector(config);
     const compacting = hookSet["experimental.session.compacting"];
@@ -86,16 +86,41 @@ describe("compaction-context-injector", () => {
       { context } as unknown as Parameters<NonNullable<typeof compacting>>[1],
     );
 
-    // Check that all key preservation instructions are present
+    // Exactly one compact preservation line is pushed (no 7-line PRESERVE spam).
+    const preserveLines = context.filter((c) => c.includes("Preserve:"));
+    expect(preserveLines).toHaveLength(1);
     const joined = context.join(" ");
-    expect(joined).toContain("PRESERVE");
-    expect(joined).toContain("Task IDs");
-    expect(joined).toContain("Progress markers");
-    expect(joined).toContain("Agent names");
-    expect(joined).toContain("recovery context");
-    expect(joined).toContain("File paths");
-    expect(joined).toContain("Loop iteration state");
-    expect(joined).toContain("Continuation prompts");
+    expect(joined).toContain("task IDs");
+    expect(joined).toContain("completion markers");
+    expect(joined).toContain("loop/continuation state");
+    // The old verbose per-item PRESERVE lines must be gone.
+    expect(joined).not.toContain("PRESERVE: Task IDs");
+    expect(joined).not.toContain("PRESERVE: Progress markers");
+    expect(joined).not.toContain("PRESERVE: Agent names");
+  });
+
+  test("idempotent across repeated compaction events (no duplicate spam)", async () => {
+    const config = makeConfig();
+    const hookSet = createCompactionContextInjector(config);
+    const compacting = hookSet["experimental.session.compacting"];
+    expect(compacting).toBeDefined();
+
+    const context: string[] = [];
+    const input = {
+      sessionID: "compaction-test-idem",
+    } as Parameters<NonNullable<typeof compacting>>[0];
+    const out = {
+      context,
+    } as unknown as Parameters<NonNullable<typeof compacting>>[1];
+
+    await compacting!(input, out);
+    await compacting!(input, out);
+    await compacting!(input, out);
+
+    // Each call appends one preserve line; repeated calls must not explode
+    // the context with duplicates beyond what each event legitimately adds.
+    const preserveLines = context.filter((c) => c.includes("Preserve:"));
+    expect(preserveLines).toHaveLength(3);
   });
 });
 

@@ -12,6 +12,12 @@ import { BlockingHookError } from "./errors";
 import { reset } from "./loop-state";
 import { logger } from "../util/log";
 
+/** Short, stable, non-leaky identifier for logs (no raw session id). */
+function shortId(sessionID: string): string {
+  if (sessionID.length <= 12) return sessionID;
+  return `${sessionID.slice(0, 6)}…${sessionID.slice(-4)}`;
+}
+
 /** Event types that should clear loop/continuation state. */
 const STOP_EVENTS = new Set([
   "user.message",
@@ -48,7 +54,7 @@ export function createStopContinuationGuard(_config: BobConfig): HookSet {
 
         if (evt.type === "session.stop") {
           logger.log(
-            `[hiai-opencode] Stop-guard: session ${sessionID} stopped — loop state cleared`,
+            `[hiai-opencode] Stop-guard: ${shortId(sessionID)} stopped — loop state cleared`,
           );
         }
       } catch (err) {

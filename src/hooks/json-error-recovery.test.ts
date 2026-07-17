@@ -32,7 +32,7 @@ describe("createJsonErrorRecovery", () => {
     };
     await runHook(output);
     expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error detected",
+      "[hiai-opencode] JSON parse error",
     );
   });
 
@@ -42,7 +42,7 @@ describe("createJsonErrorRecovery", () => {
     };
     await runHook(output);
     expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error detected",
+      "[hiai-opencode] JSON parse error",
     );
   });
 
@@ -52,7 +52,7 @@ describe("createJsonErrorRecovery", () => {
     };
     await runHook(output);
     expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error detected",
+      "[hiai-opencode] JSON parse error",
     );
   });
 

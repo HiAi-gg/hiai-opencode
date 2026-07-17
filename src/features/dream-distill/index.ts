@@ -8,11 +8,37 @@ import { logger } from "../../util/log";
 export function createDreamDistillHook(
   config: BobConfig,
   client: PluginInput["client"],
-): Pick<Hooks, "event"> {
+): Pick<Hooks, "event" | "dispose"> {
   const dreamCfg = config.dream ?? { auto: true, interval_days: 7 };
   const distillCfg = config.distill ?? { auto: true, interval_days: 30 };
 
   const SENTINEL_FATAL = -1;
+
+  // ── Anti-replay / rate-limit guard ──
+  //
+  // session.idle / session.created can fire in bursts (e.g. many sessions
+  // created in quick succession, or repeated idle pings). Without a guard the
+  // hook would spawn duplicate dream/distill sessions and flood the runtime
+  // with noise. We debounce per-trigger-type with an in-memory cooldown and
+  // additionally rely on the persisted last-run timestamp for the long-term
+  // interval gate. The in-memory guard is the fast path that suppresses
+  // bursty repeats within `burstCooldownMs`; the persisted gate enforces the
+  // configured interval_days.
+  const burstCooldownMs =
+    typeof (config.dream as Record<string, unknown>)?.burst_cooldown_ms ===
+    "number"
+      ? ((config.dream as Record<string, unknown>).burst_cooldown_ms as number)
+      : 60_000;
+
+  const lastTriggerAt = new Map<string, number>();
+
+  const isBurstBlocked = (trigger: string): boolean => {
+    const prev = lastTriggerAt.get(trigger);
+    const now = Date.now();
+    if (prev !== undefined && now - prev < burstCooldownMs) return true;
+    lastTriggerAt.set(trigger, now);
+    return false;
+  };
 
   return {
     event: async (input) => {
@@ -21,6 +47,10 @@ export function createDreamDistillHook(
         properties?: Record<string, unknown>;
       };
       if (evt.type !== "session.idle" && evt.type !== "session.created") return;
+
+      // Fast-path burst guard: never act on the same trigger type more than
+      // once per burstCooldownMs. This is idempotent across repeated events.
+      if (isBurstBlocked(evt.type)) return;
 
       const now = Date.now();
       const dayMs = 24 * 60 * 60 * 1000;
@@ -98,6 +128,11 @@ export function createDreamDistillHook(
         distillCfg.interval_days ?? 30,
         distillCfg.auto ?? true,
       );
+    },
+
+    dispose: async () => {
+      // Drop in-memory burst guard so a plugin reload starts clean.
+      lastTriggerAt.clear();
     },
   };
 }

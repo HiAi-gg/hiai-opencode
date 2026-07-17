@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { BobConfig, HookSet } from "../types";
 import { combineHookSets, createHooks } from "./index";
 import { createLegalGate } from "./legal-gate";
+import { BlockingHookError } from "./errors";
 
 function makeConfig(hooksDisabled?: string[]): BobConfig {
   return {
@@ -364,7 +365,7 @@ describe("combineHookSets dispose", () => {
     expect(order).toEqual(["a", "b", "c"]);
   });
 
-  test("non-blocking hook errors are accumulated into output.errors[]", async () => {
+  test("non-blocking hook errors are sanitized into TUI-safe DTOs in output.errors[]", async () => {
     const boom = new Error("handler boom");
     const setA: HookSet = {
       "tool.execute.before": async () => {
@@ -380,7 +381,7 @@ describe("combineHookSets dispose", () => {
     const handler = merged["tool.execute.before"];
     expect(handler).toBeDefined();
 
-    const output: { errors?: Error[] } = {};
+    const output: { errors?: unknown[] } = {};
     // Should not throw — non-blocking error is swallowed + accumulated.
     await handler!(
       { tool: "read", sessionID: "ses_test", callID: "c1" },
@@ -388,11 +389,94 @@ describe("combineHookSets dispose", () => {
     );
     expect(output.errors).toBeDefined();
     expect(output.errors).toHaveLength(1);
-    expect(output.errors![0]).toBe(boom);
+    // The raw Error must NOT be stored — only a sanitized DTO.
+    expect(output.errors![0]).not.toBe(boom);
+    expect(output.errors![0]).toEqual({
+      code: "hook_error",
+      summary: "handler boom",
+      hookPoint: "tool.execute.before",
+    });
+  });
+
+  test("non-Error thrown payload is sanitized (no raw object leak)", async () => {
+    const payload = { session: { huge: "x".repeat(5000) }, event: {} };
+    const setA: HookSet = {
+      "tool.execute.before": async () => {
+        // A hook that throws a raw payload object (not an Error).
+        throw payload;
+      },
+    };
+    const merged = combineHookSets([setA]);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    const output: { errors?: unknown[] } = {};
+    await handler!(
+      { tool: "read", sessionID: "ses_test", callID: "c1" },
+      output,
+    );
+    expect(output.errors).toBeDefined();
+    expect(output.errors).toHaveLength(1);
+    const dto = output.errors![0] as {
+      code: string;
+      summary: string;
+      hookPoint?: string;
+    };
+    expect(dto.code).toBe("hook_error_unknown");
+    // The full payload must NOT be present in the summary.
+    expect(dto.summary).not.toContain("x".repeat(100));
+    expect(dto.summary.length).toBeLessThanOrEqual(201);
+    expect(dto.hookPoint).toBe("tool.execute.before");
+  });
+
+  test("duplicate non-blocking errors are deduplicated", async () => {
+    const setA: HookSet = {
+      "tool.execute.before": async () => {
+        throw new Error("same failure");
+      },
+    };
+    const setB: HookSet = {
+      "tool.execute.before": async () => {
+        throw new Error("same failure");
+      },
+    };
+    const merged = combineHookSets([setA, setB]);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    const output: { errors?: unknown[] } = {};
+    await handler!(
+      { tool: "read", sessionID: "ses_test", callID: "c1" },
+      output,
+    );
+    // Two identical errors → only one retained after dedup.
+    expect(output.errors).toHaveLength(1);
+  });
+
+  test("number of retained errors is capped (MAX_HOOK_ERRORS)", async () => {
+    const sets: HookSet[] = [];
+    // 15 distinct errors — well above the cap of 10.
+    for (let i = 0; i < 15; i++) {
+      const n = i;
+      sets.push({
+        "tool.execute.before": async () => {
+          throw new Error(`distinct error ${n}`);
+        },
+      });
+    }
+    const merged = combineHookSets(sets);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    const output: { errors?: unknown[] } = {};
+    await handler!(
+      { tool: "read", sessionID: "ses_test", callID: "c1" },
+      output,
+    );
+    expect(output.errors!.length).toBeLessThanOrEqual(10);
   });
 
   test("BlockingHookError still propagates (not accumulated)", async () => {
-    const { BlockingHookError } = await import("./errors");
     const setA: HookSet = {
       "tool.execute.before": async () => {
         throw new BlockingHookError("blocked");
@@ -402,12 +486,13 @@ describe("combineHookSets dispose", () => {
     const handler = merged["tool.execute.before"];
     expect(handler).toBeDefined();
 
-    const output: { errors?: Error[] } = {};
+    const output: { errors?: unknown[] } = {};
     await expect(
       handler!({ tool: "read", sessionID: "ses_test", callID: "c1" }, output),
     ).rejects.toThrow(BlockingHookError);
-    // Blocking errors are not accumulated into output.errors.
-    expect(output.errors).toBeUndefined();
+    // Blocking errors are not accumulated into output.errors — the array is
+    // initialized but must remain empty (no sanitized DTO pushed).
+    expect(output.errors).toEqual([]);
   });
 });
 

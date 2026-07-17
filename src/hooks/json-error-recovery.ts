@@ -12,8 +12,10 @@ export function createJsonErrorRecovery(_config: BobConfig): HookSet {
             output.output.includes("Unexpected token") ||
             output.output.includes("SyntaxError"))
         ) {
+          // Single-line recovery hint; the original parse error stays in
+          // output.output so the agent keeps the useful diagnostic context.
           output.output +=
-            "\n\n[hiai-opencode] JSON parse error detected. Re-read the file and ensure valid JSON before retrying.";
+            "\n[hiai-opencode] JSON parse error: re-read the file and ensure valid JSON before retrying.";
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;

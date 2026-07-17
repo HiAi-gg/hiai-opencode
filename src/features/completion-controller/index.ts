@@ -15,6 +15,62 @@ const LSP_TOOL_NAMES = new Set([
 
 let client: PluginInput["client"] | null = null;
 
+/**
+ * Maximum length (chars) allowed in a TUI-visible `output.reason`. Reasons are
+ * surfaced as clickable links in the OpenCode TUI; an oversized or raw payload
+ * (full session transcript, stack trace, internal IDs) must never be leaked
+ * there. Anything longer is truncated to a safe summary.
+ */
+const MAX_REASON_LEN = 240;
+
+/**
+ * Patterns that reveal internal/runtime detail we must never surface in a TUI
+ * link: stack frames, file paths with line/col, hex/sha IDs, session IDs,
+ * absolute paths, and raw "at <fn>" frames.
+ */
+const INTERNAL_LEAK_PATTERNS: RegExp[] = [
+  /\bat\s+[A-Za-z0-9_$.]+\s*\(/g, // "at foo (file:line:col)"
+  /\bfile:\/\/\S+/gi, // file:// URLs
+  /\/[\w./-]+\.(ts|tsx|js|jsx|mjs|cjs):\d+/g, // /path/file.ts:12
+  /\b[0-9a-f]{16,}\b/gi, // long hex (sha1, session ids, trace ids)
+  /\bsession[_-]?id\b[=:]\s*\S+/gi, // sessionID=... / session_id: ...
+  /\b[a-z0-9]{20,}\b/gi, // long opaque tokens/ids
+];
+
+/**
+ * Sanitize a `reason` string before it is written to `output.reason`.
+ *
+ * The completion controller's `action.prompt` is a controlled, human-readable
+ * instruction ("Continue with the remaining TODO items…"). However the value
+ * can be concatenated with diagnostic context, or a future branch could pass a
+ * raw payload. This guard:
+ *   - strips internal stack frames / file paths / hex IDs / session IDs,
+ *   - collapses whitespace,
+ *   - truncates to MAX_REASON_LEN with an explicit "…" marker.
+ *
+ * It never throws — on any unexpected input it returns a safe constant so the
+ * TUI link can never carry a leaked payload.
+ */
+export function sanitizeReason(raw: string | undefined | null): string {
+  if (!raw) return "";
+  let s: string;
+  try {
+    if (typeof raw !== "string") return "";
+    s = raw;
+  } catch {
+    return "";
+  }
+  for (const re of INTERNAL_LEAK_PATTERNS) {
+    s = s.replace(re, " ");
+  }
+  // Collapse runs of whitespace (incl. newlines) into a single space.
+  s = s.replace(/\s+/g, " ").trim();
+  if (s.length > MAX_REASON_LEN) {
+    s = `${s.slice(0, MAX_REASON_LEN).trimEnd()}…`;
+  }
+  return s;
+}
+
 // Local type — @opencode-ai/plugin doesn't export this
 // The runtime actor.postStop hook is registered as an object with matcher+run,
 // not as a raw function — see the registration object at line ~207.
@@ -202,19 +258,29 @@ export function createBobCompletionHook(
 
           if (action.kind === "stop") {
             // Bob's ordinary final answer is the only summary. A synthetic
-            // session.prompt creates a real turn and can cause a TUI loop.
+            // session.prompt creates a real turn and can cause a TUI loop, so
+            // we never inject one here. On a stop we also must NOT set
+            // output.continue or a noisy reason — the agent simply ends.
             return;
           }
           s.autoContinues += 1;
           output.continue = true;
-          output.reason = action.prompt;
+          // Sanitize the reason so no raw session payload, oversized text, or
+          // internal stack/IDs leak into the TUI link.
+          output.reason = sanitizeReason(action.prompt);
         } catch (err) {
           // Fail safe: never auto-continue on an unexpected error. The
           // sub-helpers each have their own try/catch for I/O failures; this
           // top-level catch guards the rest of the body (decide(), state
           // mutations, summary injection) so a thrown error cannot wedge the
           // auto-continue loop or leave the session in a broken state.
+          //
+          // We deliberately do NOT emit a synthetic "retry" prompt here: that
+          // would create a real turn and can cause a TUI loop. We just log the
+          // failure (to the file log, never the TUI) and stop cleanly.
           logger.error("[hiai-opencode] Completion controller error:", err);
+          output.continue = false;
+          output.reason = undefined;
           return;
         }
       },

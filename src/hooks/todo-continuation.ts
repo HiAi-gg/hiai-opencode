@@ -22,6 +22,12 @@ import { logger } from "../util/log";
 
 const COOLDOWN_MS = 30_000;
 
+/** Short, stable, non-leaky identifier for logs (no raw session id). */
+function shortId(sessionID: string): string {
+  if (sessionID.length <= 12) return sessionID;
+  return `${sessionID.slice(0, 6)}…${sessionID.slice(-4)}`;
+}
+
 export function createTodoContinuationHook(_config: BobConfig): HookSet {
   return {
     event: async ({ event }: { event: unknown }) => {
@@ -57,12 +63,16 @@ export function createTodoContinuationHook(_config: BobConfig): HookSet {
             if (s.hasIncompleteTasks) {
               // Generate a continuation prompt for the remaining work
               const prompt = buildContinuationPrompt(sessionID, 1);
-              logger.log(
-                `[hiai-opencode] Todo-continuation: session ${sessionID} has incomplete tasks — ${prompt}`,
-              );
-
-              // Record the prompt in loop-state so other hooks can use it
-              setContinuationPrompt(sessionID, prompt);
+              // Dedup: skip the log if the prompt is unchanged from the last
+              // recorded one — avoids repeating the same noisy line on every
+              // idle ping while the loop is still active.
+              if (s.continuationPrompt !== prompt) {
+                logger.log(
+                  `[hiai-opencode] Todo-continuation: ${shortId(sessionID)} has incomplete tasks — continue.`,
+                );
+                // Record the prompt in loop-state so other hooks can use it
+                setContinuationPrompt(sessionID, prompt);
+              }
             }
             // No incomplete tasks: nothing to continue. Stay silent to avoid
             // flooding the TUI with a hint on every idle session.

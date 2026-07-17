@@ -32,7 +32,7 @@ describe("createEditErrorRecovery", () => {
     };
     await runHook({ tool: "edit" }, output);
     expect(output.output).toContain("oldString not found");
-    expect(output.output).toContain("[hiai-opencode] Edit target not found");
+    expect(output.output).toContain("[hiai-opencode] edit failed");
   });
 
   test("appends recovery hint when edit fails with No match", async () => {
@@ -40,7 +40,7 @@ describe("createEditErrorRecovery", () => {
       output: "No match for the given oldString",
     };
     await runHook({ tool: "edit" }, output);
-    expect(output.output).toContain("[hiai-opencode] Edit target not found");
+    expect(output.output).toContain("[hiai-opencode] edit failed");
   });
 
   test("does not append when the tool is not edit", async () => {

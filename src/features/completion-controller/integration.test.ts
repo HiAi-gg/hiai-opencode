@@ -12,7 +12,11 @@
 
 import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
 import type { BobConfig } from "../../types";
-import { createBobCompletionHook, setCompletionClient } from "./index";
+import {
+  createBobCompletionHook,
+  sanitizeReason,
+  setCompletionClient,
+} from "./index";
 import * as st from "./state";
 
 function makeConfig(
@@ -104,6 +108,48 @@ function uniqueSession(): string {
   return `itest-${Math.random().toString(36).slice(2)}-${Date.now()}`;
 }
 
+describe("completion-controller: sanitizeReason", () => {
+  test("returns empty string for null/undefined/empty", () => {
+    expect(sanitizeReason(undefined)).toBe("");
+    expect(sanitizeReason(null)).toBe("");
+    expect(sanitizeReason("")).toBe("");
+  });
+
+  test("passes through a short, clean instruction unchanged", () => {
+    const clean = "Continue with the remaining TODO items until all are complete.";
+    expect(sanitizeReason(clean)).toBe(clean);
+  });
+
+  test("strips internal stack frames and file:line paths", () => {
+    const dirty =
+      "Continue. at foo (/src/app.ts:12:3) file:///home/x/y.ts:4:5 sessionID=abc123";
+    const out = sanitizeReason(dirty);
+    expect(out).not.toContain("/src/app.ts:12:3");
+    expect(out).not.toContain("file:///home/x/y.ts");
+    expect(out).not.toContain("sessionID=abc123");
+    expect(out).toContain("Continue.");
+  });
+
+  test("strips long hex / opaque ids", () => {
+    const dirty =
+      "Review changes 9f8e7d6c5b4a39281706deadbeefcafe12345678 before finishing";
+    const out = sanitizeReason(dirty);
+    expect(out).not.toContain("9f8e7d6c5b4a39281706deadbeefcafe12345678");
+  });
+
+  test("collapses whitespace and truncates oversized text with ellipsis", () => {
+    const long = "word ".repeat(200);
+    const out = sanitizeReason(long);
+    expect(out.length).toBeLessThanOrEqual(241); // 240 + "…"
+    expect(out.endsWith("…")).toBe(true);
+  });
+
+  test("never throws on non-string input", () => {
+    // @ts-expect-error - intentionally invalid input
+    expect(sanitizeReason({ not: "a string" })).toBe("");
+  });
+});
+
 describe("completion-controller integration: actor.postStop lifecycle", () => {
   let run: (input: any, output: any) => Promise<void>;
 
@@ -177,6 +223,9 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
 
     expect(output.continue).toBe(true);
     expect(output.reason).toContain("Continue");
+    // The reason is a controlled instruction and must not carry internal leaks.
+    expect(output.reason).not.toMatch(/\bat\s+\w+\s*\(/);
+    expect(output.reason).not.toMatch(/\/[\w./-]+\.(ts|tsx|js):\d+/);
     // autoContinues counter advanced on the parent session.
     expect(st.get(parent).autoContinues).toBe(1);
     st.clear(parent);
@@ -351,8 +400,10 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
       const output: { continue?: boolean; reason?: string } = {};
       await run({ sessionID: sid, agentType: "build" }, output);
 
-      // Fail-safe: never auto-continue on an unexpected error.
-      expect(output.continue).toBeUndefined();
+      // Fail-safe: never auto-continue on an unexpected error, and do NOT emit
+      // a synthetic/noisy retry prompt (that would create a real turn / TUI loop).
+      expect(output.continue).toBe(false);
+      expect(output.reason).toBeUndefined();
       st.clear(sid);
     } finally {
       mock.restore();

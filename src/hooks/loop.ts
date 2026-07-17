@@ -17,6 +17,12 @@ import {
 } from "./loop-state";
 import { logger } from "../util/log";
 
+/** Short, stable, non-leaky identifier for logs/prompts (no raw session id). */
+function shortId(sessionID: string): string {
+  if (sessionID.length <= 12) return sessionID;
+  return `${sessionID.slice(0, 6)}…${sessionID.slice(-4)}`;
+}
+
 export function createLoopHook(config: BobConfig): HookSet {
   const rawCfg = config as Record<string, unknown>;
   const loopCfg = (rawCfg.loop ?? {}) as Record<string, unknown>;
@@ -54,10 +60,11 @@ export function createLoopHook(config: BobConfig): HookSet {
 
             recordIteration(sessionID);
             // Build and record a continuation prompt so downstream
-            // hooks (eg todo-continuation) can pick it up.
+            // hooks (eg todo-continuation) can pick it up. Use a sanitized
+            // short id to avoid leaking the raw session id into prompts/logs.
             setContinuationPrompt(
               sessionID,
-              `Session ${sessionID} is still active (iteration ${s.iterations}). Continue working.`,
+              `Session ${shortId(sessionID)} active (iter ${s.iterations}). Continue.`,
             );
             break;
           }

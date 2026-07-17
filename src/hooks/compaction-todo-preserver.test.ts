@@ -57,7 +57,7 @@ describe("compaction-todo-preserver", () => {
     );
 
     expect(context).toContain(
-      "[hiai-opencode] Preserve all TODO items during compaction.",
+      "[hiai-opencode] Preserve open TODO items and their status.",
     );
   });
 

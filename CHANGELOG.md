@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.7] — 2026-07-17
+
+### 🛡️ TUI / output-leak hardening (Phase 1)
+
+- **Completion controller `output.reason` is now sanitized.** New `sanitizeReason()` strips internal stack frames, `file://` URLs, `/path/file.ts:line` paths, long hex/session IDs, and oversized payloads before a reason is written to the TUI link. Reasons are truncated to 240 chars with an explicit `…` marker. The auto-continue path no longer injects a synthetic retry prompt on error (prevents TUI loops); it fails safe with `continue=false` and `reason=undefined`.
+- **Hook error chain now emits TUI-safe DTOs.** `combineHookSets` wraps every hook handler (single or multi) so a thrown value is converted via `sanitizeHookError()` into a bounded `HookErrorDTO` (`code` + one-line `summary` + `hookPoint`) instead of leaking the raw `Error`/payload into `output.errors`. Errors are deduped and capped at `MAX_HOOK_ERRORS` (10). `BlockingHookError` still propagates.
+- **Loop / continuation / stop-guard / todo-continuation logs use a short, non-leaky session id** (`shortId()`) instead of the raw session id.
+- **Preemptive-compaction "consider compacting" warning is debounced** per session (60s cooldown) so it is not re-logged on every transform.
+- **Dream-distill gains a burst/anti-replay guard.** `session.idle` / `session.created` are debounced per trigger type via an in-memory `burst_cooldown_ms` (default 60s, configurable in `bob.json` `dream.burst_cooldown_ms`); the hook also exposes a `dispose()` that clears the guard. Prevents duplicate dream sessions from bursty idle pings.
+
+### 🧹 Compaction noise reduction
+
+- **Compaction context injector now pushes a single compact preservation line** instead of seven verbose `PRESERVE:` lines. Gate rehydration lines (`GATE: quality command…`, `GATE: lsp_diagnostics pending…`, `GATE: changes pending Critic review…`) shortened. Idempotent across repeated compaction events.
+- **Todo-preserver and error-recovery hooks emit single-line, concise hints** (edit / JSON parse recovery) rather than multi-line boilerplate. Quality-gate failure feedback collapsed to one actionable line.
+
+### 🖥️ CLI: stdout stays clean for machine output
+
+- **`hiai-opencode` CLI diagnostic/status strings now go to stderr** (`outInfo` helper) so stdout is reserved for future machine-readable (`--json`) output. Affects `doctor`, `mcp-status`, `export-mcp`, and `diagnose`.
+- **`up`/`down`/`status` stack-management commands route all human output to stderr** (was stdout / `console.warn`).
+
+### 🔌 MCP runtime: JSON-RPC stream hygiene
+
+- **`npm-package-runner.mjs` now filters child stdout to valid JSON-RPC only.** npx download banners, warnings, and stack traces are redirected to stderr so they never corrupt the MCP protocol stream on stdout. Distinct exit codes (`EXIT_LAUNCH_FAILED`, `EXIT_CHILD_SIGNALED`) replace raw signal inheritance. Added `src/features/mcp/npm-package-runner.test.ts`.
+
+### 🧪 Tests
+
+- New: `sanitizeReason` unit tests (null/empty, clean pass-through, stack/path/hex stripping, whitespace collapse + truncation, non-string safety).
+- New: dream-distill burst/anti-replay tests (idle burst, created burst, independent trigger types, idempotent repeats).
+- Updated: completion-controller integration (no TUI-loop retry prompt on error), compaction-context-injector (single preserve line, idempotency), hooks/index (DTO sanitization), loop, quality-gate, edit/json error recovery, todo-continuation, preemptive-compaction, stop-continuation-guard.
+
 ## [0.3.6] — 2026-07-12
 
 ### 🔧 CLI: `bin` field & hardening
