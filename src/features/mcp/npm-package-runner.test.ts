@@ -96,7 +96,7 @@ describe("npm-package-runner (Phase 6.1)", () => {
       stdio: ["ignore", "pipe", "pipe"],
     });
     // Give the runner time to spawn the grandchild, then kill the runner.
-    setTimeout(() => child.kill("SIGTERM"), 200);
+    child.once("spawn", () => setTimeout(() => child.kill("SIGTERM"), 500));
 
     const code = await new Promise<number>((resolve) => {
       child.on("exit", (c) => resolve(c ?? 0));
