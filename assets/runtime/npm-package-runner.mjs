@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { mkdirSync, existsSync, readFileSync, statSync } from "node:fs";
+import { dirname, join, resolve, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
 
@@ -62,21 +62,79 @@ function writeStderr(prefix, chunk) {
   }
 }
 
-const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
-const child = spawn(npxCommand, ["-y", pkg, ...forwardArgs], {
-  // Do NOT use stdio: "inherit". The child's stdout must be filtered so that
-  // only valid JSON-RPC reaches the parent's stdout; stdin is inherited so the
-  // MCP client can drive the child, stderr is piped for safe redirection.
-  stdio: ["inherit", "pipe", "pipe"],
-  shell: process.platform === "win32",
-  env: {
-    ...process.env,
-    npm_config_cache: cacheRoot,
-    NPM_CONFIG_CACHE: cacheRoot,
-    TEMP: tempRoot,
-    TMP: tempRoot,
-  },
-});
+// Resolve a local package directory to the absolute path of its executable
+// entry point (the `bin` field in package.json). When `pkg` points at a real
+// directory on disk we run it directly with `node` instead of going through
+// `npx`. This keeps execution fully offline and deterministic, and — crucially
+// — honors the `#!/usr/bin/env node` shebang. `npx -y <dir>` instead wraps the
+// bin in a shell script that the system shell executes (ignoring the node
+// shebang), which fails with "Permission denied" / "Syntax error" for
+// `.mjs`/ESM bins and never emits any JSON-RPC.
+function resolveLocalBin(pkgArg) {
+  let dir;
+  try {
+    dir = isAbsolute(pkgArg) ? pkgArg : resolve(process.cwd(), pkgArg);
+  } catch {
+    return null;
+  }
+  if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+    return null;
+  }
+  const pkgJsonPath = join(dir, "package.json");
+  if (!existsSync(pkgJsonPath)) {
+    return null;
+  }
+  let pkgJson;
+  try {
+    pkgJson = JSON.parse(readFileSync(pkgJsonPath, "utf8"));
+  } catch {
+    return null;
+  }
+  const bin = pkgJson?.bin;
+  if (!bin) {
+    return null;
+  }
+  const binRel = typeof bin === "string" ? bin : bin[Object.keys(bin)[0]];
+  if (!binRel) {
+    return null;
+  }
+  const binAbs = resolve(dir, binRel);
+  return existsSync(binAbs) ? binAbs : null;
+}
+
+const localBin = resolveLocalBin(pkg);
+let child;
+if (localBin) {
+  // Local package directory: execute its bin directly with node. No network,
+  // no npx wrapper, deterministic behavior.
+  child = spawn(process.execPath, [localBin, ...forwardArgs], {
+    stdio: ["inherit", "pipe", "pipe"],
+    env: {
+      ...process.env,
+      npm_config_cache: cacheRoot,
+      NPM_CONFIG_CACHE: cacheRoot,
+      TEMP: tempRoot,
+      TMP: tempRoot,
+    },
+  });
+} else {
+  // Remote package name: delegate to npx for download + execution.
+  const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
+  child = spawn(npxCommand, ["-y", pkg, ...forwardArgs], {
+    // Do NOT use stdio: "inherit". The child's stdout must be filtered so that
+    // only valid JSON-RPC reaches the parent's stdout; stdin is inherited so the
+    // MCP client can drive the child, stderr is piped for safe redirection.
+    stdio: ["inherit", "pipe", "pipe"],
+    shell: process.platform === "win32",
+    env: {
+      ...process.env,
+      npm_config_cache: cacheRoot,
+      NPM_CONFIG_CACHE: cacheRoot,
+      TEMP: tempRoot,
+      TMP: tempRoot,
+    },
+  });
+}
 
 // Forward only protocol-valid lines to the parent stdout.
 let stdoutBuffer = "";
