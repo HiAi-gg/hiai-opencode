@@ -54,7 +54,7 @@ describe("npm-package-runner (Phase 6.1)", () => {
   });
 
   it("forwards only valid JSON-RPC to stdout and filters noise to stderr", async () => {
-    const child = spawn("node", [runnerPath, fakePkgDir], {
+    const child = spawn(process.execPath, [runnerPath, fakePkgDir], {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
@@ -92,7 +92,7 @@ describe("npm-package-runner (Phase 6.1)", () => {
   });
 
   it("exits non-zero with a distinct code when the child is killed by a signal", async () => {
-    const child = spawn("node", [runnerPath, fakePkgDir], {
+    const child = spawn(process.execPath, [runnerPath, fakePkgDir], {
       stdio: ["ignore", "pipe", "pipe"],
     });
     // Give the runner time to spawn the grandchild, then kill the runner.
@@ -102,12 +102,20 @@ describe("npm-package-runner (Phase 6.1)", () => {
       child.on("exit", (c) => resolve(c ?? 0));
     });
 
-    // EXIT_CHILD_SIGNALED = 2 (distinct from 0/1).
-    expect(code).toBe(2);
+    // POSIX runtimes deliver SIGTERM to the runner's signal handler, which
+    // maps it to EXIT_CHILD_SIGNALED = 2. Windows does not deliver POSIX
+    // signals to Node handlers; `child.kill("SIGTERM")` terminates directly
+    // with a platform exit code instead. Keep the contract strict on POSIX
+    // while asserting a non-success termination on Windows.
+    if (process.platform === "win32") {
+      expect(code).not.toBe(0);
+    } else {
+      expect(code).toBe(2);
+    }
   });
 
   it("exits with code 1 and a clear message when no package name is given", async () => {
-    const child = spawn("node", [runnerPath], {
+    const child = spawn(process.execPath, [runnerPath], {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
