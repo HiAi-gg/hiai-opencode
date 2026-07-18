@@ -1,9 +1,56 @@
 #!/usr/bin/env node
 
-import { mkdirSync, existsSync, readFileSync, statSync } from "node:fs";
+import { mkdirSync, existsSync, readFileSync, statSync, appendFileSync } from "node:fs";
 import { dirname, join, resolve, isAbsolute } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn } from "node:child_process";
+
+// Declared early so the signal handlers (registered below, before spawn) can
+// reference it safely even if a signal arrives before the child is launched.
+let child;
+
+// Exit codes: keep them distinct and meaningful so the parent (MCP client /
+// OpenCode) can reason about failures instead of inheriting a raw signal.
+const EXIT_OK = 0;
+const EXIT_LAUNCH_FAILED = 1;
+const EXIT_CHILD_SIGNALED = 2;
+
+// Single, guarded shutdown. `process.exit()` is last-wins, so concurrent
+// callers (the signal handler and the child `exit` handler) would otherwise
+// race and produce a non-deterministic exit code. This guard ensures only the
+// FIRST exit request is honored, making the outcome deterministic: whichever
+// event (a runner shutdown signal or the child's own exit) is observed first
+// wins, and it is always one of our distinct codes — never a misattributed or
+// inherited value.
+let exitCode = null;
+function shutdown(code) {
+  if (exitCode !== null) {
+    return;
+  }
+  exitCode = code;
+  process.exit(code);
+}
+
+// If the runner itself is terminated (e.g. the MCP client shuts it down),
+// forward the signal to the child and exit with a distinct, non-zero code
+// (EXIT_CHILD_SIGNALED) instead of letting Node emit the raw 128+signal value.
+//
+// Registered BEFORE the child is spawned so an early SIGTERM (delivered in the
+// window before spawn completes) is never missed — otherwise Node's default
+// SIGTERM handling would terminate the runner with a non-deterministic code
+// instead of the distinct EXIT_CHILD_SIGNALED.
+for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"]) {
+  process.on(sig, () => {
+    if (child && !child.killed) {
+      try {
+        child.kill(sig);
+      } catch {
+        /* child may already be gone */
+      }
+    }
+    shutdown(EXIT_CHILD_SIGNALED);
+  });
+}
 
 function resolveCacheRoot() {
   const xdgCache = process.env.XDG_CACHE_HOME?.trim();
@@ -26,12 +73,6 @@ if (!pkg) {
 const cacheRoot = join(resolveCacheRoot(), "hiai-opencode", "npm");
 const tempRoot = join(cacheRoot, "tmp");
 mkdirSync(tempRoot, { recursive: true });
-
-// Exit codes: keep them distinct and meaningful so the parent (MCP client /
-// OpenCode) can reason about failures instead of inheriting a raw signal.
-const EXIT_OK = 0;
-const EXIT_LAUNCH_FAILED = 1;
-const EXIT_CHILD_SIGNALED = 2;
 
 // A line is forwarded to the parent stdout only when it is a well-formed
 // JSON-RPC message. Anything else (npx download banners, warnings, stack
@@ -103,7 +144,6 @@ function resolveLocalBin(pkgArg) {
 }
 
 const localBin = resolveLocalBin(pkg);
-let child;
 if (localBin) {
   // Local package directory: execute its bin directly with node. No network,
   // no npx wrapper, deterministic behavior.
@@ -172,34 +212,27 @@ child.stderr.on("data", (chunk) => {
 });
 
 child.on("exit", (code, signal) => {
-  if (signal) {
-    // A killed child (e.g. SIGTERM) is reported distinctly, not silently
-    // inherited. We still surface the signal on stderr for diagnostics.
+  if (signal || child.killed) {
+    // A killed child (e.g. SIGTERM forwarded from a runner shutdown) is
+    // reported distinctly, not silently inherited. Surface it on stderr.
     process.stderr.write(
-      `[hiai-opencode] ${pkg} terminated by signal ${signal}\n`,
+      `[hiai-opencode] ${pkg} terminated by signal ${signal ?? "killed"}\n`,
     );
-    process.exit(EXIT_CHILD_SIGNALED);
+    shutdown(EXIT_CHILD_SIGNALED);
+    return;
   }
-  process.exit(code ?? EXIT_OK);
+  // The child exited on its own. A non-zero code is propagated immediately; a
+  // clean (0) exit exits 0. The guarded `shutdown` ensures a concurrently
+  // delivered runner shutdown signal (which also calls shutdown(2)) cannot be
+  // overridden by this path — whichever fires first wins deterministically.
+  if (code !== 0) {
+    shutdown(code ?? EXIT_OK);
+    return;
+  }
+  shutdown(EXIT_OK);
 });
 
 child.on("error", (error) => {
   process.stderr.write(`[hiai-opencode] Failed to launch ${pkg}: ${error?.message ?? error}\n`);
-  process.exit(EXIT_LAUNCH_FAILED);
+  shutdown(EXIT_LAUNCH_FAILED);
 });
-
-// If the runner itself is terminated (e.g. the MCP client shuts it down),
-// forward the signal to the child and exit with a distinct, non-zero code
-// instead of letting Node emit the raw 128+signal value.
-for (const sig of ["SIGTERM", "SIGINT", "SIGHUP"]) {
-  process.on(sig, () => {
-    if (!child.killed) {
-      try {
-        child.kill(sig);
-      } catch {
-        /* child may already be gone */
-      }
-    }
-    process.exit(EXIT_CHILD_SIGNALED);
-  });
-}
