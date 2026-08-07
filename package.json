@@ -59,6 +59,12 @@
     "url": "https://github.com/HiAi-gg/hiai-opencode/issues"
   },
   "author": "HiAi",
+  "contributors": [
+    {
+      "name": "HiAi",
+      "url": "https://github.com/HiAi-gg"
+    }
+  ],
   "license": "MIT",
   "publishConfig": {
     "access": "public"

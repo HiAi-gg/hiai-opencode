@@ -255,6 +255,12 @@ bun test               # 986 tests
 
 ---
 
+## Contributors
+
+- [HiAi](https://github.com/HiAi-gg)
+
+---
+
 ## License
 
 MIT © [HiAi](https://github.com/HiAi-gg). See [LICENSE.md](LICENSE.md).
