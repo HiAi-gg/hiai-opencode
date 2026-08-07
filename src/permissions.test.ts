@@ -487,6 +487,22 @@ describe("config hook integration", () => {
     await hooks.dispose?.();
   });
 
+  test("Plan permission does not deny native question capability", async () => {
+    const hooks = await (await import("./index")).BobPlugin({ directory: TMP });
+    const cfg: Record<string, unknown> = { agent: {} };
+    await hooks.config?.(cfg as any);
+    const agent = cfg.agent as Record<string, unknown>;
+    const plan = agent.plan as Record<string, unknown>;
+    expect(plan.permission).toBeDefined();
+    const permission = plan.permission as Record<string, string>;
+    // HiAi must not write question: deny — the native OpenCode plan agent
+    // provides question: allow via its built-in permission, and the runtime
+    // merges user/plugin config over it. Writing deny here would strip the
+    // interactive question UI from the plan agent.
+    expect(permission.question).not.toBe("deny");
+    await hooks.dispose?.();
+  });
+
   test("explore write/edit restrictions are still applied", async () => {
     const hooks = await (await import("./index")).BobPlugin({ directory: TMP });
     const cfg: Record<string, unknown> = { agent: {} };

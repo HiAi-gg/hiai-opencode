@@ -18,16 +18,17 @@ import {
   setCompletionClient,
 } from "./features/completion-controller";
 import { createDreamDistillHook } from "./features/dream-distill";
-import { getMcpConfig } from "./features/mcp/registry";
 import { autoExportStaticMcp } from "./features/mcp/auto-export";
+import { getMcpConfig } from "./features/mcp/registry";
 import { initShellEnv } from "./features/shell-env";
 import { initTelemetry, shutdownTelemetry } from "./features/telemetry/index";
 import {
   setWorkspaceAdapter,
   WorkspaceAdapter,
 } from "./features/workspace-adapter";
-import { combineHookSets, createHooks } from "./hooks/index";
 import { createCircuitBreakerHook } from "./hooks/circuit-breaker";
+import { combineHookSets, createHooks } from "./hooks/index";
+import { setPlanInvocationClient } from "./hooks/plan-invocation-injector";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
@@ -146,6 +147,9 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
 
     // Init completion controller
     setCompletionClient(input.client);
+
+    // Init plan invocation-context injector (subagent vs direct detection)
+    setPlanInvocationClient(input.client);
 
     // Init session tools
     setSessionClient(input.client);

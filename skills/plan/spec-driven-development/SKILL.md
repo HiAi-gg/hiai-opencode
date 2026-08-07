@@ -33,20 +33,19 @@ SPECIFY ──→ PLAN ──→ TASKS ──→ IMPLEMENT
 
 ### Phase 1: Specify
 
-Start with a high-level vision. Ask the human clarifying questions until requirements are concrete.
+Start with a high-level vision. Resolve ambiguity autonomously first: research the repository, existing specs, project memory, and documentation before asking the human anything.
 
 **Surface assumptions immediately.** Before writing any spec content, list what you're assuming:
 
 ```
 ASSUMPTIONS I'M MAKING:
 1. This is a web application (not native mobile)
-2. Authentication uses session-based cookies (not JWT)
+2. Authentication uses session-based cookies (not JWT) — per existing repo pattern
 3. The database is PostgreSQL (based on existing Prisma schema)
 4. We're targeting modern browsers only (no IE11)
-→ Correct me now or I'll proceed with these.
 ```
 
-Don't silently fill in ambiguous requirements. The spec's entire purpose is to surface misunderstandings *before* code gets written — assumptions are the most dangerous form of misunderstanding.
+Material assumptions must be either verified by repository research or resolved with the native `question` tool (per the Plan agent's Autonomy Contract). Non-material assumptions are documented without blocking. Never end an assumption list with a plain-text prompt asking the human to correct you — if a material assumption genuinely needs human input, emit it through the `question` tool; otherwise proceed and note the assumption with its risk in the spec.
 
 **Write a spec document covering these six core areas:**
 
@@ -119,12 +118,13 @@ Don't silently fill in ambiguous requirements. The spec's entire purpose is to s
 ```
 REQUIREMENT: "Make the dashboard faster"
 
-REFRAMED SUCCESS CRITERIA:
+REFRAMED SUCCESS CRITERIA (to be validated by the human or accepted as targets):
 - Dashboard LCP < 2.5s on 4G connection
 - Initial data load completes in < 500ms
 - No layout shift during load (CLS < 0.1)
-→ Are these the right targets?
 ```
+
+Record these targets in the spec. If confirming the targets with the human is genuinely required, emit a `question` tool call with the options — never print the confirmation request as plain text.
 
 This lets you loop, retry, and problem-solve toward a clear goal rather than guessing what "faster" means.
 

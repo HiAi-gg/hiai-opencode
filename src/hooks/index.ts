@@ -1,4 +1,5 @@
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { createCavemanMessageCompressor } from "./caveman-message-compressor";
 import { createCavemanSystemInjector } from "./caveman-system-injector";
 import { createClosureInjector } from "./closure-injector";
@@ -10,15 +11,16 @@ import { createDirectoryAgentsInjector } from "./directory-agents-injector";
 import { createEditErrorRecovery } from "./edit-error-recovery";
 import {
   BlockingHookError,
+  type HookErrorDTO,
   MAX_HOOK_ERRORS,
   sanitizeHookError,
-  type HookErrorDTO,
 } from "./errors";
 import { createJsonErrorRecovery } from "./json-error-recovery";
 import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
 import { createModelFallbackHook } from "./model-fallback";
 import { createNonInteractiveEnv } from "./non-interactive-env";
+import { createPlanInvocationInjector } from "./plan-invocation-injector";
 import { createPreemptiveCompaction } from "./preemptive-compaction";
 import { createQualityGate } from "./quality-gate";
 import { createReasoningContentCacheHook } from "./reasoning-content-cache";
@@ -33,7 +35,6 @@ import { createTokenBudgetHook } from "./token-budget";
 import { createToolPairValidator } from "./tool-pair-validator";
 import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
 import { createWriteExistingFileGuard } from "./write-existing-file-guard";
-import { logger } from "../util/log";
 
 type HookFactory = (config: BobConfig) => HookSet;
 
@@ -163,6 +164,7 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
   { name: "json-error-recovery", factory: createJsonErrorRecovery },
   { name: "edit-error-recovery", factory: createEditErrorRecovery },
   { name: "non-interactive-env", factory: createNonInteractiveEnv },
+  { name: "plan-invocation-injector", factory: createPlanInvocationInjector },
   { name: "model-fallback", factory: createModelFallbackHook },
   { name: "runtime-fallback", factory: createRuntimeFallback },
   { name: "preemptive-compaction", factory: createPreemptiveCompaction },

@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(git:*)",
+      "Shell(grep:*)",
+      "Shell(sed:*)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/tool/question.ts 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/agent/agent.ts 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/session/prompt/plan.txt 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/session/prompt/plan-mode.txt 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/tool/registry.ts 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/permission.ts 2 >& 1)",
+      "Shell(curl -fsSL https://api.github.com/search/code?q=repo:sst/opencode+visibleTools+in:file+language:typescript 2 > /dev/null)",
+      "Shell(curl -fsSL https://api.github.com/repos/sst/opencode/git/trees/v1.18.15?recursive=1 2 > /dev/null)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/permission/index.ts 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/tool/question.txt 2 >& 1)",
+      "Shell(echo:*)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/session/prompt.ts 2 >& 1)",
+      "Shell(curl -fsSL https://raw.githubusercontent.com/sst/opencode/v1.18.15/packages/opencode/src/tool/task.ts 2 >& 1)"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

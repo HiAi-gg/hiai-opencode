@@ -20,7 +20,7 @@ Explicit task decomposition into verifiable units with acceptance criteria. This
 - When "I have a plan" but the plan has no verifiable tasks
 
 **Don't use when:**
-- Requirements are still unclear → use `interview-me` first
+- Requirements are still unclear → resolve autonomously first (research, repo conventions, documented assumptions); use `interview-me` ONLY if the human explicitly asks for an interview
 - No spec exists → use `spec-driven-development` first
 - Task is simple single-step → just do it, don't over-plan
 
@@ -47,6 +47,6 @@ Sequential, parallel, or conditional.
 
 ## Relationship to Other Skills
 
-- **`interview-me`** — Used BEFORE this skill when requirements are unclear
+- **`interview-me`** — Used BEFORE this skill ONLY when the human explicitly requested an interview (otherwise resolve ambiguity autonomously)
 - **`spec-driven-development`** — Used BEFORE this skill when no spec exists
 - **`subagent-driven-development`** — Uses tasks from this skill for execution
