@@ -1,6 +1,9 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createCavemanSystemInjector } from "./caveman-system-injector";
+import {
+  createCavemanSystemInjector,
+  setCavemanClient,
+} from "./caveman-system-injector";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {
@@ -40,6 +43,18 @@ function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
     ...overrides,
   };
 }
+
+function makeClientForSession(agent: string) {
+  return {
+    session: {
+      get: async () => ({ data: { agent, id: "s" } }),
+    },
+  } as never;
+}
+
+afterEach(() => {
+  setCavemanClient(null);
+});
 
 describe("caveman-system-injector", () => {
   test("injects bob internal caveman + delegation + decode boundary for bob", async () => {
@@ -152,6 +167,104 @@ describe("caveman-system-injector", () => {
     expect(generalOutput.system.join("\n")).not.toContain(
       "Subagent Result Handoff Protocol",
     );
+  });
+
+  // ── Session-based identification (shared models) ──────────────────────────
+
+  test("resolves writer by session even when its model is shared (excluded)", async () => {
+    // Regression: in bob.json, writer shares deepseek-v4-flash with
+    // manager/explore/general. The old model-ID reverse map resolved this
+    // session to "general" and injected SUBAGENT_INTERNAL into the excluded
+    // writer. Session lookup fixes this.
+    const config = makeConfig({
+      models: {
+        ...(makeConfig().models ?? {}),
+        writer: { model: "opencode-go/deepseek-v4-flash" }, // shared now
+      },
+    });
+    setCavemanClient(makeClientForSession("writer") as never);
+    const hookSet = createCavemanSystemInjector(config);
+    const transform = hookSet["experimental.chat.system.transform"];
+    expect(transform).toBeDefined();
+
+    const output = { system: [] as string[] };
+    await transform!(
+      {
+        sessionID: "ses_writer",
+        model: { id: "opencode-go/deepseek-v4-flash" },
+      },
+      output as { system: string[] },
+    );
+
+    // writer is excluded → no injection, even though its model maps to general
+    expect(output.system).toHaveLength(0);
+    setCavemanClient(null);
+  });
+
+  test("resolves manager by session despite sharing flash model with general", async () => {
+    // Regression: manager/explore/general all use deepseek-v4-flash; the
+    // reverse map's last-wins resolved every one of them as "general". With a
+    // session client, the real agent name is used.
+    const config = makeConfig();
+    setCavemanClient(makeClientForSession("manager") as never);
+    const hookSet = createCavemanSystemInjector(config);
+    const transform = hookSet["experimental.chat.system.transform"];
+    expect(transform).toBeDefined();
+
+    const output = { system: [] as string[] };
+    await transform!(
+      {
+        sessionID: "ses_manager",
+        model: { id: "opencode-go/deepseek-v4-flash" },
+      },
+      output as { system: string[] },
+    );
+
+    // manager is a target subagent → gets SUBAGENT_INTERNAL, not Bob fragments
+    const joined = output.system.join("\n");
+    expect(joined).toContain("Result Envelope");
+    expect(joined).not.toContain("Subagent Result Handoff Protocol");
+    setCavemanClient(null);
+  });
+
+  test("resolves build by session despite sharing pro model with plan", async () => {
+    // Regression: build and plan both use deepseek-v4-pro; the reverse map's
+    // last-wins resolved build as "plan". Session lookup restores build.
+    const config = makeConfig();
+    setCavemanClient(makeClientForSession("build") as never);
+    const hookSet = createCavemanSystemInjector(config);
+    const transform = hookSet["experimental.chat.system.transform"];
+    expect(transform).toBeDefined();
+
+    const output = { system: [] as string[] };
+    await transform!(
+      { sessionID: "ses_build", model: { id: "opencode-go/deepseek-v4-pro" } },
+      output as { system: string[] },
+    );
+
+    const joined = output.system.join("\n");
+    expect(joined).toContain("Result Envelope");
+    expect(joined).not.toContain("Subagent Result Handoff Protocol");
+    setCavemanClient(null);
+  });
+
+  test("falls back to model map when session client is unavailable", async () => {
+    const config = makeConfig();
+    setCavemanClient(null);
+    const hookSet = createCavemanSystemInjector(config);
+    const transform = hookSet["experimental.chat.system.transform"];
+    expect(transform).toBeDefined();
+
+    const output = { system: [] as string[] };
+    await transform!(
+      { sessionID: "ses_test", model: { id: "opencode-go/deepseek-v4-pro" } },
+      output as { system: string[] },
+    );
+
+    // No client → model-map fallback resolves deepseek-v4-pro to "plan"
+    // (last-wins in config order), which is a target subagent.
+    const joined = output.system.join("\n");
+    expect(joined).toContain("Result Envelope");
   });
 
   test("handles unknown model id gracefully", async () => {

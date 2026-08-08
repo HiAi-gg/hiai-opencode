@@ -26,6 +26,7 @@ import {
   setWorkspaceAdapter,
   WorkspaceAdapter,
 } from "./features/workspace-adapter";
+import { setCavemanClient } from "./hooks/caveman-system-injector";
 import { createCircuitBreakerHook } from "./hooks/circuit-breaker";
 import { combineHookSets, createHooks } from "./hooks/index";
 import { setPlanInvocationClient } from "./hooks/plan-invocation-injector";
@@ -150,6 +151,9 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
 
     // Init plan invocation-context injector (subagent vs direct detection)
     setPlanInvocationClient(input.client);
+
+    // Init caveman system injector (session-based agent identification)
+    setCavemanClient(input.client);
 
     // Init session tools
     setSessionClient(input.client);

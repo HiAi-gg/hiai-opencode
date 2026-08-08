@@ -1,3 +1,4 @@
+import type { PluginInput } from "@opencode-ai/plugin";
 import {
   BOB_DECODE_BOUNDARY,
   BOB_INTERNAL_CAVEMAN,
@@ -6,6 +7,13 @@ import {
 } from "../prompt-library/caveman";
 import type { BobConfig, CavemanConfig, HookSet } from "../types";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
+
+let client: PluginInput["client"] | null = null;
+
+export function setCavemanClient(c: PluginInput["client"] | null) {
+  client = c;
+}
 
 /**
  * Caveman System Injector — injects internal communication protocol
@@ -17,17 +25,15 @@ import { logger } from "../util/log";
  * For subagents: understand caveman briefs + answer tersely + keep CLOSURE.
  * Excluded agents (e.g., vision, writer): skipped entirely.
  *
- * Runtime Agent Identity:
- * The hook input only provides { sessionID?, model: { id } } — no explicit
- * agent name field. Agent identity is resolved via a model-ID reverse map
- * (config.models). When multiple agents share the same model (e.g. general
- * and explore both using deepseek-v4-flash), the reverse map stores only
- * the LAST such agent in iteration order — a known limitation.
- *
- * Exclusion fallback: to catch excluded agents that share a model with
- * non-excluded agents, also check modelId against exclude_agents directly.
- * This ensures an excluded agent is skipped even if the reverse map
- * resolves to a different agent sharing the same model.
+ * Agent identity resolution (two sources, in priority order):
+ * 1. Session lookup — `client.session.get(sessionID).agent`. This is the
+ *    authoritative agent name and is correct even when multiple agents share
+ *    the same model (which is the norm in bob.json: manager/explore/writer/
+ *    general all use deepseek-v4-flash, build/plan both use deepseek-v4-pro).
+ * 2. Model-ID reverse map fallback — used only when the session client is
+ *    unavailable (e.g. unit tests, headless invocation without a session).
+ *    NOTE: last-wins semantics mean the fallback is WRONG for shared models —
+ *    it exists purely so the hook degrades gracefully, never as the primary.
  *
  * Hook not found in disable mechanism: add "caveman-system-injector" to
  * hooks.disabled in bob.json to turn off.
@@ -58,8 +64,8 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
   }
 
   // Reverse-map: model ID → agent name using config.models.
-  // Uses last-wins semantics for agents sharing a model — a known limitation.
-  // See "Runtime Agent Identity" comment above.
+  // Used ONLY as a fallback when no session client is available. Last-wins
+  // semantics for agents sharing a model — see "Agent identity resolution".
   const modelToAgent = new Map<string, string>();
   if (config.models) {
     for (const [agentName, modelCfg] of Object.entries(config.models)) {
@@ -78,9 +84,28 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
         const modelId = input.model?.id;
         if (!modelId) return;
 
-        // Agent identity resolved from model ID via reverse map.
-        // No explicit agent field in hook input — see "Runtime Agent Identity" above.
-        const agentName = modelToAgent.get(modelId) ?? modelId;
+        const sessionID = input.sessionID;
+
+        // Prefer the authoritative agent name from the session when available.
+        let agentName: string | null = null;
+        if (sessionID && client) {
+          try {
+            const res = await client.session.get({
+              path: { id: sessionID },
+            });
+            const session = res.data as
+              | { agent?: string; parentID?: string }
+              | undefined;
+            if (session?.agent) agentName = session.agent;
+          } catch (err) {
+            logger.log(
+              `[hiai-opencode] caveman: session lookup failed for ${sessionID.slice(0, 6)}… — falling back to model map`,
+            );
+            void err;
+          }
+        }
+        // Fallback: model-ID reverse map (correct only for unique models).
+        if (!agentName) agentName = modelToAgent.get(modelId) ?? modelId;
 
         // Skip excluded agents — check both resolved name and raw model ID.
         // The modelId check is a safety net for excluded agents that share
@@ -114,6 +139,7 @@ export function createCavemanSystemInjector(config: BobConfig): HookSet {
           output.system.push(SUBAGENT_INTERNAL);
         }
       } catch (err) {
+        if (err instanceof BlockingHookError) throw err;
         logger.error("[hiai-opencode] caveman-system-injector error:", err);
       }
     },
