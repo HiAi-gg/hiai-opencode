@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] — 2026-08-08
+
+### 🐛 Completion controller: fix "Bob keeps finishing" loop
+
+- `recordChangedFile` now invalidates a prior review only when a genuinely **new** file is added. Rewriting an already-reviewed file (e.g. an auto-fix re-saving the same path) no longer resets the Critic verdict/fingerprint — previously this looped `review → build → review` until `maxAutoContinues`.
+- `mergeChangedFiles` only invalidates the parent's review when a child session actually merged **new** files. A subagent that changed nothing (explore, finished critic) no longer resets an approved verdict on every `actor.postStop`.
+- `actor.postStop` resets `autoContinues` and marks the loop completed on a real stop, so the continuation budget no longer accumulates across tasks (the next user request hits the cap immediately) and the idle loop hook stops ticking after completion.
+
 ## [0.5.0] — 2026-08-07
 
 ### 🎯 Plan invocation injector & skills update
