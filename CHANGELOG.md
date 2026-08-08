@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.2] — 2026-08-08
+
+### 🐛 Caveman: fix agent identification with shared models
+
+- The caveman system injector now resolves the agent from the session (`client.session.get(sessionID).agent`) instead of a model-ID reverse map. Multiple agents share models in `bob.json` (manager/explore/writer/general → `deepseek-v4-flash`, build/plan → `deepseek-v4-pro`), so the old last-wins map misattributed agents — the excluded writer received the subagent fragment, build got plan fragments, and manager/explore were misidentified.
+- Model-ID reverse map remains as a fallback only when no session client is available (unit tests, headless invocations), documented as unreliable for shared models.
+
 ## [0.5.1] — 2026-08-08
 
 ### 🐛 Completion controller: fix "Bob keeps finishing" loop
