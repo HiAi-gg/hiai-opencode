@@ -1,9 +1,10 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
+import { markCompleted } from "../../hooks/loop-state";
 import type { BobConfig } from "../../types";
+import { logger } from "../../util/log";
 import { decide } from "./decide";
 import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
-import { logger } from "../../util/log";
 
 /** LSP tool names that satisfy the post-edit lsp_diagnostics requirement. */
 const LSP_TOOL_NAMES = new Set([
@@ -261,6 +262,14 @@ export function createBobCompletionHook(
             // session.prompt creates a real turn and can cause a TUI loop, so
             // we never inject one here. On a stop we also must NOT set
             // output.continue or a noisy reason — the agent simply ends.
+            //
+            // A genuine stop also resets the per-session continuation budget and
+            // marks the loop completed. Without this, autoContinues accumulates
+            // across tasks (the next user request hits the cap immediately) and
+            // the loop hook keeps ticking on session.idle — both make Bob look
+            // like he "keeps finishing" or stops prematurely.
+            st.get(decideSessionID).autoContinues = 0;
+            markCompleted(decideSessionID);
             return;
           }
           s.autoContinues += 1;

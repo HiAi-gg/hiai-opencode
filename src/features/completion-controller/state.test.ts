@@ -3,6 +3,7 @@ import {
   clear,
   currentFingerprint,
   get,
+  mergeChangedFiles,
   recordChangedFile,
   recordCriticVerdict,
   resetForUser,
@@ -98,6 +99,78 @@ describe("state: recordChangedFile / trackChangedFile", () => {
     const s = get(sid);
     expect(s.criticVerdict).toBeNull();
     expect(s.reviewedFingerprint).toBeNull();
+    clear(sid);
+  });
+
+  it("does NOT invalidate a review when an already-tracked file is rewritten", () => {
+    // Regression: rewriting a reviewed file (e.g. an auto-fix re-saving the
+    // same path) must not reset criticVerdict/reviewedFingerprint — otherwise
+    // the session loops review→build→review until maxAutoContinues.
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
+    expect(get(sid).criticVerdict).toBe("approved");
+    const fp = get(sid).reviewedFingerprint;
+
+    // Same path again — deduped, review state preserved.
+    recordChangedFile(sid, "/a/file.ts", false);
+    const s = get(sid);
+    expect(s.changedFiles).toEqual(["/a/file.ts"]);
+    expect(s.criticVerdict).toBe("approved");
+    expect(s.reviewedFingerprint).toBe(fp);
+    clear(sid);
+  });
+
+  it("invalidates review when a NEW file is added after approval", () => {
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
+    expect(get(sid).criticVerdict).toBe("approved");
+
+    recordChangedFile(sid, "/b/new.ts", false);
+    const s = get(sid);
+    expect(s.criticVerdict).toBeNull();
+    expect(s.reviewedFingerprint).toBeNull();
+    clear(sid);
+  });
+
+  it("merge with no new files preserves an approved verdict", () => {
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
+    const fp = get(sid).reviewedFingerprint;
+    expect(get(sid).criticVerdict).toBe("approved");
+
+    // A child that changed nothing (explore, finished critic) merges nothing —
+    // must NOT reset the parent's approval (was the review-loop source).
+    mergeChangedFiles(sid, [], () => false);
+    expect(get(sid).criticVerdict).toBe("approved");
+    expect(get(sid).reviewedFingerprint).toBe(fp);
+    clear(sid);
+  });
+
+  it("merge with an already-known file preserves an approved verdict", () => {
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
+    const fp = get(sid).reviewedFingerprint;
+
+    // Child touched the same file the parent already tracked — no new info.
+    mergeChangedFiles(sid, ["/a/file.ts"], () => false);
+    expect(get(sid).criticVerdict).toBe("approved");
+    expect(get(sid).reviewedFingerprint).toBe(fp);
+    clear(sid);
+  });
+
+  it("merge with a genuinely new file invalidates the verdict", () => {
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordCriticVerdict(sid, "approved");
+    expect(get(sid).criticVerdict).toBe("approved");
+
+    mergeChangedFiles(sid, ["/b/new.ts"], () => false);
+    expect(get(sid).criticVerdict).toBeNull();
+    expect(get(sid).reviewedFingerprint).toBeNull();
     clear(sid);
   });
 });

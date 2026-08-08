@@ -41,13 +41,22 @@ export function recordChangedFile(
   isUi: boolean,
 ): void {
   const s = get(sessionID);
-  if (!s.changedFiles.includes(path)) s.changedFiles.push(path);
+  const norm = path.replace(/\\/g, "/");
+  const isNewFile = !s.changedFiles.includes(norm);
+  if (isNewFile) s.changedFiles.push(norm);
   if (isUi) s.uiChangedSinceReview = true;
-  s.criticVerdict = null;
-  s.reviewedFingerprint = null;
-  // An edit means lsp_diagnostics is now pending — the agent must run it
-  // before the completion controller will allow a stop.
-  s.lspPending = true;
+  // Only a genuinely NEW file invalidates a prior review. Rewriting a file that
+  // was already reviewed (e.g. an auto-fix re-saving the same path) must NOT
+  // reset criticVerdict/reviewedFingerprint — otherwise every post-review touch
+  // re-triggers a fresh Critic cycle and the session loops review→build→review
+  // until maxAutoContinues (the "Bob keeps finishing repeatedly" bug).
+  if (isNewFile) {
+    s.criticVerdict = null;
+    s.reviewedFingerprint = null;
+    // An edit means lsp_diagnostics is now pending — the agent must run it
+    // before the completion controller will allow a stop.
+    s.lspPending = true;
+  }
 }
 
 /** Merge changed files from a child session into the parent without re-tripping gates. */
@@ -57,14 +66,24 @@ export function mergeChangedFiles(
   isUiFn: (fp: string) => boolean,
 ): void {
   const s = get(sessionID);
+  let added = false;
   for (const fp of files) {
-    if (!s.changedFiles.includes(fp)) s.changedFiles.push(fp);
+    if (!s.changedFiles.includes(fp)) {
+      s.changedFiles.push(fp);
+      added = true;
+    }
     if (isUiFn(fp)) s.uiChangedSinceReview = true;
   }
-  // Merging inherited changes invalidates a prior review, but must NOT flip
-  // the per-session quality/lsp gates — those track the parent's own edits.
-  s.criticVerdict = null;
-  s.reviewedFingerprint = null;
+  // Merging inherited changes invalidates a prior review ONLY when new files
+  // actually arrived. A child that changed nothing (e.g. an explore or a
+  // finished critic) must NOT reset the parent's approved verdict — otherwise
+  // every subagent postStop re-triggers a fresh Critic cycle until the cap.
+  // This must NOT flip the per-session quality/lsp gates — those track the
+  // parent's own edits.
+  if (added) {
+    s.criticVerdict = null;
+    s.reviewedFingerprint = null;
+  }
 }
 
 export function recordCriticVerdict(

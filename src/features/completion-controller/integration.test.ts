@@ -116,7 +116,8 @@ describe("completion-controller: sanitizeReason", () => {
   });
 
   test("passes through a short, clean instruction unchanged", () => {
-    const clean = "Continue with the remaining TODO items until all are complete.";
+    const clean =
+      "Continue with the remaining TODO items until all are complete.";
     expect(sanitizeReason(clean)).toBe(clean);
   });
 
@@ -373,6 +374,74 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
 
     expect(st.get(parent).changedFiles).toContain("/src/feature.ts");
     // Unreviewed change + require_critic -> review prompt, which still continues.
+    expect(output.continue).toBe(true);
+    expect((output.reason ?? "").toLowerCase()).toContain("critic");
+    st.clear(parent);
+    st.clear(child);
+  });
+
+  test("stop path resets autoContinues and marks the loop completed", async () => {
+    const sid = uniqueSession();
+    // Pre-wind the counter to simulate a prior task that consumed budget.
+    st.get(sid).autoContinues = 24;
+    const { client } = makeMockClient([]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run({ sessionID: sid, agentType: "build" }, output);
+
+    // Genuine stop: no continue, budget reset to 0, loop marked completed so
+    // the idle loop hook stops ticking (fixes "Bob keeps finishing" repeat).
+    expect(output.continue).toBeUndefined();
+    expect(st.get(sid).autoContinues).toBe(0);
+    st.clear(sid);
+  });
+
+  test("approved + same-file rewrite still stops (no review loop)", async () => {
+    const parent = uniqueSession();
+    const child = uniqueSession();
+    st.recordChangedFile(parent, "/src/x.ts", false);
+    st.recordCriticVerdict(parent, "approved");
+    // Re-saving the SAME file must not invalidate the review.
+    st.recordChangedFile(parent, "/src/x.ts", false);
+
+    const { client } = makeMockClient([]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run(
+      { sessionID: child, agentType: "build", parentSessionID: parent },
+      output,
+    );
+
+    // Verdict still approved and fingerprint matches -> stop, no review loop.
+    expect(st.get(parent).criticVerdict).toBe("approved");
+    expect(output.continue).toBeUndefined();
+    st.clear(parent);
+    st.clear(child);
+  });
+
+  test("approved + NEW file after review -> review (not a silent stop)", async () => {
+    const parent = uniqueSession();
+    const child = uniqueSession();
+    st.recordChangedFile(parent, "/src/x.ts", false);
+    st.recordCriticVerdict(parent, "approved");
+    // A genuinely new file after approval must invalidate the review.
+    st.recordChangedFile(parent, "/src/y.ts", false);
+    // The new-file edit also flips lspPending (correct gate); clear it so the
+    // test isolates the review-invalidation path rather than the lsp gate.
+    st.setLspPending(parent, false);
+
+    const { client } = makeMockClient([]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run(
+      { sessionID: child, agentType: "build", parentSessionID: parent },
+      output,
+    );
+
+    expect(st.get(parent).criticVerdict).toBeNull();
     expect(output.continue).toBe(true);
     expect((output.reason ?? "").toLowerCase()).toContain("critic");
     st.clear(parent);
