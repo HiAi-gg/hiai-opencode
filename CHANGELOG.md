@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] — 2026-08-10
+
+### 📁 Ancestor-directory config discovery (bob.json / bob.env)
+
+- **bob.json/bob.env are now discovered in ancestor directories.** `loadConfig` and `loadEnvFiles` walk up from the project dir to the filesystem root, so opencode launched from a subdirectory (e.g. `packages/app`) picks up the repo-root config instead of silently falling back to defaults.
+- **Nearest ancestor wins.** A config in the working subtree overrides a higher one; per-directory the order is `bob.json` → `.opencode/bob.json` → `bob.jsonc` → `.opencode/bob.jsonc`, and global config dirs remain the last-resort candidates. First-match-wins is preserved for env files.
+- **CLI reads the same config the plugin loads.** `candidateConfigPaths()` walks ancestors from `cwd` with the same priority (plus `hiai-opencode.json` fallbacks), so `doctor`, `mcp-status`, `export-mcp`, and `diagnose` resolve the same file the runtime uses when invoked from a subdirectory; global and Windows `%APPDATA%` paths are still appended.
+
+### 🛡️ Hook robustness for undefined output
+
+- **`combineHookSets` no longer crashes when opencode invokes a hook point without an `output` object** (some hook points in opencode 1.18.x call handlers with `output === undefined`). Every handler in the chain still runs; error-DTO accumulation is simply skipped when there is no output to attach to, so non-blocking handler errors are swallowed as before.
+
+### 🎨 Vision re-scoped to UI/frontend verification + Lightpanda engine docs
+
+- **Vision's role is now explicit: browser operator + multimodal UI/frontend verification.** The agent description states it verifies design and UI/UX via a live browser and visual artifacts (screenshots, PDFs, images) and is **not** system/software architecture — architecture stays with plan/manager.
+- **Lightpanda documented as an optional headless-only engine** — set `AGENT_BROWSER_ENGINE=lightpanda` for the session or pass `agent-browser --engine lightpanda open <url>` per run. `skills/vision/SKILL.md` gains a full "Lightpanda Engine" section: install via the official one-liner (`curl -fsSL https://pkg.lightpanda.io/install.sh | bash`, **not** `cargo`), auto-managed and manual (`lightpanda serve --port 9222` + `agent-browser connect`) flows, and caveats (no extensions/profiles/persistent state/file access; headed mode is Chrome-only; Chrome remains the default and fallback engine). `bob.env.example` and `AGENTS.md` document the new `AGENT_BROWSER_ENGINE` variable.
+
+### 🧪 Tests
+
+- New: ancestor `bob.json` discovery and nearest-wins precedence (`src/config.test.ts`), ancestor `bob.env` discovery and nearest-wins precedence (`src/tools/config-smoke.test.ts`), and hook handlers running with `undefined` output while swallowing non-blocking errors (`src/hooks/index.test.ts`).
+
 ## [0.5.2] — 2026-08-08
 
 ### 🐛 Caveman: fix agent identification with shared models
