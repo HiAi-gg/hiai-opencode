@@ -54,6 +54,21 @@ npm i -g agent-browser
 agent-browser install
 ```
 
+Lightpanda is an optional, headless-only CDP-compatible browser engine. If the task
+benefits from a lighter engine, verify it:
+
+```bash
+command -v lightpanda
+```
+
+If missing, install via the official script:
+
+```bash
+curl -fsSL https://pkg.lightpanda.io/install.sh | bash
+```
+
+Do not install Lightpanda via `cargo`.
+
 Do not replace the CLI with ad hoc browser scripts.
 
 ## Context Hygiene
@@ -113,8 +128,68 @@ If Chrome exits before CDP is ready or reports `DevToolsActivePort`, report:
 "Chrome crashed before CDP became available; start Chrome manually with
 `--remote-debugging-port` and retry attach."
 
-Lightpanda is optional. Do not try `--engine lightpanda` unless
-`command -v lightpanda` succeeds.
+Chrome is the default and fallback engine. For a headless-only alternative,
+see the [Lightpanda Engine](#lightpanda-engine) section below.
+
+## Lightpanda Engine
+
+Lightpanda is a headless-only, CDP-compatible browser engine. Use it as a
+lightweight alternative to Chrome when extensions, profiles, persistent state,
+file access, and headed mode are not required.
+
+### Installation
+
+Install the official binary (do **not** use `cargo`):
+
+```bash
+curl -fsSL https://pkg.lightpanda.io/install.sh | bash
+```
+
+Verify:
+
+```bash
+command -v lightpanda
+```
+
+### Recommended: Auto-Managed Flow
+
+Let `agent-browser` manage the Lightpanda lifecycle automatically. Set
+`AGENT_BROWSER_ENGINE` so every command targets Lightpanda:
+
+```bash
+export AGENT_BROWSER_ENGINE=lightpanda
+agent-browser --engine lightpanda open <url>
+```
+
+If `lightpanda` is not on `$PATH`, provide an explicit path:
+
+```bash
+agent-browser --engine lightpanda --executable-path /path/to/lightpanda open <url>
+```
+
+### Alternative: Manual Flow
+
+Start Lightpanda as a standalone CDP server, then connect from a separate
+process:
+
+```bash
+lightpanda serve --port 9222
+```
+
+Once the server is listening:
+
+```bash
+agent-browser connect http://127.0.0.1:9222
+agent-browser open <url>
+```
+
+### Caveats
+
+- Headless-only — `AGENT_BROWSER_HEADED` has no effect and is not needed.
+- Extensions, profiles, persistent browser state, and local file access are
+  not supported.
+- Screenshots are supported via CDP but fidelity depends on engine rendering.
+- Use `--engine lightpanda` explicitly; Chrome remains the default fallback.
 
 ## Open Design Smoke Path
 

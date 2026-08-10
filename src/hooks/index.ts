@@ -86,8 +86,11 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
       input: unknown,
       output: unknown,
     ) => {
-      const out = output as { errors?: HookErrorDTO[] };
-      out.errors = out.errors ?? [];
+      // Some hook points in opencode invoke handlers without an output object.
+      // Guard against undefined output so the handler still runs; error
+      // accumulation is skipped when there is no output to attach to.
+      const out = output as { errors?: HookErrorDTO[] } | undefined;
+      if (out) out.errors = out.errors ?? [];
       const seen = new Set<string>();
       for (const handler of handlers) {
         try {
@@ -109,6 +112,7 @@ export function combineHookSets(allSets: HookSet[]): HookSet {
           } catch {
             /* logging must never break the hook chain */
           }
+          if (!out) continue;
           // Lazily initialize the errors array so a BlockingHookError (which
           // propagates) never leaves a spurious empty `errors: []` behind.
           out.errors = out.errors ?? [];

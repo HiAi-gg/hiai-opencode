@@ -96,31 +96,49 @@ function resolveEnvTemplate(value) {
   })
 }
 
+function ancestorDirs(startDir) {
+  const dirs = []
+  let current = startDir
+  for (;;) {
+    dirs.push(current)
+    const parent = dirname(current)
+    if (parent === current) break
+    current = parent
+  }
+  return dirs
+}
+
 function candidateConfigPaths() {
-  const cwd = process.cwd()
-  // bob.json is the runtime config the plugin actually loads (src/config.ts).
-  // List it first so the CLI reads the same file the plugin uses; fall back to
-  // hiai-opencode.json for backward compatibility.
-  const paths = [
-    join(cwd, "bob.json"),
-    join(cwd, "bob.jsonc"),
-    join(cwd, ".opencode", "bob.json"),
-    join(cwd, ".opencode", "bob.jsonc"),
-    join(cwd, "hiai-opencode.json"),
-    join(cwd, "hiai-opencode.jsonc"),
-    join(cwd, ".opencode", "hiai-opencode.json"),
-    join(cwd, ".opencode", "hiai-opencode.jsonc"),
+  // Walk up from cwd so running inside a subdirectory still finds the
+  // repo-root bob.json — the same file the plugin loads (src/config.ts).
+  const ancestorDirsOfCwd = ancestorDirs(process.cwd())
+  const paths = []
+  for (const dir of ancestorDirsOfCwd) {
+    paths.push(
+      join(dir, "bob.json"),
+      join(dir, "bob.jsonc"),
+      join(dir, ".opencode", "bob.json"),
+      join(dir, ".opencode", "bob.jsonc"),
+      join(dir, "hiai-opencode.json"),
+      join(dir, "hiai-opencode.jsonc"),
+      join(dir, ".opencode", "hiai-opencode.json"),
+      join(dir, ".opencode", "hiai-opencode.jsonc"),
+    )
+  }
+  paths.push(
     join(homedir(), ".config", "opencode", "bob.json"),
     join(homedir(), ".config", "opencode", "bob.jsonc"),
     join(homedir(), ".config", "opencode", "hiai-opencode.json"),
     join(homedir(), ".config", "opencode", "hiai-opencode.jsonc"),
-  ]
+  )
 
   if (process.platform === "win32" && process.env.APPDATA) {
-    paths.push(join(process.env.APPDATA, "opencode", "bob.json"))
-    paths.push(join(process.env.APPDATA, "opencode", "bob.jsonc"))
-    paths.push(join(process.env.APPDATA, "opencode", "hiai-opencode.json"))
-    paths.push(join(process.env.APPDATA, "opencode", "hiai-opencode.jsonc"))
+    paths.push(
+      join(process.env.APPDATA, "opencode", "bob.json"),
+      join(process.env.APPDATA, "opencode", "bob.jsonc"),
+      join(process.env.APPDATA, "opencode", "hiai-opencode.json"),
+      join(process.env.APPDATA, "opencode", "hiai-opencode.jsonc"),
+    )
   }
 
   return paths

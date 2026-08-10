@@ -108,7 +108,7 @@ export function createAllAgents(config: BobConfig): AgentDefinition[] {
       config: {
         name: "Vision",
         description:
-          "Analyze images, PDFs, diagrams. Visual content extraction and verification.",
+          "Browser operator + multimodal UI/frontend verification. Verifies design, UI/UX via live browser and visual artifacts (screenshots, PDFs, images). NOT system/software architecture — delegate architecture to plan/manager.",
         mode: "subagent",
         hidden: true,
         model: resolveModel("vision", config),

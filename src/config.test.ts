@@ -49,6 +49,41 @@ describe("delegation config", () => {
     expect(loadConfig(project).subagent_depth).toBe(3);
   });
 
+  test("discovers bob.json in an ancestor directory when running from a subdirectory", () => {
+    const root = join(
+      tmpdir(),
+      `hiai-ancestor-${Date.now()}-${Math.random()}`,
+    );
+    const sub = join(root, "packages", "app");
+    directories.push(root);
+    mkdirSync(sub, { recursive: true });
+    writeFileSync(
+      join(root, "bob.json"),
+      JSON.stringify({ subagent_depth: 5 }),
+    );
+    // Nearest ancestor (sub) has no bob.json — the root one must win.
+    expect(loadConfig(sub).subagent_depth).toBe(5);
+  });
+
+  test("prefers the nearest ancestor bob.json over a higher one", () => {
+    const root = join(
+      tmpdir(),
+      `hiai-nearest-${Date.now()}-${Math.random()}`,
+    );
+    const nested = join(root, "nested");
+    directories.push(root);
+    mkdirSync(nested, { recursive: true });
+    writeFileSync(
+      join(root, "bob.json"),
+      JSON.stringify({ subagent_depth: 7 }),
+    );
+    writeFileSync(
+      join(nested, "bob.json"),
+      JSON.stringify({ subagent_depth: 9 }),
+    );
+    expect(loadConfig(nested).subagent_depth).toBe(9);
+  });
+
   test("Dream and Distill explicit models override the Bob fallback", () => {
     const config = mergeConfig({
       models: { bob: { model: "provider/bob" } },

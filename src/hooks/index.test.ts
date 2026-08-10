@@ -494,6 +494,31 @@ describe("combineHookSets dispose", () => {
     // initialized but must remain empty (no sanitized DTO pushed).
     expect(output.errors).toEqual([]);
   });
+
+  test("hook handlers run when opencode invokes them without an output object", async () => {
+    const calls: string[] = [];
+    const setA: HookSet = {
+      "tool.execute.before": async () => {
+        calls.push("a");
+      },
+    };
+    const setB: HookSet = {
+      "tool.execute.before": async () => {
+        calls.push("b");
+        throw new Error("non-blocking boom");
+      },
+    };
+    const merged = combineHookSets([setA, setB]);
+    const handler = merged["tool.execute.before"];
+    expect(handler).toBeDefined();
+
+    // opencode 1.18.15 can invoke some hook points with output === undefined.
+    // The chain must still run every handler and swallow non-blocking errors.
+    await expect(
+      handler!({ tool: "read", sessionID: "ses_test", callID: "c1" }, undefined),
+    ).resolves.toBeUndefined();
+    expect(calls).toEqual(["a", "b"]);
+  });
 });
 
 // ── Browser automation gate: Playwright/Puppeteer hard block ──

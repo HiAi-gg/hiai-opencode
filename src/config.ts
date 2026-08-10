@@ -48,9 +48,27 @@ const MANAGED_ENV_KEYS = new Set([
 ] as const);
 
 /**
+ * Collect all ancestor directories of `startDir`, nearest first, walking up to
+ * the filesystem root. `startDir` itself is included. Used to discover
+ * project config (bob.json/bob.env) when opencode runs from a subdirectory —
+ * the nearest ancestor that has the file wins.
+ */
+function ancestorDirs(startDir: string): string[] {
+  const dirs: string[] = [];
+  let current = startDir;
+  for (;;) {
+    dirs.push(current);
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+  return dirs;
+}
+
+/**
  * Load bob.env from multiple paths.
- * Env-file priority (highest first): projectDir → projectDir/.opencode →
- * globalConfigDir → PLUGIN_ROOT (fallback).
+ * Env-file priority (highest first): nearest ancestor bob.env →
+ * projectDir/.opencode → globalConfigDir → PLUGIN_ROOT (fallback).
  * Among env files: first file that sets a key wins (first-match-wins).
  *
  * For managed keys (FIRECRAWL_API_KEY etc.): the env-file value always wins
@@ -60,7 +78,7 @@ const MANAGED_ENV_KEYS = new Set([
 export function loadEnvFiles(projectDir: string): void {
   const globalDir = globalConfigDir();
   const candidates = [
-    join(projectDir, "bob.env"),
+    ...ancestorDirs(projectDir).map((dir) => join(dir, "bob.env")),
     join(projectDir, ".opencode", "bob.env"),
     join(globalDir, "bob.env"),
     join(PLUGIN_ROOT, "bob.env"),
@@ -328,14 +346,18 @@ export function loadConfig(projectDir: string): BobConfig {
   // configs below OVERRIDE that baseline. Loading the plugin's bob.json
   // as a candidate would shadow the user's .opencode/bob.json because the
   // old code did `break` on the first match.
-  const candidates = [
-    join(projectDir, "bob.json"),
-    join(projectDir, ".opencode", "bob.json"),
-    join(projectDir, "bob.jsonc"),
-    join(projectDir, ".opencode", "bob.jsonc"),
-    join(cfgDir, "bob.json"),
-    join(cfgDir, "bob.jsonc"),
-  ];
+  // Priority: nearest ancestor wins. Starting from projectDir, each ancestor
+  // is checked for bob.json (project-local), then .opencode/bob.json, then
+  // bob.jsonc variants, walking up to the filesystem root. This lets opencode
+  // launched from a subdirectory still pick up the repo-root config.
+  const ancestors = ancestorDirs(projectDir);
+  const candidates = ancestors.flatMap((dir) => [
+    join(dir, "bob.json"),
+    join(dir, ".opencode", "bob.json"),
+    join(dir, "bob.jsonc"),
+    join(dir, ".opencode", "bob.jsonc"),
+  ]);
+  candidates.push(join(cfgDir, "bob.json"), join(cfgDir, "bob.jsonc"));
 
   // First config wins. This mirrors the documented source order and prevents a
   // global file from unexpectedly changing a project-local topology.
