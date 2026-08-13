@@ -236,6 +236,40 @@ function checkAgentBrowser() {
   }
 }
 
+// Resolve the effective agent-browser engine using the documented priority:
+//   1. explicit AGENT_BROWSER_ENGINE wins;
+//   2. otherwise lightpanda if its binary is on PATH;
+//   3. otherwise Chrome (the default and fallback engine).
+// Presence detection only — never installs or touches the network.
+function detectAgentBrowserEngine() {
+  const explicit = process.env.AGENT_BROWSER_ENGINE?.trim().toLowerCase() || ""
+  const lightpandaPresent = hasBinary("lightpanda")
+  const effective = explicit || (lightpandaPresent ? "lightpanda" : "chrome")
+  return { explicit, lightpandaPresent, effective }
+}
+
+function checkLightpandaPresence() {
+  const { lightpandaPresent } = detectAgentBrowserEngine()
+  if (lightpandaPresent) {
+    return { level: "ok", detail: "lightpanda binary found on PATH" }
+  }
+  // Missing Lightpanda is non-blocking (info): Chrome is the fallback engine.
+  return {
+    level: "info",
+    detail: "lightpanda not installed — Chrome fallback in effect (optional: curl -fsSL https://pkg.lightpanda.io/install.sh | bash)",
+  }
+}
+
+function checkAgentBrowserEngine() {
+  const { explicit, lightpandaPresent, effective } = detectAgentBrowserEngine()
+  const source = explicit
+    ? `explicit AGENT_BROWSER_ENGINE=${explicit}`
+    : lightpandaPresent
+      ? "auto (lightpanda binary on PATH)"
+      : "fallback (lightpanda not found)"
+  return { level: "info", detail: `effective engine=${effective} [${source}]` }
+}
+
 function checkOpenCodePluginRegistration() {
   for (const path of candidateOpenCodeConfigPaths()) {
     if (!existsSync(path)) continue
@@ -787,6 +821,7 @@ function hasEnvOrAuth(config, envName, authKey) {
 function statusIcon(level) {
   if (level === "ok") return "✅"
   if (level === "warn") return "⚠️ "
+  if (level === "info") return "ℹ️ "
   return "❌"
 }
 
@@ -879,6 +914,14 @@ async function mcpStatus(options = {}) {
     track(agentBrowser.level)
     outInfo(`${statusIcon(agentBrowser.level)} Agent-browser CLI - ${agentBrowser.detail}`)
 
+    const lightpanda = checkLightpandaPresence()
+    track(lightpanda.level)
+    outInfo(`${statusIcon(lightpanda.level)} Lightpanda engine - ${lightpanda.detail}`)
+
+    const engine = checkAgentBrowserEngine()
+    track(engine.level)
+    outInfo(`${statusIcon(engine.level)} Agent-browser effective engine - ${engine.detail}`)
+
     outInfo("")
     outInfo("MCP Tool Probes:")
     const probeResults = await probeMcpServers(config)
@@ -920,6 +963,7 @@ async function runDiagnose(outputPath) {
     "HIAI_OPENCODE_EXPORT_MCP_MODE",
     "CONTEXT7_API_KEY",
     "AGENT_BROWSER_SESSION",
+    "AGENT_BROWSER_ENGINE",
     "GREP_APP_API_KEY",
     "OLLAMA_BASE_URL",
     "OLLAMA_MODEL",

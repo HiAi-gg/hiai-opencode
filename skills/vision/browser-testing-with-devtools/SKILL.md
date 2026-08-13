@@ -31,7 +31,9 @@ Use the `agent-browser` CLI skill instead of installing `chrome-devtools-mcp`. T
 bun add -g agent-browser && agent-browser install
 ```
 
-Key env vars: `AGENT_BROWSER_HEADED=1`, `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_PROFILE`.
+Key env vars: `AGENT_BROWSER_HEADED=1`, `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_PROFILE`, `AGENT_BROWSER_ENGINE`.
+
+**Engine selection:** the runtime prefers **Lightpanda** (headless-only) when its binary is installed and `AGENT_BROWSER_ENGINE` is unset; **Chrome** is the fallback. Override with `AGENT_BROWSER_ENGINE=chrome|lightpanda` or `agent-browser --engine <name> open <url>`. Lightpanda is a separate user-level install (official installer only — not `cargo`, not auto-downloaded by the npm plugin or `agent-browser install`).
 
 ### Available Capabilities
 

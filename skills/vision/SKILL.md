@@ -54,14 +54,16 @@ npm i -g agent-browser
 agent-browser install
 ```
 
-Lightpanda is an optional, headless-only CDP-compatible browser engine. If the task
-benefits from a lighter engine, verify it:
+Lightpanda is an optional, headless-only CDP-compatible browser engine. The runtime
+auto-prefers it whenever the binary is installed and `AGENT_BROWSER_ENGINE` is not set
+(Chrome is the fallback). Verify the binary:
 
 ```bash
 command -v lightpanda
 ```
 
-If missing, install via the official script:
+If missing, install it separately at user level via the official installer — neither
+the npm plugin nor `agent-browser install` downloads it:
 
 ```bash
 curl -fsSL https://pkg.lightpanda.io/install.sh | bash
@@ -128,8 +130,9 @@ If Chrome exits before CDP is ready or reports `DevToolsActivePort`, report:
 "Chrome crashed before CDP became available; start Chrome manually with
 `--remote-debugging-port` and retry attach."
 
-Chrome is the default and fallback engine. For a headless-only alternative,
-see the [Lightpanda Engine](#lightpanda-engine) section below.
+The runtime prefers Lightpanda when its binary is installed and
+`AGENT_BROWSER_ENGINE` is unset; Chrome is the fallback. For the headless-only
+alternative, see the [Lightpanda Engine](#lightpanda-engine) section below.
 
 ## Lightpanda Engine
 
@@ -139,7 +142,8 @@ file access, and headed mode are not required.
 
 ### Installation
 
-Install the official binary (do **not** use `cargo`):
+Install the official binary at **user level** via the official installer (do **not**
+use `cargo`); neither the npm plugin nor `agent-browser install` downloads it:
 
 ```bash
 curl -fsSL https://pkg.lightpanda.io/install.sh | bash
@@ -153,12 +157,20 @@ command -v lightpanda
 
 ### Recommended: Auto-Managed Flow
 
-Let `agent-browser` manage the Lightpanda lifecycle automatically. Set
-`AGENT_BROWSER_ENGINE` so every command targets Lightpanda:
+Let `agent-browser` manage the Lightpanda lifecycle automatically. When the binary
+is installed and `AGENT_BROWSER_ENGINE` is unset, the runtime already prefers
+Lightpanda — no flag needed. To make the intent explicit, or to force Lightpanda:
 
 ```bash
 export AGENT_BROWSER_ENGINE=lightpanda
 agent-browser --engine lightpanda open <url>
+```
+
+To force Chrome (the fallback) even when Lightpanda is installed:
+
+```bash
+export AGENT_BROWSER_ENGINE=chrome
+agent-browser --engine chrome open <url>
 ```
 
 If `lightpanda` is not on `$PATH`, provide an explicit path:
@@ -189,7 +201,7 @@ agent-browser open <url>
 - Extensions, profiles, persistent browser state, and local file access are
   not supported.
 - Screenshots are supported via CDP but fidelity depends on engine rendering.
-- Use `--engine lightpanda` explicitly; Chrome remains the default fallback.
+- Engine auto-selection: Lightpanda is preferred when installed and `AGENT_BROWSER_ENGINE` is unset; Chrome is the fallback. Force either engine with `AGENT_BROWSER_ENGINE=chrome|lightpanda` or `--engine <name>`.
 
 ## Open Design Smoke Path
 

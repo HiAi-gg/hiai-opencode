@@ -22,7 +22,7 @@ Most AI coding tools drop you into one big context window and hope the model sel
 - 🔍 **Diagnostics are mandatory, not optional.** Edit a file and the completion gate blocks until `lsp_diagnostics` has run clean and any failing `test` / `lint` / `typecheck` passes.
 - 🧠 **A real team, not a monologue.** Bob routes by category — quick work to a cheap executor, hard implementation to a Senior Engineer, architecture to a Principal Architect, UI to a Designer, docs to a Writer.
 - 🗜️ **Context that survives compaction.** Long sessions compact gracefully — in-memory gate state (failed quality check, pending diagnostics, unreviewed changes) is re-injected into the compaction context so the post-compaction agent still knows what blocks completion.
-- ⚡ **No external services.** Everything is local: SQLite memory (Bun), LSP via `npx`, browser via Chrome CDP. Zero cloud dependencies, zero data leaves your machine.
+- ⚡ **No external services.** Everything is local: SQLite memory (Bun), LSP via `npx`, browser via local Lightpanda/Chrome CDP. Zero cloud dependencies, zero data leaves your machine.
 - 🪝 **One line to install.** No separate MCP server config, no manual wiring — `opencode plugin @hiai-gg/hiai-opencode@latest --global`.
 
 ---
@@ -54,7 +54,25 @@ cp bob.env.example bob.env
 # Edit bob.env — add FIRECRAWL_API_KEY for web scraping (optional)
 ```
 
-### 4. Verify
+### 4. (Optional) Install browser automation
+
+Vision's browser tools talk to a local engine over CDP. Engine selection is automatic: **Lightpanda** when its binary is on your PATH, **Chrome** otherwise.
+
+Install the CLI and provision the Chrome fallback:
+
+```bash
+bun add -g agent-browser && agent-browser install
+```
+
+**Lightpanda** ([lightpanda.io](https://lightpanda.io)) — optional, preferred when installed, headless-only. Separate user-level install via the official installer, not `cargo`:
+
+```bash
+curl -fsSL https://pkg.lightpanda.io/install.sh | bash
+```
+
+Force an engine per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome.
+
+### 5. Verify
 
 ```bash
 opencode debug config
@@ -72,7 +90,12 @@ Paste this into a fresh session:
 Read AGENTS.md and finish hiai-opencode setup for this workspace.
 Check that @hiai-gg/hiai-opencode is registered, enable MCP services that can run here
 (sequential-thinking: node/npx; grep_app: no key), verify with opencode debug config
-and hiai-opencode doctor. Report missing keys without printing secret values.
+and hiai-opencode doctor.
+Install and configure browser automation for Vision as documented in AGENTS.md:
+bun add -g agent-browser && agent-browser install, plus Lightpanda via its official
+installer when possible. Verify with agent-browser --version and lightpanda version
+(if installed), then run hiai-opencode doctor again.
+Report missing keys without printing secret values.
 ```
 
 ---
@@ -99,12 +122,14 @@ Bob routes work; the rest execute. Three are visible in the picker (you can invo
 ### Tools — 35 registered
 
 - **LSP (6)** — `lsp_diagnostics`, `lsp_goto_definition`, `lsp_find_references`, `lsp_symbols`, `lsp_prepare_rename`, `lsp_rename`. TypeScript, Svelte, ESLint, Python, Bash.
-- **Agent Browser (14)** — Navigate, snapshot, click, fill, screenshot, eval, console, and more. Native Chrome via CDP — no Playwright. Restricted to Vision/General agents.
+- **Agent Browser (14)** — Navigate, snapshot, click, fill, screenshot, eval, console, and more. CDP via Lightpanda (preferred when installed) or Chrome (fallback) — no Playwright. Restricted to Vision/General agents.
 - **Memory (1)** — `hiai_memory_search`: BM25-ranked SQLite FTS5 search over MEMORY.md, checkpoints, notes, and task progress.
 - **Session Manager (4)** — List, read, search, and inspect sessions.
 - **Worktree (4)** — `hiai_worktree_create`/`_list`/`_remove`/`_status` for isolated parallel work.
 - **Skills (1)** — `skill("build/shadcn-ui")`, `skill("explore/context7")`, etc.
 - **Firecrawl (3)** — Web scrape, search, sitemap (CLI skill, requires `FIRECRAWL_API_KEY`).
+
+**Browser engines (auto-selected):** the runtime prefers **Lightpanda** ([lightpanda.io](https://lightpanda.io); headless-only) when its binary is on your PATH and `AGENT_BROWSER_ENGINE` is unset; **Chrome** is the fallback. Override per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome. Lightpanda installs separately via its official installer (not `cargo`) — neither the npm plugin nor `agent-browser install` downloads it. See [Install](#install).
 
 ### MCP servers — 2, zero-config
 

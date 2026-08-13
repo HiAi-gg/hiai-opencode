@@ -186,7 +186,18 @@ CLI skills (not MCP, invoked via `skill("...")` or shell):
 
 - `firecrawl` — web scraping (requires `FIRECRAWL_API_KEY`)
 - `context7` — on-demand library docs via `skill("explore/context7")`
-- `agent-browser` — browser automation via Chrome CDP (uses `/agent-browser` skill)
+- `agent-browser` — browser automation via CDP on Lightpanda (preferred when installed) or Chrome (fallback) (uses `/agent-browser` skill)
+
+### Browser engine selection
+
+The external `agent-browser` CLI owns launching the browser engine — the plugin never starts, downloads, or embeds one. The plugin's only engine logic is a small availability-aware selection step in [src/shared/agent-browser-engine.ts](src/shared/agent-browser-engine.ts): `applyAgentBrowserEngineDefault()` (invoked from [src/index.ts](src/index.ts) before agent creation) checks whether a `lightpanda` binary exists on `$PATH` and, if so while `AGENT_BROWSER_ENGINE` is unset, sets the variable to `lightpanda`. Otherwise the variable is left **unset** so upstream `agent-browser` falls back to its own default engine, **Chrome** — the plugin never hardcodes Chrome, and the Chrome fallback remains.
+
+- **Auto-selection:** if the `lightpanda` binary is on `$PATH` and `AGENT_BROWSER_ENGINE` is **not** set, the plugin sets `AGENT_BROWSER_ENGINE=lightpanda`, so upstream prefers **Lightpanda** (headless-only).
+- **Fallback:** **Chrome**, `agent-browser`'s own default engine, provisioned by `agent-browser install`.
+- **Explicit override** beats auto-selection: `AGENT_BROWSER_ENGINE=chrome|lightpanda` (env, whole session) or `agent-browser --engine chrome|lightpanda open <url>` (CLI flag, per run). An explicit value is always honored verbatim.
+- **Install boundary:** Lightpanda is a separate **user-level** install via its official installer (`curl -fsSL https://pkg.lightpanda.io/install.sh | bash`, not `cargo`). Neither the npm plugin nor `agent-browser install` downloads the Lightpanda binary — the plugin only detects an already-installed binary on `$PATH`.
+
+Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome.
 
 ## MCP
 

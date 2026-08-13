@@ -33,8 +33,12 @@ When asked to finish setup in a workspace:
 4. **Env keys** (without printing values — see [bob.env.example](bob.env.example)):
    - `FIRECRAWL_API_KEY` — required for the Firecrawl CLI skill
    - `CONTEXT7_API_KEY` — optional, on-demand via `skill("explore/context7")`
-   - `AGENT_BROWSER_SESSION`, `GREP_APP_API_KEY`, `OLLAMA_*` — optional
-5. **Verify**: `opencode debug config`, `hiai-opencode doctor`, `hiai-opencode mcp-status`.
+   - `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_ENGINE`, `GREP_APP_API_KEY`, `OLLAMA_*` — optional
+5. **Browser tooling** (required for the `/agent-browser` skill — details in [Browser automation](#browser-automation)):
+   - Install the CLI: `bun add -g agent-browser && agent-browser install` — `agent-browser install` provisions only the **Chrome fallback** engine.
+   - Lightpanda is **optional** and **headless-only**: install via the official user-level installer (not `cargo`) — `curl -fsSL https://pkg.lightpanda.io/install.sh | bash` (site: https://lightpanda.io).
+   - Engine rules: Lightpanda is auto-preferred when its binary is installed; Chrome is the fallback; an explicit `AGENT_BROWSER_ENGINE=chrome|lightpanda` overrides auto-selection.
+6. **Verify**: `opencode debug config`, `hiai-opencode doctor`, `hiai-opencode mcp-status`; for browser tooling confirm `agent-browser --version` and, if Lightpanda was installed, `lightpanda version`.
 
 Operating rules: keep OpenCode plugins separate from MCP servers; never add MCP server packages to the `plugin` array; never print/invent/commit API keys; prefer user-level or project-local installs (no sudo).
 
@@ -101,7 +105,7 @@ Use [bob.env.example](bob.env.example) as the canonical template. Model provider
 | `FIRECRAWL_API_KEY` | Firecrawl CLI skill (web scraping) |
 | `CONTEXT7_API_KEY` | On-demand library docs via `skill("explore/context7")` |
 | `AGENT_BROWSER_SESSION` | Browser automation session name |
-| `AGENT_BROWSER_ENGINE` | Browser engine — `chrome` (default) \| `lightpanda` (optional, headless-only) |
+| `AGENT_BROWSER_ENGINE` | Browser engine — auto-selects `lightpanda` when its binary is installed; `chrome` is the fallback; an explicit `chrome` \| `lightpanda` value overrides auto-selection |
 | `GREP_APP_API_KEY` | Optional grep.app search |
 | `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | Local Ollama models |
 | `HIAI_OPENCODE_AUTO_EXPORT_MCP` | `if-missing` (default) \| `always` \| `off` |
@@ -153,17 +157,23 @@ The plugin can't find its bundled config. Run `bun run build` to populate `dist/
 Firecrawl is a CLI skill, not an MCP server. The env var must be in the shell that runs the CLI skill — `export FIRECRAWL_API_KEY=fc-...` before starting OpenCode, or set it in `bob.env`. It is NOT configured in the `mcp` block.
 
 ### Browser automation
-Use the `/agent-browser` skill (not MCP). Install: `bun add -g agent-browser && agent-browser install`. Uses native Chrome via CDP — no Playwright. Key env: `AGENT_BROWSER_HEADED=1`, `AGENT_BROWSER_SESSION=name`. Pattern: `snapshot -i --json` → @eN refs → `click @e2`. Repo: https://github.com/vercel-labs/agent-browser
+Use the `/agent-browser` skill (not MCP). Install: `bun add -g agent-browser && agent-browser install`. Uses CDP against Lightpanda (preferred when installed) or Chrome (fallback) — no Playwright. Key env: `AGENT_BROWSER_HEADED=1`, `AGENT_BROWSER_SESSION=name`. Pattern: `snapshot -i --json` → @eN refs → `click @e2`. Repo: https://github.com/vercel-labs/agent-browser
 
-`agent-browser install` only sets up the **default engine (Chrome)** — it does **not** install Lightpanda.
+`agent-browser install` only provisions the **fallback engine (Chrome)** — it does **not** install Lightpanda, and neither does the npm plugin (no binary auto-download).
 
-**Lightpanda (optional, headless-only):** install via the official one-liner (not `cargo`):
+**Engine auto-selection:** if the `lightpanda` binary is installed and `AGENT_BROWSER_ENGINE` is **not** set, the runtime prefers **Lightpanda** (headless-only). **Chrome is the fallback** — used when Lightpanda is absent, or when an explicit override forces it.
+
+**Lightpanda (optional, headless-only):** separate user-level install via the official installer (not `cargo`):
 
 ```bash
 curl -fsSL https://pkg.lightpanda.io/install.sh | bash
 ```
 
-Select it per-run with the CLI flag `agent-browser --engine lightpanda open <url>`, or set `AGENT_BROWSER_ENGINE=lightpanda` for the whole session. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome — Lightpanda is headless-only. Chrome remains the default and fallback engine.
+**Explicit override** (beats auto-selection) — env var for the whole session, or CLI flag per run:
+- `AGENT_BROWSER_ENGINE=chrome` / `agent-browser --engine chrome open <url>` — force Chrome
+- `AGENT_BROWSER_ENGINE=lightpanda` / `agent-browser --engine lightpanda open <url>` — force Lightpanda
+
+Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome — Lightpanda is headless-only.
 
 ### Agent prompt correct in source but wrong at runtime
 The runtime prompt is assembled in layers: (1) `src/agents/<agent>.ts`, (2) `src/prompt-library/*.ts` imports, (3) runtime hooks (closure-injector, caveman-system-injector), (4) `hooks.config` in [src/index.ts](src/index.ts) applies model/visibility/permissions. Inspect `hooks.config` first when runtime output diverges from source.

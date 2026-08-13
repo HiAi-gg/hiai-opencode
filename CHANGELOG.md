@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] — 2026-08-13
+
+### 🌐 Runtime Lightpanda auto-selection
+
+- **New availability-aware engine default.** `applyAgentBrowserEngineDefault()` (`src/shared/agent-browser-engine.ts`), invoked from the plugin entry before agents are created, checks whether a `lightpanda` binary is on `$PATH` and — while `AGENT_BROWSER_ENGINE` is unset — sets the variable to `lightpanda`. Otherwise the variable stays **unset** so upstream `agent-browser` falls back to its own default engine, **Chrome**; the plugin never hardcodes Chrome.
+- **Explicit override always wins:** `AGENT_BROWSER_ENGINE=chrome|lightpanda` (env, whole session) or `agent-browser --engine chrome|lightpanda open <url>` (CLI flag, per run) beats auto-selection; `chrome` forces the fallback engine even when Lightpanda is installed.
+- **Install boundary clarified:** Lightpanda is a separate **user-level** install via its official installer (`curl -fsSL https://pkg.lightpanda.io/install.sh | bash`, not `cargo`). Neither the npm plugin nor `agent-browser install` downloads the Lightpanda binary — `agent-browser install` provisions Chrome only; the plugin detects an already-installed binary on `$PATH`, it never downloads or embeds an engine.
+- New unit tests for PATH discovery and the auto-selection default (`src/shared/agent-browser-engine.test.ts`).
+
+### 🖥️ CLI doctor diagnostics
+
+- **`hiai-opencode mcp-status` now reports the browser-engine state:** a **Lightpanda engine** check (ok when the binary is on PATH; info when missing, with the install one-liner hint) and an **Agent-browser effective engine** check that traces the resolution chain — explicit `AGENT_BROWSER_ENGINE` → auto-selected Lightpanda on PATH → Chrome fallback.
+- **New info status level (ℹ️)** for non-blocking diagnostics alongside ok/warn/error.
+- **`hiai-opencode diagnose` now includes `AGENT_BROWSER_ENGINE`** in the environment snapshot.
+
+### 📚 Docs & install guidance
+
+- **Engine auto-selection documented consistently** across `README.md`, `ARCHITECTURE.md`, `AGENTS.md`, `bob.env.example`, and the vision skills: the runtime prefers **Lightpanda** (headless-only) when its binary is installed and `AGENT_BROWSER_ENGINE` is unset; **Chrome** is the fallback.
+- **README gains a dedicated "Install browser automation" step** (optional): `bun add -g agent-browser && agent-browser install` provisions the Chrome fallback, Lightpanda installs via its official one-liner, and engine overrides plus the headed-mode caveat (`AGENT_BROWSER_HEADED=1` is Chrome-only) are spelled out.
+- **`AGENTS.md` bootstrap checklist and browser-automation troubleshooting** now cover Lightpanda installation, engine auto-selection rules, and explicit overrides; **`ARCHITECTURE.md`** gains a "Browser engine selection" section describing the plugin's engine boundary (detect, never launch/download/embed).
+- `bob.env.example` now shows `AGENT_BROWSER_ENGINE` as an explicit override example (both `lightpanda` and `chrome`), with no secrets added.
+
 ## [0.6.0] — 2026-08-10
 
 ### 📁 Ancestor-directory config discovery (bob.json / bob.env)

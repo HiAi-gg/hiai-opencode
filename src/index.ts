@@ -36,6 +36,7 @@ import {
   getDefaultExternalDirectory,
   getTaskPermissions,
 } from "./permissions";
+import { applyAgentBrowserEngineDefault } from "./shared/agent-browser-engine";
 import { createAgentBrowserTools } from "./tools/agent-browser";
 import {
   firecrawlMapTool,
@@ -121,6 +122,10 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
   acquireConsoleGuard();
   try {
     const config = loadConfig(input.directory);
+    // Availability-aware engine default: honor an explicit AGENT_BROWSER_ENGINE,
+    // else auto-select lightpanda when its binary is in PATH, else leave unset
+    // so upstream agent-browser falls back to Chrome. Runs before agent creation.
+    applyAgentBrowserEngineDefault();
     const agents = createAllAgents(config);
     const bobHooks = createHooks(config as BobConfig);
     const skillsDir = join(__dirname, "..", "skills");
