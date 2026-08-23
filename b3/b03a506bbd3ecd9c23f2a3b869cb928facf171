@@ -1,0 +1,138 @@
+AGENTS.md
+  h_c4ebb69e7d3702 69,73-99,112-113,143-146,154,157,213-215,230-232
+ARCHITECTURE.md
+  h_c4ebb69e7d3702 29,32,34-35,37,41-42,70,89,93,110-111,253-255,282
+CHANGELOG.md
+  h_c4ebb69e7d3702 8-34
+README.md
+  h_c4ebb69e7d3702 13,21,103-113,121-126,129-130,148,157-158,165,250
+assets/cli/hiai-opencode.mjs
+  h_c4ebb69e7d3702 5,111-120,122-123,130,134-135,637-646,655-672,698,700,840-852,901-904,926-929
+bob.json
+  h_c4ebb69e7d3702 85-89
+config/hiai-opencode.schema.json
+  h_c4ebb69e7d3702 9,28-37
+package.json
+  h_c4ebb69e7d3702 3
+skills/build/dispatching-parallel-agents/SKILL.md
+  h_c4ebb69e7d3702 68-69,71-74
+skills/build/executing-plans/SKILL.md
+  h_c4ebb69e7d3702 10,14,18-22
+skills/build/finishing-a-development-branch/SKILL.md
+  h_c4ebb69e7d3702 196-198
+skills/critic/requesting-code-review/SKILL.md
+  h_c4ebb69e7d3702 10,15,18-20
+skills/plan/SKILL.md
+  h_c4ebb69e7d3702 19,52
+skills/plan/subagent-driven-development/SKILL.md
+  h_c4ebb69e7d3702 3,8-9,14,242
+skills/plan/writing-plans/SKILL.md
+  h_c4ebb69e7d3702 18-19,52,136,138-140,142
+src/agents/bob.test.ts
+  h_c4ebb69e7d3702 75-109
+src/agents/bob.ts
+  h_c4ebb69e7d3702 26,29-48,54,57-60,78-80,108,132,163,171-172,174,209-210,212-213,216-219,221
+src/agents/build.test.ts
+  h_c4ebb69e7d3702 32-38
+src/agents/build.ts
+  h_c4ebb69e7d3702 21,23,27,35-37,45-46,49-52,54,79-80
+src/agents/critic.test.ts
+  h_c4ebb69e7d3702 46-50
+src/agents/critic.ts
+  h_c4ebb69e7d3702 9-10
+src/agents/designer.ts
+  h_c4ebb69e7d3702 23
+src/agents/explore.ts
+  h_c4ebb69e7d3702 63
+src/agents/general.ts
+  h_c4ebb69e7d3702 13-14
+src/agents/manager.test.ts
+  h_c4ebb69e7d3702 20,32-33
+src/agents/manager.ts
+  h_c4ebb69e7d3702 7,10-12,15-19,49-56,64-65,84-85,89,93-94,105-106,117,120-121
+src/agents/plan.test.ts
+  h_c4ebb69e7d3702 50,63,66,68-69,114,147-158
+src/agents/plan.ts
+  h_c4ebb69e7d3702 1-4,27,37,61,70-72,74-78,80-83,85,102-103,132,134,136-139,145-152,164,200-201,205-207,209,244,246
+src/agents/writer.test.ts
+  h_c4ebb69e7d3702 42-43
+src/agents/writer.ts
+  h_c4ebb69e7d3702 41
+src/config.test.ts
+  h_c4ebb69e7d3702 15-30
+src/config.ts
+  h_c4ebb69e7d3702 127,227-231,234,488-493,509,517-527
+src/features/completion-controller/decide.test.ts
+  h_c4ebb69e7d3702 160-181
+src/features/completion-controller/decide.ts
+  h_c4ebb69e7d3702 16-17,34-35,37-39,65-71
+src/features/completion-controller/index.ts
+  h_c4ebb69e7d3702 5-7,11-16,111,188-195,237-239,276,296
+src/features/completion-controller/integration.test.ts
+  h_c4ebb69e7d3702 13,19,453-455,468
+src/features/plan-lifecycle/index.test.ts
+  h_c4ebb69e7d3702 1-107
+src/features/plan-lifecycle/index.ts
+  h_c4ebb69e7d3702 1-251
+src/features/plan-lifecycle/persist.test.ts
+  h_c4ebb69e7d3702 1-49
+src/features/plan-lifecycle/persist.ts
+  h_c4ebb69e7d3702 1-128
+src/hooks/compaction-context-injector.ts
+  h_c4ebb69e7d3702 21,62-65,67-74
+src/hooks/host-interaction-gate.test.ts
+  h_c4ebb69e7d3702 1-70
+src/hooks/host-interaction-gate.ts
+  h_c4ebb69e7d3702 1-56
+src/hooks/index.ts
+  h_c4ebb69e7d3702 23,25,174-175
+src/hooks/loop-state.test.ts
+  h_c4ebb69e7d3702 7-8,22-23,30,101-108,132-133,141
+src/hooks/loop-state.ts
+  h_c4ebb69e7d3702 41-42,56-57,132,202-220
+src/hooks/loop.ts
+  h_c4ebb69e7d3702 8-10,16,24-40,48-49,51-55,89-123
+src/hooks/plan-invocation-injector.test.ts
+  h_c4ebb69e7d3702 50-51
+src/hooks/plan-invocation-injector.ts
+  h_c4ebb69e7d3702 18-22
+src/hooks/plan-lifecycle-gate.test.ts
+  h_c4ebb69e7d3702 1-141
+src/hooks/plan-lifecycle-gate.ts
+  h_c4ebb69e7d3702 1-192
+src/hooks/quality-gate.test.ts
+  h_c4ebb69e7d3702 172,176-180
+src/hooks/quality-gate.ts
+  h_c4ebb69e7d3702 17,25
+src/hooks/worktree-lifecycle.test.ts
+  h_c4ebb69e7d3702 1-21
+src/hooks/worktree-lifecycle.ts
+  h_c4ebb69e7d3702 2,4-5,7-11,18-23,33,35-39,41-43,48,57-80,84-85
+src/index.ts
+  h_c4ebb69e7d3702 32-33,35-36,42,164-167,263-267,291-295,321-325,348-352,379-383
+src/permissions.test.ts
+  h_c4ebb69e7d3702 22,73,77-81,84-129,134-137
+src/permissions.ts
+  h_c4ebb69e7d3702 104,106-109,112,116-117,119-122,126-142
+src/prompt-library/native-memory.ts
+  h_c4ebb69e7d3702 15,17-25,28-31,34-61
+src/prompt-library/worktree.ts
+  h_c4ebb69e7d3702 3-7
+src/tools/skill.test.ts
+  h_c4ebb69e7d3702 42-54
+src/tools/skill.ts
+  h_c4ebb69e7d3702 5-7,25-29,125-127
+src/types.ts
+  h_c4ebb69e7d3702 49,90-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "b3b03a506bbd3ecd9c23f2a3b869cb928facf171",
+  "prompts": {},
+  "humans": {
+    "h_c4ebb69e7d3702": {
+      "author": "vlgalib <vlgalib@users.noreply.github.com>"
+    }
+  }
+}
