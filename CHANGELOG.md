@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.4] — 2026-08-23
+
+### CI maintenance
+
+- Updated `actions/setup-node` to v7 and `softprops/action-gh-release` to v3 so the release workflow uses the supported Node.js 24 action runtime without compatibility forcing warnings.
+
 ## [0.6.3] — 2026-08-23
 
 ### Runtime and release hardening
