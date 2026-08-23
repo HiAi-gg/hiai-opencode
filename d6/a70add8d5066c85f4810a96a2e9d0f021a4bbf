@@ -1,0 +1,23 @@
+package.json
+  s_868efed2fa0a27::t_fcf68861fc373f 3
+CHANGELOG.md
+  s_868efed2fa0a27::t_fcf68861fc373f 8-13
+.github/workflows/release.yml
+  s_868efed2fa0a27::t_fcf68861fc373f 26,73
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "d6a70add8d5066c85f4810a96a2e9d0f021a4bbf",
+  "prompts": {},
+  "sessions": {
+    "s_868efed2fa0a27": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02fa2-0424-7681-8ffd-2770976a4fdb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "vlgalib <vlgalib@users.noreply.github.com>"
+    }
+  }
+}
