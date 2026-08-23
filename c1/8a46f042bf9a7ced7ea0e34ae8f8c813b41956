@@ -1,0 +1,201 @@
+src/hooks/errors.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 77-78
+src/hooks/edit-error-recovery.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/model-fallback.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/hooks/session-recovery.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 12
+src/hooks/todo-continuation.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/todo-continuation.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 14
+src/tools/skill.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 125
+src/features/completion-controller/decide.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 168-169
+  s_868efed2fa0a27::t_484d01c2d7223b 188
+  s_868efed2fa0a27::t_15089a7868370e 9-10,52,61,70,78,83,85,90,95,97,102,107,109,119,129,142,153,164,177
+src/features/plan-lifecycle/persist.test.ts
+  s_868efed2fa0a27::t_0f37c1e2ef76af 6,10-11,52-65
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 14
+  s_868efed2fa0a27::t_a0152fa85547c3 66
+src/hooks/directory-agents-injector.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/token-budget.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/hooks/loop.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3,228-230,242-244,271-273,277-279,283-285
+src/hooks/stop-continuation-guard.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/non-interactive-env.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/host-interaction-gate.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 27-30,45-47,64-66
+src/hooks/context-window-limit-recovery.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 11
+src/agents/plan.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 114-116
+src/hooks/json-error-recovery.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 34,42,50
+src/permissions.test.ts
+  s_868efed2fa0a27::t_c5899a3d7afc29 125-142
+scripts/release-audit.mjs
+  s_868efed2fa0a27::t_66e112ebc7e8a2 7-11,14-26,28-35,47
+src/shared/agent-browser-engine.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 1,9
+src/hooks/index.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3,518-521
+src/hooks/worktree-lifecycle.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/thinking-block-validator.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/plan-lifecycle-gate.ts
+  s_868efed2fa0a27::t_e6f32842703e50 16,83-85,91-95,167,187,199-202,207-216
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 2,17,19,60-62,73-75,86-90,203-206
+src/permissions.ts
+  s_868efed2fa0a27::t_a5067ff53103eb 140
+src/features/dream-distill/index.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3,5
+src/features/completion-controller/integration.test.ts
+  s_868efed2fa0a27::t_b87fa3d25e1d2f 442,448,459-461
+  s_868efed2fa0a27::t_c02f90c60cfba5 235-276
+  s_868efed2fa0a27::t_865516b3255be7 407
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 206
+src/hooks/compaction-context-injector.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/index.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 23,33
+.github/workflows/release.yml
+  s_868efed2fa0a27::t_66e112ebc7e8a2 46-50
+CHANGELOG.md
+  s_868efed2fa0a27::t_66e112ebc7e8a2 8-19
+src/features/plan-lifecycle/index.test.ts
+  s_868efed2fa0a27::t_0f37c1e2ef76af 101
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 53-58,60-65,94-96
+src/features/shell-env/index.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 10
+src/hooks/preemptive-compaction.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/features/completion-controller/signals.test.ts
+  s_868efed2fa0a27::t_484d01c2d7223b 2
+src/hooks/model-fallback.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/reasoning-content-cache.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/tools/config-smoke.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 316,326-327
+src/features/completion-controller/state.test.ts
+  s_868efed2fa0a27::t_b28ca9e34bfef5 153,167-171,186-190
+  s_868efed2fa0a27::t_b87fa3d25e1d2f 106,115-123,125,161,174
+  s_868efed2fa0a27::t_15089a7868370e 32-33,65-66,95,102,124,138,146,151-152,154-155,157,165-166,172-173,184-185,191-192,194,199-200,206
+src/features/mcp/auto-export.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 12
+  s_868efed2fa0a27::t_c5899a3d7afc29 5,175-218
+src/hooks/context-window-monitor.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+package.json
+  s_868efed2fa0a27::t_d0a2af65d1ad98 85
+  s_868efed2fa0a27::t_8225391bfe17c6 89
+  s_868efed2fa0a27::t_66e112ebc7e8a2 3,86-87,90
+src/hooks/write-existing-file-guard.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/features/plan-lifecycle/index.ts
+  s_868efed2fa0a27::t_e6f32842703e50 35,83,96,129
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4,245-248
+src/hooks/closure-injector.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 5
+src/hooks/legal-gate.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/features/mcp/npm-package-runner.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3-5,95-113
+src/hooks/host-interaction-gate.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 5,32-34,54-57
+src/hooks/preemptive-compaction.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3,26
+src/hooks/session-notification.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/features/plan-lifecycle/persist.ts
+  s_868efed2fa0a27::t_e6f32842703e50 17
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 66-68
+src/hooks/circuit-breaker.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 2,4
+src/hooks/session-recovery.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/token-budget.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/session-notification.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/hooks/think-mode.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/features/mcp/auto-export.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 12
+  s_868efed2fa0a27::t_a5067ff53103eb 1-8,15-33,143-148,180
+src/features/dream-distill/index.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 11-13
+src/features/completion-controller/decide.ts
+  s_868efed2fa0a27::t_c67ed4175633d9 6-7,76-77,80
+src/hooks/context-window-limit-recovery.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/features/completion-controller/index.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 2,254-255
+  s_868efed2fa0a27::t_c67ed4175633d9 265-266
+src/features/dream-distill/state.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/compaction-context-injector.ts
+  s_868efed2fa0a27::t_c67ed4175633d9 71-72
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 21,23
+src/hooks/runtime-fallback.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/plan-lifecycle-gate.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3-5,11,13-18,49,63
+  s_868efed2fa0a27::t_0f37c1e2ef76af 8,138-161,165-226
+src/hooks/write-existing-file-guard.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+src/memory/reconcile.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+README.md
+  s_868efed2fa0a27::t_66e112ebc7e8a2 25,103
+src/hooks/index.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 18
+src/hooks/loop.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 12,95
+src/hooks/compaction-todo-preserver.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/quality-gate.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 2,4
+src/hooks/closure-injector.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 4
+.github/workflows/ci.yml
+  s_868efed2fa0a27::t_66e112ebc7e8a2 54,62-63
+src/features/completion-controller/state.ts
+  s_868efed2fa0a27::t_c67ed4175633d9 5-8,27-28,50-55,58,65,71-74,76,90
+  s_868efed2fa0a27::t_7070d6c860bbf3 61
+  s_868efed2fa0a27::t_b28ca9e34bfef5 77-80
+src/hooks/rules-injector.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/hooks/stop-continuation-guard.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 11
+src/hooks/tool-pair-validator.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+src/config.test.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 69,82
+src/hooks/json-error-recovery.ts
+  s_868efed2fa0a27::t_fa1c81b02aa7ac 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.23",
+  "base_commit_sha": "c18a46f042bf9a7ced7ea0e34ae8f8c813b41956",
+  "prompts": {},
+  "sessions": {
+    "s_868efed2fa0a27": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a02fa2-0424-7681-8ffd-2770976a4fdb",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "vlgalib <vlgalib@users.noreply.github.com>"
+    }
+  }
+}
