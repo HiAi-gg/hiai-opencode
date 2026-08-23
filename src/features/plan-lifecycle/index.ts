@@ -1,9 +1,9 @@
 import {
   planIdFromPath,
   readDiskSession,
+  type TodoSnapshot,
   writeDiskSession,
   writeSessionTodos,
-  type TodoSnapshot,
 } from "./persist";
 
 export type PlanLifecycleStatus =
@@ -32,6 +32,7 @@ const IMPLEMENTING_WORKERS = new Set([
   "general",
   "designer",
   "writer",
+  "manager",
 ]);
 
 export const INVALIDATE_PLAN_TOKEN = "INVALIDATE_PLAN";
@@ -79,6 +80,7 @@ function hydrateFromDisk(sessionID: string, s: PlanLifecycleState): void {
   s.planPath = disk.planPath;
   s.checksum = disk.checksum;
   s.frozenAt = disk.frozenAt;
+  s.implementingWorkerCompleted = disk.implementingWorkerCompleted ?? false;
   s.todos = disk.todos ?? [];
   s.hydratedFromDisk = true;
 }
@@ -91,6 +93,7 @@ function persist(sessionID: string, s: PlanLifecycleState): void {
     status: s.status,
     checksum: s.checksum,
     frozenAt: s.frozenAt,
+    implementingWorkerCompleted: s.implementingWorkerCompleted,
     todos: s.todos,
   });
 }
@@ -123,6 +126,7 @@ export function markImplementingWorkerCompleted(
 ): PlanLifecycleState {
   const s = getPlanLifecycle(sessionID);
   s.implementingWorkerCompleted = true;
+  persist(sessionID, s);
   return s;
 }
 
@@ -238,7 +242,10 @@ export function canSpawnCritic(
         "No implementing worker has finished yet. Critic runs once at delivery after implementation waves.",
     };
   }
-  return { allow: true, reason: "plan waves complete — delivery critic allowed" };
+  return {
+    allow: true,
+    reason: "plan waves complete — delivery critic allowed",
+  };
 }
 
 export function checksumText(text: string): string {

@@ -1,7 +1,7 @@
-import type { BobConfig, HookSet } from "../types";
 import type { BackgroundManager } from "../features/background-manager/index";
-import { BlockingHookError } from "./errors";
+import type { BobConfig, HookSet } from "../types";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 /**
  * Circuit-breaker hook: feeds every tool call into the BackgroundManager so the

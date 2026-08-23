@@ -14,6 +14,7 @@ export interface DiskSessionLifecycle {
   status: PlanLifecycleStatus;
   checksum: string | null;
   frozenAt: number | null;
+  implementingWorkerCompleted?: boolean;
   todos: TodoSnapshot[];
 }
 
@@ -62,7 +63,9 @@ export function readDiskFile(): DiskLifecycleFile {
   }
 }
 
-export function readDiskSession(sessionID: string): DiskSessionLifecycle | null {
+export function readDiskSession(
+  sessionID: string,
+): DiskSessionLifecycle | null {
   const rec = readDiskFile().sessions[sessionID];
   return rec ?? null;
 }

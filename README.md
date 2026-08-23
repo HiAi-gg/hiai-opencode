@@ -22,7 +22,7 @@ Most AI coding tools drop you into one big context window and hope the model sel
 - 🔍 **Diagnostics are mandatory, not optional.** Edit a file and the completion gate blocks until `lsp_diagnostics` has run clean and any failing `test` / `lint` / `typecheck` passes.
 - 🧠 **A real team, not a monologue.** Bob routes by category — quick work to a cheap executor, hard implementation to a Senior Engineer, architecture to a Principal Architect, UI to a Designer, docs to a Writer.
 - 🗜️ **Context that survives compaction.** Long sessions compact gracefully — in-memory gate state (failed quality check, pending diagnostics, unreviewed changes) is re-injected into the compaction context so the post-compaction agent still knows what blocks completion.
-- ⚡ **No external services.** Everything is local: SQLite memory (Bun), LSP via `npx`, browser via local Lightpanda/Chrome CDP. Zero cloud dependencies, zero data leaves your machine.
+- ⚡ **Local-first runtime.** Memory, LSP, and browser execution stay local. Model prompts are sent to the providers you connect, while optional `grep_app` and Firecrawl features call their documented remote services.
 - 🪝 **One line to install.** No separate MCP server config, no manual wiring — `opencode plugin @hiai-gg/hiai-opencode@latest --global`.
 
 ---
@@ -100,7 +100,7 @@ Report missing keys without printing secret values.
 
 ---
 
-## How a task runs (v0.6.2+)
+## How a task runs (v0.6.3+)
 
 ```
 trivial (1–2 files)     → general                     → (Critic only if high-risk)

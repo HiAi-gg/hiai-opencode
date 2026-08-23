@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "description": "HiAi OpenCode Plugin — multi-agent orchestration for OpenCode with 10 agents, LSP tools, browser automation, Memory, Session management, and Caveman protocol",
   "type": "module",
   "main": "dist/index.js",
@@ -82,10 +82,12 @@
     "format:check": "biome format src/",
     "check": "biome check src/",
     "check:fix": "biome check --write src/",
-    "ci": "biome ci .",
+    "ci": "biome ci src/ scripts/",
+    "check:docs": "bun run scripts/check-docs.ts",
+    "release:audit": "bun run scripts/release-audit.mjs",
     "check:bundle-size": "node scripts/check-bundle-size.mjs",
-    "pack:check": "bun run build && npm pack --dry-run",
-    "prepublishOnly": "bun run typecheck && bun run test && bun run build && bun run pack:check"
+    "pack:check": "bun run build && npm pack --dry-run --ignore-scripts --cache .npm-cache",
+    "prepublishOnly": "bun run typecheck && bun run test && bun run ci && bun run check:docs && bun run pack:check"
   },
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",

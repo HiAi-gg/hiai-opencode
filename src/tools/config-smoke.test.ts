@@ -313,10 +313,7 @@ describe("loadEnvFiles", () => {
     const root = join(TMP, `ancestor-${Date.now()}-${Math.random()}`);
     const sub = join(root, "packages", "app");
     mkdirSync(sub, { recursive: true });
-    writeFileSync(
-      join(root, "bob.env"),
-      "TEST_FIRECRAWL_KEY=ancestor-fire\n",
-    );
+    writeFileSync(join(root, "bob.env"), "TEST_FIRECRAWL_KEY=ancestor-fire\n");
     loadEnvFiles(sub);
     expect(process.env.TEST_FIRECRAWL_KEY).toBe("ancestor-fire");
     rmSync(root, { recursive: true, force: true });
@@ -326,14 +323,8 @@ describe("loadEnvFiles", () => {
     const root = join(TMP, `nearest-env-${Date.now()}-${Math.random()}`);
     const nested = join(root, "nested");
     mkdirSync(nested, { recursive: true });
-    writeFileSync(
-      join(root, "bob.env"),
-      "TEST_FIRECRAWL_KEY=root-fire\n",
-    );
-    writeFileSync(
-      join(nested, "bob.env"),
-      "TEST_FIRECRAWL_KEY=nested-fire\n",
-    );
+    writeFileSync(join(root, "bob.env"), "TEST_FIRECRAWL_KEY=root-fire\n");
+    writeFileSync(join(nested, "bob.env"), "TEST_FIRECRAWL_KEY=nested-fire\n");
     loadEnvFiles(nested);
     expect(process.env.TEST_FIRECRAWL_KEY).toBe("nested-fire");
     rmSync(root, { recursive: true, force: true });

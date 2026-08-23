@@ -1,24 +1,38 @@
 #!/usr/bin/env bun
 
-import { execSync } from "node:child_process";
-
 console.log("=== Release Audit ===");
 let errors = 0;
 
 const checks = [
-  ["typecheck", "bun run typecheck"],
-  ["build", "bun run build"],
-  ["test", "bun test"],
-  ["check:docs", "bun run check:docs"],
-  ["pack:check", "npm run pack:check"],
+  ["typecheck", ["bun", "run", "typecheck"]],
+  ["test", ["bun", "test"]],
+  ["ci", ["bun", "run", "ci"]],
+  ["check:docs", ["bun", "run", "check:docs"]],
+  ["pack:check", ["bun", "run", "pack:check"]],
 ];
 
-for (const [name, cmd] of checks) {
-  try {
-    execSync(cmd, { encoding: "utf-8", stdio: "pipe", timeout: 120000 });
+function diagnosticText(value) {
+  const text = new TextDecoder().decode(value).trim();
+  return text.length > 4000 ? `${text.slice(0, 4000)}\n…truncated` : text;
+}
+
+for (const [name, command] of checks) {
+  const result = Bun.spawnSync({
+    cmd: command,
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: 120000,
+  });
+  if (result.exitCode === 0) {
     console.log(`  ${name}: PASS`);
-  } catch (e) {
-    console.log(`  ${name}: FAIL`);
+  } else {
+    console.log(
+      `  ${name}: FAIL (exit=${result.exitCode}, command=${command.join(" ")})`,
+    );
+    const stderr = diagnosticText(result.stderr);
+    const stdout = diagnosticText(result.stdout);
+    if (stderr) console.log(stderr);
+    else if (stdout) console.log(stdout);
     errors++;
   }
 }

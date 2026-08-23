@@ -66,10 +66,7 @@ describe("delegation config", () => {
   });
 
   test("discovers bob.json in an ancestor directory when running from a subdirectory", () => {
-    const root = join(
-      tmpdir(),
-      `hiai-ancestor-${Date.now()}-${Math.random()}`,
-    );
+    const root = join(tmpdir(), `hiai-ancestor-${Date.now()}-${Math.random()}`);
     const sub = join(root, "packages", "app");
     directories.push(root);
     mkdirSync(sub, { recursive: true });
@@ -82,10 +79,7 @@ describe("delegation config", () => {
   });
 
   test("prefers the nearest ancestor bob.json over a higher one", () => {
-    const root = join(
-      tmpdir(),
-      `hiai-nearest-${Date.now()}-${Math.random()}`,
-    );
+    const root = join(tmpdir(), `hiai-nearest-${Date.now()}-${Math.random()}`);
     const nested = join(root, "nested");
     directories.push(root);
     mkdirSync(nested, { recursive: true });

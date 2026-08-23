@@ -1,7 +1,7 @@
-import type { BobConfig, HookSet } from "../types";
 import { setQualityGateFailed } from "../features/completion-controller/state";
-import { BlockingHookError } from "./errors";
+import type { BobConfig, HookSet } from "../types";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 /**
  * Strict error-signal patterns. These target *structural* diagnostic signals

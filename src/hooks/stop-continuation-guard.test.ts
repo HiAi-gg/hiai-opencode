@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
+import { logger } from "../util/log";
 import { get } from "./loop-state";
 import { createStopContinuationGuard } from "./stop-continuation-guard";
-import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 

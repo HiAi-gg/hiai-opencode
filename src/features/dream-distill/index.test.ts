@@ -7,10 +7,10 @@
 
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../../types";
-import { createDreamDistillHook } from "./index";
-import { DREAM_PROMPT } from "./dream";
-import { DISTILL_PROMPT } from "./distill";
 import { logger } from "../../util/log";
+import { DISTILL_PROMPT } from "./distill";
+import { DREAM_PROMPT } from "./dream";
+import { createDreamDistillHook } from "./index";
 
 function makeConfig(overrides?: Partial<BobConfig>): BobConfig {
   return {

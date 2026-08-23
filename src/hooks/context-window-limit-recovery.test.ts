@@ -1,8 +1,8 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
+import { logger } from "../util/log";
 import { createContextWindowLimitRecoveryHook } from "./context-window-limit-recovery";
 import { get, markError, reset } from "./loop-state";
-import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

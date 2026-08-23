@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createPreemptiveCompaction } from "./preemptive-compaction";
 import { logger } from "../util/log";
+import { createPreemptiveCompaction } from "./preemptive-compaction";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

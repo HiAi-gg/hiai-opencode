@@ -51,7 +51,7 @@ jobs:
         run: npm run check:bundle-size
 
   lint:
-    name: Lint
+    name: Static checks
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -59,4 +59,5 @@ jobs:
         with:
           bun-version: '1.3.x'
       - run: bun install --frozen-lockfile
-      - run: bun run lint
+      - run: bun run ci
+      - run: bun run check:docs

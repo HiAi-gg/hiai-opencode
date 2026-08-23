@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 export function matchesAnyGlob(path: string, globs: string[]): boolean {
   const norm = path.replace(/\\/g, "/");
   return globs.some((g) => globToRegExp(g).test(norm));
@@ -12,12 +10,6 @@ function globToRegExp(glob: string): RegExp {
     .map((segment) => segment.replace(/\*/g, "[^/]*"))
     .join(".*");
   return new RegExp(`^${re}$`);
-}
-
-export function fingerprint(files: string[]): string {
-  if (files.length === 0) return "";
-  const uniq = [...new Set(files.map((f) => f.replace(/\\/g, "/")))].sort();
-  return createHash("sha1").update(uniq.join("\n")).digest("hex");
 }
 
 export function parseCriticVerdict(

@@ -1,8 +1,8 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 import type { BobConfig } from "../types";
-import { createClosureInjector } from "./closure-injector";
 import { logger } from "../util/log";
+import { createClosureInjector } from "./closure-injector";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

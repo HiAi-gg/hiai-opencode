@@ -50,19 +50,19 @@ describe("plan-lifecycle", () => {
     const sessionID = sid();
     recordFrozenPlan(sessionID, "p.md", "1");
     markExecuting(sessionID);
-    expect(
-      canSpawnCritic(sessionID, { hasIncompleteTodos: true }).allow,
-    ).toBe(false);
-    expect(
-      canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow,
-    ).toBe(false);
+    expect(canSpawnCritic(sessionID, { hasIncompleteTodos: true }).allow).toBe(
+      false,
+    );
+    expect(canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow).toBe(
+      false,
+    );
     markImplementingWorkerCompleted(sessionID);
-    expect(
-      canSpawnCritic(sessionID, { hasIncompleteTodos: true }).allow,
-    ).toBe(false);
-    expect(
-      canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow,
-    ).toBe(true);
+    expect(canSpawnCritic(sessionID, { hasIncompleteTodos: true }).allow).toBe(
+      false,
+    );
+    expect(canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow).toBe(
+      true,
+    );
   });
 
   test("manager phase-close critic allowed after workers; does not require empty todos", () => {
@@ -91,13 +91,14 @@ describe("plan-lifecycle", () => {
 
   test("allows critic when no frozen plan", () => {
     const sessionID = sid();
-    expect(
-      canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow,
-    ).toBe(true);
+    expect(canSpawnCritic(sessionID, { hasIncompleteTodos: false }).allow).toBe(
+      true,
+    );
   });
 
   test("isImplementingWorker and invalidate token helpers", () => {
     expect(isImplementingWorker("build")).toBe(true);
+    expect(isImplementingWorker("manager")).toBe(true);
     expect(isImplementingWorker("explore")).toBe(false);
     expect(promptRequestsInvalidate("please INVALIDATE_PLAN now")).toBe(true);
     expect(promptRequestsInvalidate("just plan")).toBe(false);

@@ -122,11 +122,24 @@ describe("granular task permissions", () => {
     });
   });
 
-  test("workers cannot open the question UI", () => {
-    expect(nativeHostPermissions("build").question).toBe("deny");
-    expect(nativeHostPermissions("manager").question).toBe("deny");
-    expect(nativeHostPermissions("critic").question).toBe("deny");
-    expect(nativeHostPermissions("explore").question).toBe("deny");
+  test("workers and service agents cannot use host interaction tools", () => {
+    for (const agent of [
+      "build",
+      "manager",
+      "critic",
+      "explore",
+      "general",
+      "designer",
+      "writer",
+      "vision",
+      "dream-consolidator",
+      "distill-packager",
+    ]) {
+      expect(nativeHostPermissions(agent)).toEqual({
+        question: "deny",
+        todowrite: "deny",
+      });
+    }
   });
 
   test("General and service agents are leaves", () => {

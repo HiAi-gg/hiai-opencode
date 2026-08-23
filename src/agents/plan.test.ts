@@ -111,7 +111,9 @@ describe("PLAN_PROMPT", () => {
   });
 
   test("forbids plain-text user-facing questions when question is available", () => {
-    expect(PLAN_PROMPT).toContain("NEVER print the question as ordinary assistant text");
+    expect(PLAN_PROMPT).toContain(
+      "NEVER print the question as ordinary assistant text",
+    );
     expect(PLAN_PROMPT).toContain("ordinary assistant text");
   });
 

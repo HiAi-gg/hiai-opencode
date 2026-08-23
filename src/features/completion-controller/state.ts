@@ -1,10 +1,11 @@
-import { fingerprint } from "./signals";
-
 export interface SessionRuntime {
   autoContinues: number;
   hasIncompleteTodos: boolean;
   changedFiles: string[];
-  reviewedFingerprint: string | null;
+  /** Monotonic count of successful file mutations observed in this session. */
+  changeRevision: number;
+  /** Revision covered by the latest Critic verdict. */
+  reviewedRevision: number | null;
   criticVerdict: "approved" | "rejected" | null;
   blockerFlagged: boolean;
   uiChangedSinceReview: boolean;
@@ -23,7 +24,8 @@ export function get(sessionID: string): SessionRuntime {
       autoContinues: 0,
       hasIncompleteTodos: false,
       changedFiles: [],
-      reviewedFingerprint: null,
+      changeRevision: 0,
+      reviewedRevision: null,
       criticVerdict: null,
       blockerFlagged: false,
       uiChangedSinceReview: false,
@@ -45,44 +47,37 @@ export function recordChangedFile(
   const isNewFile = !s.changedFiles.includes(norm);
   if (isNewFile) s.changedFiles.push(norm);
   if (isUi) s.uiChangedSinceReview = true;
-  // Only a genuinely NEW file invalidates a prior review. Rewriting a file that
-  // was already reviewed (e.g. an auto-fix re-saving the same path) must NOT
-  // reset criticVerdict/reviewedFingerprint — otherwise every post-review touch
-  // re-triggers a fresh Critic cycle and the session loops review→build→review
-  // until maxAutoContinues (the "Bob keeps finishing repeatedly" bug).
-  if (isNewFile) {
-    s.criticVerdict = null;
-    s.reviewedFingerprint = null;
-    // An edit means lsp_diagnostics is now pending — the agent must run it
-    // before the completion controller will allow a stop.
-    s.lspPending = true;
-  }
+  // Every mutation invalidates review and diagnostics, even when the path was
+  // already tracked. The revision distinguishes new content at the same path.
+  s.changeRevision += 1;
+  s.criticVerdict = null;
+  s.reviewedRevision = null;
+  s.lspPending = true;
 }
 
-/** Merge changed files from a child session into the parent without re-tripping gates. */
+/** Merge a completed child mutation batch into the parent session. */
 export function mergeChangedFiles(
   sessionID: string,
-  files: string[],
+  child: Pick<SessionRuntime, "changedFiles" | "changeRevision" | "lspPending">,
   isUiFn: (fp: string) => boolean,
 ): void {
   const s = get(sessionID);
-  let added = false;
-  for (const fp of files) {
+  for (const fp of child.changedFiles) {
     if (!s.changedFiles.includes(fp)) {
       s.changedFiles.push(fp);
-      added = true;
     }
     if (isUiFn(fp)) s.uiChangedSinceReview = true;
   }
-  // Merging inherited changes invalidates a prior review ONLY when new files
-  // actually arrived. A child that changed nothing (e.g. an explore or a
-  // finished critic) must NOT reset the parent's approved verdict — otherwise
-  // every subagent postStop re-triggers a fresh Critic cycle until the cap.
-  // This must NOT flip the per-session quality/lsp gates — those track the
-  // parent's own edits.
-  if (added) {
+  // A child with no mutations (Explore/Critic) preserves approval. Any actual
+  // child mutation invalidates it, including a rewrite of an existing path.
+  if (child.changeRevision > 0) {
+    s.changeRevision += child.changeRevision;
     s.criticVerdict = null;
-    s.reviewedFingerprint = null;
+    s.reviewedRevision = null;
+    // The parent may request review only after the worker that made the edits
+    // has run diagnostics. Preserve a cleared child gate, but propagate an
+    // outstanding one so actor.postStop cannot skip directly to Critic.
+    if (child.lspPending) s.lspPending = true;
   }
 }
 
@@ -92,7 +87,7 @@ export function recordCriticVerdict(
 ): void {
   const s = get(sessionID);
   s.criticVerdict = verdict;
-  s.reviewedFingerprint = fingerprint(s.changedFiles);
+  s.reviewedRevision = s.changeRevision;
   if (verdict === "approved") {
     s.uiChangedSinceReview = false;
     // A Critic approval implies the reviewer saw clean state — clear the
@@ -127,8 +122,4 @@ export function resetForUser(sessionID: string): void {
 
 export function clear(sessionID: string): void {
   store.delete(sessionID);
-}
-
-export function currentFingerprint(s: SessionRuntime): string {
-  return fingerprint(s.changedFiles);
 }

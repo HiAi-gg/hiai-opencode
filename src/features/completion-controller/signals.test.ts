@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { fingerprint, matchesAnyGlob, parseCriticVerdict } from "./signals";
+import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 
 const UI = ["**/*.svelte", "**/*.css"];
 
@@ -9,22 +9,6 @@ describe("matchesAnyGlob", () => {
   test("non-ui file", () => expect(matchesAnyGlob("src/x.ts", UI)).toBe(false));
   test("nested path", () =>
     expect(matchesAnyGlob("a/b/c/component.css", UI)).toBe(true));
-});
-
-describe("fingerprint", () => {
-  test("order-independent + stable", () => {
-    expect(fingerprint(["b.ts", "a.ts"])).toBe(fingerprint(["a.ts", "b.ts"]));
-  });
-  test("changes when set changes", () => {
-    expect(fingerprint(["a.ts"])).not.toBe(fingerprint(["a.ts", "b.ts"]));
-  });
-  test("empty -> empty string", () => expect(fingerprint([])).toBe(""));
-  test("dedupes", () => {
-    expect(fingerprint(["a.ts", "a.ts"])).toBe(fingerprint(["a.ts"]));
-  });
-  test("normalizes backslashes", () => {
-    expect(fingerprint(["a\\b\\c.ts"])).toBe(fingerprint(["a/b/c.ts"]));
-  });
 });
 
 describe("parseCriticVerdict", () => {

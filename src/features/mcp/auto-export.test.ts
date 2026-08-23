@@ -2,13 +2,14 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import {
   existsSync,
   mkdirSync,
+  readdirSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { buildStaticMcpPayload, autoExportStaticMcp } from "./auto-export";
 import type { BobConfig } from "../../types";
+import { autoExportStaticMcp, buildStaticMcpPayload } from "./auto-export";
 
 const TMP = join(import.meta.dir, ".tmp-auto-export-test");
 
@@ -170,5 +171,49 @@ describe("autoExportStaticMcp", () => {
     expect(existsSync(join(TMP, "custom.json"))).toBe(true);
     expect(existsSync(join(TMP, ".opencode", ".mcp.json"))).toBe(false);
     delete process.env.HIAI_OPENCODE_MCP_EXPORT_PATH;
+  });
+
+  test("unknown auto-export mode fails closed without overwriting", () => {
+    process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP = "alwys";
+    delete process.env.HIAI_OPENCODE_EXPORT_MCP_MODE;
+    delete process.env.HIAI_OPENCODE_MCP_EXPORT_PATH;
+    const out = join(TMP, ".opencode", ".mcp.json");
+    mkdirSync(join(TMP, ".opencode"), { recursive: true });
+    writeFileSync(out, JSON.stringify({ someoneElse: true }));
+
+    autoExportStaticMcp(baseConfig(), TMP);
+
+    expect(JSON.parse(readFileSync(out, "utf-8"))).toEqual({
+      someoneElse: true,
+    });
+    delete process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP;
+  });
+
+  test("unknown overwrite mode is treated as safe", () => {
+    process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP = "always";
+    process.env.HIAI_OPENCODE_EXPORT_MCP_MODE = "froce";
+    delete process.env.HIAI_OPENCODE_MCP_EXPORT_PATH;
+    const out = join(TMP, ".opencode", ".mcp.json");
+    mkdirSync(join(TMP, ".opencode"), { recursive: true });
+    writeFileSync(out, JSON.stringify({ someoneElse: true }));
+
+    autoExportStaticMcp(baseConfig(), TMP);
+
+    expect(JSON.parse(readFileSync(out, "utf-8"))).toEqual({
+      someoneElse: true,
+    });
+    delete process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP;
+    delete process.env.HIAI_OPENCODE_EXPORT_MCP_MODE;
+  });
+
+  test("successful export leaves no temporary files", () => {
+    delete process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP;
+    delete process.env.HIAI_OPENCODE_EXPORT_MCP_MODE;
+    delete process.env.HIAI_OPENCODE_MCP_EXPORT_PATH;
+
+    autoExportStaticMcp(baseConfig(), TMP);
+
+    const entries = readdirSync(join(TMP, ".opencode"));
+    expect(entries).toEqual([".mcp.json"]);
   });
 });

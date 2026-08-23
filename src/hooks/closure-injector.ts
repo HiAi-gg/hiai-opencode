@@ -1,7 +1,7 @@
 import { CLOSURE_SCHEMA_PROMPT, validateClosure } from "../shared/closure";
 import type { BobConfig, HookSet } from "../types";
-import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 export function createClosureInjector(_config: BobConfig): HookSet {
   return {

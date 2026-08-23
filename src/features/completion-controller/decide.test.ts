@@ -6,8 +6,8 @@ const base: CompletionState = {
   maxAutoContinues: 25,
   hasIncompleteTodos: false,
   changedFiles: [],
-  currentFingerprint: "",
-  reviewedFingerprint: null,
+  changeRevision: 0,
+  reviewedRevision: null,
   criticVerdict: null,
   blockerFlagged: false,
   uiChanged: false,
@@ -49,7 +49,7 @@ describe("decide", () => {
         ...base,
         requireCritic: false,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
       }),
     ).toEqual({ kind: "stop", reason: "done" });
   });
@@ -58,7 +58,7 @@ describe("decide", () => {
     const a = decide({
       ...base,
       changedFiles: ["a.ts"],
-      currentFingerprint: "x",
+      changeRevision: 1,
     });
     expect(a.kind).toBe("review");
   });
@@ -67,7 +67,7 @@ describe("decide", () => {
     const a = decide({
       ...base,
       changedFiles: ["a.svelte"],
-      currentFingerprint: "x",
+      changeRevision: 1,
       uiChanged: true,
     });
     expect(a.kind).toBe("review");
@@ -75,38 +75,38 @@ describe("decide", () => {
       expect(a.prompt.toLowerCase()).toContain("browser");
   });
 
-  test("critic approved current fingerprint -> stop(done)", () => {
+  test("critic approved current revision -> stop(done)", () => {
     expect(
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         criticVerdict: "approved",
-        reviewedFingerprint: "x",
+        reviewedRevision: 1,
       }),
     ).toEqual({ kind: "stop", reason: "done" });
   });
 
-  test("stale approval (fingerprint changed since review) -> review again", () => {
+  test("stale approval (revision changed since review) -> review again", () => {
     expect(
       decide({
         ...base,
         changedFiles: ["a.ts", "b.ts"],
-        currentFingerprint: "y",
+        changeRevision: 2,
         criticVerdict: "approved",
-        reviewedFingerprint: "x",
+        reviewedRevision: 1,
       }).kind,
     ).toBe("review");
   });
 
-  test("critic rejected current fingerprint -> continue (fix)", () => {
+  test("critic rejected current revision -> continue (fix)", () => {
     expect(
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         criticVerdict: "rejected",
-        reviewedFingerprint: "x",
+        reviewedRevision: 1,
       }).kind,
     ).toBe("continue");
   });
@@ -116,7 +116,7 @@ describe("decide", () => {
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         autoContinues: 25,
       }),
     ).toEqual({ kind: "stop", reason: "cap" });
@@ -126,7 +126,7 @@ describe("decide", () => {
     const a = decide({
       ...base,
       changedFiles: ["a.ts"],
-      currentFingerprint: "x",
+      changeRevision: 1,
       qualityGateFailed: true,
     });
     expect(a.kind).toBe("continue");
@@ -139,7 +139,7 @@ describe("decide", () => {
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         qualityGateFailed: true,
         autoContinues: 25,
       }),
@@ -150,7 +150,7 @@ describe("decide", () => {
     const a = decide({
       ...base,
       changedFiles: ["a.ts"],
-      currentFingerprint: "x",
+      changeRevision: 1,
       lspPending: true,
     });
     expect(a.kind).toBe("continue");
@@ -161,11 +161,12 @@ describe("decide", () => {
     const a = decide({
       ...base,
       changedFiles: ["a.ts"],
-      currentFingerprint: "x",
+      changeRevision: 1,
       planStatus: "executing",
     });
     expect(a.kind).toBe("continue");
-    if (a.kind === "continue") expect(a.prompt.toLowerCase()).toContain("frozen plan");
+    if (a.kind === "continue")
+      expect(a.prompt.toLowerCase()).toContain("frozen plan");
   });
 
   test("plan done with unreviewed changes -> review", () => {
@@ -173,7 +174,7 @@ describe("decide", () => {
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         planStatus: "done",
       }).kind,
     ).toBe("review");
@@ -184,7 +185,7 @@ describe("decide", () => {
       decide({
         ...base,
         changedFiles: ["a.ts"],
-        currentFingerprint: "x",
+        changeRevision: 1,
         lspPending: true,
         autoContinues: 25,
       }),

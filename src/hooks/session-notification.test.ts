@@ -1,7 +1,7 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createSessionNotification } from "./session-notification";
 import { logger } from "../util/log";
+import { createSessionNotification } from "./session-notification";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

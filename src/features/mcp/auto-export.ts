@@ -1,10 +1,36 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  unlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { dirname, isAbsolute, join } from "node:path";
 import type { BobConfig } from "../../types";
-import { getMcpConfig } from "./registry";
 import { logger } from "../../util/log";
+import { getMcpConfig } from "./registry";
 
 const MCP_EXPORT_MARKER = "hiai-opencode";
+const AUTO_EXPORT_MODES = new Set([
+  "if-missing",
+  "always",
+  "off",
+  "0",
+  "false",
+  "disabled",
+]);
+
+function writeJsonAtomic(path: string, payload: Record<string, unknown>): void {
+  const tempPath = `${path}.${process.pid}.${crypto.randomUUID()}.tmp`;
+  try {
+    writeFileSync(tempPath, `${JSON.stringify(payload, null, 2)}\n`);
+    renameSync(tempPath, path);
+  } catch (err) {
+    if (existsSync(tempPath)) unlinkSync(tempPath);
+    throw err;
+  }
+}
 
 /**
  * Build the static `.mcp.json` payload from the merged runtime config.
@@ -114,6 +140,12 @@ export function autoExportStaticMcp(
   const rawMode =
     process.env.HIAI_OPENCODE_AUTO_EXPORT_MCP?.trim().toLowerCase();
   const mode = rawMode === "" || rawMode === undefined ? "if-missing" : rawMode;
+  if (!AUTO_EXPORT_MODES.has(mode)) {
+    logger.warn(
+      `[hiai-opencode] auto-export: invalid HIAI_OPENCODE_AUTO_EXPORT_MCP=${mode}; refusing to write`,
+    );
+    return;
+  }
   if (
     mode === "off" ||
     mode === "0" ||
@@ -145,7 +177,7 @@ export function autoExportStaticMcp(
   try {
     const payload = buildStaticMcpPayload(config);
     mkdirSync(dirname(outputPath), { recursive: true });
-    writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`);
+    writeJsonAtomic(outputPath, payload);
     const servers = payload.mcpServers as Record<string, unknown>;
     const count = Object.keys(servers).length;
     logger.log(

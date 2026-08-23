@@ -1,9 +1,8 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
-import { markCompleted } from "../../hooks/loop-state";
+import { markCompleted, markNativeContinue } from "../../hooks/loop-state";
 import type { BobConfig } from "../../types";
 import { logger } from "../../util/log";
 import { getPlanLifecycle, setPlanTodos } from "../plan-lifecycle";
-import { markNativeContinue } from "../../hooks/loop-state";
 import { decide as defaultDecide } from "./decide";
 import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
@@ -252,10 +251,8 @@ export function createBobCompletionHook(
           const decideSessionID = input.parentSessionID ?? sid;
           if (input.parentSessionID) {
             const childState = st.get(sid);
-            st.mergeChangedFiles(
-              decideSessionID,
-              childState.changedFiles,
-              (fp) => matchesAnyGlob(fp, cfg.ui_globs),
+            st.mergeChangedFiles(decideSessionID, childState, (fp) =>
+              matchesAnyGlob(fp, cfg.ui_globs),
             );
           }
 
@@ -265,8 +262,8 @@ export function createBobCompletionHook(
             maxAutoContinues: cfg.max_auto_continues,
             hasIncompleteTodos: s.hasIncompleteTodos,
             changedFiles: s.changedFiles,
-            currentFingerprint: st.currentFingerprint(s),
-            reviewedFingerprint: s.reviewedFingerprint,
+            changeRevision: s.changeRevision,
+            reviewedRevision: s.reviewedRevision,
             criticVerdict: s.criticVerdict,
             blockerFlagged: s.blockerFlagged,
             uiChanged: s.uiChangedSinceReview,

@@ -8,9 +8,9 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { BlockingHookError } from "./errors";
 import { reset } from "./loop-state";
-import { logger } from "../util/log";
 
 /** Short, stable, non-leaky identifier for logs (no raw session id). */
 function shortId(sessionID: string): string {

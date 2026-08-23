@@ -9,9 +9,9 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { BlockingHookError } from "./errors";
 import { buildRecoveryHint, classifyError, markError } from "./loop-state";
-import { logger } from "../util/log";
 
 function extractErrorMessage(properties: Record<string, unknown>): string {
   // Try common shapes: error string, error object with message, or APIError

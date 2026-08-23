@@ -7,13 +7,13 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { logger } from "../../util/log";
 import {
   getShellEnv,
   getSubprocessEnv,
   initShellEnv,
   ShellEnvContext,
 } from "./index";
-import { logger } from "../../util/log";
 
 const TMP = join(tmpdir(), "hiai-opencode-shell-env-test");
 

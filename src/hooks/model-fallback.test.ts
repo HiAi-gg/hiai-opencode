@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createModelFallbackHook } from "./model-fallback";
 import { logger } from "../util/log";
+import { createModelFallbackHook } from "./model-fallback";
 
 const config = {} as BobConfig;
 

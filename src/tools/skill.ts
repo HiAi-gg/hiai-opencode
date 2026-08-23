@@ -122,8 +122,6 @@ ${available}`;
 }
 
 function listAllSkills(index: Map<string, string>): string {
-  const names = [...index.keys()]
-    .filter((n) => !OPT_IN_SKILLS.has(n))
-    .sort();
+  const names = [...index.keys()].filter((n) => !OPT_IN_SKILLS.has(n)).sort();
   return names.join("\n");
 }

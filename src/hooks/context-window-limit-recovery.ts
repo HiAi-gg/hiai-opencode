@@ -8,6 +8,7 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { BlockingHookError } from "./errors";
 import {
   buildRecoveryContext,
@@ -15,7 +16,6 @@ import {
   classifyError,
   reset,
 } from "./loop-state";
-import { logger } from "../util/log";
 
 /** Errors that explicitly say the context window was hit. */
 const CONTEXT_WINDOW_PATTERNS = [

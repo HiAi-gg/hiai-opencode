@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from "bun:test";
 import {
   clear,
-  currentFingerprint,
   get,
   mergeChangedFiles,
   recordChangedFile,
@@ -30,7 +29,8 @@ describe("state: get / createDefaultSession", () => {
     expect(s.autoContinues).toBe(0);
     expect(s.hasIncompleteTodos).toBe(false);
     expect(s.changedFiles).toEqual([]);
-    expect(s.reviewedFingerprint).toBeNull();
+    expect(s.reviewedRevision).toBeNull();
+    expect(s.changeRevision).toBe(0);
     expect(s.criticVerdict).toBeNull();
     expect(s.blockerFlagged).toBe(false);
     expect(s.uiChangedSinceReview).toBe(false);
@@ -62,7 +62,8 @@ describe("state: get / createDefaultSession", () => {
         "hasIncompleteTodos",
         "lspPending",
         "qualityGateFailed",
-        "reviewedFingerprint",
+        "reviewedRevision",
+        "changeRevision",
         "uiChangedSinceReview",
       ].sort(),
     );
@@ -91,33 +92,37 @@ describe("state: recordChangedFile / trackChangedFile", () => {
     clear(sid);
   });
 
-  it("resets criticVerdict and reviewedFingerprint when a file changes", () => {
+  it("resets criticVerdict and reviewedRevision when a file changes", () => {
     const sid = uniqueSession();
     recordCriticVerdict(sid, "approved");
     expect(get(sid).criticVerdict).toBe("approved");
     recordChangedFile(sid, "/a/file.ts", false);
     const s = get(sid);
     expect(s.criticVerdict).toBeNull();
-    expect(s.reviewedFingerprint).toBeNull();
+    expect(s.reviewedRevision).toBeNull();
     clear(sid);
   });
 
-  it("does NOT invalidate a review when an already-tracked file is rewritten", () => {
-    // Regression: rewriting a reviewed file (e.g. an auto-fix re-saving the
-    // same path) must not reset criticVerdict/reviewedFingerprint — otherwise
-    // the session loops review→build→review until maxAutoContinues.
+  it("invalidates a review when an already-tracked file is rewritten", () => {
     const sid = uniqueSession();
     recordChangedFile(sid, "/a/file.ts", false);
     recordCriticVerdict(sid, "approved");
     expect(get(sid).criticVerdict).toBe("approved");
-    const fp = get(sid).reviewedFingerprint;
 
-    // Same path again — deduped, review state preserved.
     recordChangedFile(sid, "/a/file.ts", false);
     const s = get(sid);
     expect(s.changedFiles).toEqual(["/a/file.ts"]);
-    expect(s.criticVerdict).toBe("approved");
-    expect(s.reviewedFingerprint).toBe(fp);
+    expect(s.criticVerdict).toBeNull();
+    expect(s.lspPending).toBe(true);
+    clear(sid);
+  });
+
+  it("increments change revision for every mutation, including the same path", () => {
+    const sid = uniqueSession();
+    recordChangedFile(sid, "/a/file.ts", false);
+    recordChangedFile(sid, "/a/file.ts", false);
+    const s = get(sid);
+    expect(s.changeRevision).toBe(2);
     clear(sid);
   });
 
@@ -130,7 +135,7 @@ describe("state: recordChangedFile / trackChangedFile", () => {
     recordChangedFile(sid, "/b/new.ts", false);
     const s = get(sid);
     expect(s.criticVerdict).toBeNull();
-    expect(s.reviewedFingerprint).toBeNull();
+    expect(s.reviewedRevision).toBeNull();
     clear(sid);
   });
 
@@ -138,27 +143,35 @@ describe("state: recordChangedFile / trackChangedFile", () => {
     const sid = uniqueSession();
     recordChangedFile(sid, "/a/file.ts", false);
     recordCriticVerdict(sid, "approved");
-    const fp = get(sid).reviewedFingerprint;
+    const revision = get(sid).reviewedRevision;
     expect(get(sid).criticVerdict).toBe("approved");
 
     // A child that changed nothing (explore, finished critic) merges nothing —
     // must NOT reset the parent's approval (was the review-loop source).
-    mergeChangedFiles(sid, [], () => false);
+    mergeChangedFiles(
+      sid,
+      { changedFiles: [], changeRevision: 0, lspPending: false },
+      () => false,
+    );
     expect(get(sid).criticVerdict).toBe("approved");
-    expect(get(sid).reviewedFingerprint).toBe(fp);
+    expect(get(sid).reviewedRevision).toBe(revision);
     clear(sid);
   });
 
-  it("merge with an already-known file preserves an approved verdict", () => {
+  it("merge with an already-known file invalidates an approved verdict", () => {
     const sid = uniqueSession();
     recordChangedFile(sid, "/a/file.ts", false);
     recordCriticVerdict(sid, "approved");
-    const fp = get(sid).reviewedFingerprint;
-
-    // Child touched the same file the parent already tracked — no new info.
-    mergeChangedFiles(sid, ["/a/file.ts"], () => false);
-    expect(get(sid).criticVerdict).toBe("approved");
-    expect(get(sid).reviewedFingerprint).toBe(fp);
+    mergeChangedFiles(
+      sid,
+      {
+        changedFiles: ["/a/file.ts"],
+        changeRevision: 1,
+        lspPending: true,
+      },
+      () => false,
+    );
+    expect(get(sid).criticVerdict).toBeNull();
     clear(sid);
   });
 
@@ -168,22 +181,29 @@ describe("state: recordChangedFile / trackChangedFile", () => {
     recordCriticVerdict(sid, "approved");
     expect(get(sid).criticVerdict).toBe("approved");
 
-    mergeChangedFiles(sid, ["/b/new.ts"], () => false);
+    mergeChangedFiles(
+      sid,
+      {
+        changedFiles: ["/b/new.ts"],
+        changeRevision: 1,
+        lspPending: true,
+      },
+      () => false,
+    );
     expect(get(sid).criticVerdict).toBeNull();
-    expect(get(sid).reviewedFingerprint).toBeNull();
+    expect(get(sid).reviewedRevision).toBeNull();
     clear(sid);
   });
 });
 
-describe("state: recordCriticVerdict / recordFingerprint + recordVerdict", () => {
-  it("stores the verdict and computes a fingerprint of changed files", () => {
+describe("state: recordCriticVerdict", () => {
+  it("stores the verdict at the current change revision", () => {
     const sid = uniqueSession();
     recordChangedFile(sid, "/a/file.ts", false);
     recordCriticVerdict(sid, "approved");
     const s = get(sid);
     expect(s.criticVerdict).toBe("approved");
-    // fingerprint of ['/a/file.ts'] is a non-empty sha1 hex string
-    expect(s.reviewedFingerprint).toMatch(/^[0-9a-f]{40}$/);
+    expect(s.reviewedRevision).toBe(1);
     clear(sid);
   });
 
@@ -241,25 +261,5 @@ describe("state: clear / teardownSession", () => {
     const fresh = get(sid);
     expect(fresh).not.toBe(s);
     expect(fresh.autoContinues).toBe(0);
-  });
-});
-
-describe("state: currentFingerprint", () => {
-  it("returns empty string for no changed files", () => {
-    const sid = uniqueSession();
-    const s = get(sid);
-    expect(currentFingerprint(s)).toBe("");
-    clear(sid);
-  });
-
-  it("returns a stable sha1 fingerprint for the changed files", () => {
-    const sid = uniqueSession();
-    const s = get(sid);
-    s.changedFiles = ["/a.ts", "/b.ts"];
-    const fp = currentFingerprint(s);
-    expect(fp).toMatch(/^[0-9a-f]{40}$/);
-    // Stable across calls
-    expect(currentFingerprint(s)).toBe(fp);
-    clear(sid);
   });
 });

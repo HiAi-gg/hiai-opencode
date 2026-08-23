@@ -1,10 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
 
 const runnerPath = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -93,22 +92,25 @@ describe("npm-package-runner (Phase 6.1)", () => {
 
   const signalIt = process.platform === "win32" ? it.skip : it;
 
-  signalIt("exits non-zero with a distinct code when the child is killed by a signal", async () => {
-    const child = spawn(process.execPath, [runnerPath, fakePkgDir], {
-      stdio: ["ignore", "pipe", "pipe"],
-    });
-    // Give the runner time to spawn the grandchild, then kill the runner.
-    child.once("spawn", () => setTimeout(() => child.kill("SIGTERM"), 500));
+  signalIt(
+    "exits non-zero with a distinct code when the child is killed by a signal",
+    async () => {
+      const child = spawn(process.execPath, [runnerPath, fakePkgDir], {
+        stdio: ["ignore", "pipe", "pipe"],
+      });
+      // Give the runner time to spawn the grandchild, then kill the runner.
+      child.once("spawn", () => setTimeout(() => child.kill("SIGTERM"), 500));
 
-    const code = await new Promise<number>((resolve) => {
-      child.on("exit", (c) => resolve(c ?? 0));
-    });
+      const code = await new Promise<number>((resolve) => {
+        child.on("exit", (c) => resolve(c ?? 0));
+      });
 
-    // EXIT_CHILD_SIGNALED = 2. Windows is skipped because Bun's
-    // child.kill("SIGTERM") is a no-op there and cannot exercise this POSIX
-    // signal-handler contract.
-    expect(code).toBe(2);
-  });
+      // EXIT_CHILD_SIGNALED = 2. Windows is skipped because Bun's
+      // child.kill("SIGTERM") is a no-op there and cannot exercise this POSIX
+      // signal-handler contract.
+      expect(code).toBe(2);
+    },
+  );
 
   it("exits with code 1 and a clear message when no package name is given", async () => {
     const child = spawn(process.execPath, [runnerPath], {

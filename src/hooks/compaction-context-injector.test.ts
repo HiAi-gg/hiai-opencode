@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import type { BobConfig } from "../types";
 import * as st from "../features/completion-controller/state";
+import type { BobConfig } from "../types";
 import { createCompactionContextInjector } from "./compaction-context-injector";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {

@@ -1,6 +1,6 @@
 import type { Hooks } from "@opencode-ai/plugin";
-import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 // Legal gate — enforces the project ethical-use policy on the autonomy feature.
 //

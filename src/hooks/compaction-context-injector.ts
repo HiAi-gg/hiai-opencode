@@ -16,11 +16,11 @@
  * it can complete.
  */
 
-import type { BobConfig, HookSet } from "../types";
 import * as st from "../features/completion-controller/state";
 import { getPlanLifecycle } from "../features/plan-lifecycle";
-import { BlockingHookError } from "./errors";
+import type { BobConfig, HookSet } from "../types";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 export function createCompactionContextInjector(_config: BobConfig): HookSet {
   return {
@@ -68,7 +68,8 @@ export function createCompactionContextInjector(_config: BobConfig): HookSet {
             );
           } else if (
             s.changedFiles.length > 0 &&
-            s.criticVerdict !== "approved"
+            (s.criticVerdict !== "approved" ||
+              s.reviewedRevision !== s.changeRevision)
           ) {
             output.context.push(
               "[hiai-opencode] GATE: changes pending delivery Critic — do not report done until Critic returns APPROVED. Call Critic once after all waves.",

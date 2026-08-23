@@ -3,12 +3,15 @@ import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
+  canSpawnCritic,
   canSpawnPlan,
   clearPlanLifecycle,
   getPlanLifecycle,
+  markExecuting,
+  markImplementingWorkerCompleted,
   recordFrozenPlan,
-  setPlanTodos,
   setPlansRoot,
+  setPlanTodos,
 } from "./index";
 
 describe("plan-lifecycle persist", () => {
@@ -45,5 +48,20 @@ describe("plan-lifecycle persist", () => {
     expect(md).toContain("status: frozen");
     expect(md).toContain("planId: feat");
     expect(md).toContain("checksum: deadbeef");
+  });
+
+  test("implementing worker completion survives hydration", () => {
+    const root = mkdtempSync(join(tmpdir(), "hiai-plan-worker-"));
+    setPlansRoot(root);
+    recordFrozenPlan("sess-worker", ".bob/plans/worker.md", "abc");
+    markExecuting("sess-worker");
+    markImplementingWorkerCompleted("sess-worker");
+
+    clearPlanLifecycle("sess-worker");
+    const restored = getPlanLifecycle("sess-worker");
+    expect(restored.implementingWorkerCompleted).toBe(true);
+    expect(
+      canSpawnCritic("sess-worker", { hasIncompleteTodos: false }).allow,
+    ).toBe(true);
   });
 });

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] — 2026-08-23
+
+### Runtime and release hardening
+
+- Critic approval is bound to a monotonic change revision, so every successful file mutation — including rewriting an existing path or merging child changes — invalidates stale review and requires fresh LSP diagnostics.
+- Frozen-plan execution state now persists completed implementation work across restarts. Manager-only waves count after a successful closure, while blocked or rejected workers do not.
+- Delivery Critic no longer marks a plan done before review; only a valid `accept` closure finalizes the plan.
+- Worker and service agents explicitly deny both native `question` and `todowrite` tools.
+- MCP auto-export rejects unknown modes without writing and replaces managed exports atomically.
+- CI, prepublish, and release audit now enforce full Biome checks and documentation checks; release-audit failures include actionable diagnostics.
+- README now describes local and remote data boundaries accurately.
+
 ## [0.6.2] — 2026-08-23
 
 ### ⚡ Orchestration contract: plan once, parallel waves, critic once

@@ -180,7 +180,6 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     const parent = uniqueSession();
     const critic = uniqueSession();
     // Give the parent at least one changed file so the recorded review
-    // fingerprint is a real sha1 (empty file list -> "" fingerprint).
     st.recordChangedFile(parent, "/src/x.ts", false);
     const { client } = makeMockClient([
       {
@@ -204,8 +203,7 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     // Critic branch returns early and must NOT set output.continue.
     expect(output.continue).toBeUndefined();
     expect(st.get(parent).criticVerdict).toBe("approved");
-    // The reviewed fingerprint is derived from the parent's changed files.
-    expect(st.get(parent).reviewedFingerprint).toMatch(/^[0-9a-f]{40}$/);
+    expect(st.get(parent).reviewedRevision).toBe(st.get(parent).changeRevision);
     st.clear(parent);
     st.clear(critic);
   });
@@ -230,6 +228,48 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     expect(output.reason).not.toMatch(/\/[\w./-]+\.(ts|tsx|js):\d+/);
     // autoContinues counter advanced on the parent session.
     expect(st.get(parent).autoContinues).toBe(1);
+    st.clear(parent);
+    st.clear(child);
+  });
+
+  test("child edits keep the parent behind the LSP gate", async () => {
+    const parent = uniqueSession();
+    const child = uniqueSession();
+    st.recordChangedFile(child, "/src/changed.ts", false);
+    const { client } = makeMockClient([]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run(
+      { sessionID: child, agentType: "build", parentSessionID: parent },
+      output,
+    );
+
+    expect(st.get(parent).lspPending).toBe(true);
+    expect(output.continue).toBe(true);
+    expect(output.reason).toContain("lsp_diagnostics");
+    expect(output.reason).not.toContain("Critic");
+    st.clear(parent);
+    st.clear(child);
+  });
+
+  test("child diagnostics clear the LSP gate before parent review", async () => {
+    const parent = uniqueSession();
+    const child = uniqueSession();
+    st.recordChangedFile(child, "/src/changed.ts", false);
+    st.setLspPending(child, false);
+    const { client } = makeMockClient([]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run(
+      { sessionID: child, agentType: "build", parentSessionID: parent },
+      output,
+    );
+
+    expect(st.get(parent).lspPending).toBe(false);
+    expect(output.continue).toBe(true);
+    expect(output.reason).toContain("Critic");
     st.clear(parent);
     st.clear(child);
   });
@@ -364,6 +404,7 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     // change. After merge the parent should route to review (unreviewed change)
     // rather than stop(done).
     st.recordChangedFile(child, "/src/feature.ts", false);
+    st.setLspPending(child, false);
     const { client } = makeMockClient([]);
     setCompletionClient(client);
 
@@ -398,13 +439,13 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     st.clear(sid);
   });
 
-  test("approved + same-file rewrite still stops (no review loop)", async () => {
+  test("approved + same-file rewrite requires a new review", async () => {
     const parent = uniqueSession();
     const child = uniqueSession();
     st.recordChangedFile(parent, "/src/x.ts", false);
     st.recordCriticVerdict(parent, "approved");
-    // Re-saving the SAME file must not invalidate the review.
     st.recordChangedFile(parent, "/src/x.ts", false);
+    st.setLspPending(parent, false);
 
     const { client } = makeMockClient([]);
     setCompletionClient(client);
@@ -415,9 +456,9 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
       output,
     );
 
-    // Verdict still approved and fingerprint matches -> stop, no review loop.
-    expect(st.get(parent).criticVerdict).toBe("approved");
-    expect(output.continue).toBeUndefined();
+    expect(st.get(parent).criticVerdict).toBeNull();
+    expect(output.continue).toBe(true);
+    expect((output.reason ?? "").toLowerCase()).toContain("critic");
     st.clear(parent);
     st.clear(child);
   });

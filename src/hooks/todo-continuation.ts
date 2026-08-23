@@ -11,6 +11,7 @@
  */
 
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { BlockingHookError } from "./errors";
 import {
   buildContinuationPrompt,
@@ -18,7 +19,6 @@ import {
   setContinuationPrompt,
   setHasIncompleteTasks,
 } from "./loop-state";
-import { logger } from "../util/log";
 
 const COOLDOWN_MS = 30_000;
 

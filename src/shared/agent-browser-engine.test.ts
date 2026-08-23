@@ -1,12 +1,12 @@
+import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, test } from "bun:test";
 import {
   AGENT_BROWSER_ENGINE,
-  LIGHTPANDA_ENGINE,
   applyAgentBrowserEngineDefault,
   findInPath,
+  LIGHTPANDA_ENGINE,
 } from "./agent-browser-engine";
 
 describe("applyAgentBrowserEngineDefault", () => {

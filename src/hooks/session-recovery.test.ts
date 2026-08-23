@@ -1,8 +1,8 @@
 import { describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
+import { logger } from "../util/log";
 import { get, reset } from "./loop-state";
 import { createSessionRecoveryHook } from "./session-recovery";
-import { logger } from "../util/log";
 
 function makeConfig(overrides: Partial<BobConfig> = {}): BobConfig {
   return {

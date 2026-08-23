@@ -3,8 +3,8 @@ export interface CompletionState {
   maxAutoContinues: number;
   hasIncompleteTodos: boolean;
   changedFiles: string[];
-  currentFingerprint: string;
-  reviewedFingerprint: string | null;
+  changeRevision: number;
+  reviewedRevision: number | null;
   criticVerdict: "approved" | "rejected" | null;
   blockerFlagged: boolean;
   uiChanged: boolean;
@@ -73,11 +73,11 @@ export function decide(s: CompletionState): CompletionAction {
     return { kind: "stop", reason: "done" };
   }
 
-  const verdictMatchesDiff = s.reviewedFingerprint === s.currentFingerprint;
-  if (s.criticVerdict === "approved" && verdictMatchesDiff) {
+  const verdictMatchesRevision = s.reviewedRevision === s.changeRevision;
+  if (s.criticVerdict === "approved" && verdictMatchesRevision) {
     return { kind: "stop", reason: "done" };
   }
-  if (s.criticVerdict === "rejected" && verdictMatchesDiff) {
+  if (s.criticVerdict === "rejected" && verdictMatchesRevision) {
     return atCap
       ? { kind: "stop", reason: "cap" }
       : { kind: "continue", prompt: FIX_PROMPT };

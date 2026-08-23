@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createWriteExistingFileGuard } from "./write-existing-file-guard";
 import { logger } from "../util/log";
+import { createWriteExistingFileGuard } from "./write-existing-file-guard";
 
 const config = {} as BobConfig;
 

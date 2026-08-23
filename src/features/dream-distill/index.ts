@@ -1,9 +1,9 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import type { BobConfig } from "../../types";
-import { DREAM_PROMPT } from "./dream";
-import { DISTILL_PROMPT } from "./distill";
-import { getLastRun, markFatal, save } from "./state";
 import { logger } from "../../util/log";
+import { DISTILL_PROMPT } from "./distill";
+import { DREAM_PROMPT } from "./dream";
+import { getLastRun, markFatal, save } from "./state";
 
 export function createDreamDistillHook(
   config: BobConfig,

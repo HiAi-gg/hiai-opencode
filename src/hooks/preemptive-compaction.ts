@@ -1,6 +1,6 @@
 import type { BobConfig, HookSet } from "../types";
-import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 // Per-session debounce so the "consider compacting" hint is not re-logged on
 // every single transform while a large session is mid-flight.
@@ -23,8 +23,7 @@ export function createPreemptiveCompaction(_config: BobConfig): HookSet {
           0,
         );
         if (totalParts > 200) {
-          const sid =
-            (output as { sessionID?: string }).sessionID ?? "unknown";
+          const sid = (output as { sessionID?: string }).sessionID ?? "unknown";
           const now = Date.now();
           const prev = lastWarnAt.get(sid);
           if (prev === undefined || now - prev >= WARN_COOLDOWN_MS) {

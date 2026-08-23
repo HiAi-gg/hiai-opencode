@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
-import { createTokenBudgetHook } from "./token-budget";
 import { logger } from "../util/log";
+import { createTokenBudgetHook } from "./token-budget";
 
 const config = {} as BobConfig;
 

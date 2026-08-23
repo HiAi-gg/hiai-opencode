@@ -74,7 +74,8 @@ export function sanitizeHookError(
     // A thrown payload object (e.g. a raw session/event) must NEVER be
     // stringified into the summary — that would leak the full payload into the
     // TUI. We only record its constructor name / type as a short, opaque tag.
-    const ctor = (err as { constructor?: { name?: string } })?.constructor?.name;
+    const ctor = (err as { constructor?: { name?: string } })?.constructor
+      ?.name;
     preview = ctor && ctor !== "Object" ? `<${ctor}>` : "<object>";
   }
   if (preview.length > MAX_SUMMARY) {

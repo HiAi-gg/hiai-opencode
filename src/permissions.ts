@@ -137,7 +137,7 @@ export function nativeHostPermissions(
   if (agentKey === "bob" || agentKey === "plan") {
     return { question: "allow", todowrite: "allow" };
   }
-  return { question: "deny" };
+  return { question: "deny", todowrite: "deny" };
 }
 
 /**

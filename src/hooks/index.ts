@@ -15,12 +15,12 @@ import {
   MAX_HOOK_ERRORS,
   sanitizeHookError,
 } from "./errors";
+import { createHostInteractionGate } from "./host-interaction-gate";
 import { createJsonErrorRecovery } from "./json-error-recovery";
 import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
 import { createModelFallbackHook } from "./model-fallback";
 import { createNonInteractiveEnv } from "./non-interactive-env";
-import { createHostInteractionGate } from "./host-interaction-gate";
 import { createPlanInvocationInjector } from "./plan-invocation-injector";
 import { createPlanLifecycleGate } from "./plan-lifecycle-gate";
 import { createPreemptiveCompaction } from "./preemptive-compaction";

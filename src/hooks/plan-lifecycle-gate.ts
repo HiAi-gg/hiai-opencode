@@ -1,5 +1,5 @@
 import type { PluginInput } from "@opencode-ai/plugin";
-import type { BobConfig, HookSet } from "../types";
+import { get as getCompletion } from "../features/completion-controller/state";
 import {
   canSpawnCritic,
   canSpawnPlan,
@@ -13,9 +13,10 @@ import {
   promptRequestsInvalidate,
   recordFrozenPlan,
 } from "../features/plan-lifecycle";
-import { get as getCompletion } from "../features/completion-controller/state";
-import { BlockingHookError } from "./errors";
+import { validateClosure } from "../shared/closure";
+import type { BobConfig, HookSet } from "../types";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 let client: PluginInput["client"] | null = null;
 
@@ -56,7 +57,9 @@ async function resolveCallerAgent(
   return "other";
 }
 
-export function taskSubagentType(args: Record<string, unknown>): string | undefined {
+export function taskSubagentType(
+  args: Record<string, unknown>,
+): string | undefined {
   const v = args.subagent_type ?? args.subagentType ?? args.agent ?? args.name;
   return typeof v === "string" && v.trim() ? v.trim() : undefined;
 }
@@ -67,12 +70,27 @@ function taskPrompt(args: Record<string, unknown>): string | undefined {
 }
 
 function planReturnedDone(text: string): boolean {
-  return /\*\*Status:\*\*\s*done/i.test(text) || /\bStatus:\s*done\b/i.test(text);
+  return (
+    /\*\*Status:\*\*\s*done/i.test(text) || /\bStatus:\s*done\b/i.test(text)
+  );
 }
 
 function extractPlanPath(text: string): string | null {
   const m = text.match(/\.bob\/plans\/[^\s)`'"\]]+/);
   return m ? m[0] : null;
+}
+
+function closureReadiness(text: string): "done" | "accept" | "reject" | null {
+  const parsed = validateClosure(text);
+  const readiness = parsed.data?.readiness;
+  if (
+    readiness === "done" ||
+    readiness === "accept" ||
+    readiness === "reject"
+  ) {
+    return readiness;
+  }
+  return null;
 }
 
 export function createPlanLifecycleGate(_config: BobConfig): HookSet {
@@ -145,9 +163,8 @@ export function createPlanLifecycleGate(_config: BobConfig): HookSet {
             );
             return;
           }
-          markPlanDone(sid);
           logger.log(
-            `[hiai-opencode] plan-lifecycle: delivery_critic ${shortId(sid)}`,
+            `[hiai-opencode] plan-lifecycle: delivery_critic_start ${shortId(sid)}`,
           );
           return;
         }
@@ -167,9 +184,9 @@ export function createPlanLifecycleGate(_config: BobConfig): HookSet {
         const args = taskArgs(input, output as { args?: unknown });
         const agent = taskSubagentType(args);
         if (!agent) return;
+        const text = typeof output.output === "string" ? output.output : "";
 
         if (agent === "plan") {
-          const text = typeof output.output === "string" ? output.output : "";
           if (planReturnedDone(text)) {
             recordFrozenPlan(sid, extractPlanPath(text), checksumText(text));
             logger.log(
@@ -179,7 +196,24 @@ export function createPlanLifecycleGate(_config: BobConfig): HookSet {
           return;
         }
 
-        if (isImplementingWorker(agent)) {
+        if (agent === "critic") {
+          const caller = await resolveCallerAgent(sid);
+          if (caller !== "manager" && closureReadiness(text) === "accept") {
+            const lifecycle = getPlanLifecycle(sid);
+            if (
+              lifecycle.status === "frozen" ||
+              lifecycle.status === "executing"
+            ) {
+              markPlanDone(sid);
+              logger.log(
+                `[hiai-opencode] plan-lifecycle: delivery_critic_accepted ${shortId(sid)}`,
+              );
+            }
+          }
+          return;
+        }
+
+        if (isImplementingWorker(agent) && closureReadiness(text) === "done") {
           markExecuting(sid);
           markImplementingWorkerCompleted(sid);
         }

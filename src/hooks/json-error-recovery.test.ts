@@ -31,9 +31,7 @@ describe("createJsonErrorRecovery", () => {
       output: "JSON parse error near line 3",
     };
     await runHook(output);
-    expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error",
-    );
+    expect(output.output).toContain("[hiai-opencode] JSON parse error");
   });
 
   test("appends recovery hint on Unexpected token", async () => {
@@ -41,9 +39,7 @@ describe("createJsonErrorRecovery", () => {
       output: "SyntaxError: Unexpected token } in JSON",
     };
     await runHook(output);
-    expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error",
-    );
+    expect(output.output).toContain("[hiai-opencode] JSON parse error");
   });
 
   test("appends recovery hint on SyntaxError", async () => {
@@ -51,9 +47,7 @@ describe("createJsonErrorRecovery", () => {
       output: "JSON SyntaxError: bad input",
     };
     await runHook(output);
-    expect(output.output).toContain(
-      "[hiai-opencode] JSON parse error",
-    );
+    expect(output.output).toContain("[hiai-opencode] JSON parse error");
   });
 
   test("does not append when JSON is mentioned without an error keyword", async () => {

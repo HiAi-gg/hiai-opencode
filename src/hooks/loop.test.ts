@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import type { BobConfig } from "../types";
+import { createLoopHook } from "./loop";
 import {
   buildContinuationPrompt,
   buildRecoveryContext,
@@ -9,7 +10,6 @@ import {
   get,
   reset,
 } from "./loop-state";
-import { createLoopHook } from "./loop";
 
 function makeConfig(overrides?: Partial<BobConfig>): BobConfig {
   return {
@@ -225,7 +225,9 @@ describe("createLoopHook: burst session.idle", () => {
 
     // Burst of idle pings — only the first should pass shouldContinue().
     for (let i = 0; i < 5; i++) {
-      await fn({ event: { type: "session.idle", properties: { sessionID: sid } } });
+      await fn({
+        event: { type: "session.idle", properties: { sessionID: sid } },
+      });
     }
 
     // Cooldown is 60s, so only one iteration was recorded.
@@ -237,7 +239,9 @@ describe("createLoopHook: burst session.idle", () => {
     const fn = hook.event as (input: { event: unknown }) => Promise<void>;
 
     for (let i = 0; i < 10; i++) {
-      await fn({ event: { type: "session.idle", properties: { sessionID: sid } } });
+      await fn({
+        event: { type: "session.idle", properties: { sessionID: sid } },
+      });
     }
 
     // Only one continuation prompt recorded despite 10 idle events.
@@ -264,15 +268,21 @@ describe("createLoopHook: burst session.idle", () => {
     const hook = createLoopHook(makeConfig({ loop: { cooldownMs: 60_000 } }));
     const fn = hook.event as (input: { event: unknown }) => Promise<void>;
 
-    await fn({ event: { type: "session.idle", properties: { sessionID: sid } } });
+    await fn({
+      event: { type: "session.idle", properties: { sessionID: sid } },
+    });
     expect(get(sid).iterations).toBe(1);
 
     // Error resets the cooldown clock.
-    await fn({ event: { type: "session.error", properties: { sessionID: sid } } });
+    await fn({
+      event: { type: "session.error", properties: { sessionID: sid } },
+    });
     expect(get(sid).iterations).toBe(0);
 
     // A new idle right after reset records another iteration.
-    await fn({ event: { type: "session.idle", properties: { sessionID: sid } } });
+    await fn({
+      event: { type: "session.idle", properties: { sessionID: sid } },
+    });
     expect(get(sid).iterations).toBe(1);
   });
 });

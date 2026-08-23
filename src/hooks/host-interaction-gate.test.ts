@@ -24,9 +24,10 @@ async function before(
 ) {
   setHostInteractionClient(session ? makeClient(session) : null);
   const hook = createHostInteractionGate({} as never);
-  const fn = hook["tool.execute.before"] as (
-    input: { tool: string; sessionID?: string },
-  ) => Promise<void>;
+  const fn = hook["tool.execute.before"] as (input: {
+    tool: string;
+    sessionID?: string;
+  }) => Promise<void>;
   await fn({ tool, sessionID });
   return sessionID;
 }
@@ -41,9 +42,9 @@ describe("host-interaction-gate", () => {
   });
 
   test("blocks question when Plan is a Bob subagent", async () => {
-    await expect(before({ agent: "plan", parentID: "bob-session" })).rejects.toBeInstanceOf(
-      BlockingHookError,
-    );
+    await expect(
+      before({ agent: "plan", parentID: "bob-session" }),
+    ).rejects.toBeInstanceOf(BlockingHookError);
   });
 
   test("blocks question for other subagents", async () => {
@@ -60,9 +61,9 @@ describe("host-interaction-gate", () => {
     const sid = `host-frozen-${crypto.randomUUID()}`;
     recordFrozenPlan(sid, "p.md", "x");
     try {
-      await expect(before({ agent: "bob" }, "question", sid)).rejects.toBeInstanceOf(
-        BlockingHookError,
-      );
+      await expect(
+        before({ agent: "bob" }, "question", sid),
+      ).rejects.toBeInstanceOf(BlockingHookError);
     } finally {
       clearPlanLifecycle(sid);
     }

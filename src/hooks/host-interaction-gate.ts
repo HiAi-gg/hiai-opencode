@@ -1,8 +1,8 @@
 import type { PluginInput } from "@opencode-ai/plugin";
 import { getPlanLifecycle } from "../features/plan-lifecycle";
 import type { BobConfig, HookSet } from "../types";
-import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
+import { BlockingHookError } from "./errors";
 
 let client: PluginInput["client"] | null = null;
 
@@ -29,7 +29,9 @@ export function createHostInteractionGate(_config: BobConfig): HookSet {
         const sid = input.sessionID;
         if (!sid || !client) return;
         const res = await client.session.get({ path: { id: sid } });
-        const session = res.data as { parentID?: string; agent?: string } | undefined;
+        const session = res.data as
+          | { parentID?: string; agent?: string }
+          | undefined;
         if (session?.parentID) {
           logger.log(
             `[hiai-opencode] host-interaction: denied question in subagent ${session.agent ?? "unknown"}`,
@@ -49,7 +51,10 @@ export function createHostInteractionGate(_config: BobConfig): HookSet {
         }
       } catch (err) {
         if (err instanceof BlockingHookError) throw err;
-        logger.error("[hiai-opencode] Hook error in host-interaction-gate:", err);
+        logger.error(
+          "[hiai-opencode] Hook error in host-interaction-gate:",
+          err,
+        );
       }
     },
   };

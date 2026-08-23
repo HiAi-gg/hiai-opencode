@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import path from "node:path";
 import { eq } from "drizzle-orm";
+import { logger } from "../util/log";
 import { getDb } from "./db";
 import { MemoryFtsTable } from "./fts.sql";
 import {
@@ -9,7 +10,6 @@ import {
   parseCcPath,
   parsePath,
 } from "./paths";
-import { logger } from "../util/log";
 
 const log = {
   warn: (msg: string, extra?: unknown) =>

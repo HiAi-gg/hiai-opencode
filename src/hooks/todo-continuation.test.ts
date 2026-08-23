@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, spyOn, test } from "bun:test";
 import type { BobConfig } from "../types";
+import { logger } from "../util/log";
 import { get, reset } from "./loop-state";
 import { createTodoContinuationHook } from "./todo-continuation";
-import { logger } from "../util/log";
 
 const config = {} as BobConfig;
 

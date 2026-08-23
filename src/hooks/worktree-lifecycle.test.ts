@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
 import type { BobConfig } from "../types";
+import { createWorktreeLifecycleHook } from "./worktree-lifecycle";
 
 describe("worktree-lifecycle", () => {
   test("disabled config returns an empty hook set", () => {

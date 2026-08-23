@@ -9,6 +9,7 @@ import type { PluginInput } from "@opencode-ai/plugin";
 import { get as getCompletion } from "../features/completion-controller/state";
 import { getPlanLifecycle } from "../features/plan-lifecycle";
 import type { BobConfig, HookSet } from "../types";
+import { logger } from "../util/log";
 import { BlockingHookError } from "./errors";
 import {
   detectCompletionMarker,
@@ -19,7 +20,6 @@ import {
   setContinuationPrompt,
   shouldContinue,
 } from "./loop-state";
-import { logger } from "../util/log";
 
 let client: PluginInput["client"] | null = null;
 
@@ -92,11 +92,7 @@ export function createLoopHook(config: BobConfig): HookSet {
               logger.log(
                 `[hiai-opencode] loop: skip_prompt native_continue ${shortId(sessionID)}`,
               );
-            } else if (
-              enabled &&
-              workRemaining(sessionID) &&
-              client
-            ) {
+            } else if (enabled && workRemaining(sessionID) && client) {
               try {
                 const ses = await client.session.get({
                   path: { id: sessionID },

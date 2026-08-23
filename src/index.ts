@@ -20,6 +20,7 @@ import {
 import { createDreamDistillHook } from "./features/dream-distill";
 import { autoExportStaticMcp } from "./features/mcp/auto-export";
 import { getMcpConfig } from "./features/mcp/registry";
+import { setPlansRoot } from "./features/plan-lifecycle";
 import { initShellEnv } from "./features/shell-env";
 import { initTelemetry, shutdownTelemetry } from "./features/telemetry/index";
 import {
@@ -28,12 +29,11 @@ import {
 } from "./features/workspace-adapter";
 import { setCavemanClient } from "./hooks/caveman-system-injector";
 import { createCircuitBreakerHook } from "./hooks/circuit-breaker";
-import { combineHookSets, createHooks } from "./hooks/index";
 import { setHostInteractionClient } from "./hooks/host-interaction-gate";
+import { combineHookSets, createHooks } from "./hooks/index";
 import { setLoopClient } from "./hooks/loop";
 import { setPlanInvocationClient } from "./hooks/plan-invocation-injector";
 import { setPlanLifecycleClient } from "./hooks/plan-lifecycle-gate";
-import { setPlansRoot } from "./features/plan-lifecycle";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
