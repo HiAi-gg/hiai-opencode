@@ -193,8 +193,9 @@ git worktree remove <worktree-path>
 ## Integration
 
 **Called by:**
-- **subagent-driven-development** (Step 7) - After all tasks complete
-- **executing-plans** (Step 5) - After all batches complete
+- Bob, after the frozen plan's waves finish **and** the single delivery Critic returns APPROVED
+- **executing-plans** — after all waves complete
+- **subagent-driven-development** (opt-in paranoid mode only)
 
 **Pairs with:**
 - **using-git-worktrees** - Cleans up worktree created by that skill

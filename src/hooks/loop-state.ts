@@ -38,6 +38,8 @@ export interface LoopSessionState {
   continuationPrompt: string | null;
   /** Whether a continuation instruction has been injected */
   continuationInjected: boolean;
+  /** Timestamp of last native actor.postStop continue */
+  lastNativeContinueAt: number;
 }
 
 export type ErrorType =
@@ -51,8 +53,8 @@ export type ErrorType =
 
 // ── Defaults ──
 
-const DEFAULT_MAX_ITERATIONS = 10;
-const DEFAULT_COOLDOWN_MS = 10_000;
+const DEFAULT_MAX_ITERATIONS = 50;
+const DEFAULT_COOLDOWN_MS = 1500;
 
 // ── Store ──
 
@@ -127,6 +129,7 @@ export function get(sessionID: string): LoopSessionState {
         lastErrorType: null,
         continuationPrompt: null,
         continuationInjected: false,
+        lastNativeContinueAt: 0,
       };
       store.set(sessionID, s);
       assertInvariants(sessionID, s);
@@ -193,6 +196,25 @@ export function setHasIncompleteTasks(
     const s = get(sessionID);
     s.hasIncompleteTasks = hasIncomplete;
     assertInvariants(sessionID, s);
+  });
+}
+
+export function markNativeContinue(sessionID: string): void {
+  dispatch(sessionID, () => {
+    const s = get(sessionID);
+    s.lastNativeContinueAt = Date.now();
+    assertInvariants(sessionID, s);
+  });
+}
+
+export function recentlyNativelyContinued(
+  sessionID: string,
+  windowMs: number,
+): boolean {
+  return dispatch(sessionID, () => {
+    const s = get(sessionID);
+    if (!s.lastNativeContinueAt) return false;
+    return Date.now() - s.lastNativeContinueAt < windowMs;
   });
 }
 

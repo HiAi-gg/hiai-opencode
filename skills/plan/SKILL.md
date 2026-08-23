@@ -16,7 +16,7 @@ Explicit task decomposition into verifiable units with acceptance criteria. This
 - A spec or requirements document exists
 - Need to break work into manageable pieces
 - Planning a multi-step implementation
-- Before `subagent-driven-development` begins
+- Before Bob dispatches frozen-plan waves
 - When "I have a plan" but the plan has no verifiable tasks
 
 **Don't use when:**
@@ -49,4 +49,4 @@ Sequential, parallel, or conditional.
 
 - **`interview-me`** — Used BEFORE this skill ONLY when the human explicitly requested an interview (otherwise resolve ambiguity autonomously)
 - **`spec-driven-development`** — Used BEFORE this skill when no spec exists
-- **`subagent-driven-development`** — Uses tasks from this skill for execution
+- **Bob frozen-plan waves** — Default execution. `subagent-driven-development` is opt-in paranoid mode only.

@@ -66,9 +66,36 @@ Removed from default registry (v0.3.0): `mempalace`, `stitch`, `context7`. Conte
 | `visual-engineering` | designer |
 | `writing` | writer |
 | `ultrabrain` | plan |
-| review/verification | critic |
+| review/verification | critic (once at delivery, after all plan waves) |
 | research/discovery | explore |
 | browser/visual | vision |
+
+## Orchestration contract (v0.6.2+)
+
+Default path for a user request:
+
+1. Bob classifies. Trivial 1–2 files → `general` (no Plan; Critic only if high-risk).
+2. Non-trivial → **Plan once**. Plan may fan out 1–3 `explore` calls, writes `.bob/plans/*.md`, returns `Status: done` → **frozen**.
+3. Bob dispatches waves from the frozen graph. `parallel: yes` = several `task()` in **one** assistant turn. Manager only if ≥6 workers; Manager never spawns Plan or Critic.
+4. Workers execute the annotated step. They do not re-plan or review.
+5. **One Critic** after every implementation wave. UI work → Critic delegates Vision.
+6. Re-plan only with `INVALIDATE_PLAN` in the Plan prompt (user changed scope, worker `Status: blocked` because the plan is wrong, or delivery Critic said the plan is unexecutable).
+
+Hard wall: `getTaskPermissions()` in [src/permissions.ts](src/permissions.ts). Runtime freeze: [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts). Freeze is **per session** in `.bob/plans/.lifecycle.json` (plus plan-file frontmatter). A new session in the same repo is not blocked by another session's plan.
+
+**Native OpenCode UI (do not reinvent):**
+- Tasks: Bob calls `todowrite` after Plan returns — phase rows + indented `N.M` steps. Host `task()` sessions are the parent/child tree.
+- Question: direct Plan (picker / Tab) uses the native `question` tool for complex/unclear **user-owned** facts. Plan invoked **through Bob** never interviews (`host-interaction-gate` denies `question` when the session has `parentID`).
+- Memory: native `memory` tool first; `hiai_memory_search` only if that misses.
+
+| Agent | May `task()` |
+|---|---|
+| bob | manager + all workers |
+| manager | explore, build, general, designer, writer, vision, **critic (phase close only)** |
+| plan | explore |
+| critic | vision, explore |
+| build | explore (missing path only) |
+| explore, designer, writer, vision, general | none |
 
 ## Change Map
 
@@ -82,7 +109,8 @@ When you need to change something, edit the right file first.
 | Shared prompt fragments | [src/prompt-library/](src/prompt-library) (browser, caveman, native-memory, postgres-rules, workspace, worktree) |
 | Runtime prompt injection | [src/hooks/closure-injector.ts](src/hooks/closure-injector.ts), [src/hooks/caveman-system-injector.ts](src/hooks/caveman-system-injector.ts) |
 | Agent registration (visibility, mode, model) | [src/agents/index.ts](src/agents/index.ts) + [src/index.ts](src/index.ts) `hooks.config` |
-| Per-agent permissions | [src/permissions.ts](src/permissions.ts) — `applyAgentPermissions()` |
+| Per-agent permissions | [src/permissions.ts](src/permissions.ts) — `applyAgentPermissions()` / `getTaskPermissions()` spawn matrix |
+| Plan freeze / single Critic | [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts) |
 | Closure protocol | [src/shared/closure.ts](src/shared/closure.ts) — `CLOSURE_SCHEMA_PROMPT` + `validateClosure()` |
 | Prompt override / `prompt_append` | [src/agents/index.ts](src/agents/index.ts) — `applyPromptOverride()` |
 | Skill tool | [src/tools/skill.ts](src/tools/skill.ts) |
@@ -112,6 +140,10 @@ Use [bob.env.example](bob.env.example) as the canonical template. Model provider
 | `HIAI_OPENCODE_MCP_EXPORT_PATH` | Override `.opencode/.mcp.json` output path |
 | `HIAI_OPENCODE_EXPORT_MCP_MODE` | `safe` (default) \| `force` (overwrite policy) |
 
+All plugin settings go through **one** `bob.json` (or `bob.jsonc`). Search order (first found wins): current dir → each parent up to filesystem root (`bob.json`, then `.opencode/bob.json`, then jsonc) → `~/.config/hiai-opencode/bob.json`. CLI `doctor` uses the same order. Credentials stay in `bob.env` / Connect, not in JSON.
+
+`loop.enabled` (default true) keeps Bob running on idle until the frozen plan and todos are done. Do not wait for the user to re-prompt.
+
 Use `{env:VAR_NAME}` placeholders in config JSON — never raw keys, never `${VAR}` (blocked for names containing `KEY`/`TOKEN`/`SECRET`). Check with `grep -E '(fc-\|ctx7sk-\|sk-\|key-)' bob.json` — should return 0 matches.
 
 ## Mental Map
@@ -119,10 +151,10 @@ Use `{env:VAR_NAME}` placeholders in config JSON — never raw keys, never `${VA
 ```
 AGENTS:    bob (orchestrator) · build (impl) · plan (architecture) · explore (discovery)
            critic (review gate) · designer · writer · vision (browser) · manager · general (fallback)
-MCP:       grep_app -> explore, build · sequential-thinking -> plan, critic
+MCP:       grep_app -> explore · sequential-thinking optional (Plan uses native thinking)
 CLI SKILLS: firecrawl -> explore · context7 -> explore, build · agent-browser -> vision
 LSP:       typescript, svelte, eslint, bash, pyright → build MUST run lsp_diagnostics after every edit
-GATES:     critic-review · quality-gate · lsp-pending · legal-gate · circuit-breaker · closure
+GATES:     plan-freeze · delivery-critic (once) · quality-gate · lsp-pending · legal-gate · circuit-breaker · closure
 ```
 
 ## Closure Protocol
@@ -178,6 +210,9 @@ Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome — Lightpanda is 
 ### Agent prompt correct in source but wrong at runtime
 The runtime prompt is assembled in layers: (1) `src/agents/<agent>.ts`, (2) `src/prompt-library/*.ts` imports, (3) runtime hooks (closure-injector, caveman-system-injector), (4) `hooks.config` in [src/index.ts](src/index.ts) applies model/visibility/permissions. Inspect `hooks.config` first when runtime output diverges from source.
 
+### Plan is called again or Critic runs after every step
+Expected contract since v0.6.2: one Plan, frozen until done; one Critic at delivery. If you still see mid-plan Plan/Critic calls, check (1) agent prompts import the freeze/delivery wording, (2) `plan-lifecycle-gate` is not in `hooks.disabled`, (3) logs for `[hiai-opencode] plan-lifecycle: denied_replan` / `denied_early_critic`. Invalidate only with `INVALIDATE_PLAN` in the Plan prompt.
+
 ### Circuit breaker triggered
 Sessions are aborted at 20+ consecutive identical tool calls (default) or 4000+ total tool calls (default). Search logs for `[background-agent] Circuit breaker:`. Adjust via `background_manager.circuit_breaker.consecutive_threshold` / `max_tool_calls` in config. State is in-memory only — lost on restart.
 
@@ -192,6 +227,9 @@ Windows/OpenCode may fail to spawn local MCP processes (`sequential-thinking`, n
 - **`{env:VAR}` not `${VAR}`** in hiai-opencode config files — the latter blocks names containing `KEY`/`TOKEN`/`SECRET`.
 - **Never hardcode API keys** in JSON. Use `{env:VARIABLE_NAME}` placeholders.
 - **Bob's prompt is the routing source of truth** — there is no separate TypeScript routing map.
+- **Do not re-plan a frozen plan.** Execute waves. Invalidate only with `INVALIDATE_PLAN`.
+- **Do not call Critic after each todo.** Delivery Critic once. Skills that say otherwise (`subagent-driven-development`) are opt-in paranoid mode.
+- **Leaf agents cannot spawn Plan/Critic.** If a prompt still shows `task({subagent_type: "explore"})` on Writer, that call is denied at the permission wall — report the gap to Bob instead.
 
 ## Documentation
 

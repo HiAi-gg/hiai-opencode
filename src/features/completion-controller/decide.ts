@@ -13,6 +13,8 @@ export interface CompletionState {
   qualityGateFailed: boolean;
   /** An edit was made without a subsequent lsp_diagnostics call. */
   lspPending: boolean;
+  /** Frozen-plan lifecycle. Review is blocked while a plan is still executing. */
+  planStatus?: "none" | "frozen" | "executing" | "done" | "invalidated";
 }
 
 export type CompletionAction =
@@ -29,9 +31,12 @@ const QUALITY_GATE_PROMPT =
 const LSP_PENDING_PROMPT =
   "You edited files without running lsp_diagnostics afterwards. Run lsp_diagnostics on every changed file and confirm zero errors before requesting review.";
 const REVIEW_PROMPT =
-  'All TODOs are done. Delegate to Critic (task subagent_type="critic") to review the changes; ' +
-  "do not finish until Critic returns APPROVED.";
+  'All TODOs are done. Delegate to Critic (task subagent_type="critic") once to review the completed work; ' +
+  "do not finish until Critic returns APPROVED. Do not call Critic per step.";
 const REVIEW_VISION_PROMPT = `${REVIEW_PROMPT} UI files changed — Critic MUST delegate a Vision browser verification task before approving. Vision will navigate, set viewport, screenshot, inspect console, and report evidence.`;
+const FINISH_WAVES_PROMPT =
+  "A frozen plan is still executing. Finish the remaining plan waves with concurrent task() calls. " +
+  "Do not call Plan again. Do not call Critic until every implementation wave is done.";
 
 export function decide(s: CompletionState): CompletionAction {
   if (s.blockerFlagged) return { kind: "stop", reason: "blocked" };
@@ -55,6 +60,13 @@ export function decide(s: CompletionState): CompletionAction {
     return atCap
       ? { kind: "stop", reason: "cap" }
       : { kind: "continue", prompt: LSP_PENDING_PROMPT };
+  }
+
+  const planBusy = s.planStatus === "frozen" || s.planStatus === "executing";
+  if (planBusy) {
+    return atCap
+      ? { kind: "stop", reason: "cap" }
+      : { kind: "continue", prompt: FINISH_WAVES_PROMPT };
   }
 
   if (!s.requireCritic || s.changedFiles.length === 0) {

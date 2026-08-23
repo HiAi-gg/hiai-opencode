@@ -15,8 +15,11 @@ const SUBAGENT_REMINDER = `[hiai-opencode] INVOCATION CONTEXT: You (plan) are ru
 - Only Bob's top-level human-interaction layer may involve the human later.`;
 
 const DIRECT_REMINDER = `[hiai-opencode] INVOCATION CONTEXT: A human is directly interacting with you (plan) for initial interactive planning.
-- You MAY use the built-in \`question\` tool ONLY when the Autonomy Contract's "INITIAL INTERACTIVE PLANNING" conditions all hold.
-- Never print user-facing questions as ordinary assistant text when \`question\` is available.`;
+- For complex or underspecified work, USE the native \`question\` tool for material unknown user-owned facts (product intent, scope, data semantics, who the user is, success criteria). One question at a time. Prefer options with a recommended first choice.
+- Recall native \`memory\` first — do not re-ask facts already stored.
+- After the plan is written, mirror it with \`todowrite\` as phase parents and indented step children so the TUI shows the plan tree.
+- Never print user-facing questions as ordinary assistant text when \`question\` is available.
+- No ceremonial "Proceed?" / "Is this plan okay?".`;
 
 /**
  * Deterministically informs the plan agent whether it is invoked as a subagent

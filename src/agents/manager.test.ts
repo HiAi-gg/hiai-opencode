@@ -17,13 +17,11 @@ describe("MANAGER_PROMPT", () => {
     expect(MANAGER_PROMPT).toContain("Owner → Subagent Type Mapping");
   });
 
-  test("lists all valid owner→subagent_type mappings", () => {
+  test("lists worker owner→subagent_type mappings and forbids plan/critic spawn", () => {
     const mappings = [
       "explore",
-      "plan",
       "build",
       "general",
-      "critic",
       "designer",
       "writer",
       "vision",
@@ -31,6 +29,8 @@ describe("MANAGER_PROMPT", () => {
     for (const agent of mappings) {
       expect(MANAGER_PROMPT).toContain(`\`${agent}\``);
     }
+    expect(MANAGER_PROMPT).toContain("MUST NOT spawn `plan`");
+    expect(MANAGER_PROMPT).toContain("Phase-close Critic");
   });
 
   test("instructs not to override plan owner assignment", () => {

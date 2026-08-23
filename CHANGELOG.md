@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] — 2026-08-23
+
+### ⚡ Orchestration contract: plan once, parallel waves, critic once
+
+Breaking agent-behavior change. Multi-point work is no longer re-planned mid-flight and no longer sends Critic after every specialist.
+
+- **Plan freeze.** Plan is invoked once, then frozen. A second Plan spawn is denied unless the prompt contains `INVALIDATE_PLAN` (scope change, worker proved the plan wrong, or delivery Critic said it is unexecutable). Runtime: `src/features/plan-lifecycle/` + `src/hooks/plan-lifecycle-gate.ts`.
+- **Delivery Critic once.** Bob/Manager/Build prompts no longer require Critic after every specialist. Critic is blocked while a frozen plan is still executing and incomplete todos remain. The completion controller will not inject a review prompt mid-plan.
+- **Spawn matrix.** `getTaskPermissions()`: Manager cannot spawn Plan/Critic; Plan spawns explore only; Build spawns explore only; Critic spawns vision+explore; other workers are leaves.
+- **Parallel waves.** Prompts require concurrent `task()` in the **same** assistant message for `parallel: yes` steps. Manager no longer re-reads the plan after every delegation.
+- **Skills.** `subagent-driven-development` is opt-in paranoid mode. `writing-plans` hands off to frozen `.bob/plans/` waves. Code review is at delivery, not after each task.
+- **Worktree lifecycle.** No auto-create on user-message regex; no teardown on arbitrary `<CLOSURE>`. Explicit `hiai_worktree_create` only.
+- **Quality gate.** Bare `\bfailed\b` no longer trips the gate (false positives). Counts like `1 failed` and `FAIL` still do.
+- **Docs.** README / AGENTS.md / ARCHITECTURE.md describe the frozen-plan → waves → delivery-Critic path; spawn matrix; `INVALIDATE_PLAN`.
+- **Native OpenCode UI.** Bob/`todowrite` mirrors the frozen plan as phase parents + indented step children so the TUI task list is hierarchical. `task()` remains the parent/child session tree.
+- **Question tool.** Plan and Bob have `question: allow`. Direct Plan interviews on complex/unclear user-owned facts (native `question` UI). Plan spawned by Bob cannot interview — `host-interaction-gate` blocks `question` when the session has a `parentID`. Other agents `question: deny`.
+- **Memory.** Prompts use OpenCode native `memory` first; `hiai_memory_search` is forensic fallback.
+- **Manager.** Only for a **large phase** (not 1–2 file / `general` work). May spawn **one Critic at phase close** (that slice only). Bob still runs one **delivery Critic** after all phases. Phase-close critic does not mark the frozen plan `done`.
+- **Freeze persists** in `.bob/plans/.lifecycle.json` plus YAML frontmatter (`status`, `checksum`) so a restart does not unlock re-plan.
+- **Progress line.** Bob must lead user-facing messages with Plan / status / phase N/M / what is running.
+- **Skills.** `subagent-driven-development` is loadable only as `plan/subagent-driven-development` — not a short-name default hit.
+- **Doctor.** Missing/empty `models.bob`, `models.plan`, or `models.build` is a hard fail.
+- **Single `bob.json`.** Plugin and CLI walk ancestors the same way (`bob.json` → `.opencode/bob.json` → jsonc → `~/.config/hiai-opencode`). All tunables (loop, completion, models, mcp) live there.
+- **Run-to-completion loop.** Default `loop.enabled=true`. Canonical budget is `loop.max_auto_continues` (default 50; aliases `loop.maxIterations` and `completion.max_auto_continues`). Idle `session.prompt` is a fallback only — skipped when native `actor.postStop` continue is already running (no double TUI loop). `question` is blocked while a plan is executing.
+- **Per-session freeze.** `.bob/plans/.lifecycle.json` is a map of session → plan. A new chat in the same repo can start a new Plan. Todos snapshot with the freeze; Bob restores via `todowrite` after restart of the same session.
+- **Doctor.** First check prints the resolved `bob.json` absolute path (or warn if defaults).
+
 ## [0.6.1] — 2026-08-13
 
 ### 🌐 Runtime Lightpanda auto-selection

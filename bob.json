@@ -82,9 +82,13 @@
     "exclude_agents": ["vision", "writer"],
     "min_messages_to_compress": 5
   },
+  "loop": {
+    "enabled": true,
+    "max_auto_continues": 50,
+    "cooldownMs": 1500
+  },
   "completion": {
     "enabled": true,
-    "max_auto_continues": 25,
     "require_critic": true,
     "ui_globs": ["**/*.svelte", "**/*.tsx", "**/*.jsx", "**/*.vue", "**/*.css", "**/*.scss", "**/*.html", "**/*.astro"],
     "reset_on_user_message": true

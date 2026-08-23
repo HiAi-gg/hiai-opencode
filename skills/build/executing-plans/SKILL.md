@@ -7,19 +7,19 @@ description: Use when you have a written implementation plan to execute in a sep
 
 ## Overview
 
-Load plan, review critically, execute all tasks, report when complete.
+Load the **frozen** plan, execute its waves, report when complete. Do not rewrite the plan. Do not call Critic after each task.
 
 **Announce at start:** "I'm using the executing-plans skill to implement this plan."
 
-**Note:** Tell your human partner that Superpowers works much better with access to subagents. The quality of its work will be significantly higher if run on a platform with subagent support (such as your agent or Codex). If subagents are available, use subagent-driven-development instead of this skill.
+**Note:** Default HiAi path is Bob frozen-plan waves (parallel `task()` in one turn per phase, one Critic at delivery). `subagent-driven-development` is opt-in paranoid mode, not the fallback.
 
 ## The Process
 
-### Step 1: Load and Review Plan
-1. Read plan file
-2. Review critically - identify any questions or concerns about the plan
-3. If concerns: Raise them with your human partner before starting
-4. If no concerns: Create TodoWrite and proceed
+### Step 1: Load Frozen Plan
+1. Read plan file (do not rewrite it)
+2. Create TodoWrite from phases
+3. Dispatch `parallel: yes` steps as concurrent `task()` in one turn
+4. Critic once after all tasks — not per task, not mid-wave
 
 ### Step 2: Execute Tasks
 

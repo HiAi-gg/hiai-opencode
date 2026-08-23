@@ -1,48 +1,26 @@
 /**
- * worktree-lifecycle.ts — Auto-create and auto-clean git worktrees around a plan.
+ * worktree-lifecycle.ts — Track worktrees created via hiai_worktree_* tools.
  *
- * Lifecycle:
- *  - `chat.message`: when the user message signals the start of a plan/phase
- *    (e.g. "implement plan", "start phase"), a linked worktree is created and
- *    associated with the session.
- *  - `tool.execute.after`: when a CLOSURE block is detected in tool output, the
- *    worktree associated with that session is removed.
+ * Auto-create on user phrases like "implement plan" is disabled: it does not
+ * fire in autonomous Bob loops and it tore down trees on any CLOSURE.
  *
- * Only active when `config.worktreeConfig?.enabled === true`.
+ * When `config.worktreeConfig.enabled`, this hook:
+ *  - records paths from successful `hiai_worktree_create` calls
+ *  - removes those recorded worktrees on session.deleted / dispose
+ *
+ * Agents must call `hiai_worktree_create` explicitly for disjoint parallel writes.
  */
 
 import { WorktreeManager } from "../features/worktree";
 import type { BobConfig, HookSet } from "../types";
 import { logger } from "../util/log";
 
-/** Phrases that signal the start of a plan / phase and should spawn a worktree. */
-const PLAN_START_PATTERNS: RegExp[] = [
-  /\bimplement\s+(the\s+)?plan\b/i,
-  /\bstart\s+(the\s+)?plan\b/i,
-  /\bbegin\s+(the\s+)?plan\b/i,
-  /\bexecute\s+(the\s+)?plan\b/i,
-  /\bstart\s+(a\s+)?phase\b/i,
-  /\bbegin\s+(a\s+)?phase\b/i,
-  /\bstart\s+(a\s+)?new\s+task\b/i,
-];
-
-/** Marker that the plan is complete and the worktree can be torn down. */
-const CLOSURE_PATTERN = /<CLOSURE>[\s\S]*?<\/CLOSURE>/i;
-
-function extractMessageText(parts: unknown): string {
-  if (!Array.isArray(parts)) return "";
-  return parts
-    .map((p) => {
-      const part = p as { type?: string; text?: string };
-      return part?.type === "text" && typeof part.text === "string"
-        ? part.text
-        : "";
-    })
-    .join("\n");
-}
-
-function isPlanStart(message: string): boolean {
-  return PLAN_START_PATTERNS.some((re) => re.test(message));
+function createdPathFromOutput(output: string): string | null {
+  const m =
+    output.match(/path["']?\s*[:=]\s*["']([^"']+)/i) ||
+    output.match(/directory["']?\s*[:=]\s*["']([^"']+)/i) ||
+    output.match(/Created worktree[^\n]*?(\/\S+)/i);
+  return m ? m[1] : null;
 }
 
 export function createWorktreeLifecycleHook(config: BobConfig): HookSet {
@@ -52,71 +30,60 @@ export function createWorktreeLifecycleHook(config: BobConfig): HookSet {
   }
 
   const manager = new WorktreeManager({ baseDir: wtConfig.base_dir });
-  const sessionWorktrees = new Map<string, string>();
+  const sessionWorktrees = new Map<string, string[]>();
 
-  return {
-    "chat.message": async (_input, output) => {
-      const sessionID = _input.sessionID;
-      if (!sessionID) return;
-      // Already tracking a worktree for this session.
-      if (sessionWorktrees.has(sessionID)) return;
+  const track = (sessionID: string, dir: string) => {
+    const list = sessionWorktrees.get(sessionID) ?? [];
+    if (!list.includes(dir)) list.push(dir);
+    sessionWorktrees.set(sessionID, list);
+  };
 
-      const text = extractMessageText(output?.parts);
-      if (!isPlanStart(text)) return;
-
-      try {
-        const info = await manager.create({ planName: text.slice(0, 64) });
-        sessionWorktrees.set(sessionID, info.path);
-        logger.log(
-          `[hiai-opencode] worktree-lifecycle: created worktree ${info.path} for session ${sessionID}`,
-        );
-      } catch (err) {
-        logger.error(
-          `[hiai-opencode] worktree-lifecycle: failed to create worktree for session ${sessionID}:`,
-          err,
-        );
-      }
-    },
-
-    "tool.execute.after": async (input, output) => {
-      const sessionID = input.sessionID;
-      if (!sessionID) return;
-      const dir = sessionWorktrees.get(sessionID);
-      if (!dir) return;
-
-      const toolOutput =
-        typeof output?.output === "string" ? output.output : "";
-      if (!CLOSURE_PATTERN.test(toolOutput)) return;
-
+  const removeAll = async (sessionID: string, reason: string) => {
+    const dirs = sessionWorktrees.get(sessionID) ?? [];
+    for (const dir of dirs) {
       try {
         const removed = await manager.remove(dir);
         if (removed) {
           logger.log(
-            `[hiai-opencode] worktree-lifecycle: removed worktree ${dir} for session ${sessionID}`,
+            `[hiai-opencode] worktree-lifecycle: removed worktree ${dir} for session ${sessionID} (${reason})`,
           );
         }
-        sessionWorktrees.delete(sessionID);
       } catch (err) {
         logger.error(
           `[hiai-opencode] worktree-lifecycle: failed to remove worktree ${dir} for session ${sessionID}:`,
           err,
         );
       }
+    }
+    sessionWorktrees.delete(sessionID);
+  };
+
+  return {
+    "tool.execute.after": async (input, output) => {
+      const sessionID = input.sessionID;
+      if (!sessionID) return;
+      if (input.tool !== "hiai_worktree_create") return;
+      const text = typeof output?.output === "string" ? output.output : "";
+      const args = (input.args ?? {}) as { path?: string; directory?: string };
+      const dir = args.path ?? args.directory ?? createdPathFromOutput(text);
+      if (dir) track(sessionID, dir);
+    },
+
+    event: async ({ event }: { event: unknown }) => {
+      const evt = event as {
+        type?: string;
+        properties?: { sessionID?: string };
+      };
+      if (evt?.type !== "session.deleted") return;
+      const sessionID = evt.properties?.sessionID;
+      if (!sessionID) return;
+      await removeAll(sessionID, "session.deleted");
     },
 
     dispose: async () => {
-      // Best-effort cleanup of any worktrees still tracked at shutdown.
-      for (const [sessionID, dir] of sessionWorktrees) {
-        try {
-          await manager.remove(dir);
-          logger.log(
-            `[hiai-opencode] worktree-lifecycle: removed worktree ${dir} for session ${sessionID} on dispose`,
-          );
-        } catch {
-          // ignore individual removal failures
-        }
+      for (const sessionID of [...sessionWorktrees.keys()]) {
+        await removeAll(sessionID, "dispose");
       }
-      sessionWorktrees.clear();
     },
   };
 }

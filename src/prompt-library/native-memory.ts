@@ -12,31 +12,50 @@
 export const NATIVE_MEMORY_PROMPT = `
 ## Project Memory Architecture
 
-You have access to 6 tiers of memory/context:
+Use the HOST tools — do not invent a shadow notebook.
 
-1. **Current conversation** — everything in this session (messages, tool results, agent outputs)
-2. **Session history** — browse past sessions via \`session_read\` / \`session_search\` tools
-3. **Project memory (FTS5)** — search MEMORY.md, checkpoint.md, notes.md, progress files via \`hiai_memory_search\`
-   Database at ~/.hiai-opencode/data/hiai-memory.db — BM25-ranked full-text search
-4. **Project files** — AGENTS.md, README.md, TODO.md, plans/, .opencode/ — always the authoritative source of truth
-5. **Subagent results** — summaries and CLOSURE blocks returned by delegated agents
-6. **System context** — your identity, model, tools, skills, workspace path
+1. **Native \`memory\` tool** (OpenCode built-in) — primary. Recall/write curated facts:
+   decisions, architecture, patterns, open product questions. Call it BEFORE planning or
+   a non-trivial wave. After a decision that should survive this session, write it back.
+2. **Current conversation** — this session's messages and tool results
+3. **\`hiai_memory_search\`** — forensic BM25 over transcripts/checkpoints when native memory
+   has no hit (not the default lookup)
+4. **Project files** — AGENTS.md, README.md, \`.bob/plans/\` — authoritative for this repo
+5. **Subagent Result Envelopes** — consume, do not re-search
+6. **System context** — identity, model, tools, workspace
 
 **Persistence contract:**
-- Before non-trivial work: use hiai_memory_search to recall prior decisions, patterns, open threads
-- After significant work: write to MEMORY.md (Rules, Architecture Decisions, Discovered Knowledge sections)
-- After each task: the checkpoint-writer captures status, files touched, next steps to checkpoint.md
-- After task completion: update TODO.md if items reference your task; update plans/*.md status
-- Keep entries short and factual; the FTS5 index searches them automatically
-
-**Memory files layout:**
-- MEMORY.md — project-level durable knowledge (Rules, Architecture Decisions, Discovered Knowledge, Patterns, Gotchas)
-- checkpoint.md — per-session summary (Active intent, Next action, Task tree, Files/code, Errors/fixes)
-- notes.md — free-form session scratchpad (reconciled by checkpoint-writer)
-- tasks/<TID>/progress.md — per-task progress capture`;
+- Before Plan / before a wave: native \`memory\` recall (then hiai_memory_search only if empty)
+- After a durable decision: native \`memory\` write (short, factual)
+- Do not dump session transcripts into memory
+- Keep entries short; prefer one fact per write`;
 
 export const NATIVE_TASKS_PROMPT = `
-## Tasks & delegation tree (host-native)
-Delegation via \`task({subagent_type: ...})\` is recorded by the host as a persistent parent/child
-task tree (status, progress, checkpoints) that survives restarts. Do NOT keep a separate shadow
-task list — rely on the native tree and write progress/decisions to native memory.`;
+## Native tasks (OpenCode TUI)
+
+The host has two trees. Use both; do not invent a third.
+
+1. **\`task({subagent_type})\`** — OpenCode records parent/child sessions. This is how waves
+   show up as nested work in the TUI. Fire parallel steps as concurrent \`task()\` in ONE turn.
+2. **\`todowrite\`** — the checklist the user sees. Bob (and Plan in a *direct* session) MUST
+   mirror the frozen plan as nested items so phases are parents and steps are children.
+
+\`todowrite\` format (flat list; numbering + indent = hierarchy the TUI renders):
+
+\`\`\`
+todowrite({ todos: [
+  { id: "p1", content: "Phase 1 — Research", status: "pending" },
+  { id: "p1.1", content: "  1.1 Map structure — owner: explore", status: "pending" },
+  { id: "p1.2", content: "  1.2 Find feature files — owner: explore", status: "pending" },
+  { id: "p2", content: "Phase 2 — Implement", status: "pending" },
+  { id: "p2.1", content: "  2.1 Auth module — owner: build", status: "pending" },
+  { id: "p3", content: "Phase 3 — Delivery review — owner: critic", status: "pending" }
+]})
+\`\`\`
+
+Rules:
+- One todo per plan step. Phase headers are parent rows; steps are indented sub-items (\`  N.M \`).
+- Mark the current wave \`in_progress\` before dispatch; mark a step \`completed\` when its envelope returns.
+- Never batch-complete a whole phase in one write unless every step actually finished.
+- Workers do not call \`todowrite\` (permission denied). Bob owns the list.
+- Do not keep a markdown checkbox list as the source of truth — \`todowrite\` is.`;

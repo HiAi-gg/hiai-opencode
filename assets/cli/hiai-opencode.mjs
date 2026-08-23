@@ -2,7 +2,7 @@
 
 import { spawnSync } from "node:child_process"
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
-import { dirname, join } from "node:path"
+import { dirname, isAbsolute, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { homedir } from "node:os"
 import { createHash } from "node:crypto"
@@ -108,39 +108,31 @@ function ancestorDirs(startDir) {
   return dirs
 }
 
+function globalConfigDir() {
+  // MUST match src/config.ts globalConfigDir().
+  const home = process.env.HIAI_BOB_HOME
+  if (home && isAbsolute(home)) return join(home, "config")
+  const xdg = process.env.XDG_CONFIG_HOME
+  const base =
+    xdg && isAbsolute(xdg) ? xdg : join(homedir(), ".config")
+  return join(base, "hiai-opencode")
+}
+
 function candidateConfigPaths() {
-  // Walk up from cwd so running inside a subdirectory still finds the
-  // repo-root bob.json — the same file the plugin loads (src/config.ts).
+  // Same order as src/config.ts loadConfig: nearest ancestor bob.json wins,
+  // then .opencode/bob.json, jsonc variants, then the plugin global dir.
   const ancestorDirsOfCwd = ancestorDirs(process.cwd())
   const paths = []
   for (const dir of ancestorDirsOfCwd) {
     paths.push(
       join(dir, "bob.json"),
-      join(dir, "bob.jsonc"),
       join(dir, ".opencode", "bob.json"),
+      join(dir, "bob.jsonc"),
       join(dir, ".opencode", "bob.jsonc"),
-      join(dir, "hiai-opencode.json"),
-      join(dir, "hiai-opencode.jsonc"),
-      join(dir, ".opencode", "hiai-opencode.json"),
-      join(dir, ".opencode", "hiai-opencode.jsonc"),
     )
   }
-  paths.push(
-    join(homedir(), ".config", "opencode", "bob.json"),
-    join(homedir(), ".config", "opencode", "bob.jsonc"),
-    join(homedir(), ".config", "opencode", "hiai-opencode.json"),
-    join(homedir(), ".config", "opencode", "hiai-opencode.jsonc"),
-  )
-
-  if (process.platform === "win32" && process.env.APPDATA) {
-    paths.push(
-      join(process.env.APPDATA, "opencode", "bob.json"),
-      join(process.env.APPDATA, "opencode", "bob.jsonc"),
-      join(process.env.APPDATA, "opencode", "hiai-opencode.json"),
-      join(process.env.APPDATA, "opencode", "hiai-opencode.jsonc"),
-    )
-  }
-
+  const cfgDir = globalConfigDir()
+  paths.push(join(cfgDir, "bob.json"), join(cfgDir, "bob.jsonc"))
   return paths
 }
 
@@ -642,13 +634,40 @@ function getAgentSummary(config) {
   if (deprecated.length > 0) issues.push(`${deprecated.length} deprecated key(s): ${deprecated.map(k => `${k}→${DEPRECATED_MODEL_KEYS[k]}`).join(", ")}`)
   if (emptySlots.length > 0) issues.push(`${emptySlots.length} empty model value(s): ${emptySlots.join(", ")}`)
 
-  const level = issues.length === 0 ? "ok" : (missing.length > 0 ? "fail" : "warn")
+  const coreEmpty = ["bob", "plan", "build"].filter((slot) => emptySlots.includes(slot) || missing.includes(slot))
+  if (coreEmpty.length > 0) {
+    issues.push(`core models missing/empty: ${coreEmpty.join(", ")} — plugin cannot orchestrate`)
+  }
+  const level =
+    issues.length === 0
+      ? "ok"
+      : missing.length > 0 || coreEmpty.length > 0
+        ? "fail"
+        : "warn"
   const issueDetail = issues.length > 0 ? ` (${issues.join("; ")})` : ""
 
   return {
     level,
     detail: `visible=${visible.length} [${visible.join(", ")}]; hidden=${hidden.length} [${hidden.join(", ")}]; model slots=${modelKeys.length}/${REQUIRED_MODEL_SLOTS.length}${missingDetail}${deprecatedDetail}${emptyDetail}${issueDetail}`,
   }
+}
+
+function checkCoreOrchestrationModels(config) {
+  const core = ["bob", "plan", "build"]
+  const models = config?.models ?? {}
+  const bad = []
+  for (const slot of core) {
+    const value = models[slot]
+    const model = typeof value === "string" ? value : value?.model
+    if (!model || String(model).trim() === "") bad.push(slot)
+  }
+  if (bad.length > 0) {
+    return {
+      level: "fail",
+      detail: `missing/empty: ${bad.join(", ")} — set models.${bad[0]}.model in bob.json`,
+    }
+  }
+  return { level: "ok", detail: "bob, plan, and build have models" }
 }
 
 function checkModelSlotValues(config) {
@@ -676,9 +695,9 @@ function checkSubagentDepth(config) {
     return { level: "fail", detail: `invalid subagent_depth=${String(depth)}; expected a positive integer` }
   }
   if (depth < 2) {
-    return { level: "warn", detail: `subagent_depth=${depth}; Bob → Manager → worker requires 2` }
+    return { level: "warn", detail: `subagent_depth=${depth}; Bob → Plan → Explore / Bob → Manager → worker requires 2` }
   }
-  return { level: "ok", detail: `subagent_depth=${depth}; nested Bob → Manager → worker delegation enabled` }
+  return { level: "ok", detail: `subagent_depth=${depth}; nested Bob → Plan → Explore / Bob → Manager → worker enabled` }
 }
 
 function getLspDefaults() {
@@ -818,6 +837,19 @@ function hasEnvOrAuth(config, envName, authKey) {
   return false
 }
 
+function formatBobJsonCheck(path, error) {
+  if (error) {
+    return {
+      level: "fail",
+      detail: `parse error at ${path ?? "(unknown)"}: ${error}`,
+    }
+  }
+  if (!path) {
+    return { level: "warn", detail: "not found; using plugin defaults" }
+  }
+  return { level: "ok", detail: path }
+}
+
 function statusIcon(level) {
   if (level === "ok") return "✅"
   if (level === "warn") return "⚠️ "
@@ -866,6 +898,10 @@ async function mcpStatus(options = {}) {
     outInfo("")
     outInfo("Doctor Checks:")
 
+    const bobJson = formatBobJsonCheck(path, error)
+    track(bobJson.level)
+    outInfo(`${statusIcon(bobJson.level)} bob.json - ${bobJson.detail}`)
+
     const freshness = checkStaticMcpFreshness(staticMcpPath, config)
     const freshIcon = freshness.status === "fresh" ? "✅" : freshness.status === "missing" ? "⚠️ " : "❌"
     if (freshness.status === "stale" || freshness.status === "drift-unmanaged") sawError = true
@@ -886,6 +922,10 @@ async function mcpStatus(options = {}) {
     const agents = getAgentSummary(config)
     track(agents.level)
     outInfo(`${statusIcon(agents.level)} Agent count and naming - ${agents.detail}`)
+
+    const coreModels = checkCoreOrchestrationModels(config)
+    track(coreModels.level)
+    outInfo(`${statusIcon(coreModels.level)} Core models (bob/plan/build) - ${coreModels.detail}`)
 
     const depth = checkSubagentDepth(config)
     track(depth.level)

@@ -1,15 +1,17 @@
 ---
 name: subagent-driven-development
-description: Use when executing implementation plans with independent tasks in the current session
+description: OPT-IN PARANOID MODE only. Do not use unless the user explicitly named subagent-driven-development. Default execution is Bob frozen-plan waves with one Critic at delivery.
 ---
 
 # Subagent-Driven Development
+
+**OPT-IN PARANOID MODE — not the default.** HiAi OpenCode default execution is Bob's frozen-plan waves: concurrent `task()` per parallel phase, one Critic at delivery. Use this skill only when the user explicitly asks for per-task dual review (high-risk / audit).
 
 Execute plan by dispatching fresh subagent per task, with two-stage review after each: spec compliance review first, then code quality review.
 
 **Why subagents:** You delegate tasks to specialized agents with isolated context. By precisely crafting their instructions and context, you ensure they stay focused and succeed at their task. They should never inherit your session's context or history — you construct exactly what they need. This also preserves your own context for coordination work.
 
-**Core principle:** Fresh subagent per task + two-stage review (spec then quality) = high quality, fast iteration
+**Core principle (this mode only):** Fresh subagent per task + two-stage review (spec then quality). This is slower. Do not use it as Bob's default.
 
 ## When to Use
 
@@ -237,7 +239,7 @@ Done!
 - Start implementation on main/master branch without explicit user consent
 - Skip reviews (spec compliance OR code quality)
 - Proceed with unfixed issues
-- Dispatch multiple implementation subagents in parallel (conflicts)
+- Dispatch multiple implementation subagents in parallel **when they share files**. Disjoint file sets from a frozen plan MUST run in parallel (same-turn concurrent `task()`). This skill's serial default is the opt-in exception, not Bob's contract.
 - Make subagent read plan file (provide full text instead)
 - Skip scene-setting context (subagent needs to understand where task fits)
 - Ignore subagent questions (answer before letting them proceed)

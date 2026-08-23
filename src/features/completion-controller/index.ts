@@ -2,9 +2,17 @@ import type { Hooks, PluginInput } from "@opencode-ai/plugin";
 import { markCompleted } from "../../hooks/loop-state";
 import type { BobConfig } from "../../types";
 import { logger } from "../../util/log";
-import { decide } from "./decide";
+import { getPlanLifecycle, setPlanTodos } from "../plan-lifecycle";
+import { markNativeContinue } from "../../hooks/loop-state";
+import { decide as defaultDecide } from "./decide";
 import { matchesAnyGlob, parseCriticVerdict } from "./signals";
 import * as st from "./state";
+
+/** Test seam: force `decide()` to throw without `mock.module` (that leaks across files). */
+let decide = defaultDecide;
+export function setCompletionDecide(fn: typeof defaultDecide | null): void {
+  decide = fn ?? defaultDecide;
+}
 
 /** LSP tool names that satisfy the post-edit lsp_diagnostics requirement. */
 const LSP_TOOL_NAMES = new Set([
@@ -100,7 +108,7 @@ export function createBobCompletionHook(
   Record<string, unknown> {
   const cfg = config.completion ?? {
     enabled: true,
-    max_auto_continues: 25,
+    max_auto_continues: 50,
     require_critic: true,
     ui_globs: [],
     reset_on_user_message: true,
@@ -177,6 +185,14 @@ export function createBobCompletionHook(
           (t) => t.status !== "completed" && t.status !== "cancelled",
         );
         st.setHasIncompleteTodos(evt.properties.sessionID, hasIncomplete);
+        setPlanTodos(
+          evt.properties.sessionID,
+          evt.properties.todos.map((t) => ({
+            id: (t as { id?: string }).id ?? t.status,
+            content: (t as { content?: string }).content ?? "",
+            status: t.status,
+          })),
+        );
       }
     },
 
@@ -218,7 +234,9 @@ export function createBobCompletionHook(
             );
           }
 
-          // Critic subagent: capture the verdict for the parent session.
+          // Critic subagent: capture the verdict for the immediate parent.
+          // A Manager phase-close critic parents to Manager — do NOT treat
+          // that as Bob's delivery approval (Bob still reviews at the end).
           if (input.agentType === "critic") {
             const verdict = await readLastAssistantVerdict(sid);
             if (verdict) {
@@ -255,6 +273,7 @@ export function createBobCompletionHook(
             requireCritic: cfg.require_critic,
             qualityGateFailed: s.qualityGateFailed,
             lspPending: s.lspPending,
+            planStatus: getPlanLifecycle(decideSessionID).status,
           });
 
           if (action.kind === "stop") {
@@ -274,6 +293,7 @@ export function createBobCompletionHook(
           }
           s.autoContinues += 1;
           output.continue = true;
+          markNativeContinue(decideSessionID);
           // Sanitize the reason so no raw session payload, oversized text, or
           // internal stack/IDs leak into the TUI link.
           output.reason = sanitizeReason(action.prompt);

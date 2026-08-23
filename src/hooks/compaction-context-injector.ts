@@ -18,6 +18,7 @@
 
 import type { BobConfig, HookSet } from "../types";
 import * as st from "../features/completion-controller/state";
+import { getPlanLifecycle } from "../features/plan-lifecycle";
 import { BlockingHookError } from "./errors";
 import { logger } from "../util/log";
 
@@ -58,9 +59,19 @@ export function createCompactionContextInjector(_config: BobConfig): HookSet {
               "[hiai-opencode] GATE: lsp_diagnostics pending on edited files — run it and confirm zero errors before completing.",
             );
           }
-          if (s.changedFiles.length > 0 && s.criticVerdict !== "approved") {
+          const plan = getPlanLifecycle(sid);
+          const planBusy =
+            plan.status === "frozen" || plan.status === "executing";
+          if (planBusy) {
             output.context.push(
-              "[hiai-opencode] GATE: changes pending Critic review — do not report done until Critic returns APPROVED.",
+              "[hiai-opencode] GATE: frozen plan still executing — finish remaining waves; do not call Plan again; Critic only at delivery.",
+            );
+          } else if (
+            s.changedFiles.length > 0 &&
+            s.criticVerdict !== "approved"
+          ) {
+            output.context.push(
+              "[hiai-opencode] GATE: changes pending delivery Critic — do not report done until Critic returns APPROVED. Call Critic once after all waves.",
             );
           }
         }

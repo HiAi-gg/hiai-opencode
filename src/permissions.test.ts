@@ -19,6 +19,7 @@ import {
   EXTERNAL_DIRECTORY_ALLOW_AGENTS,
   getDefaultExternalDirectory,
   getTaskPermissions,
+  nativeHostPermissions,
   TOOLS_KEYS,
 } from "./permissions";
 
@@ -69,16 +70,71 @@ describe("granular task permissions", () => {
     expect(permissions.build).toBe("allow");
   });
 
-  test("Manager can call workers but never Bob or Manager", () => {
+  test("Manager can call workers and phase-close Critic, never Bob, Manager, or Plan", () => {
     const permissions = getTaskPermissions("manager");
     expect(permissions.build).toBe("allow");
     expect(permissions.general).toBe("allow");
+    expect(permissions.explore).toBe("allow");
+    expect(permissions.designer).toBe("allow");
+    expect(permissions.writer).toBe("allow");
+    expect(permissions.vision).toBe("allow");
+    expect(permissions.critic).toBe("allow");
     expect(permissions.bob).toBe("deny");
     expect(permissions.manager).toBe("deny");
+    expect(permissions.plan).toBe("deny");
+  });
+
+  test("Plan may spawn explore only", () => {
+    const permissions = getTaskPermissions("plan");
+    expect(permissions.explore).toBe("allow");
+    expect(permissions.plan).toBe("deny");
+    expect(permissions.critic).toBe("deny");
+    expect(permissions.build).toBe("deny");
+    expect(permissions.manager).toBe("deny");
+  });
+
+  test("Critic may spawn vision and explore only", () => {
+    const permissions = getTaskPermissions("critic");
+    expect(permissions.vision).toBe("allow");
+    expect(permissions.explore).toBe("allow");
+    expect(permissions.plan).toBe("deny");
+    expect(permissions.build).toBe("deny");
+    expect(permissions.critic).toBe("deny");
+  });
+
+  test("Build may spawn explore only", () => {
+    const permissions = getTaskPermissions("build");
+    expect(permissions.explore).toBe("allow");
+    expect(permissions.plan).toBe("deny");
+    expect(permissions.critic).toBe("deny");
+    expect(permissions.build).toBe("deny");
+    expect(permissions.general).toBe("deny");
+  });
+
+  test("Bob and Plan may use native question and todowrite", () => {
+    expect(nativeHostPermissions("bob")).toEqual({
+      question: "allow",
+      todowrite: "allow",
+    });
+    expect(nativeHostPermissions("plan")).toEqual({
+      question: "allow",
+      todowrite: "allow",
+    });
+  });
+
+  test("workers cannot open the question UI", () => {
+    expect(nativeHostPermissions("build").question).toBe("deny");
+    expect(nativeHostPermissions("manager").question).toBe("deny");
+    expect(nativeHostPermissions("critic").question).toBe("deny");
+    expect(nativeHostPermissions("explore").question).toBe("deny");
   });
 
   test("General and service agents are leaves", () => {
     expect(getTaskPermissions("general").build).toBe("deny");
+    expect(getTaskPermissions("explore").vision).toBe("deny");
+    expect(getTaskPermissions("designer").explore).toBe("deny");
+    expect(getTaskPermissions("writer").explore).toBe("deny");
+    expect(getTaskPermissions("vision").explore).toBe("deny");
     expect(getTaskPermissions("dream-consolidator").build).toBe("deny");
   });
 });

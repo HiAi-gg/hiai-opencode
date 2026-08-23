@@ -14,7 +14,7 @@ import { logger } from "../util/log";
  *  - `\bERR_`                → "ERR_MODULE_NOT_FOUND", "ERR_INVALID_ARG_TYPE", ...
  *  - `\bERROR\b`             → standalone all-caps ERROR
  *  - `\b[1-9]\d*\s+errors?\b`→ "N error(s)" with N >= 1 (excludes the passing "0 errors")
- *  - `\bfailed\b` / `\bFAIL\b` → test/command failure keywords
+ *  - `\b[1-9]\d*\s+failed\b` / `\bFAIL\b` → test-count failures, not prose "failed to"
  *  - `[✗✘×]`                 → failure glyphs emitted by test runners / linters
  */
 const ERROR_PATTERNS: RegExp[] = [
@@ -22,7 +22,7 @@ const ERROR_PATTERNS: RegExp[] = [
   /\bERR_/i,
   /\bERROR\b/,
   /\b[1-9]\d*\s+errors?\b/i,
-  /\bfailed\b/i,
+  /\b[1-9]\d*\s+failed\b/i,
   /\bFAIL\b/,
   /[✗✘×]/,
 ];

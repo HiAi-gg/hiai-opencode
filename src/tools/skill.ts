@@ -2,6 +2,9 @@ import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { tool } from "@opencode-ai/plugin";
 
+/** Opt-in only: load by exact namespaced path, never as a default/short-name hit. */
+const OPT_IN_SKILLS = new Set(["plan/subagent-driven-development"]);
+
 function discoverSkills(skillsDir: string): Map<string, string> {
   const index = new Map<string, string>();
 
@@ -19,7 +22,11 @@ function discoverSkills(skillsDir: string): Map<string, string> {
             index.set(namespacedName, fullPath);
           }
           const shortName = parents[parents.length - 1];
-          if (shortName && !index.has(shortName)) {
+          if (
+            shortName &&
+            !index.has(shortName) &&
+            !OPT_IN_SKILLS.has(namespacedName)
+          ) {
             index.set(shortName, fullPath);
           }
         }
@@ -115,6 +122,8 @@ ${available}`;
 }
 
 function listAllSkills(index: Map<string, string>): string {
-  const names = [...index.keys()].sort();
+  const names = [...index.keys()]
+    .filter((n) => !OPT_IN_SKILLS.has(n))
+    .sort();
   return names.join("\n");
 }

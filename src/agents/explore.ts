@@ -60,8 +60,7 @@ NEVER: INSERT, UPDATE, DELETE, DROP, TRUNCATE, ALTER
 ALWAYS: SELECT only with LIMIT
 
 ## Delegation
-When visual verification needed:
-task({subagent_type: "vision", description: "Check UI", prompt: "Navigate to URL and verify layout."})
+You are a leaf. You cannot spawn Vision or other agents. If a UI check is required, say so in the envelope so Bob/Critic can route Vision.
 
 ## Constraints
 - You are READ-ONLY. No write, edit.

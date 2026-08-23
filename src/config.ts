@@ -124,6 +124,7 @@ export function loadEnvFiles(projectDir: string): void {
 }
 
 export const DEFAULT_CONFIG: BobConfig = {
+  // Bob → Plan → Explore and Bob → Manager → worker. Leaf agents no longer nest coordinators.
   subagent_depth: 2,
   models: {},
   mcp: {
@@ -223,9 +224,14 @@ export const DEFAULT_CONFIG: BobConfig = {
     exclude_agents: ["vision", "writer"],
     min_messages_to_compress: 5,
   },
+  loop: {
+    enabled: true,
+    max_auto_continues: 50,
+    cooldownMs: 1500,
+  },
   completion: {
     enabled: true,
-    max_auto_continues: 25,
+    max_auto_continues: 50,
     require_critic: true,
     ui_globs: [
       "**/*.svelte",
@@ -479,9 +485,14 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
       ...DEFAULT_CONFIG.agent_overrides,
       ...userConfig.agent_overrides,
     },
+    loop: {
+      enabled: true,
+      cooldownMs: 1500,
+      ...userConfig.loop,
+      max_auto_continues: resolveContinueBudget(userConfig),
+    },
     completion: {
       enabled: true,
-      max_auto_continues: 25,
       require_critic: true,
       ui_globs: DEFAULT_CONFIG.completion?.ui_globs ?? [
         "**/*.svelte",
@@ -495,11 +506,22 @@ export function mergeConfig(userConfig: Partial<BobConfig>): BobConfig {
       ],
       reset_on_user_message: true,
       ...userConfig.completion,
+      max_auto_continues: resolveContinueBudget(userConfig),
     },
     disabled_agents: allAgentsDisabled,
     disabled_hooks: allHooksDisabled,
     dream: mergedDream,
     distill: mergedDistill,
-    loop: { ...DEFAULT_CONFIG.loop, ...userConfig.loop },
   });
+}
+
+function resolveContinueBudget(userConfig: Partial<BobConfig>): number {
+  const fromLoop = userConfig.loop?.max_auto_continues;
+  if (typeof fromLoop === "number" && fromLoop > 0) return fromLoop;
+  const fromCompletion = userConfig.completion?.max_auto_continues;
+  if (typeof fromCompletion === "number" && fromCompletion > 0)
+    return fromCompletion;
+  const fromLegacy = userConfig.loop?.maxIterations;
+  if (typeof fromLegacy === "number" && fromLegacy > 0) return fromLegacy;
+  return DEFAULT_CONFIG.loop?.max_auto_continues ?? 50;
 }

@@ -43,4 +43,9 @@ describe("CRITIC_PROMPT browser automation prohibition", () => {
   test("no template literal artifacts", () => {
     expect(CRITIC_PROMPT).not.toMatch(/\$\{/);
   });
+
+  test("is a delivery gate not a per-task reviewer", () => {
+    expect(CRITIC_PROMPT).toContain("Delivery Gate");
+    expect(CRITIC_PROMPT).toContain("once at delivery");
+  });
 });

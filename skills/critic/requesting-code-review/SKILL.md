@@ -7,14 +7,16 @@ description: Use when completing tasks, implementing major features, or before m
 
 Dispatch code-reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context for evaluation — never your session's history. This keeps the reviewer focused on the work product, not your thought process, and preserves your own context for continued work.
 
-**Core principle:** Review early, review often.
+**Core principle:** One delivery review after the frozen plan's waves complete. Not after every todo.
 
 ## When to Request Review
 
 **Mandatory:**
-- After each task in subagent-driven development
-- After completing major feature
+- After the full plan (or unplanned task) is implemented — Bob's single delivery Critic
 - Before merge to main
+
+**Not default:**
+- After each task in subagent-driven-development (that skill is opt-in paranoid mode)
 
 **Optional but valuable:**
 - When stuck (fresh perspective)

@@ -72,7 +72,40 @@ describe("BOB_PROMPT", () => {
     expect(BOB_PROMPT).toContain("flag it as a plan quality issue");
   });
 
-  test("mentions chain plans for research-first", () => {
-    expect(BOB_PROMPT).toContain("Chain plans");
+  test("forbids chaining plans; frozen plan is the contract", () => {
+    expect(BOB_PROMPT).toContain("Do not chain plans");
+    expect(BOB_PROMPT).toContain("Plan Freeze");
+    expect(BOB_PROMPT).not.toContain("Chain plans");
+  });
+
+  test("requires a single delivery Critic after all waves", () => {
+    expect(BOB_PROMPT).toContain("Delivery Critic (ONCE)");
+    expect(BOB_PROMPT).not.toContain("After EVERY specialist completes");
+  });
+
+  test("requires concurrent task() in the same assistant message", () => {
+    expect(BOB_PROMPT).toContain("SAME assistant message");
+  });
+
+  test("mirrors the frozen plan with native todowrite nested items", () => {
+    expect(BOB_PROMPT).toContain("todowrite");
+    expect(BOB_PROMPT).toContain("indented sub-item");
+  });
+
+  test("runs autonomously until the frozen plan is done", () => {
+    expect(BOB_PROMPT).toContain("Autonomous run-to-completion");
+    expect(BOB_PROMPT).toContain("NEVER ask the user to proceed");
+  });
+
+  test("emits a plan progress line while a plan is active", () => {
+    expect(BOB_PROMPT).toContain("**Plan:**");
+    expect(BOB_PROMPT).toContain("**phase:**");
+    expect(BOB_PROMPT).toContain("delivery critic pending");
+  });
+
+  test("Manager is for large phases only; small work is general", () => {
+    expect(BOB_PROMPT).toContain("large phase");
+    expect(BOB_PROMPT).toContain("Never hire Manager for 1–2 file");
+    expect(BOB_PROMPT).toContain("phase-close Critic");
   });
 });

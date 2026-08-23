@@ -46,7 +46,7 @@ export interface LspServerConfig {
 }
 
 export interface BobConfig {
-  /** Maximum nested Task depth accepted by OpenCode. Bob → Manager → worker needs 2. */
+  /** Maximum nested Task depth accepted by OpenCode. Bob → Plan → Explore and Bob → Manager → worker both need 2. */
   subagent_depth?: number;
   models?: Record<string, { model: string; recommended?: string }>;
   mcp?: Record<string, { enabled: boolean }>;
@@ -87,7 +87,14 @@ export interface BobConfig {
     enabled?: boolean;
     cache_results?: boolean;
   };
-  loop?: Record<string, unknown>;
+  loop?: {
+    enabled?: boolean;
+    /** Canonical continue budget (also used as completion.max_auto_continues). */
+    max_auto_continues?: number;
+    /** @deprecated Use max_auto_continues */
+    maxIterations?: number;
+    cooldownMs?: number;
+  };
   tool_settings?: Record<string, number>;
   shell_env?: {
     variables?: string[];

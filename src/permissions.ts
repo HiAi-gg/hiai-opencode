@@ -101,22 +101,43 @@ export function getTaskPermissions(
       ]),
     ) as Record<string, "allow" | "deny">;
 
+  // Bob owns Plan freeze, wave dispatch, and the single delivery Critic.
   if (agentKey === "bob") return denyAll(["manager", ...WORKER_AGENTS]);
-  if (agentKey === "manager") return denyAll(WORKER_AGENTS);
-  if (
-    [
-      "plan",
+  // Manager coordinates a LARGE phase: workers + one critic at phase close.
+  // It never re-plans and never nests Managers.
+  if (agentKey === "manager") {
+    return denyAll([
       "explore",
       "build",
-      "critic",
+      "general",
       "designer",
       "writer",
       "vision",
-    ].includes(agentKey)
-  ) {
-    return denyAll(WORKER_AGENTS);
+      "critic",
+    ]);
   }
+  if (agentKey === "plan") return denyAll(["explore"]);
+  if (agentKey === "critic") return denyAll(["vision", "explore"]);
+  // Build may look up missing context. It must not spawn Plan or Critic.
+  if (agentKey === "build") return denyAll(["explore"]);
   return denyAll([]);
+}
+
+/**
+ * Native OpenCode UI permissions.
+ * - `question` opens the host interview UI. Only Bob (primary) and Plan
+ *   (direct interactive planning) may use it. Plan-as-subagent is still
+ *   blocked at runtime by the host-interaction gate (session parentID).
+ * - `todowrite` drives the TUI task list. Only Bob and Plan write it so
+ *   workers cannot clobber the execution graph.
+ */
+export function nativeHostPermissions(
+  agentKey: string,
+): Record<string, "allow" | "deny"> {
+  if (agentKey === "bob" || agentKey === "plan") {
+    return { question: "allow", todowrite: "allow" };
+  }
+  return { question: "deny" };
 }
 
 /**

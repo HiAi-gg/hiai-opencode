@@ -5,17 +5,38 @@
  * detects completion markers, and orchestrates continuation prompts.
  */
 
+import type { PluginInput } from "@opencode-ai/plugin";
+import { get as getCompletion } from "../features/completion-controller/state";
+import { getPlanLifecycle } from "../features/plan-lifecycle";
 import type { BobConfig, HookSet } from "../types";
 import { BlockingHookError } from "./errors";
 import {
   detectCompletionMarker,
   get,
+  recentlyNativelyContinued,
   recordIteration,
   reset,
   setContinuationPrompt,
   shouldContinue,
 } from "./loop-state";
 import { logger } from "../util/log";
+
+let client: PluginInput["client"] | null = null;
+
+export function setLoopClient(c: PluginInput["client"] | null) {
+  client = c;
+}
+
+const AUTONOMOUS_CONTINUE =
+  "Continue the frozen plan autonomously. Do not ask the user. Dispatch remaining waves or the delivery Critic. Update todowrite. Do not stop until the plan is done or you are blocked by an unexecutable plan.";
+
+export function workRemaining(sessionID: string): boolean {
+  const plan = getPlanLifecycle(sessionID);
+  if (plan.status === "frozen" || plan.status === "executing") return true;
+  if (getCompletion(sessionID).hasIncompleteTodos) return true;
+  if (get(sessionID).hasIncompleteTasks) return true;
+  return false;
+}
 
 /** Short, stable, non-leaky identifier for logs/prompts (no raw session id). */
 function shortId(sessionID: string): string {
@@ -24,12 +45,14 @@ function shortId(sessionID: string): string {
 }
 
 export function createLoopHook(config: BobConfig): HookSet {
-  const rawCfg = config as Record<string, unknown>;
-  const loopCfg = (rawCfg.loop ?? {}) as Record<string, unknown>;
+  const loopCfg = config.loop ?? {};
+  const enabled = loopCfg.enabled !== false;
   const maxIterations =
-    typeof loopCfg.maxIterations === "number"
-      ? loopCfg.maxIterations
-      : undefined;
+    typeof loopCfg.max_auto_continues === "number"
+      ? loopCfg.max_auto_continues
+      : typeof loopCfg.maxIterations === "number"
+        ? loopCfg.maxIterations
+        : undefined;
   const cooldownMs =
     typeof loopCfg.cooldownMs === "number" ? loopCfg.cooldownMs : undefined;
 
@@ -59,13 +82,45 @@ export function createLoopHook(config: BobConfig): HookSet {
             if (!shouldContinue(sessionID)) return;
 
             recordIteration(sessionID);
-            // Build and record a continuation prompt so downstream
-            // hooks (eg todo-continuation) can pick it up. Use a sanitized
-            // short id to avoid leaking the raw session id into prompts/logs.
             setContinuationPrompt(
               sessionID,
               `Session ${shortId(sessionID)} active (iter ${s.iterations}). Continue.`,
             );
+
+            const nativeWindow = (s.cooldownMs || 1500) * 3;
+            if (recentlyNativelyContinued(sessionID, nativeWindow)) {
+              logger.log(
+                `[hiai-opencode] loop: skip_prompt native_continue ${shortId(sessionID)}`,
+              );
+            } else if (
+              enabled &&
+              workRemaining(sessionID) &&
+              client
+            ) {
+              try {
+                const ses = await client.session.get({
+                  path: { id: sessionID },
+                });
+                const parentID = (ses.data as { parentID?: string } | undefined)
+                  ?.parentID;
+                if (parentID) break;
+                await client.session.prompt({
+                  path: { id: sessionID },
+                  body: {
+                    parts: [{ type: "text", text: AUTONOMOUS_CONTINUE }],
+                    noReply: false,
+                  },
+                } as never);
+                logger.log(
+                  `[hiai-opencode] loop: autonomous continue ${shortId(sessionID)} iter ${get(sessionID).iterations}`,
+                );
+              } catch (err) {
+                logger.error(
+                  "[hiai-opencode] loop: failed to continue session:",
+                  err,
+                );
+              }
+            }
             break;
           }
 

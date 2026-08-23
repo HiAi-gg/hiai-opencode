@@ -47,10 +47,9 @@ describe("PLAN_PROMPT", () => {
     expect(PLAN_PROMPT).toContain("Subagent Type Mapping");
   });
 
-  test("lists all valid owner→subagent_type mappings", () => {
+  test("lists valid owner→subagent_type mappings without plan as a step owner", () => {
     const owners = [
       "explore",
-      "plan",
       "build",
       "general",
       "critic",
@@ -61,10 +60,13 @@ describe("PLAN_PROMPT", () => {
     for (const owner of owners) {
       expect(PLAN_PROMPT).toContain(`\`${owner}\``);
     }
+    expect(PLAN_PROMPT).toContain("NEVER assign `plan` as a step owner");
   });
 
-  test("forbids owners not in the allowed list", () => {
+  test("forbids owners not in the allowed list and freezes the plan", () => {
     expect(PLAN_PROMPT).toContain("NEVER assign an owner not in this list");
+    expect(PLAN_PROMPT).toContain("Plan Freeze");
+    expect(PLAN_PROMPT).toContain("INVALIDATE_PLAN");
   });
 
   test("requires manager-ready groups of at most five", () => {
@@ -109,7 +111,7 @@ describe("PLAN_PROMPT", () => {
   });
 
   test("forbids plain-text user-facing questions when question is available", () => {
-    expect(PLAN_PROMPT).toContain("NEVER print such a question");
+    expect(PLAN_PROMPT).toContain("NEVER print the question as ordinary assistant text");
     expect(PLAN_PROMPT).toContain("ordinary assistant text");
   });
 
@@ -141,6 +143,18 @@ describe("PLAN_PROMPT", () => {
   test("interview is explicit opt-in only", () => {
     expect(PLAN_PROMPT).toContain("EXPLICITLY requests an interview");
     expect(PLAN_PROMPT).toContain("interview-me");
+  });
+
+  test("allows a phase-close critic on Manager-sized phases plus a delivery critic", () => {
+    expect(PLAN_PROMPT).toContain("phase close");
+    expect(PLAN_PROMPT).toContain("delivery Critic");
+  });
+
+  test("direct Plan interviews; subagent Plan does not; todowrite only when direct", () => {
+    expect(PLAN_PROMPT).toContain("not via Bob");
+    expect(PLAN_PROMPT).toContain("USER QUESTIONING IS FORBIDDEN");
+    expect(PLAN_PROMPT).toContain("todowrite");
+    expect(PLAN_PROMPT).toContain("As a Bob subagent, do NOT call");
   });
 });
 

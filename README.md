@@ -10,7 +10,7 @@
 
 > A multi-agent engineering team that lives inside your editor. One plugin gives [OpenCode](https://opencode.ai) an orchestrator, a planner, senior engineers, a critic, a designer, a researcher, and a browser operator — all coordinating autonomously, with enforced review gates and live diagnostics.
 
-**hiai-opencode** is an OpenCode plugin that turns a single AI session into a self-directing team. Instead of one model doing everything, Bob (the orchestrator) routes work to specialist subagents — a Senior Engineer writes the code, a Critic must approve it, an Explorer researches the codebase, Vision drives the browser to verify UIs — while a completion controller enforces that nothing ships unreviewed.
+**hiai-opencode** is an OpenCode plugin that turns a single AI session into a self-directing team. Instead of one model doing everything, Bob (the orchestrator) writes a plan **once**, dispatches parallel waves, and runs a **single** Critic at delivery. Explore researches, Build implements, Vision verifies UIs. The plan-lifecycle gate and completion controller enforce that — not prompt theater.
 
 ---
 
@@ -18,7 +18,7 @@
 
 Most AI coding tools drop you into one big context window and hope the model self-manages. The result is predictable: the model edits a file, declares victory, and moves on — no review, no diagnostics run, no verification that the tests pass. **hiai-opencode fixes the loop:**
 
-- 🛡️ **Code never ships unreviewed.** A dedicated Critic agent must return `APPROVED` before any task completes. A completion-controller state machine enforces it — not just a prompt.
+- 🛡️ **Code never ships unreviewed.** After a frozen plan's waves finish, a dedicated Critic must return `APPROVED` once. The completion controller and plan-lifecycle gate enforce it — not per-todo prompt theater.
 - 🔍 **Diagnostics are mandatory, not optional.** Edit a file and the completion gate blocks until `lsp_diagnostics` has run clean and any failing `test` / `lint` / `typecheck` passes.
 - 🧠 **A real team, not a monologue.** Bob routes by category — quick work to a cheap executor, hard implementation to a Senior Engineer, architecture to a Principal Architect, UI to a Designer, docs to a Writer.
 - 🗜️ **Context that survives compaction.** Long sessions compact gracefully — in-memory gate state (failed quality check, pending diagnostics, unreviewed changes) is re-injected into the compaction context so the post-compaction agent still knows what blocks completion.
@@ -100,7 +100,17 @@ Report missing keys without printing secret values.
 
 ---
 
-## What's in the box
+## How a task runs (v0.6.2+)
+
+```
+trivial (1–2 files)     → general                     → (Critic only if high-risk)
+non-trivial             → Plan once → freeze
+                        → parallel task() waves
+                        → one Critic at delivery
+                          (Vision if UI) → you
+```
+
+Plan is not rewritten until it is done or you change scope (`INVALIDATE_PLAN`). Critic is not called after each checkbox. Independent steps of a phase must be dispatched as **several `task()` calls in the same assistant turn**.
 
 ### Agents — a specialist team
 
@@ -108,16 +118,16 @@ Bob routes work; the rest execute. Three are visible in the picker (you can invo
 
 | Agent | Role | When it kicks in |
 |-------|------|------------------|
-| **Bob** (orchestrator) | Routes work, collects results, verifies. Never writes code. | Always — your entry point |
-| **Plan** (Strategist) | Deep planning, architecture analysis, read-only | `ultrabrain` category, or user-invoked |
-| **Build** (Senior Engineer) | Multi-file implementation from plans | `deep` category — the workhorse |
-| **General** | Fast bounded executor, fallback for failed agents | `quick` category |
-| **Explore** (Researcher) | Codebase grep, web search (Firecrawl/grep_app), library docs | `research` / discovery |
-| **Critic** | Binary review gate — `APPROVED` or `REJECTED` with feedback | Auto-invoked before any task completes |
+| **Bob** (orchestrator) | Routes work, freezes the plan, dispatches waves. Never writes code. | Always — your entry point |
+| **Plan** (Strategist) | Deep planning, architecture, read-only. Writes `.bob/plans/`. | Once, at the start of non-trivial work (or user-invoked) |
+| **Build** (Senior Engineer) | Multi-file implementation of a frozen plan step | `deep` category — the workhorse |
+| **General** | Fast bounded executor | `quick` category (1–2 files) |
+| **Explore** (Researcher) | Codebase grep, web search (Firecrawl/grep_app), library docs | Discovery inside Plan, or a Bob research route |
+| **Critic** | Binary delivery gate — `APPROVED` or `REJECTED` | Once, after all waves (not per step) |
 | **Designer** | UI/visual direction, design systems, component specs | `visual-engineering` |
 | **Writer** | Copy, positioning, SEO, docs | `writing` |
-| **Vision** | Browser operator, multimodal analysis, screenshots | `browser` / visual verification |
-| **Manager** | Delegation orchestrator, TODO tracker, memory steward | Complex multi-wave tasks |
+| **Vision** | Browser operator, multimodal analysis, screenshots | UI verification, usually via delivery Critic |
+| **Manager** | Large-phase coordinator (many workers). One Critic at phase close. Not for 1–2 file work. | One large phase (≥5 worker steps) |
 
 ### Tools — 35 registered
 
@@ -135,7 +145,7 @@ Bob routes work; the rest execute. Three are visible in the picker (you can invo
 
 | Server | Type | Use |
 |--------|------|-----|
-| `sequential-thinking` | local (npx) | Deep reasoning for Plan & Critic |
+| `sequential-thinking` | local (npx) | Optional extra reasoning. Plan uses native model thinking by default. |
 | `grep_app` | remote | GitHub OSS code search — no key required |
 
 The plugin auto-exports `.opencode/.mcp.json` at startup so `opencode mcp list` sees these servers. Control it via `HIAI_OPENCODE_AUTO_EXPORT_MCP` (`if-missing` / `always` / `off`).
@@ -144,14 +154,15 @@ The plugin auto-exports `.opencode/.mcp.json` at startup so `opencode mcp list` 
 
 | Gate | What it enforces |
 |------|-----------------|
-| **Critic review** | No task with changed files completes until Critic returns `APPROVED` |
+| **Plan freeze** | After Plan returns `Status: done`, a second Plan spawn is denied until the plan is done or `INVALIDATE_PLAN` |
+| **Delivery Critic** | Changed files on a finished plan need one `APPROVED` verdict — not a review after every specialist |
 | **Quality gate** | Failed `test`/`lint`/`typecheck` blocks completion until it passes |
 | **LSP gate** | Edits block completion until `lsp_diagnostics` runs clean |
 | **Legal gate** | Hard-blocks browser-automation abuse, malicious tool use (throws) |
 | **Circuit breaker** | Aborts sessions stuck in loops (20+ identical calls, or 4000+ total) |
 | **Closure protocol** | Every agent response must carry a valid `<CLOSURE>` block |
 
-### Hooks — 30, categorized
+### Hooks — 30, categorized (includes `plan-lifecycle-gate`)
 
 Safety · Quality · Recovery · System · Lifecycle. All chainable, all disable-able via `hooks.disabled` in config. See [AGENTS.md](AGENTS.md) for the full list.
 
@@ -236,7 +247,7 @@ The 10 model slots: `bob`, `build`, `plan`, `manager`, `critic`, `designer`, `ex
 
 Connect providers in OpenCode, run `opencode models`, and copy exact `provider/model-id` strings — don't invent prefixes. Model provider credentials live in OpenCode Connect, not in `bob.json`.
 
-Config resolution order (first found wins): bundled `bob.json` → `<project>/bob.json` → `<project>/.opencode/bob.json` → `<project>/bob.jsonc` → `<project>/.opencode/bob.jsonc` → global config dir.
+**One file:** `bob.json` (or `bob.jsonc`). First found wins, walking **up** from the directory OpenCode was started in: `bob.json` → `.opencode/bob.json` → jsonc variants, each parent until the filesystem root, then `~/.config/hiai-opencode/bob.json`. Bundled defaults are the baseline, not a competing file. `loop.enabled` (default true) continues Bob on idle until the plan and todos are done.
 
 ### `bob.env` — service keys (git-ignored)
 

@@ -6,7 +6,7 @@
   "properties": {
     "$schema": { "type": "string" },
     "version": { "type": "string" },
-    "subagent_depth": { "type": "integer", "minimum": 1, "default": 2, "description": "Use 2 for Bob → Manager → worker." },
+    "subagent_depth": { "type": "integer", "minimum": 1, "default": 2, "description": "Use 2 for Bob → Plan → Explore and Bob → Manager → worker." },
     "models": { "type": "object", "additionalProperties": { "$ref": "#/definitions/modelSlot" } },
     "mcp": { "type": "object", "additionalProperties": { "$ref": "#/definitions/toggle" } },
     "lsp": { "type": "object", "additionalProperties": { "$ref": "#/definitions/lsp" } },
@@ -25,7 +25,16 @@
     "distill": { "$ref": "#/definitions/periodic" },
     "worktreeConfig": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "base_dir": { "type": "string" } }, "additionalProperties": false },
     "workspace": { "type": "object", "properties": { "enabled": { "type": "boolean" }, "cache_results": { "type": "boolean" } }, "additionalProperties": false },
-    "loop": { "type": "object", "additionalProperties": true },
+    "loop": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": true, "description": "Keep running until the frozen plan and todos are done. Do not wait for the user to re-prompt." },
+        "max_auto_continues": { "type": "integer", "minimum": 1, "default": 50, "description": "Single continue budget for idle loop and completion-controller." },
+        "maxIterations": { "type": "integer", "minimum": 1, "description": "Deprecated alias of max_auto_continues." },
+        "cooldownMs": { "type": "integer", "minimum": 0, "default": 1500 }
+      },
+      "additionalProperties": false
+    },
     "tool_settings": { "type": "object", "additionalProperties": { "type": "number" } },
     "shell_env": { "type": "object", "properties": { "variables": { "type": "array", "items": { "type": "string" } }, "inject_in": { "type": "array", "items": { "type": "string" } }, "env_file": { "type": "string" } }, "additionalProperties": false }
   },

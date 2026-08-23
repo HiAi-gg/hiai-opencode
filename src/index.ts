@@ -29,12 +29,17 @@ import {
 import { setCavemanClient } from "./hooks/caveman-system-injector";
 import { createCircuitBreakerHook } from "./hooks/circuit-breaker";
 import { combineHookSets, createHooks } from "./hooks/index";
+import { setHostInteractionClient } from "./hooks/host-interaction-gate";
+import { setLoopClient } from "./hooks/loop";
 import { setPlanInvocationClient } from "./hooks/plan-invocation-injector";
+import { setPlanLifecycleClient } from "./hooks/plan-lifecycle-gate";
+import { setPlansRoot } from "./features/plan-lifecycle";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
   getDefaultExternalDirectory,
   getTaskPermissions,
+  nativeHostPermissions,
 } from "./permissions";
 import { applyAgentBrowserEngineDefault } from "./shared/agent-browser-engine";
 import { createAgentBrowserTools } from "./tools/agent-browser";
@@ -156,6 +161,10 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
 
     // Init plan invocation-context injector (subagent vs direct detection)
     setPlanInvocationClient(input.client);
+    setHostInteractionClient(input.client);
+    setPlanLifecycleClient(input.client);
+    setLoopClient(input.client);
+    setPlansRoot(input.directory);
 
     // Init caveman system injector (session-based agent identification)
     setCavemanClient(input.client);
@@ -251,7 +260,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
             prompt: applyPromptOverride("explore", EXPLORE_PROMPT, config),
             temperature: getToolSetting("agent_temp_explore", 0.1),
             tools: restrictionTools,
-            permission: { ...permission, task: getTaskPermissions("explore") },
+            permission: {
+              ...permission,
+              task: getTaskPermissions("explore"),
+              ...nativeHostPermissions("explore"),
+            },
           };
         }
 
@@ -275,7 +288,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
               type: "enabled",
               budgetTokens: getToolSetting("thinking_budget_plan", 16000),
             },
-            permission: { ...permission, task: getTaskPermissions("plan") },
+            permission: {
+              ...permission,
+              task: getTaskPermissions("plan"),
+              ...nativeHostPermissions("plan"),
+            },
             ...(Object.keys(tools).length > 0 ? { tools } : {}),
           };
         }
@@ -301,7 +318,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
               type: "enabled",
               budgetTokens: getToolSetting("thinking_budget_build", 16000),
             },
-            permission: { ...permission, task: getTaskPermissions("build") },
+            permission: {
+              ...permission,
+              task: getTaskPermissions("build"),
+              ...nativeHostPermissions("build"),
+            },
             ...(Object.keys(tools).length > 0 ? { tools } : {}),
           };
         }
@@ -324,7 +345,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
               resolveModelForAgent("manager"),
             prompt: applyPromptOverride("general", GENERAL_PROMPT, config),
             temperature: getToolSetting("agent_temp_general", 0.1),
-            permission: { ...permission, task: getTaskPermissions("general") },
+            permission: {
+              ...permission,
+              task: getTaskPermissions("general"),
+              ...nativeHostPermissions("general"),
+            },
             ...(Object.keys(tools).length > 0 ? { tools } : {}),
           };
         }
@@ -351,7 +376,11 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
             ...(agent.config.thinking
               ? { thinking: agent.config.thinking }
               : {}),
-            permission: { ...permission, task: getTaskPermissions(name) },
+            permission: {
+              ...permission,
+              task: getTaskPermissions(name),
+              ...nativeHostPermissions(name),
+            },
             ...(Object.keys(tools).length > 0 ? { tools } : {}),
             ...(agent.config.hidden ? { hidden: true } : {}),
           };

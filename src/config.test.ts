@@ -12,6 +12,22 @@ afterEach(() => {
 });
 
 describe("delegation config", () => {
+  test("loop is on by default and run-to-completion budgets match", () => {
+    expect(DEFAULT_CONFIG.loop?.enabled).toBe(true);
+    expect(DEFAULT_CONFIG.loop?.max_auto_continues).toBe(50);
+    expect(DEFAULT_CONFIG.completion?.max_auto_continues).toBe(50);
+    expect(mergeConfig({ loop: { cooldownMs: 9 } }).loop?.enabled).toBe(true);
+    expect(mergeConfig({ loop: { cooldownMs: 9 } }).loop?.cooldownMs).toBe(9);
+    expect(
+      mergeConfig({ loop: { max_auto_continues: 80 } }).completion
+        ?.max_auto_continues,
+    ).toBe(80);
+    expect(
+      mergeConfig({ completion: { max_auto_continues: 12 } }).loop
+        ?.max_auto_continues,
+    ).toBe(12);
+  });
+
   test("defaults subagent_depth to two and validates overrides", () => {
     expect(DEFAULT_CONFIG.subagent_depth).toBe(2);
     expect(mergeConfig({ subagent_depth: 3 }).subagent_depth).toBe(3);

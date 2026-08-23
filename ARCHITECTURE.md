@@ -26,19 +26,20 @@ User input
      ▼
 ┌──────────────────────────────────────────────────────┐
 │                                                      │
-│  Simple / small (<5 todos, no parallelism)            │
-│    └─► build   (hidden, deep/bounded implementation)  │
+│  Simple / small (1–2 files)                           │
 │    └─► general (visible, quick/fallback executor)     │
 │                                                      │
-│  Planning / architecture                              │
+│  Non-trivial: Plan ONCE → freeze → parallel waves     │
 │    └─► plan (visible, deep planning, read-only)       │
+│         then build/general/designer/… per annotations │
+│         then critic ONCE at delivery                  │
 │                                                      │
-│  Specialist tiers (always delegated, not routed):     │
+│  Specialist tiers (delegated, not re-planned):        │
 │    explore  ◄── discovery (grep, firecrawl, context7) │
 │    writer   ◄── copy / SEO / messaging               │
 │    designer ◄── visual direction                      │
-│    critic   ◄── review gate (APPROVED/REJECTED)      │
-│    manager  ◄── delegation orchestrator, memory       │
+│    critic   ◄── delivery review gate (APPROVED/REJECTED) │
+│    manager  ◄── group coordinator (no plan/critic)    │
 │    vision   ◄── browser operator, multimodal          │
 │                                                      │
 └──────────────────────────────────────────────────────┘
@@ -66,7 +67,7 @@ User input
 - [src/shared/](src/shared): closure protocol, env-var resolution, event helpers
 - [src/permissions.ts](src/permissions.ts): per-agent permission/tool-disable resolution
 - [src/hooks/](src/hooks): all runtime hooks (circuit breaker, quality gate, closure injector, legal gate, worktree lifecycle, etc.)
-- [src/features/](src/features): background-manager, completion-controller, dream-distill, mcp, shell-env, telemetry, workspace-adapter, worktree
+- [src/features/](src/features): background-manager, completion-controller, plan-lifecycle, dream-distill, mcp, shell-env, telemetry, workspace-adapter, worktree
 - [src/tools/](src/tools): tool registrations (skill, lsp, session-manager, background-task, worktree, agent-browser, firecrawl, memory-tool)
 - [assets/cli/hiai-opencode.mjs](assets/cli/hiai-opencode.mjs): the `hiai-opencode` CLI (doctor, mcp-status, export-mcp, diagnose)
 - [assets/runtime/](assets/runtime): npm bootstrap helper for MCP/LSP tools
@@ -85,11 +86,11 @@ User input
 
 - `build` — Senior Staff Engineer, implementation (deep/bounded)
 - `explore` — discovery (firecrawl + grep_app + context7)
-- `critic` — review gate (binary APPROVED/REJECTED)
+- `critic` — delivery review gate (binary APPROVED/REJECTED), once per plan
 - `designer` — UI/visual direction
 - `writer` — copy/positioning/SEO
 - `vision` — browser operator, multimodal
-- `manager` — delegation orchestrator, memory steward
+- `manager` — large-phase coordinator (workers + one phase-close Critic; no Plan), memory steward
 - `dream-consolidator` — memory consolidation (auto-triggered)
 - `distill-packager` — workflow packaging (auto-triggered)
 
@@ -106,6 +107,8 @@ There is **no** separate migration module. Legacy agent keys are mapped only in 
 - [src/agents/index.ts](src/agents/index.ts) — `createAllAgents()` registers 8 agents with visibility, mode, description, and prompts; `resolveAgentModel` / `applyPromptOverride` helpers
 - [src/index.ts](src/index.ts) — `hooks.config` callback native-upgrades `explore`/`plan`/`build`/`general` and merges all agents into OpenCode's `cfg.agent` dict; assembles MCP config
 - [src/types.ts](src/types.ts) — `AgentConfig`, `BobConfig`, `CompletionConfig`, `WorktreeConfig`, `ClosureBlock` types
+- [src/permissions.ts](src/permissions.ts) — `getTaskPermissions()` spawn matrix (leaf agents cannot spawn Plan/Critic)
+- [src/features/plan-lifecycle/](src/features/plan-lifecycle) — freeze / executing / done / invalidated **per session** (`.bob/plans/.lifecycle.json` map + plan frontmatter + todo snapshot)
 
 ## Models
 
@@ -247,7 +250,9 @@ The plugin enforces a layered safety model. From strongest to weakest:
 
 - **Legal gate** — [src/hooks/legal-gate.ts](src/hooks/legal-gate.ts): three-tier deny list (browser automation always blocked, military/malicious always blocked, contextual dual-use with offensive-intent regex). Throws `BlockingHookError`.
 - **Per-agent permission maps** — [src/permissions.ts](src/permissions.ts): `applyAgentPermissions()` converts `agent_restrictions` into `permission.deny` / `tools.<key>=false`. Applied in `src/index.ts` `hooks.config`.
-- **Completion controller** — [src/features/completion-controller/](src/features/completion-controller): state machine that gates task completion. `decide()` (decide.ts) requires: no blocker, no incomplete todos, quality gate passed, LSP diagnostics run (if edits made), and Critic approval (if `require_critic` and changed files exist).
+- **Plan lifecycle gate** — [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts): freezes a Plan `Status: done` result; blocks a second Plan spawn and blocks Critic until implementation waves finish.
+- **Host interaction gate** — [src/hooks/host-interaction-gate.ts](src/hooks/host-interaction-gate.ts): blocks the native `question` tool on any session with a `parentID` (Plan-via-Bob cannot interview). Direct Plan and Bob keep `question: allow`.
+- **Completion controller** — [src/features/completion-controller/](src/features/completion-controller): state machine that gates task completion. `decide()` (decide.ts) requires: no blocker, no incomplete todos, quality gate passed, LSP diagnostics run (if edits made), frozen plan not still executing, and Critic approval (if `require_critic` and changed files exist). Critic is a delivery gate, not a per-step gate.
 - **Circuit breaker** — [src/hooks/circuit-breaker.ts](src/hooks/circuit-breaker.ts) + [src/features/background-manager/index.ts](src/features/background-manager/index.ts): feeds every `tool.execute.after` call into `BackgroundManager.recordSessionToolCall()`; trips on N consecutive identical calls (default 20) or total tool calls (default 4000), aborting the session via `client.session.abort`.
 - **Agent-browser guard** — [src/tools/agent-browser/index.ts](src/tools/agent-browser/index.ts): `browserGateGuard()` throws for non-`vision`/`general` agents.
 - **LSP sandbox** — [src/tools/lsp/index.ts](src/tools/lsp/index.ts): throws on paths resolving outside `ctx.directory`.
@@ -274,7 +279,7 @@ Git worktree-based task isolation for parallel work.
 
 - **WorktreeManager** — [src/features/worktree/index.ts](src/features/worktree/index.ts): create/list/remove/cleanup operations
 - **Tools** — [src/tools/worktree.ts](src/tools/worktree.ts): `hiai_worktree_create`, `hiai_worktree_remove`, `hiai_worktree_list`, `hiai_worktree_status`
-- **Lifecycle hooks** — [src/hooks/worktree-lifecycle.ts](src/hooks/worktree-lifecycle.ts): auto-create on plan-start signals, auto-remove on `<CLOSURE>`
+- **Lifecycle hooks** — [src/hooks/worktree-lifecycle.ts](src/hooks/worktree-lifecycle.ts): track explicit `hiai_worktree_create` calls; clean up on session delete / dispose. No auto-create from user-message regex.
 - **Skill** — [skills/general/using-git-worktrees/](skills/general/using-git-worktrees/)
 - **Prompt integration** — [src/prompt-library/worktree.ts](src/prompt-library/worktree.ts): `WORKTREE_AWARENESS`
 

@@ -20,7 +20,9 @@ import { createLegalGate } from "./legal-gate";
 import { createLoopHook } from "./loop";
 import { createModelFallbackHook } from "./model-fallback";
 import { createNonInteractiveEnv } from "./non-interactive-env";
+import { createHostInteractionGate } from "./host-interaction-gate";
 import { createPlanInvocationInjector } from "./plan-invocation-injector";
+import { createPlanLifecycleGate } from "./plan-lifecycle-gate";
 import { createPreemptiveCompaction } from "./preemptive-compaction";
 import { createQualityGate } from "./quality-gate";
 import { createReasoningContentCacheHook } from "./reasoning-content-cache";
@@ -169,6 +171,8 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
   { name: "edit-error-recovery", factory: createEditErrorRecovery },
   { name: "non-interactive-env", factory: createNonInteractiveEnv },
   { name: "plan-invocation-injector", factory: createPlanInvocationInjector },
+  { name: "host-interaction-gate", factory: createHostInteractionGate },
+  { name: "plan-lifecycle-gate", factory: createPlanLifecycleGate },
   { name: "model-fallback", factory: createModelFallbackHook },
   { name: "runtime-fallback", factory: createRuntimeFallback },
   { name: "preemptive-compaction", factory: createPreemptiveCompaction },

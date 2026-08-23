@@ -157,6 +157,28 @@ describe("decide", () => {
     if (a.kind === "continue") expect(a.prompt.toLowerCase()).toContain("lsp");
   });
 
+  test("frozen plan with unreviewed changes -> continue (finish waves), not review", () => {
+    const a = decide({
+      ...base,
+      changedFiles: ["a.ts"],
+      currentFingerprint: "x",
+      planStatus: "executing",
+    });
+    expect(a.kind).toBe("continue");
+    if (a.kind === "continue") expect(a.prompt.toLowerCase()).toContain("frozen plan");
+  });
+
+  test("plan done with unreviewed changes -> review", () => {
+    expect(
+      decide({
+        ...base,
+        changedFiles: ["a.ts"],
+        currentFingerprint: "x",
+        planStatus: "done",
+      }).kind,
+    ).toBe("review");
+  });
+
   test("lsp pending at cap -> stop(cap)", () => {
     expect(
       decide({

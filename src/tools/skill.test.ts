@@ -39,6 +39,19 @@ describe("skill tool — valid names", () => {
     const out = await runSkill("plan/interview-me");
     expect(out).toContain('Skill "plan/interview-me" loaded');
   });
+
+  test("opt-in paranoid skill is not a short-name default hit", async () => {
+    const out = await runSkill("subagent-driven-development");
+    expect(out).toContain("not found");
+    expect(out).not.toContain("loaded");
+    expect(out).not.toMatch(/^plan\/subagent-driven-development$/m);
+  });
+
+  test("opt-in paranoid skill still loads by exact namespaced path", async () => {
+    const out = await runSkill("plan/subagent-driven-development");
+    expect(out).toContain("loaded");
+    expect(out).toContain("OPT-IN PARANOID MODE");
+  });
 });
 
 describe("skill tool — path traversal safety", () => {

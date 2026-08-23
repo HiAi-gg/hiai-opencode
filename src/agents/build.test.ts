@@ -29,4 +29,11 @@ describe("BUILD_PROMPT lint gate", () => {
   test("contains CLOSURE schema", () => {
     expect(BUILD_PROMPT).toContain("<CLOSURE>");
   });
+
+  test("planned-step mode forbids spawning Plan or Critic", () => {
+    expect(BUILD_PROMPT).toContain("planned-step");
+    expect(BUILD_PROMPT).toContain("Do not spawn Plan");
+    expect(BUILD_PROMPT).toContain("Do not spawn Critic");
+    expect(BUILD_PROMPT).not.toContain("Complex → MUST delegate");
+  });
 });

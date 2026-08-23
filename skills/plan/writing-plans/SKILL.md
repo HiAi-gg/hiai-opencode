@@ -15,8 +15,8 @@ Assume they are a skilled developer, but know almost nothing about our toolset o
 
 **Context:** This should be run in a dedicated worktree (created by using-git-worktrees skill).
 
-**Save plans to:** `docs/superpowers/plans/YYYY-MM-DD-<feature-name>.md`
-- (User preferences for plan location override this default)
+**Save plans to:** `.bob/plans/<descriptive-name>.md` (frozen after Status: done)
+- Superpowers-style `docs/superpowers/plans/` is optional extra, not the runtime contract
 
 ## Scope Check
 
@@ -49,7 +49,7 @@ This structure informs the task decomposition. Each task should produce self-con
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** Default execution is Bob's frozen-plan waves (concurrent `task()` per parallel phase, one Critic at delivery). Do not use per-task dual review. `subagent-driven-development` is opt-in paranoid mode only.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -133,10 +133,10 @@ If you find issues, fix them inline. No need to re-review — just fix and move 
 
 ## Execution Handoff
 
-After saving the plan, note the two execution options:
+After saving the plan it is FROZEN. Bob (or Manager groups) dispatch waves from the phase graph:
 
-**1. Subagent-Driven (recommended)** - I dispatch a fresh subagent per task, review between tasks, fast iteration
+1. Concurrent `task()` in one assistant turn for every `parallel: yes` step
+2. No Plan rewrite, no Critic between steps
+3. One delivery Critic after all waves (Vision if UI)
 
-**2. Inline Execution** - Execute tasks in this session using executing-plans, batch execution with checkpoints
-
-Record both options in the plan's handoff section (or the plan deliverable). If you must ask the human which they prefer, emit the choice through the native `question` tool with the two options — never print the choice question as plain text, and do not ask when the surrounding orchestration contract already determines the execution path.
+Do not recommend subagent-driven-development as the default. Do not ask the human which execution path to use when Bob already owns dispatch. If a human-owned scope choice is still required, use the native `question` tool — never print the choice as ordinary assistant text.

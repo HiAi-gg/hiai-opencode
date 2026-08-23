@@ -47,6 +47,8 @@ describe("createPlanInvocationInjector", () => {
     expect(output.system.some((s) => s.includes("directly interacting"))).toBe(
       true,
     );
+    expect(output.system.some((s) => s.includes("question"))).toBe(true);
+    expect(output.system.some((s) => s.includes("todowrite"))).toBe(true);
   });
 
   test("does not inject for non-plan agents", async () => {

@@ -39,8 +39,8 @@ describe("WRITER_PROMPT", () => {
     expect(WRITER_PROMPT).toContain("**Consistent**");
   });
 
-  test("contains delegation to explore", () => {
-    expect(WRITER_PROMPT).toContain("explore");
+  test("is a leaf and cannot spawn explore", () => {
+    expect(WRITER_PROMPT).toContain("cannot spawn explore");
   });
 
   test("contains Result Envelope format", () => {

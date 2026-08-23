@@ -169,8 +169,13 @@ describe("quality-gate: structural error signals (positive)", () => {
     expect(out.output).toContain(GATE_MARKER);
   });
 
-  it('flags "failed" keyword', async () => {
+  it('flags "N failed" test counts', async () => {
     const out = await runAfter("bun test", "1 failed, 3 passed");
     expect(out.output).toContain(GATE_MARKER);
+  });
+
+  it('does NOT flag prose "failed to match"', async () => {
+    const out = await runAfter("bun test", "failed to match snapshot name");
+    expect(out.output).not.toContain(GATE_MARKER);
   });
 });

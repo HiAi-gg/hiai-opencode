@@ -1,7 +1,8 @@
 export const WORKTREE_AWARENESS = `
 ## Worktree Awareness
-This project uses git worktrees for isolated parallel work.
-- Check your current worktree status: hiai_worktree_status
-- Create a worktree: hiai_worktree_create
-- Work strictly inside worktree directory
+Git worktrees isolate **disjoint parallel write sets** (independent file lists in one wave).
+They are optional. Do not create a worktree per todo or per specialist.
+- Create: hiai_worktree_create (only when two workers would write different file sets in parallel)
+- Status: hiai_worktree_status
+- Work strictly inside the worktree directory when one was created for your step
 `;

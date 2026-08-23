@@ -4,6 +4,8 @@ import {
   markCompleted,
   markContinuationInjected,
   markError,
+  markNativeContinue,
+  recentlyNativelyContinued,
   recordIteration,
   reset,
   setContinuationPrompt,
@@ -17,14 +19,15 @@ describe("loop-state (stateful)", () => {
     reset(sid);
     const s = get(sid);
     expect(s.iterations).toBe(0);
-    expect(s.maxIterations).toBe(10);
-    expect(s.cooldownMs).toBe(10_000);
+    expect(s.maxIterations).toBe(50);
+    expect(s.cooldownMs).toBe(1500);
     expect(s.isCompleted).toBe(false);
     expect(s.hasIncompleteTasks).toBe(false);
     expect(s.lastError).toBeNull();
     expect(s.lastErrorType).toBeNull();
     expect(s.continuationPrompt).toBeNull();
     expect(s.continuationInjected).toBe(false);
+    expect(s.lastNativeContinueAt).toBe(0);
   });
 
   test("get is cached and idempotent for the same session", () => {
@@ -95,6 +98,14 @@ describe("loop-state (stateful)", () => {
     expect(get(sid).hasIncompleteTasks).toBe(false);
   });
 
+  test("markNativeContinue is visible to recentlyNativelyContinued", () => {
+    const sid = "ls_native_1";
+    reset(sid);
+    expect(recentlyNativelyContinued(sid, 10_000)).toBe(false);
+    markNativeContinue(sid);
+    expect(recentlyNativelyContinued(sid, 10_000)).toBe(true);
+  });
+
   test("markContinuationInjected sets the flag", () => {
     const sid = "ls_injected_1";
     reset(sid);
@@ -118,8 +129,8 @@ describe("loop-state (stateful)", () => {
   test("shouldContinue is false once maxIterations reached", () => {
     const sid = "ls_cont_max_1";
     reset(sid);
-    for (let i = 0; i < 10; i++) recordIteration(sid);
-    expect(get(sid).iterations).toBe(10);
+    for (let i = 0; i < 50; i++) recordIteration(sid);
+    expect(get(sid).iterations).toBe(50);
     expect(shouldContinue(sid)).toBe(false);
   });
 
@@ -127,7 +138,7 @@ describe("loop-state (stateful)", () => {
     const sid = "ls_cont_cool_1";
     reset(sid);
     recordIteration(sid); // sets lastLoopTime = now, iterations = 1
-    expect(get(sid).iterations).toBeLessThan(10);
+    expect(get(sid).iterations).toBeLessThan(50);
     expect(shouldContinue(sid)).toBe(false);
   });
 

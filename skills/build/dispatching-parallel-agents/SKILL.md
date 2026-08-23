@@ -65,12 +65,13 @@ Each agent gets:
 
 ### 3. Dispatch in Parallel
 
+Parallel means **several `task()` calls in the same assistant message**, not one task per turn.
+
 ```typescript
-// In your agent / AI environment
-Task("Fix agent-tool-abort.test.ts failures")
-Task("Fix batch-completion-behavior.test.ts failures")
-Task("Fix tool-approval-race-conditions.test.ts failures")
-// All three run concurrently
+// SAME turn — OpenCode runs these concurrently
+task({subagent_type: "build", description: "Fix abort tests", prompt: "..."})
+task({subagent_type: "build", description: "Fix batch tests", prompt: "..."})
+task({subagent_type: "build", description: "Fix race tests", prompt: "..."})
 ```
 
 ### 4. Review and Integrate

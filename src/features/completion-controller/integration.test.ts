@@ -10,12 +10,13 @@
 // It does NOT touch state.ts or the core decide() logic; it only drives the
 // public hook surface and asserts on observable outcomes.
 
-import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import type { BobConfig } from "../../types";
 import {
   createBobCompletionHook,
   sanitizeReason,
   setCompletionClient,
+  setCompletionDecide,
 } from "./index";
 import * as st from "./state";
 
@@ -448,19 +449,10 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     st.clear(child);
   });
 
-  // NOTE: this must remain the LAST test in the suite. mock.module replaces
-  // the `./decide` module for the whole file; even after mock.restore() the
-  // already-resolved `index.ts` binding can retain the mock, so keeping it
-  // last avoids leaking into the other (real-decide) assertions.
   test("unexpected error in body does not set output.continue", async () => {
-    // Force decide() to throw so the top-level try/catch is exercised. The
-    // sub-helpers each guard their own I/O, so the only way to reach the
-    // top-level catch is an error in the decide()/state path.
-    mock.module("./decide", () => ({
-      decide: () => {
-        throw new Error("simulated decide failure");
-      },
-    }));
+    setCompletionDecide(() => {
+      throw new Error("simulated decide failure");
+    });
     try {
       const sid = uniqueSession();
       const { client } = makeMockClient([]);
@@ -469,13 +461,11 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
       const output: { continue?: boolean; reason?: string } = {};
       await run({ sessionID: sid, agentType: "build" }, output);
 
-      // Fail-safe: never auto-continue on an unexpected error, and do NOT emit
-      // a synthetic/noisy retry prompt (that would create a real turn / TUI loop).
       expect(output.continue).toBe(false);
       expect(output.reason).toBeUndefined();
       st.clear(sid);
     } finally {
-      mock.restore();
+      setCompletionDecide(null);
     }
   });
 });
