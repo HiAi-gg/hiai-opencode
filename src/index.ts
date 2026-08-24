@@ -34,12 +34,14 @@ import { combineHookSets, createHooks } from "./hooks/index";
 import { setLoopClient } from "./hooks/loop";
 import { setPlanInvocationClient } from "./hooks/plan-invocation-injector";
 import { setPlanLifecycleClient } from "./hooks/plan-lifecycle-gate";
+import { setPlanWriteClient } from "./hooks/plan-write-gate";
 import { createMemoryService } from "./memory/service";
 import {
   applyAgentPermissions,
   getDefaultExternalDirectory,
   getTaskPermissions,
   nativeHostPermissions,
+  planFileMutationPermission,
 } from "./permissions";
 import { applyAgentBrowserEngineDefault } from "./shared/agent-browser-engine";
 import { createAgentBrowserTools } from "./tools/agent-browser";
@@ -162,6 +164,7 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
     // Init plan invocation-context injector (subagent vs direct detection)
     setPlanInvocationClient(input.client);
     setHostInteractionClient(input.client);
+    setPlanWriteClient(input.client);
     setPlanLifecycleClient(input.client);
     setLoopClient(input.client);
     setPlansRoot(input.directory);
@@ -290,6 +293,7 @@ export const BobPlugin: Plugin = async (input: PluginInput): Promise<Hooks> => {
             },
             permission: {
               ...permission,
+              edit: planFileMutationPermission(),
               task: getTaskPermissions("plan"),
               ...nativeHostPermissions("plan"),
             },

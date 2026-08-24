@@ -36,4 +36,10 @@ describe("BUILD_PROMPT lint gate", () => {
     expect(BUILD_PROMPT).toContain("Do not spawn Critic");
     expect(BUILD_PROMPT).not.toContain("Complex → MUST delegate");
   });
+
+  test("is a browser leaf and keeps the alternate-stack ban in system prompt", () => {
+    expect(BUILD_PROMPT).toContain("cannot spawn Vision");
+    expect(BUILD_PROMPT).not.toContain('task({subagent_type: "vision"');
+    expect(BUILD_PROMPT).toMatch(/Playwright/i);
+  });
 });

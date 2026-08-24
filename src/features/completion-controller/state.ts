@@ -104,6 +104,10 @@ export function setHasIncompleteTodos(
   get(sessionID).hasIncompleteTodos = hasIncomplete;
 }
 
+export function setBlockerFlagged(sessionID: string, flagged: boolean): void {
+  get(sessionID).blockerFlagged = flagged;
+}
+
 /** Mark that a quality command failed in this session (blocks completion). */
 export function setQualityGateFailed(sessionID: string, failed: boolean): void {
   get(sessionID).qualityGateFailed = failed;

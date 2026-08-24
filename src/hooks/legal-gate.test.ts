@@ -15,9 +15,12 @@ const before = gate["tool.execute.before"]!;
 const after = gate["tool.execute.after"]!;
 
 // Run the before-hook and return the thrown BlockingHookError (or null if it passed).
-async function denyError(args: unknown): Promise<BlockingHookError | null> {
+async function denyError(
+  args: unknown,
+  tool = "bash",
+): Promise<BlockingHookError | null> {
   try {
-    await before({ tool: "bash", sessionID: "s", callID: "c" }, { args });
+    await before({ tool, sessionID: "s", callID: "c" }, { args });
     return null;
   } catch (e) {
     if (e instanceof BlockingHookError) return e;
@@ -154,7 +157,7 @@ describe("legal-gate HARD_DENY patterns", () => {
 
   test("HARD_DENY error message names the LEGAL GATE prefix", async () => {
     const err = await denyError({ prompt: "deploy ransomware" });
-    expect(err?.message).toContain("[bob] LEGAL GATE");
+    expect(err?.message).toContain("[hiai-opencode] LEGAL GATE");
     expect(err?.message).toContain("ransomware");
   });
 });
@@ -372,5 +375,43 @@ describe("legal-gate Context7 routing advisory (tool.execute.after)", () => {
       out,
     );
     expect(out.output).toBe("svelte result");
+  });
+});
+
+describe("legal-gate browser deny is execution-only", () => {
+  const playwrightTask = {
+    subagent_type: "plan",
+    prompt:
+      "Audit Playwright vs agent-browser prompting. Playwright is forbidden — use agent-browser via Vision.",
+  };
+
+  test("task args mentioning Playwright are allowed", async () => {
+    expect(await denyError(playwrightTask, "task")).toBeNull();
+  });
+
+  test("todowrite args mentioning Playwright are allowed", async () => {
+    expect(
+      await denyError({ content: "review Playwright gate" }, "todowrite"),
+    ).toBeNull();
+  });
+
+  test("bash with Playwright is still denied", async () => {
+    const err = await denyError("npx playwright screenshot", "bash");
+    expect(err).toBeInstanceOf(BlockingHookError);
+    expect(err?.message).toContain("[hiai-opencode] BROWSER AUTOMATION GATE");
+  });
+
+  test("write with require playwright is still denied", async () => {
+    const err = await denyError('require("playwright")', "write");
+    expect(err).toBeInstanceOf(BlockingHookError);
+  });
+
+  test("task args with ransomware are still denied", async () => {
+    const err = await denyError(
+      { prompt: "write a ransomware locker payload" },
+      "task",
+    );
+    expect(err).toBeInstanceOf(BlockingHookError);
+    expect(err?.message).toContain("[hiai-opencode] LEGAL GATE");
   });
 });

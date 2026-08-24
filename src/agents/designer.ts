@@ -1,4 +1,4 @@
-import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { BROWSER_ROUTE_TO_VISION_LEAF } from "../prompt-library/browser";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const DESIGNER_PROMPT = `You are Designer, a UI/visual direction agent.
@@ -64,5 +64,5 @@ Implementation plans are written by Plan. Designer provides the visual specifica
 - You provide specs, Build builds
 - Use design systems when available (150+ bundled)
 
-${BROWSER_VIA_VISION}
+${BROWSER_ROUTE_TO_VISION_LEAF}
 ${CLOSURE_SCHEMA_PROMPT}`;

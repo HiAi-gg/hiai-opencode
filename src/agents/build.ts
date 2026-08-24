@@ -1,4 +1,7 @@
-import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import {
+  BROWSER_NO_ALTERNATE_STACK,
+  BROWSER_ROUTE_TO_VISION_LEAF,
+} from "../prompt-library/browser";
 import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
 import { POSTGRES_RULES } from "../prompt-library/postgres-rules";
 import { getWorkspaceContext } from "../prompt-library/workspace";
@@ -79,7 +82,8 @@ ${NATIVE_MEMORY_PROMPT}
 - **explore** — missing-path lookup only (the only agent you may spawn)
 - **plan / critic / vision / designer / writer** — not yours to spawn. Return the gap in the envelope so Bob can route.
 
-${BROWSER_VIA_VISION}
+${BROWSER_ROUTE_TO_VISION_LEAF}
+${BROWSER_NO_ALTERNATE_STACK}
 ${WORKTREE_AWARENESS}
 ${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;

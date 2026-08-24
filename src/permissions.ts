@@ -141,6 +141,26 @@ export function nativeHostPermissions(
 }
 
 /**
+ * Plan may mutate only frozen-plan artifacts. Native `edit`/`write` permission
+ * is deny-by-default with path allowlists; the plan-write-gate hook is
+ * defense-in-depth when the host does not honor path-scoped write.
+ */
+export function planFileMutationPermission(): Record<string, "allow" | "deny"> {
+  return {
+    "*": "deny",
+    ".bob/plans/*": "allow",
+    ".bob/plans/**": "allow",
+    ".bob/drafts/*": "allow",
+    ".bob/drafts/**": "allow",
+  };
+}
+
+export function isPlanWritablePath(filePath: string): boolean {
+  const normalized = filePath.replace(/\\/g, "/");
+  return /(?:^|\/)\.bob\/(plans|drafts)(?:\/|$)/.test(normalized);
+}
+
+/**
  * Get the default external_directory permission for a given agent.
  * Returns 'allow' for internal agents that need cross-project file access,
  * undefined otherwise.

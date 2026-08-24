@@ -82,6 +82,18 @@ describe("MANAGER_PROMPT", () => {
     expect(MANAGER_PROMPT).toContain("return BLOCKED status");
   });
 
+  test("work packets must not dump global bans into task() args", () => {
+    expect(MANAGER_PROMPT).toContain("Work packets");
+    expect(MANAGER_PROMPT).toContain("Never name forbidden browser stacks");
+    expect(MANAGER_PROMPT).not.toContain("MUST NOT DO");
+  });
+
+  test("routes browser work to Vision without naming Playwright/Puppeteer", () => {
+    expect(MANAGER_PROMPT).toContain("Vision owns the browser");
+    expect(MANAGER_PROMPT).not.toMatch(/playwright/i);
+    expect(MANAGER_PROMPT).not.toMatch(/puppeteer/i);
+  });
+
   test("no stale actor() references in delegation examples", () => {
     // The delegation syntax section should use task() not actor()
     const delegationSection =

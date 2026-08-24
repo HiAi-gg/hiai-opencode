@@ -208,6 +208,36 @@ describe("completion-controller integration: actor.postStop lifecycle", () => {
     st.clear(critic);
   });
 
+  test("Plan subagent return does not continue Plan and does not complete Bob", async () => {
+    const parent = uniqueSession();
+    const child = uniqueSession();
+    st.setHasIncompleteTodos(parent, true);
+    const { client } = makeMockClient([
+      {
+        info: { role: "assistant" },
+        parts: [
+          {
+            type: "text",
+            text: "**Status:** done\n# Plan\n- [1.1] step — owner: build",
+          },
+        ],
+      },
+    ]);
+    setCompletionClient(client);
+
+    const output: { continue?: boolean; reason?: string } = {};
+    await run(
+      { sessionID: child, agentType: "plan", parentSessionID: parent },
+      output,
+    );
+
+    expect(output.continue).toBe(false);
+    expect(st.get(parent).autoContinues).toBe(0);
+    expect(st.get(parent).blockerFlagged).toBe(false);
+    st.clear(parent);
+    st.clear(child);
+  });
+
   test("non-critic subagent with incomplete todos -> output.continue + state increment", async () => {
     const parent = uniqueSession();
     const child = uniqueSession();

@@ -1,4 +1,4 @@
-import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { BROWSER_ROUTE_TO_VISION } from "../prompt-library/browser";
 import {
   NATIVE_MEMORY_PROMPT,
   NATIVE_TASKS_PROMPT,
@@ -242,7 +242,7 @@ Before emitting CLOSURE, produce a structured summary the user can verify:
 This is the LAST thing you emit before CLOSURE. The user must be able to verify your work without re-reading the entire conversation.
 ${NATIVE_TASKS_PROMPT}
 ${POSTGRES_RULES}
-${BROWSER_VIA_VISION}
+${BROWSER_ROUTE_TO_VISION}
 ${WORKTREE_AWARENESS}
 ${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;

@@ -1,4 +1,4 @@
-import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { BROWSER_ROUTE_TO_VISION } from "../prompt-library/browser";
 import { NATIVE_MEMORY_PROMPT } from "../prompt-library/native-memory";
 import { getWorkspaceContext } from "../prompt-library/workspace";
 import { WORKTREE_AWARENESS } from "../prompt-library/worktree";
@@ -60,7 +60,7 @@ flag it as a plan quality issue. Default bias: prefer general for simple work (1
 NEVER ask 'should I continue' between steps. Just delegate next task.
 
 ## Key Rules
-1. **6-Section Prompts**: Every task() call MUST include: TASK, EXPECTED OUTCOME, REQUIRED TOOLS, MUST DO, MUST NOT DO, CONTEXT.
+1. **Work packets**: Every task() call MUST include: TASK, EXPECTED OUTCOME, FILES, CONSTRAINTS of this step, CONTEXT. Do not dump global bans or gate errors into the packet — child agents already have those walls. Never name forbidden browser stacks in \`task()\` args.
 2. **Wave Dispatch**: For each phase, read the Execution Graph Extract + plan annotations → extract file lists → check overlaps → dispatch ALL parallel steps in ONE assistant message → collect ALL → then next phase.
 3. **Post-Phase**: After the whole phase returns, update plan checkboxes. Do NOT re-read the plan file between individual steps.
 4. **Conflict Detection**: Before dispatch, check file overlaps from plan annotations. Serialize overlapping tasks within a phase.
@@ -136,7 +136,7 @@ Wave N Complete:
 Next wave: [what comes next]
 \`\`\`
 
-${BROWSER_VIA_VISION}
+${BROWSER_ROUTE_TO_VISION}
 ${WORKTREE_AWARENESS}
 ${getWorkspaceContext()}
 ${CLOSURE_SCHEMA_PROMPT}`;

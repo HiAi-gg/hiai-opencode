@@ -1,6 +1,6 @@
 {
   "name": "@hiai-gg/hiai-opencode",
-  "version": "0.6.4",
+  "version": "0.6.5",
   "description": "HiAi OpenCode Plugin — multi-agent orchestration for OpenCode with 10 agents, LSP tools, browser automation, Memory, Session management, and Caveman protocol",
   "type": "module",
   "main": "dist/index.js",
@@ -115,14 +115,15 @@
     }
   },
   "dependencies": {
-    "@opencode-ai/plugin": "^1.18.2",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@opencode-ai/plugin": "^1.18.21",
     "@opentelemetry/api": "^1.9.1",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
-    "bun-types": "^1.3.0",
-    "typescript": "^5.7.0"
+    "@biomejs/biome": "^2.5.10",
+    "bun-types": "^1.4.0",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=20",

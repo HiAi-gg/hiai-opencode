@@ -83,6 +83,8 @@ Default path for a user request:
 
 Hard wall: `getTaskPermissions()` in [src/permissions.ts](src/permissions.ts). Runtime freeze: [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts). Freeze is **per session** in `.bob/plans/.lifecycle.json` (plus plan-file frontmatter). A new session in the same repo is not blocked by another session's plan.
 
+Restriction layers: system prompt = identity/routing; native permissions and runtime guards = the wall the **acting** agent hits. `task()` prompts are work packets — do not copy child bans or gate errors into args. Browser lexical deny in legal-gate applies to bash/write/edit/patch, not to `task`.
+
 **Native OpenCode UI (do not reinvent):**
 - Tasks: Bob calls `todowrite` after Plan returns — phase rows + indented `N.M` steps. Host `task()` sessions are the parent/child tree.
 - Question: direct Plan (picker / Tab) uses the native `question` tool for complex/unclear **user-owned** facts. Plan invoked **through Bob** never interviews (`host-interaction-gate` denies `question` when the session has `parentID`).
@@ -106,11 +108,12 @@ When you need to change something, edit the right file first.
 | User-facing model slot | [bob.json](bob.json) |
 | Internal defaults (permissions, mcp, lsp, completion) | [src/config.ts](src/config.ts) — `DEFAULT_CONFIG` |
 | Agent prompt (any) | `src/agents/<agent>.ts` (flat: bob, build, plan, manager, critic, designer, writer, vision, explore, general) |
-| Shared prompt fragments | [src/prompt-library/](src/prompt-library) (browser, caveman, native-memory, postgres-rules, workspace, worktree) |
+| Shared prompt fragments | [src/prompt-library/](src/prompt-library) (browser route/leaf/no-alternate-stack, caveman, native-memory, postgres-rules, workspace, worktree) |
 | Runtime prompt injection | [src/hooks/closure-injector.ts](src/hooks/closure-injector.ts), [src/hooks/caveman-system-injector.ts](src/hooks/caveman-system-injector.ts) |
 | Agent registration (visibility, mode, model) | [src/agents/index.ts](src/agents/index.ts) + [src/index.ts](src/index.ts) `hooks.config` |
 | Per-agent permissions | [src/permissions.ts](src/permissions.ts) — `applyAgentPermissions()` / `getTaskPermissions()` spawn matrix |
 | Plan freeze / single Critic | [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts) |
+| Plan write path | [src/permissions.ts](src/permissions.ts) `planFileMutationPermission()` + [src/hooks/plan-write-gate.ts](src/hooks/plan-write-gate.ts) |
 | Closure protocol | [src/shared/closure.ts](src/shared/closure.ts) — `CLOSURE_SCHEMA_PROMPT` + `validateClosure()` |
 | Prompt override / `prompt_append` | [src/agents/index.ts](src/agents/index.ts) — `applyPromptOverride()` |
 | Skill tool | [src/tools/skill.ts](src/tools/skill.ts) |
@@ -142,7 +145,7 @@ Use [bob.env.example](bob.env.example) as the canonical template. Model provider
 
 All plugin settings go through **one** `bob.json` (or `bob.jsonc`). Search order (first found wins): current dir → each parent up to filesystem root (`bob.json`, then `.opencode/bob.json`, then jsonc) → `~/.config/hiai-opencode/bob.json`. CLI `doctor` uses the same order. Credentials stay in `bob.env` / Connect, not in JSON.
 
-`loop.enabled` (default true) keeps Bob running on idle until the frozen plan and todos are done. Do not wait for the user to re-prompt.
+`loop.enabled` (default true) keeps **Bob/Manager** running on idle until the frozen plan and todos are done. After Plan returns, Bob must dispatch waves — the Plan child is not continued. Direct Plan (no parent) does not receive dispatch continues.
 
 Use `{env:VAR_NAME}` placeholders in config JSON — never raw keys, never `${VAR}` (blocked for names containing `KEY`/`TOKEN`/`SECRET`). Check with `grep -E '(fc-\|ctx7sk-\|sk-\|key-)' bob.json` — should return 0 matches.
 
@@ -154,7 +157,7 @@ AGENTS:    bob (orchestrator) · build (impl) · plan (architecture) · explore 
 MCP:       grep_app -> explore · sequential-thinking optional (Plan uses native thinking)
 CLI SKILLS: firecrawl -> explore · context7 -> explore, build · agent-browser -> vision
 LSP:       typescript, svelte, eslint, bash, pyright → build MUST run lsp_diagnostics after every edit
-GATES:     plan-freeze · delivery-critic (once) · quality-gate · lsp-pending · legal-gate · circuit-breaker · closure
+GATES:     plan-freeze · delivery-critic (once) · quality-gate · lsp-pending · legal-gate (execution tools) · plan-write · circuit-breaker · closure
 ```
 
 ## Closure Protocol

@@ -19,7 +19,7 @@ export function browserGateGuard(context: ToolContext): void {
   const agent = context.agent ?? "unknown";
   if (!ALLOWED_BROWSER_AGENTS.has(agent)) {
     throw new Error(
-      `[BOB HARD GATE] agent_browser_* tools are restricted to Vision (primary) and General (fallback). Agent "${agent}" attempted to call a browser tool. This call is blocked. Delegate browser operations to Vision via task({subagent_type: "vision", ...}).`,
+      `[hiai-opencode] BROWSER AUTOMATION GATE: agent_browser_* tools are restricted to Vision (primary) and General (fallback). Agent "${agent}" attempted to call a browser tool. This call is blocked. Delegate browser operations to Vision via task({subagent_type: "vision", ...}).`,
     );
   }
 }

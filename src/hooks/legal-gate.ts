@@ -31,8 +31,9 @@ const OFFENSIVE_INTENT =
 
 // Browser-automation deny-list — Playwright/Puppeteer are FORBIDDEN in this repo.
 // The ONLY approved browser automation path is agent-browser via Vision/general.
-// Any attempt to install, import, require, or run Playwright/Puppeteer (or equivalent)
-// via any tool (bash, write, edit, etc.) will be blocked.
+// Lexical browser deny applies only to *execution* tools (bash/write/edit/patch).
+// Meta tools such as `task` may discuss the ban without being treated as using it.
+// Ethical HARD_DENY / CONTEXTUAL_DENY still apply to every tool, including `task`.
 //
 // NOTE: More specific patterns must come BEFORE /\bplaywright\b/i to ensure they fire first.
 // findDenyMatch returns the first match; a bare "playwright" would consume all variants otherwise.
@@ -157,6 +158,16 @@ const BROWSER_AUTOMATION_DENY: Array<{ pattern: RegExp; reason: string }> = [
   },
 ];
 
+/** Tools that actually run or write browser-automation code. */
+export const BROWSER_AUTOMATION_EXECUTION_TOOLS = new Set([
+  "bash",
+  "write",
+  "edit",
+  "apply_patch",
+  "multiedit",
+  "patch",
+]);
+
 const HARD_DENY: Array<{ pattern: RegExp; reason: string }> = [
   // Military
   {
@@ -253,20 +264,24 @@ const FRAMEWORK_KEYWORDS =
 
 function findDenyMatch(
   args: unknown,
-): { pattern: RegExp; reason: string } | null {
+  tool?: string,
+): { pattern: RegExp; reason: string; kind: "browser" | "legal" } | null {
   if (args == null) return null;
   const haystack = JSON.stringify(args);
-  // Browser automation (Playwright/Puppeteer) is ALWAYS blocked — no exceptions.
-  const browserHit = BROWSER_AUTOMATION_DENY.find((d) =>
-    d.pattern.test(haystack),
-  );
-  if (browserHit) return browserHit;
+  const toolName = (tool ?? "").toLowerCase();
+  if (BROWSER_AUTOMATION_EXECUTION_TOOLS.has(toolName)) {
+    const browserHit = BROWSER_AUTOMATION_DENY.find((d) =>
+      d.pattern.test(haystack),
+    );
+    if (browserHit) return { ...browserHit, kind: "browser" };
+  }
   const hard = HARD_DENY.find((d) => d.pattern.test(haystack));
-  if (hard) return hard;
+  if (hard) return { ...hard, kind: "legal" };
   // Dual-use terms only deny when paired with offensive intent — defensive
   // security work (test/fix/patch/audit) passes through.
   if (!OFFENSIVE_INTENT.test(haystack)) return null;
-  return CONTEXTUAL_DENY.find((d) => d.pattern.test(haystack)) ?? null;
+  const contextual = CONTEXTUAL_DENY.find((d) => d.pattern.test(haystack));
+  return contextual ? { ...contextual, kind: "legal" } : null;
 }
 
 export function createLegalGate(): Pick<
@@ -277,18 +292,16 @@ export function createLegalGate(): Pick<
     // (a) Hard deny-list — runs BEFORE native permission checks.
     "tool.execute.before": async (input, output) => {
       try {
-        const hit = findDenyMatch(output.args);
+        const hit = findDenyMatch(output.args, input.tool);
         if (hit) {
-          // Distinguish browser-automation gate from general legal gate.
-          const isBrowserAutomation = BROWSER_AUTOMATION_DENY.some(
-            (d) => d.pattern === hit.pattern,
-          );
-          const prefix = isBrowserAutomation
-            ? "[bob] BROWSER AUTOMATION GATE"
-            : "[bob] LEGAL GATE";
-          const suffix = isBrowserAutomation
-            ? " Use agent-browser via Vision, or return BLOCKED with the agent-browser error."
-            : " This use is prohibited by the project ethical-use policy and cannot be overridden.";
+          const prefix =
+            hit.kind === "browser"
+              ? "[hiai-opencode] BROWSER AUTOMATION GATE"
+              : "[hiai-opencode] LEGAL GATE";
+          const suffix =
+            hit.kind === "browser"
+              ? " Use agent-browser via Vision, or return BLOCKED with the agent-browser error."
+              : " This use is prohibited by the project ethical-use policy and cannot be overridden.";
           throw new BlockingHookError(
             `${prefix}: ${hit.reason}. Pattern matched in ${input.tool} args.${suffix}`,
           );

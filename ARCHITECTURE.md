@@ -147,7 +147,7 @@ Each agent's prompt is a template literal assembled from imported fragments:
 
 Reusable policy/behavior blocks imported by the agent prompts:
 
-- [src/prompt-library/browser.ts](src/prompt-library/browser.ts) — `BROWSER_VIA_VISION` (delegate browser to Vision)
+- [src/prompt-library/browser.ts](src/prompt-library/browser.ts) — `BROWSER_ROUTE_TO_VISION` (orchestrators), `BROWSER_ROUTE_TO_VISION_LEAF` (leaves), `BROWSER_NO_ALTERNATE_STACK` (Vision/General/Build system prompt only)
 - [src/prompt-library/caveman.ts](src/prompt-library/caveman.ts) — caveman protocol fragments (injected at runtime by `caveman-system-injector`)
 - [src/prompt-library/native-memory.ts](src/prompt-library/native-memory.ts) — native memory/tasks tool reminders
 - [src/prompt-library/postgres-rules.ts](src/prompt-library/postgres-rules.ts) — DB query rules
@@ -248,13 +248,14 @@ The plugin enforces a layered safety model. From strongest to weakest:
 
 ### Hard gates (throw / mutate state)
 
-- **Legal gate** — [src/hooks/legal-gate.ts](src/hooks/legal-gate.ts): three-tier deny list (browser automation always blocked, military/malicious always blocked, contextual dual-use with offensive-intent regex). Throws `BlockingHookError`.
-- **Per-agent permission maps** — [src/permissions.ts](src/permissions.ts): `applyAgentPermissions()` converts `agent_restrictions` into `permission.deny` / `tools.<key>=false`. Applied in `src/index.ts` `hooks.config`.
+- **Legal gate** — [src/hooks/legal-gate.ts](src/hooks/legal-gate.ts): three-tier deny list. Browser-automation patterns apply only to execution tools (`bash`/`write`/`edit`/`patch`); `task()` may discuss the ban. Ethical `HARD_DENY` still applies to every tool including `task`. Throws `BlockingHookError`.
+- **Per-agent permission maps** — [src/permissions.ts](src/permissions.ts): `applyAgentPermissions()` converts `agent_restrictions` into `permission.deny` / `tools.<key>=false`. Applied in `src/index.ts` `hooks.config`. Plan file mutations are path-scoped via `planFileMutationPermission()` (`.bob/plans/*`, `.bob/drafts/*`).
+- **Plan write gate** — [src/hooks/plan-write-gate.ts](src/hooks/plan-write-gate.ts): Plan `write`/`edit` outside `.bob/plans` and `.bob/drafts` is denied at runtime.
 - **Plan lifecycle gate** — [src/features/plan-lifecycle/](src/features/plan-lifecycle) + [src/hooks/plan-lifecycle-gate.ts](src/hooks/plan-lifecycle-gate.ts): freezes a Plan `Status: done` result; blocks a second Plan spawn and blocks Critic until implementation waves finish.
 - **Host interaction gate** — [src/hooks/host-interaction-gate.ts](src/hooks/host-interaction-gate.ts): blocks the native `question` tool on any session with a `parentID` (Plan-via-Bob cannot interview). Direct Plan and Bob keep `question: allow`.
 - **Completion controller** — [src/features/completion-controller/](src/features/completion-controller): state machine that gates task completion. `decide()` (decide.ts) requires: no blocker, no incomplete todos, quality gate passed, LSP diagnostics run (if edits made), frozen plan not still executing, and Critic approval (if `require_critic` and changed files exist). Critic is a delivery gate, not a per-step gate.
 - **Circuit breaker** — [src/hooks/circuit-breaker.ts](src/hooks/circuit-breaker.ts) + [src/features/background-manager/index.ts](src/features/background-manager/index.ts): feeds every `tool.execute.after` call into `BackgroundManager.recordSessionToolCall()`; trips on N consecutive identical calls (default 20) or total tool calls (default 4000), aborting the session via `client.session.abort`.
-- **Agent-browser guard** — [src/tools/agent-browser/index.ts](src/tools/agent-browser/index.ts): `browserGateGuard()` throws for non-`vision`/`general` agents.
+- **Agent-browser guard** — [src/tools/agent-browser/index.ts](src/tools/agent-browser/index.ts): `browserGateGuard()` throws for non-`vision`/`general` agents. The acting agent hits this wall; orchestrators must not copy the error into `task()` args.
 - **LSP sandbox** — [src/tools/lsp/index.ts](src/tools/lsp/index.ts): throws on paths resolving outside `ctx.directory`.
 
 ### Soft gates (mutate output / state)

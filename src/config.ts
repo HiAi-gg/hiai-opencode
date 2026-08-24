@@ -155,8 +155,8 @@ export const DEFAULT_CONFIG: BobConfig = {
       lsp_rename: false,
     },
     plan: {
-      write: false,
-      edit: false,
+      // write/edit are path-scoped in src/index.ts via planFileMutationPermission()
+      // (.bob/plans/* and .bob/drafts/* only). apply_patch stays off.
       apply_patch: false,
       bash: false,
       grep: false,

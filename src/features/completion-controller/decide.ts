@@ -15,6 +15,11 @@ export interface CompletionState {
   lspPending: boolean;
   /** Frozen-plan lifecycle. Review is blocked while a plan is still executing. */
   planStatus?: "none" | "frozen" | "executing" | "done" | "invalidated";
+  /**
+   * False when the current agent/mode cannot dispatch plan waves
+   * (Plan agent, OpenCode plan mode). Default true (Bob/Manager).
+   */
+  waveExecutor?: boolean;
 }
 
 export type CompletionAction =
@@ -42,6 +47,10 @@ export function decide(s: CompletionState): CompletionAction {
   if (s.blockerFlagged) return { kind: "stop", reason: "blocked" };
 
   const atCap = s.autoContinues >= s.maxAutoContinues;
+  const planBusy = s.planStatus === "frozen" || s.planStatus === "executing";
+  if (planBusy && s.waveExecutor === false) {
+    return { kind: "stop", reason: "blocked" };
+  }
 
   if (s.hasIncompleteTodos) {
     return atCap
@@ -62,7 +71,6 @@ export function decide(s: CompletionState): CompletionAction {
       : { kind: "continue", prompt: LSP_PENDING_PROMPT };
   }
 
-  const planBusy = s.planStatus === "frozen" || s.planStatus === "executing";
   if (planBusy) {
     return atCap
       ? { kind: "stop", reason: "cap" }

@@ -157,6 +157,17 @@ describe("decide", () => {
     if (a.kind === "continue") expect(a.prompt.toLowerCase()).toContain("lsp");
   });
 
+  test("frozen plan on a non-executor (Plan mode) -> stop(blocked)", () => {
+    expect(
+      decide({
+        ...base,
+        hasIncompleteTodos: true,
+        planStatus: "frozen",
+        waveExecutor: false,
+      }),
+    ).toEqual({ kind: "stop", reason: "blocked" });
+  });
+
   test("frozen plan with unreviewed changes -> continue (finish waves), not review", () => {
     const a = decide({
       ...base,

@@ -1,3 +1,4 @@
+import { BROWSER_NO_ALTERNATE_STACK } from "../prompt-library/browser";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const VISION_PROMPT = `You are Vision, the multimodal analysis and BROWSER OPERATOR agent.
@@ -149,10 +150,9 @@ Issues:
 - You analyze visuals, you don't modify them
 - You report findings, you don't implement fixes
 - Always use browser tools for web UI verification (not Read tool)
-- **🚫 Playwright/Puppeteer are FORBIDDEN.** If agent_browser_* tools fail, return
-  **Status: blocked** with the exact error. Do NOT attempt to use Playwright, Puppeteer,
-  Chrome DevTools MCP, or any other browser automation. Do NOT write/run node scripts
-  that import Playwright or Puppeteer.
+- If agent_browser_* tools fail, return **Status: blocked** with the exact error.
+  Do NOT write/run node scripts that import Playwright or Puppeteer.
+${BROWSER_NO_ALTERNATE_STACK}
 
 ## Local Media Files (Images, PDFs, Documents)
 When asked to review local media files (images, screenshots, PDFs, documents) inside the project:

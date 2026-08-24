@@ -19,7 +19,9 @@ import {
   EXTERNAL_DIRECTORY_ALLOW_AGENTS,
   getDefaultExternalDirectory,
   getTaskPermissions,
+  isPlanWritablePath,
   nativeHostPermissions,
+  planFileMutationPermission,
   TOOLS_KEYS,
 } from "./permissions";
 
@@ -140,6 +142,16 @@ describe("granular task permissions", () => {
         todowrite: "deny",
       });
     }
+  });
+
+  test("Plan file mutation is path-scoped to .bob/plans and .bob/drafts", () => {
+    const permission = planFileMutationPermission();
+    expect(permission["*"]).toBe("deny");
+    expect(permission[".bob/plans/**"]).toBe("allow");
+    expect(permission[".bob/drafts/**"]).toBe("allow");
+    expect(isPlanWritablePath(".bob/plans/feat.md")).toBe(true);
+    expect(isPlanWritablePath("/repo/.bob/drafts/wip.md")).toBe(true);
+    expect(isPlanWritablePath("src/agents/plan.ts")).toBe(false);
   });
 
   test("General and service agents are leaves", () => {
@@ -553,6 +565,20 @@ describe("config hook integration", () => {
     expect((plan.tools as Record<string, boolean>).grep).toBe(false);
     expect((plan.tools as Record<string, boolean>).glob).toBe(false);
     expect((plan.permission as Record<string, string>).webfetch).toBe("deny");
+    await hooks.dispose?.();
+  });
+
+  test("Plan file mutations are path-scoped in the config hook", async () => {
+    const hooks = await (await import("./index")).BobPlugin({ directory: TMP });
+    const cfg: Record<string, unknown> = { agent: {} };
+    await hooks.config?.(cfg as any);
+    const agent = cfg.agent as Record<string, unknown>;
+    const plan = agent.plan as Record<string, unknown>;
+    const permission = plan.permission as Record<string, unknown>;
+    expect(permission.edit).toEqual(planFileMutationPermission());
+    expect((plan.tools as Record<string, boolean> | undefined)?.write).not.toBe(
+      false,
+    );
     await hooks.dispose?.();
   });
 

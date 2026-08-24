@@ -1,6 +1,15 @@
 import { afterEach, describe, expect, test } from "bun:test";
+import {
+  clearPlanLifecycle,
+  recordFrozenPlan,
+} from "../features/plan-lifecycle";
 import type { BobConfig } from "../types";
-import { createLoopHook } from "./loop";
+import {
+  createLoopHook,
+  isWaveExecutorAgent,
+  lastMessageIsTerminalBlock,
+  setLoopClient,
+} from "./loop";
 import {
   buildContinuationPrompt,
   buildRecoveryContext,
@@ -284,5 +293,113 @@ describe("createLoopHook: burst session.idle", () => {
       event: { type: "session.idle", properties: { sessionID: sid } },
     });
     expect(get(sid).iterations).toBe(1);
+  });
+});
+
+describe("isWaveExecutorAgent", () => {
+  test("Bob and Manager can dispatch waves", () => {
+    expect(isWaveExecutorAgent("bob")).toBe(true);
+    expect(isWaveExecutorAgent("manager")).toBe(true);
+    expect(isWaveExecutorAgent(undefined)).toBe(true);
+  });
+
+  test("Plan agent cannot dispatch waves; Bob can even if host mode is plan", () => {
+    expect(isWaveExecutorAgent("plan")).toBe(false);
+    expect(isWaveExecutorAgent("bob", "plan")).toBe(true);
+    expect(isWaveExecutorAgent("build")).toBe(false);
+  });
+});
+
+describe("lastMessageIsTerminalBlock", () => {
+  test("detects envelope Status: blocked", () => {
+    expect(
+      lastMessageIsTerminalBlock("**Status:** blocked\n**Summary:** x"),
+    ).toBe(true);
+    expect(lastMessageIsTerminalBlock("Status: blocked")).toBe(true);
+    expect(lastMessageIsTerminalBlock("Статус: blocked · ход 12")).toBe(true);
+  });
+
+  test("ignores ordinary done envelopes", () => {
+    expect(lastMessageIsTerminalBlock("**Status:** done")).toBe(false);
+  });
+});
+
+describe("createLoopHook: skip autonomous continue", () => {
+  const sid = "loop-plan-mode-test";
+  let prompted: string[];
+
+  function mockClient(session: {
+    agent?: string;
+    mode?: string;
+    parentID?: string;
+    lastText?: string;
+  }) {
+    prompted = [];
+    return {
+      session: {
+        get: async () => ({ data: session }),
+        messages: async () => ({
+          data: [
+            {
+              info: { role: "assistant" },
+              parts: [{ type: "text", text: session.lastText ?? "" }],
+            },
+          ],
+        }),
+        prompt: async (req: {
+          body?: { parts?: Array<{ text?: string }> };
+        }) => {
+          prompted.push(req.body?.parts?.[0]?.text ?? "");
+        },
+      },
+    } as never;
+  }
+
+  afterEach(() => {
+    reset(sid);
+    clearPlanLifecycle(sid);
+    setLoopClient(null);
+  });
+
+  test("does not poke Plan agent to dispatch frozen waves", async () => {
+    recordFrozenPlan(sid, ".bob/plans/x.md", "abc");
+    setLoopClient(mockClient({ agent: "plan" }));
+    const hook = createLoopHook(makeConfig({ loop: { cooldownMs: 0 } }));
+    const fn = hook.event as (input: { event: unknown }) => Promise<void>;
+    await fn({
+      event: { type: "session.idle", properties: { sessionID: sid } },
+    });
+    expect(prompted).toEqual([]);
+  });
+
+  test("Bob still receives dispatch prompt after a false plan-mode block", async () => {
+    recordFrozenPlan(sid, ".bob/plans/x.md", "abc");
+    setLoopClient(
+      mockClient({
+        agent: "bob",
+        lastText: "**Status:** blocked\nPlan mode forbids waves",
+      }),
+    );
+    const hook = createLoopHook(makeConfig({ loop: { cooldownMs: 0 } }));
+    const fn = hook.event as (input: { event: unknown }) => Promise<void>;
+    await fn({
+      event: { type: "session.idle", properties: { sessionID: sid } },
+    });
+    expect(prompted.length).toBe(1);
+    expect(prompted[0]).toContain("not Plan");
+    expect(get(sid).isCompleted).toBe(false);
+  });
+
+  test("Bob with a frozen plan receives a dispatch-waves continue", async () => {
+    recordFrozenPlan(sid, ".bob/plans/x.md", "abc");
+    setLoopClient(mockClient({ agent: "bob", lastText: "**Status:** done" }));
+    const hook = createLoopHook(makeConfig({ loop: { cooldownMs: 0 } }));
+    const fn = hook.event as (input: { event: unknown }) => Promise<void>;
+    await fn({
+      event: { type: "session.idle", properties: { sessionID: sid } },
+    });
+    expect(prompted.length).toBe(1);
+    expect(prompted[0]).toContain("Dispatch the next wave NOW");
+    expect(prompted[0]).not.toContain("Continue the frozen plan autonomously");
   });
 });

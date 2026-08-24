@@ -27,9 +27,9 @@ describe("CRITIC_PROMPT browser automation prohibition", () => {
     );
   });
 
-  test("includes BROWSER_VIA_VISION which contains the prohibition", () => {
-    // CRITIC_PROMPT imports and embeds BROWSER_VIA_VISION
+  test("includes BROWSER_ROUTE_TO_VISION for Vision ownership", () => {
     expect(CRITIC_PROMPT).toContain("Vision owns the browser");
+    expect(CRITIC_PROMPT).toContain('task({subagent_type: "vision"');
   });
 
   test("Critic is forbidden to call agent_browser_* directly", () => {

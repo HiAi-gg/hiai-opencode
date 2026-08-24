@@ -108,4 +108,11 @@ describe("BOB_PROMPT", () => {
     expect(BOB_PROMPT).toContain("Never hire Manager for 1–2 file");
     expect(BOB_PROMPT).toContain("phase-close Critic");
   });
+
+  test("routes browser work to Vision without naming Playwright/Puppeteer", () => {
+    expect(BOB_PROMPT).toContain("Vision owns the browser");
+    expect(BOB_PROMPT).toContain("Task-prompt wall");
+    expect(BOB_PROMPT).not.toMatch(/playwright/i);
+    expect(BOB_PROMPT).not.toMatch(/puppeteer/i);
+  });
 });

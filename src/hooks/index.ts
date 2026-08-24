@@ -23,6 +23,7 @@ import { createModelFallbackHook } from "./model-fallback";
 import { createNonInteractiveEnv } from "./non-interactive-env";
 import { createPlanInvocationInjector } from "./plan-invocation-injector";
 import { createPlanLifecycleGate } from "./plan-lifecycle-gate";
+import { createPlanWriteGate } from "./plan-write-gate";
 import { createPreemptiveCompaction } from "./preemptive-compaction";
 import { createQualityGate } from "./quality-gate";
 import { createReasoningContentCacheHook } from "./reasoning-content-cache";
@@ -173,6 +174,7 @@ const ALL_NAMED_HOOK_FACTORIES: NamedHookFactory[] = [
   { name: "plan-invocation-injector", factory: createPlanInvocationInjector },
   { name: "host-interaction-gate", factory: createHostInteractionGate },
   { name: "plan-lifecycle-gate", factory: createPlanLifecycleGate },
+  { name: "plan-write-gate", factory: createPlanWriteGate },
   { name: "model-fallback", factory: createModelFallbackHook },
   { name: "runtime-fallback", factory: createRuntimeFallback },
   { name: "preemptive-compaction", factory: createPreemptiveCompaction },

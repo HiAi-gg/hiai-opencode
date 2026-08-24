@@ -1,4 +1,5 @@
 import type { Hooks, PluginInput } from "@opencode-ai/plugin";
+import { lastMessageIsTerminalBlock } from "../../hooks/loop";
 import { markCompleted, markNativeContinue } from "../../hooks/loop-state";
 import type { BobConfig } from "../../types";
 import { logger } from "../../util/log";
@@ -114,10 +115,8 @@ export function createBobCompletionHook(
   };
   if (!cfg.enabled) return {};
 
-  async function readLastAssistantVerdict(
-    sessionID: string,
-  ): Promise<"approved" | "rejected" | null> {
-    if (!client) return null;
+  async function readLastAssistantText(sessionID: string): Promise<string> {
+    if (!client) return "";
     try {
       const res = await client.session.messages({ path: { id: sessionID } });
       const msgs = (res.data ?? []) as Array<{
@@ -127,14 +126,20 @@ export function createBobCompletionHook(
       const lastAssistant = [...msgs]
         .reverse()
         .find((m) => m.info?.role === "assistant");
-      const text = (lastAssistant?.parts ?? [])
+      return (lastAssistant?.parts ?? [])
         .filter((p) => p.type === "text")
         .map((p) => p.text ?? "")
         .join("");
-      return parseCriticVerdict(text);
     } catch {
-      return null;
+      return "";
     }
+  }
+
+  async function readLastAssistantVerdict(
+    sessionID: string,
+  ): Promise<"approved" | "rejected" | null> {
+    const text = await readLastAssistantText(sessionID);
+    return parseCriticVerdict(text);
   }
 
   return {
@@ -245,6 +250,17 @@ export function createBobCompletionHook(
             return;
           }
 
+          // Plan-as-subagent finished: freeze is already recorded. Never
+          // continue the Plan child (it cannot dispatch waves). Never mark
+          // the parent complete — Bob/Manager own the next idle dispatch.
+          if (input.agentType === "plan" && input.parentSessionID) {
+            output.continue = false;
+            logger.log(
+              `[hiai-opencode] completion: plan child returned — parent ${input.parentSessionID.slice(0, 8)} owns wave dispatch`,
+            );
+            return;
+          }
+
           // Non-critic subagent completed: merge changed files from the
           // subagent's session into the parent's state, then decide whether
           // the parent should continue, review, or stop.
@@ -257,6 +273,20 @@ export function createBobCompletionHook(
           }
 
           const s = st.get(decideSessionID);
+          // Child Status: blocked must not poison the parent orchestrator.
+          if (!input.parentSessionID) {
+            const lastText = await readLastAssistantText(sid);
+            if (lastMessageIsTerminalBlock(lastText)) {
+              st.setBlockerFlagged(sid, true);
+            }
+          }
+          // Wave dispatch belongs to the session we decide for (parent when
+          // a child stopped). The child's agentType is irrelevant.
+          const waveExecutor = input.parentSessionID
+            ? true
+            : !input.agentType ||
+              input.agentType === "bob" ||
+              input.agentType === "manager";
           const action = decide({
             autoContinues: s.autoContinues,
             maxAutoContinues: cfg.max_auto_continues,
@@ -265,12 +295,13 @@ export function createBobCompletionHook(
             changeRevision: s.changeRevision,
             reviewedRevision: s.reviewedRevision,
             criticVerdict: s.criticVerdict,
-            blockerFlagged: s.blockerFlagged,
+            blockerFlagged: st.get(decideSessionID).blockerFlagged,
             uiChanged: s.uiChangedSinceReview,
             requireCritic: cfg.require_critic,
             qualityGateFailed: s.qualityGateFailed,
             lspPending: s.lspPending,
             planStatus: getPlanLifecycle(decideSessionID).status,
+            waveExecutor,
           });
 
           if (action.kind === "stop") {

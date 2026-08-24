@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.5] — 2026-08-24
+
+### Loop: Bob executes after Plan returns
+
+- `actor.postStop` no longer continues the **Plan child** after it returns `Status: done`. Wave dispatch belongs to Bob/Manager. A Plan subagent must not set `output.continue` or mark the parent complete.
+- `waveExecutor` is taken from the **parent** session being decided, not the child’s `agentType` (that wrongly stopped Bob when Plan finished).
+- Idle continue text tells Bob to `task()` the next wave now — not “continue the frozen plan”, which Bob treated as plan-mode and looped on `Status: blocked`.
+- Direct Plan (no parent) still does not receive dispatch continues. Bob still does, even if the last reply claimed “plan mode”.
+
+### Restriction walls on the acting agent
+
+- Browser-automation lexical deny in `legal-gate` applies only to execution tools (`bash`, `write`, `edit`, `apply_patch`, `multiedit`, `patch`). `task()` / `todowrite` may discuss the ban without being blocked. Ethical `HARD_DENY` still applies to every tool, including `task`.
+- Gate errors are branded `[hiai-opencode]` (not `[bob]`), so the acting agent is the one that hits the wall.
+- Split `BROWSER_VIA_VISION` into `BROWSER_ROUTE_TO_VISION` (orchestrators, no Playwright/Puppeteer tokens), `BROWSER_ROUTE_TO_VISION_LEAF` (Designer/Build cannot `task(vision)`), and `BROWSER_NO_ALTERNATE_STACK` (Vision/General/Build system prompt only).
+- Bob/Manager `task()` prompts are work packets: do not copy child restrictions or gate errors into args.
+- Plan file writes are path-scoped to `.bob/plans/*` and `.bob/drafts/*` (`planFileMutationPermission` + `plan-write-gate`).
+
+### CLI doctor
+
+- Shared `withTimeout` helper for MCP probes; CLI loads `bob.env` the same way as the plugin.
+- Doctor recognizes versioned plugin ids (`@hiai-gg/hiai-opencode@x.y.z`), prefers `c7` for Context7, reads `opencode providers list`, and treats the runtime skill registry as optional.
+
+### Dependencies
+
+- `@opencode-ai/plugin` ^1.18.21, `@modelcontextprotocol/sdk` 1.30.0, Biome 2.5, bun-types 1.4, TypeScript 5.9.
+
 ## [0.6.4] — 2026-08-23
 
 ### CI maintenance

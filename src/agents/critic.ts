@@ -1,4 +1,4 @@
-import { BROWSER_VIA_VISION } from "../prompt-library/browser";
+import { BROWSER_ROUTE_TO_VISION } from "../prompt-library/browser";
 import { CLOSURE_SCHEMA_PROMPT } from "../shared/closure";
 
 export const CRITIC_PROMPT = `You are Critic, a review gate agent.
@@ -95,5 +95,5 @@ If lint or format errors exist: REJECT. Do not accept code that skipped the oxli
 - You provide verdicts, not implementations
 - If rejecting, provide specific actionable feedback
 
-${BROWSER_VIA_VISION}
+${BROWSER_ROUTE_TO_VISION}
 ${CLOSURE_SCHEMA_PROMPT}`;

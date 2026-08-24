@@ -78,6 +78,12 @@ describe("PLAN_PROMPT", () => {
     expect(PLAN_PROMPT).toContain("plan file path");
   });
 
+  test("path-scopes plan writes to .bob/plans and .bob/drafts", () => {
+    expect(PLAN_PROMPT).toContain("path-scoped");
+    expect(PLAN_PROMPT).toContain(".bob/plans/");
+    expect(PLAN_PROMPT).toContain(".bob/drafts/");
+  });
+
   test("requires full plan text in deliverable body", () => {
     expect(PLAN_PROMPT).toContain(
       "ALWAYS include it here even if you also saved to .bob/plans/",

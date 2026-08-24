@@ -27,8 +27,32 @@ export function setLoopClient(c: PluginInput["client"] | null) {
   client = c;
 }
 
-const AUTONOMOUS_CONTINUE =
-  "Continue the frozen plan autonomously. Do not ask the user. Dispatch remaining waves or the delivery Critic. Update todowrite. Do not stop until the plan is done or you are blocked by an unexecutable plan.";
+export const AUTONOMOUS_CONTINUE =
+  "You are the orchestrator (Bob/Manager), not Plan. The plan is FROZEN — do NOT call Plan again, do NOT stay in planning, do NOT wait for the user. Dispatch the next wave NOW: concurrent task() to each step's annotated owner (build/general/designer/writer/vision/explore). Update todowrite. Call delivery Critic only after every implementation wave is done.";
+
+/** Only Bob/Manager execute a frozen plan. Direct Plan cannot dispatch waves. */
+export function isWaveExecutorAgent(
+  agent?: string | null,
+  _mode?: string | null,
+): boolean {
+  const a = (agent ?? "").toLowerCase();
+  if (!a) return true;
+  return a === "bob" || a === "manager";
+}
+
+export function lastMessageIsTerminalBlock(text: string): boolean {
+  if (!text) return false;
+  if (/\*\*Status:\*\*\s*blocked\b/i.test(text)) return true;
+  if (/\bStatus:\s*blocked\b/i.test(text)) return true;
+  if (/^Статус:\s*blocked\b/im.test(text)) return true;
+  if (
+    /["']readiness["']\s*:\s*["']reject["']/i.test(text) &&
+    /\bblocked\b/i.test(text)
+  ) {
+    return true;
+  }
+  return false;
+}
 
 export function workRemaining(sessionID: string): boolean {
   const plan = getPlanLifecycle(sessionID);
@@ -97,9 +121,20 @@ export function createLoopHook(config: BobConfig): HookSet {
                 const ses = await client.session.get({
                   path: { id: sessionID },
                 });
-                const parentID = (ses.data as { parentID?: string } | undefined)
-                  ?.parentID;
-                if (parentID) break;
+                const session = ses.data as
+                  | {
+                      parentID?: string;
+                      agent?: string;
+                      mode?: string;
+                    }
+                  | undefined;
+                if (session?.parentID) break;
+                if (!isWaveExecutorAgent(session?.agent, session?.mode)) {
+                  logger.log(
+                    `[hiai-opencode] loop: skip_prompt not_executor ${shortId(sessionID)} agent=${session?.agent ?? "unknown"}`,
+                  );
+                  break;
+                }
                 await client.session.prompt({
                   path: { id: sessionID },
                   body: {

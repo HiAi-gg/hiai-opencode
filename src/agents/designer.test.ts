@@ -37,9 +37,12 @@ describe("DESIGNER_PROMPT", () => {
     expect(DESIGNER_PROMPT).toContain("5. **Review**");
   });
 
-  test("references browser-via-vision pattern", () => {
+  test("references browser-via-vision pattern as a leaf", () => {
     expect(DESIGNER_PROMPT).toContain("Vision");
     expect(DESIGNER_PROMPT).toContain("browser");
+    expect(DESIGNER_PROMPT).toContain("cannot spawn Vision");
+    expect(DESIGNER_PROMPT).not.toContain('task({subagent_type: "vision"');
+    expect(DESIGNER_PROMPT).not.toMatch(/playwright/i);
   });
 
   test("contains CLOSURE schema", () => {

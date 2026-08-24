@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url"
 import { homedir } from "node:os"
 import { createHash } from "node:crypto"
 import { up as cmdUp, down as cmdDown, status as cmdStatus } from "./up.mjs"
+import { withTimeout } from "./timeout.mjs"
 
 const PACKAGE_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..")
 const MCP_EXPORT_MARKER = "hiai-opencode"
@@ -118,6 +119,44 @@ function globalConfigDir() {
   return join(base, "hiai-opencode")
 }
 
+const MANAGED_ENV_KEYS = new Set([
+  "FIRECRAWL_API_KEY",
+  "CONTEXT7_API_KEY",
+  "AGENT_BROWSER_SESSION",
+  "GREP_APP_API_KEY",
+])
+
+function parseEnvFile(text) {
+  const entries = []
+  for (const line of text.split("\n")) {
+    const match = line.trim().match(/^(?:export\s+)?(\w+)=(.*)$/)
+    if (!match) continue
+    const key = match[1]
+    const value = match[2].replace(/^['"]|['"]$/g, "")
+    entries.push({ key, value })
+  }
+  return entries
+}
+
+function loadEnvFiles() {
+  const candidates = [
+    ...ancestorDirs(process.cwd()).map((dir) => join(dir, "bob.env")),
+    join(process.cwd(), ".opencode", "bob.env"),
+    join(globalConfigDir(), "bob.env"),
+    join(PACKAGE_ROOT, "bob.env"),
+  ]
+  const values = new Map()
+  for (const path of candidates) {
+    if (!existsSync(path)) continue
+    for (const entry of parseEnvFile(readFileSync(path, "utf-8"))) {
+      if (!values.has(entry.key)) values.set(entry.key, entry.value)
+    }
+  }
+  for (const [key, value] of values) {
+    if (MANAGED_ENV_KEYS.has(key) || !process.env[key]) process.env[key] = value
+  }
+}
+
 function candidateConfigPaths() {
   // Same order as src/config.ts loadConfig: nearest ancestor bob.json wins,
   // then .opencode/bob.json, jsonc variants, then the plugin global dir.
@@ -197,14 +236,14 @@ function checkFirecrawlAuth() {
 }
 
 function checkContext7() {
-  // context7 ships without a bin entry; resolve via npx -y.
-  const result = spawnSync("npx", ["-y", "context7", "--help"], {
+  const binary = process.platform === "win32" ? "c7.cmd" : "c7"
+  const result = spawnSync(binary, ["--help"], {
     encoding: "utf-8",
     timeout: 15000,
     shell: process.platform === "win32",
   })
   if (result.status === 0) {
-    return { level: "ok", detail: "context7 CLI available (npx -y context7)" }
+    return { level: "ok", detail: "c7 available" }
   }
   return {
     level: "warn",
@@ -279,12 +318,13 @@ function checkOpenCodePluginRegistration() {
         }
       }
 
-      const dcpRegistered = plugins.includes("@tarquinen/opencode-dcp@latest") || plugins.includes("@tarquinen/opencode-dcp")
-      const hiaiRegistered = plugins.includes("@hiai-gg/hiai-opencode")
+      const hasPackage = (name) => plugins.some((plugin) => plugin === name || plugin.startsWith(`${name}@`))
+      const dcpRegistered = hasPackage("@tarquinen/opencode-dcp")
+      const hiaiRegistered = hasPackage("@hiai-gg/hiai-opencode")
 
       if (hiaiRegistered) {
         return {
-          level: dcpRegistered ? "ok" : "warn",
+          level: "ok",
           detail: `plugin registered in ${path}${dcpRegistered ? "; DCP (opencode-dcp) also registered" : "; DCP (opencode-dcp) not found — optional for Dynamic Context Pruning"}`,
         }
       }
@@ -528,6 +568,7 @@ function checkOpenCodeConnectVisibility(config) {
   }
 
   const commands = [
+    [opencodeBinary, ["providers", "list"]],
     [opencodeBinary, ["connect", "list", "--json"]],
     [opencodeBinary, ["connect", "list"]],
   ]
@@ -539,14 +580,14 @@ function checkOpenCodeConnectVisibility(config) {
       const summary = out ? out.split("\n").slice(0, 3).join(" | ") : "connect list ok"
       return {
         level: "ok",
-        detail: `OpenCode Connect visible. Configured model providers: ${providers.join(", ") || "(none)"}; connect summary: ${summary}`,
+        detail: `OpenCode Providers visible. Configured model providers: ${providers.join(", ") || "(none)"}; summary: ${summary}`,
       }
     }
   }
 
   return {
     level: "warn",
-    detail: `Could not read OpenCode Connect state. Configured model providers: ${providers.join(", ") || "(none)"}`,
+    detail: `Could not read OpenCode provider state. Configured model providers: ${providers.join(", ") || "(none)"}`,
   }
 }
 
@@ -560,7 +601,7 @@ function getSkillRegistryPath() {
 function checkSkillMaterialization() {
   const registryPath = getSkillRegistryPath()
   if (!existsSync(registryPath)) {
-    return { level: "warn", detail: `skill registry missing: ${registryPath}` }
+    return { level: "info", detail: "runtime skill registry is optional; skills load from the plugin bundle" }
   }
 
   try {
@@ -775,12 +816,9 @@ async function probeStdioMcp(serverName, serverConfig) {
     stderr: "pipe",
   })
 
-  const timeoutMs = 60000
-  const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeoutMs))
-
   try {
-    await Promise.race([client.connect(transport), timeout])
-    const toolsResponse = await Promise.race([client.listTools(), timeout])
+    await withTimeout(client.connect(transport), 60000)
+    const toolsResponse = await withTimeout(client.listTools(), 60000)
     const count = toolsResponse?.tools?.length ?? 0
     await client.close()
     return { level: "ok", detail: `${serverName}: reachable, tools=${count}` }
@@ -1070,6 +1108,7 @@ async function runDiagnose(outputPath) {
 }
 
 async function main() {
+  loadEnvFiles()
   const command = process.argv[2]
   if (!command || command === "-h" || command === "--help") {
     // Bare `hiai-opencode` (or --help) launches the stack by default.
