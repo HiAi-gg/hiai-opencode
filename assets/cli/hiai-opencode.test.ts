@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { chmodSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { tmpdir } from "node:os";
 
 const tempRoots: string[] = [];
+const isWindows = process.platform === "win32";
 
 afterEach((): void => {
   for (const root of tempRoots.splice(0)) {
@@ -11,31 +12,48 @@ afterEach((): void => {
   }
 });
 
+function writeStub(bin: string, name: string, unixBody: string, cmdBody: string): void {
+  if (isWindows) {
+    writeFileSync(join(bin, `${name}.cmd`), cmdBody);
+    return;
+  }
+  const path = join(bin, name);
+  writeFileSync(path, unixBody);
+  chmodSync(path, 0o755);
+}
+
 describe("hiai-opencode doctor", (): void => {
   test.each([
     "@hiai-gg/hiai-opencode@latest",
     "@hiai-gg/hiai-opencode@0.6.4",
     "@hiai-gg/hiai-opencode@0.6.5",
+    "@hiai-gg/hiai-opencode@0.6.6",
   ])("recognizes versioned plugin registration: %s", (plugin): void => {
     const root = join(tmpdir(), `hiai-opencode-doctor-${crypto.randomUUID()}`);
     const xdg = join(root, "xdg");
-    const opencodeConfig = join(root, ".config", "opencode");
     const project = join(root, "project");
     const bin = join(root, "bin");
+    const appData = join(root, "AppData", "Roaming");
     tempRoots.push(root);
-    mkdirSync(opencodeConfig, { recursive: true });
     mkdirSync(join(xdg, "hiai-opencode"), { recursive: true });
-    mkdirSync(project, { recursive: true });
+    mkdirSync(join(project, ".opencode"), { recursive: true });
     mkdirSync(bin, { recursive: true });
-    writeFileSync(join(bin, "c7"), "#!/bin/sh\nexit 0\n");
-    chmodSync(join(bin, "c7"), 0o755);
-    writeFileSync(
-      join(bin, "opencode"),
-      "#!/bin/sh\n[ \"$1\" = \"--version\" ] && exit 0\n[ \"$1 $2\" = \"providers list\" ] || exit 1\nprintf 'Credentials: test-provider\\n'\n",
+    mkdirSync(appData, { recursive: true });
+
+    writeStub(
+      bin,
+      "c7",
+      "#!/bin/sh\nexit 0\n",
+      "@echo off\r\nexit /b 0\r\n",
     );
-    chmodSync(join(bin, "opencode"), 0o755);
+    writeStub(
+      bin,
+      "opencode",
+      "#!/bin/sh\n[ \"$1\" = \"--version\" ] && exit 0\n[ \"$1 $2\" = \"providers list\" ] || exit 1\nprintf 'Credentials: test-provider\\n'\n",
+      "@echo off\r\nif \"%~1\"==\"--version\" exit /b 0\r\nif \"%~1\"==\"providers\" if \"%~2\"==\"list\" (\r\n  echo Credentials: test-provider\r\n  exit /b 0\r\n)\r\nexit /b 1\r\n",
+    );
     writeFileSync(
-      join(opencodeConfig, "opencode.json"),
+      join(project, ".opencode", "opencode.json"),
       JSON.stringify({ plugin: [plugin] }),
     );
     writeFileSync(
@@ -53,8 +71,10 @@ describe("hiai-opencode doctor", (): void => {
       env: {
         ...process.env,
         HOME: root,
+        USERPROFILE: root,
+        APPDATA: appData,
         XDG_CONFIG_HOME: xdg,
-        PATH: `${bin}:/usr/bin:/bin`,
+        PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
       },
       stdout: "pipe",
       stderr: "pipe",
