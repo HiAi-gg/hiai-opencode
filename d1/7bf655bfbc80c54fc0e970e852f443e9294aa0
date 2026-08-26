@@ -1,0 +1,18 @@
+CHANGELOG.md
+  h_c4ebb69e7d3702 8-13
+assets/cli/hiai-opencode.test.ts
+  h_c4ebb69e7d3702 3,7,15-24,30,36,39,41-51,53,56,74-75,77
+package.json
+  h_c4ebb69e7d3702 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "d17bf655bfbc80c54fc0e970e852f443e9294aa0",
+  "prompts": {},
+  "humans": {
+    "h_c4ebb69e7d3702": {
+      "author": "vlgalib <vlgalib@users.noreply.github.com>"
+    }
+  }
+}
