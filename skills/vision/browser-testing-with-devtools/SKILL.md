@@ -28,12 +28,18 @@ Use the `agent-browser` CLI skill instead of installing `chrome-devtools-mcp`. T
 ### Installation
 
 ```bash
-bun add -g agent-browser && agent-browser install
+bun add -g agent-browser
+curl -fsSL https://pkg.lightpanda.io/install.sh | bash
 ```
 
-Key env vars: `AGENT_BROWSER_HEADED=1`, `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_PROFILE`, `AGENT_BROWSER_ENGINE`.
+Do **not** run `agent-browser install` on this workstation (that provisions Chrome).
+Upstream/public hosts may run it as an optional Chrome fallback.
 
-**Engine selection:** the runtime prefers **Lightpanda** (headless-only) when its binary is installed and `AGENT_BROWSER_ENGINE` is unset; **Chrome** is the fallback. Override with `AGENT_BROWSER_ENGINE=chrome|lightpanda` or `agent-browser --engine <name> open <url>`. Lightpanda is a separate user-level install (official installer only — not `cargo`, not auto-downloaded by the npm plugin or `agent-browser install`).
+Key env vars: `AGENT_BROWSER_SESSION`, `AGENT_BROWSER_ENGINE`. `AGENT_BROWSER_HEADED=1` is Chrome-only and unsupported on Lightpanda.
+
+**Engine selection:** this workstation uses **Lightpanda** (headless-only). The runtime prefers it when the binary is installed and `AGENT_BROWSER_ENGINE` is unset. **Chrome** remains an upstream-host option via `agent-browser install`. Lightpanda is a separate user-level install (official installer only — not `cargo`, not auto-downloaded by the npm plugin).
+
+**Unsupported on Lightpanda:** headed windows, extensions, profiles, persistent auth, local `file://`, Chrome DevTools MCP / Performance traces, GPU flags. Screenshot fidelity is engine-dependent. A `test:e2e` placeholder is not browser coverage.
 
 ### Available Capabilities
 

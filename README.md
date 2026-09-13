@@ -56,21 +56,23 @@ cp bob.env.example bob.env
 
 ### 4. (Optional) Install browser automation
 
-Vision's browser tools talk to a local engine over CDP. Engine selection is automatic: **Lightpanda** when its binary is on your PATH, **Chrome** otherwise.
+Vision's browser tools talk to a local engine over CDP. Engine selection is automatic: **Lightpanda** when its binary is on your PATH; otherwise upstream `agent-browser` uses its own default engine (**Chrome**).
 
-Install the CLI and provision the Chrome fallback:
+Install the CLI:
 
 ```bash
-bun add -g agent-browser && agent-browser install
+bun add -g agent-browser
 ```
 
-**Lightpanda** ([lightpanda.io](https://lightpanda.io)) — optional, preferred when installed, headless-only. Separate user-level install via the official installer, not `cargo`:
+**Lightpanda** ([lightpanda.io](https://lightpanda.io)) — preferred when installed, headless-only. Separate user-level install via the official installer, not `cargo`:
 
 ```bash
 curl -fsSL https://pkg.lightpanda.io/install.sh | bash
 ```
 
-Force an engine per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome.
+**Upstream-host option:** on machines that use Chrome, `agent-browser install` provisions that fallback engine. It does **not** install Lightpanda. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome. Lightpanda does not support headed windows, extensions, profiles, persistent auth state, or local `file://` access.
+
+Force an engine per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`.
 
 ### 5. Verify
 
@@ -91,10 +93,10 @@ Read AGENTS.md and finish hiai-opencode setup for this workspace.
 Check that @hiai-gg/hiai-opencode is registered, enable MCP services that can run here
 (sequential-thinking: node/npx; grep_app: no key), verify with opencode debug config
 and hiai-opencode doctor.
-Install and configure browser automation for Vision as documented in AGENTS.md:
-bun add -g agent-browser && agent-browser install, plus Lightpanda via its official
-installer when possible. Verify with agent-browser --version and lightpanda version
-(if installed), then run hiai-opencode doctor again.
+Install and configure browser automation for Vision as documented in AGENTS.md
+(this workstation: Lightpanda only; do not run agent-browser install).
+Verify with agent-browser --version and lightpanda version, then run
+hiai-opencode doctor again.
 Report missing keys without printing secret values.
 ```
 
@@ -139,7 +141,7 @@ Bob routes work; the rest execute. Three are visible in the picker (you can invo
 - **Skills (1)** — `skill("build/shadcn-ui")`, `skill("explore/context7")`, etc.
 - **Firecrawl (3)** — Web scrape, search, sitemap (CLI skill, requires `FIRECRAWL_API_KEY`).
 
-**Browser engines (auto-selected):** the runtime prefers **Lightpanda** ([lightpanda.io](https://lightpanda.io); headless-only) when its binary is on your PATH and `AGENT_BROWSER_ENGINE` is unset; **Chrome** is the fallback. Override per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`. Headed mode (`AGENT_BROWSER_HEADED=1`) works only with Chrome. Lightpanda installs separately via its official installer (not `cargo`) — neither the npm plugin nor `agent-browser install` downloads it. See [Install](#install).
+**Browser engines (auto-selected):** the runtime prefers **Lightpanda** ([lightpanda.io](https://lightpanda.io); headless-only) when its binary is on your PATH and `AGENT_BROWSER_ENGINE` is unset. **Chrome** is upstream `agent-browser`'s own fallback, provisioned only if you run `agent-browser install` on that host — not a HiAi workstation requirement. Override per session with `AGENT_BROWSER_ENGINE=chrome|lightpanda`, or per run with `agent-browser --engine chrome|lightpanda open <url>`. Headed mode (`AGENT_BROWSER_HEADED=1`) is Chrome-only. Lightpanda installs separately via its official installer (not `cargo`) — neither the npm plugin nor `agent-browser install` downloads it. See [Install](#install).
 
 ### MCP servers — 2, zero-config
 
@@ -268,7 +270,7 @@ git clone https://github.com/HiAi-gg/hiai-opencode.git
 cd hiai-opencode
 bun install
 bun run build          # typecheck + tests run in prepublishOnly
-bun test               # 986 tests
+bun test               # current suite; do not hard-code a count here
 ```
 
 ---
@@ -284,10 +286,7 @@ bun test               # 986 tests
 
 ## Roadmap
 
-- Configurable agent roster from `bob.json`
-- Native Task lifecycle visibility (provided by OpenCode)
-- Optional telemetry export to [HiAi Observe](https://github.com/HiAi-gg/hiai-observe)
-- Skill marketplace + agent analytics
+Product direction, open work, and version notes live in [ROADMAP.md](ROADMAP.md). This README does not keep a second backlog.
 
 ---
 

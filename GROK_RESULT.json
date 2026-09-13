@@ -1,0 +1,110 @@
+{
+  "status": "review",
+  "tasks": [
+    {
+      "id": "HIAI-OPENCODE-T01",
+      "status": "review",
+      "summary": "Doctor hard failures exit 1 (missing core models, unparseable bob.json, invalid subagent_depth, stale managed .mcp.json). Complete models exit 0; missing Lightpanda is info. Plan/worker/review spawn matrix and plan-write path scope preserved by existing tests."
+    },
+    {
+      "id": "HIAI-OPENCODE-T02",
+      "status": "review",
+      "summary": "Workstation AGENTS.md does not run agent-browser install (Chrome). Lightpanda unsupported visual APIs recorded. README still documents agent-browser install as an upstream-host option. check-docs enforces the split. No Chrome installed; no visual verification claimed."
+    },
+    {
+      "id": "HIAI-OPENCODE-T03",
+      "status": "review",
+      "summary": "check:docs, typecheck, test (1102/0), biome ci, build, and bundle-size (897.3 KB) recorded exit 0. CI/release Bun 1.4.x matches DEV-01 Bun 1.4.0. Version stays 0.6.6; no publish. npm pack dry-run not repeated after permission denial. run-check.py blocked on check-slots EACCES."
+    }
+  ],
+  "changed_files": [
+    "assets/cli/hiai-opencode.mjs",
+    "assets/cli/hiai-opencode.test.ts",
+    "scripts/check-docs.ts",
+    "AGENTS.md",
+    "README.md",
+    "ARCHITECTURE.md",
+    "bob.env.example",
+    "src/agents/vision.ts",
+    "src/tools/agent-browser/index.ts",
+    "skills/vision/SKILL.md",
+    "skills/vision/browser-testing-with-devtools/SKILL.md",
+    ".github/workflows/ci.yml",
+    ".github/workflows/release.yml",
+    "CHANGELOG.md",
+    "ROADMAP.md",
+    "TEAM_BACKLOG.md",
+    "docs/acceptance/GROK-20260913.md",
+    "GROK_RESULT.json"
+  ],
+  "checks": [
+    {
+      "command": "python3 /mnt/data/work/grok-portfolio-20260913/inplace/run-check.py bun run check:docs",
+      "exit_code": 1,
+      "summary": "Helper PermissionError EACCES creating inplace/check-slots"
+    },
+    {
+      "command": "python3 /mnt/data/work/grok-portfolio-20260913/inplace/run-check.py bun run typecheck",
+      "exit_code": 1,
+      "summary": "Helper PermissionError EACCES creating inplace/check-slots"
+    },
+    {
+      "command": "python3 /mnt/data/work/grok-portfolio-20260913/inplace/run-check.py bun test",
+      "exit_code": 1,
+      "summary": "Helper PermissionError EACCES creating inplace/check-slots"
+    },
+    {
+      "command": "python3 /mnt/data/work/grok-portfolio-20260913/inplace/run-check.py bun run ci",
+      "exit_code": 1,
+      "summary": "Helper PermissionError EACCES creating inplace/check-slots"
+    },
+    {
+      "command": "python3 /mnt/data/work/grok-portfolio-20260913/inplace/run-check.py bun run check:bundle-size",
+      "exit_code": 1,
+      "summary": "Helper PermissionError EACCES creating inplace/check-slots"
+    },
+    {
+      "command": "bun run check:docs",
+      "exit_code": 0,
+      "summary": "check:docs PASSED"
+    },
+    {
+      "command": "bun run typecheck",
+      "exit_code": 0,
+      "summary": "tsc --noEmit clean"
+    },
+    {
+      "command": "bun test",
+      "exit_code": 0,
+      "summary": "1102 pass, 0 fail, 2110 expects, 81 files"
+    },
+    {
+      "command": "bun run ci",
+      "exit_code": 0,
+      "summary": "biome ci src/ scripts/; 183 files; no fixes applied"
+    },
+    {
+      "command": "bun run build",
+      "exit_code": 0,
+      "summary": "276 modules bundled; dist/index.js 918879 bytes; Dream/Distill prompts present"
+    },
+    {
+      "command": "bun run check:bundle-size",
+      "exit_code": 0,
+      "summary": "Bundle size OK: 897.3 KB (limit 1 MB)"
+    },
+    {
+      "command": "bun --version",
+      "exit_code": 0,
+      "summary": "1.4.0 (matches approved DEV-01; CI now 1.4.x)"
+    }
+  ],
+  "remaining": [
+    "Coordinator acceptance and GitHub update; no publish of 0.6.6 without a user-facing release",
+    "npm pack --dry-run not run (permission request not repeated)",
+    "run-check.py unusable until check-slots is writable",
+    "Live GitHub Actions on Bun 1.4.x not revalidated",
+    "No runtime OpenCode doctor or visual/browser verification; Lightpanda headed/extension/file:// APIs unsupported",
+    "ROADMAP item: track OpenCode host API drift"
+  ]
+}

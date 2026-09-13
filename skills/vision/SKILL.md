@@ -47,16 +47,18 @@ Verify the CLI before doing any browser work:
 command -v agent-browser
 ```
 
-If missing, stop and tell the user to install it:
+If missing, stop and tell the user to install the CLI **without** provisioning Chrome:
 
 ```bash
-npm i -g agent-browser
-agent-browser install
+bun add -g agent-browser
 ```
 
-Lightpanda is an optional, headless-only CDP-compatible browser engine. The runtime
-auto-prefers it whenever the binary is installed and `AGENT_BROWSER_ENGINE` is not set
-(Chrome is the fallback). Verify the binary:
+Do **not** run `agent-browser install` on this workstation — that command provisions
+Chrome. Upstream/public hosts may run it as an optional Chrome fallback.
+
+Lightpanda is the workstation engine (headless-only, CDP-compatible). The runtime
+auto-prefers it whenever the binary is installed and `AGENT_BROWSER_ENGINE` is not set.
+Verify the binary:
 
 ```bash
 command -v lightpanda
@@ -89,56 +91,48 @@ a temp file the same way.
 
 ## CDP Startup Contract
 
-`agent-browser` must attach to an existing CDP endpoint. Never run
-`agent-browser open` before `agent-browser connect`; doing so can make the CLI
-auto-launch Chrome and re-enter the crash path.
+Prefer the auto-managed Lightpanda flow on this workstation. Do not launch
+Google Chrome here.
 
-Use this sequence:
+If `lightpanda` is on PATH and `AGENT_BROWSER_ENGINE` is unset, `agent-browser`
+already prefers Lightpanda:
 
 ```bash
-if ! curl -fsS http://127.0.0.1:9223/json/version | rg -q webSocketDebuggerUrl; then
-  open -na "Google Chrome" --args \
-    --remote-debugging-port=9223 \
-    --user-data-dir=/tmp/od-agent-browser-chrome \
-    --no-first-run \
-    --no-default-browser-check
+command -v lightpanda
+export AGENT_BROWSER_ENGINE=lightpanda
+agent-browser --engine lightpanda open <url>
+```
 
-  for i in {1..20}; do
-    if curl -fsS http://127.0.0.1:9223/json/version | rg -q webSocketDebuggerUrl; then
-      break
-    fi
-    sleep 0.5
-  done
-fi
+Manual CDP (still Lightpanda):
 
-curl -fsS http://127.0.0.1:9223/json/version | rg webSocketDebuggerUrl
+```bash
+lightpanda serve --port 9222
+agent-browser connect http://127.0.0.1:9222
+```
+
+If Lightpanda is missing, stop and tell the user to install it via the official
+installer. Do not install Chrome to recover.
+
+### Upstream host option: Chrome CDP
+
+Public/upstream hosts that already use Chrome (not DEV-01) may attach to a Chrome
+CDP port. `agent-browser install` provisions that engine on those hosts only.
+Never run `agent-browser open` before `agent-browser connect` on a Chrome host;
+doing so can auto-launch Chrome.
+
+```bash
+# upstream Chrome hosts only — not this workstation
 agent-browser connect http://127.0.0.1:9223
 ```
 
-If CDP is still unavailable after polling, stop and ask the user to launch
-Chrome manually from Terminal:
-
-```bash
-/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
-  --remote-debugging-port=9223 \
-  --user-data-dir=/tmp/od-agent-browser-chrome \
-  --no-first-run \
-  --no-default-browser-check
-```
-
-If Chrome exits before CDP is ready or reports `DevToolsActivePort`, report:
-"Chrome crashed before CDP became available; start Chrome manually with
-`--remote-debugging-port` and retry attach."
-
-The runtime prefers Lightpanda when its binary is installed and
-`AGENT_BROWSER_ENGINE` is unset; Chrome is the fallback. For the headless-only
-alternative, see the [Lightpanda Engine](#lightpanda-engine) section below.
+If that host reports `DevToolsActivePort` or Chrome crash, report the error and
+stay blocked. Do not install Chrome on DEV-01 as a workaround.
 
 ## Lightpanda Engine
 
-Lightpanda is a headless-only, CDP-compatible browser engine. Use it as a
-lightweight alternative to Chrome when extensions, profiles, persistent state,
-file access, and headed mode are not required.
+Lightpanda is the workstation engine: headless-only, CDP-compatible. It does
+not replace Chrome for headed windows, extensions, profiles, persistent state,
+or local file access — those APIs are unsupported here.
 
 ### Installation
 
@@ -166,7 +160,7 @@ export AGENT_BROWSER_ENGINE=lightpanda
 agent-browser --engine lightpanda open <url>
 ```
 
-To force Chrome (the fallback) even when Lightpanda is installed:
+To force Chrome on an **upstream host** that already has it (not this workstation):
 
 ```bash
 export AGENT_BROWSER_ENGINE=chrome
@@ -200,8 +194,10 @@ agent-browser open <url>
 - Headless-only — `AGENT_BROWSER_HEADED` has no effect and is not needed.
 - Extensions, profiles, persistent browser state, and local file access are
   not supported.
-- Screenshots are supported via CDP but fidelity depends on engine rendering.
-- Engine auto-selection: Lightpanda is preferred when installed and `AGENT_BROWSER_ENGINE` is unset; Chrome is the fallback. Force either engine with `AGENT_BROWSER_ENGINE=chrome|lightpanda` or `--engine <name>`.
+- Screenshots are supported via CDP but fidelity depends on engine rendering —
+  not visual proof of Chrome.
+- Chrome DevTools MCP, Performance panel, and GPU flags are unsupported here.
+- Engine auto-selection: Lightpanda is preferred when installed and `AGENT_BROWSER_ENGINE` is unset. Chrome is an upstream-host fallback only.
 
 ## Open Design Smoke Path
 
@@ -215,24 +211,9 @@ export AGENT_BROWSER_SESSION=od-local-preview
 With the Open Design preview at `http://127.0.0.1:17573/`, run:
 
 ```bash
-if ! curl -fsS http://127.0.0.1:9223/json/version | rg -q webSocketDebuggerUrl; then
-  open -na "Google Chrome" --args \
-    --remote-debugging-port=9223 \
-    --user-data-dir=/tmp/od-agent-browser-chrome \
-    --no-first-run \
-    --no-default-browser-check
-
-  for i in {1..20}; do
-    if curl -fsS http://127.0.0.1:9223/json/version | rg -q webSocketDebuggerUrl; then
-      break
-    fi
-    sleep 0.5
-  done
-fi
-
-curl -fsS http://127.0.0.1:9223/json/version | rg webSocketDebuggerUrl
-agent-browser connect http://127.0.0.1:9223
-agent-browser open http://127.0.0.1:17573/
+command -v lightpanda
+export AGENT_BROWSER_ENGINE=lightpanda
+agent-browser --engine lightpanda open http://127.0.0.1:17573/
 agent-browser get title
 agent-browser get url
 agent-browser snapshot
@@ -247,8 +228,8 @@ visible Open Design UI text in the snapshot, and a screenshot at
 
 1. Verify `agent-browser` is installed.
 2. Redirect upstream docs to temp files; quote only relevant lines.
-3. Ensure CDP is reachable, starting Chrome with `open -na` if needed.
-4. Connect with `agent-browser connect http://127.0.0.1:9223`.
+3. Ensure Lightpanda is on PATH; do not start Chrome.
+4. Open with `agent-browser --engine lightpanda open <url>` (or connect to `lightpanda serve --port 9222`).
 5. Open the local preview URL.
 6. Snapshot before selecting elements.
 7. Use selectors/refs from the latest snapshot; do not guess.

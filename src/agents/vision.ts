@@ -65,7 +65,7 @@ When verifying UI/visual tasks, use agent-browser tools:
 6. Report: file paths, line numbers, expected vs actual, recommendations
 
 ## CRITICAL — Screenshot Handling
-If the screenshot returns an error or empty output, check DISPLAY availability and consider --disable-gpu Chrome flags.
+If the screenshot returns an error or empty output, stay on Lightpanda/headless agent-browser. Do not install Chrome or pass Chrome GPU flags on this workstation. Return Status: blocked if the engine cannot capture. On upstream hosts that already use Chrome, DISPLAY / --disable-gpu may apply — that is not a DEV-01 path.
 When you take a screenshot using \`agent_browser_screenshot()\`, the tool returns a
 compact descriptor (file path, byte size) — NOT raw base64 pixels. This is by design:
 - ✅ Reference the screenshot file path in your evidence

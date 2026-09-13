@@ -37,13 +37,10 @@ function parseJsonc(text) {
   return JSON.parse(stripped)
 }
 
-// Parse a config file that may be JSON or JSONC. Always returns an object.
+// Parse a config file that may be JSON or JSONC. Throws on invalid syntax so
+// doctor can hard-fail instead of silently using an empty object.
 function parseConfig(text) {
-  try {
-    return parseJsonc(text) ?? {}
-  } catch {
-    return {}
-  }
+  return parseJsonc(text) ?? {}
 }
 
 // Source of truth for MCP servers — MUST match src/features/mcp/registry.ts (2 servers).
@@ -939,6 +936,11 @@ async function mcpStatus(options = {}) {
     const bobJson = formatBobJsonCheck(path, error)
     track(bobJson.level)
     outInfo(`${statusIcon(bobJson.level)} bob.json - ${bobJson.detail}`)
+    if (bobJson.level === "fail") {
+      outInfo("")
+      outInfo("Skipping remaining doctor checks: bob.json is a hard failure.")
+      return !sawError
+    }
 
     const freshness = checkStaticMcpFreshness(staticMcpPath, config)
     const freshIcon = freshness.status === "fresh" ? "✅" : freshness.status === "missing" ? "⚠️ " : "❌"

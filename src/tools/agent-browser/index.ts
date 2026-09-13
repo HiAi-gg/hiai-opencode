@@ -166,7 +166,7 @@ export async function runCommand(
 async function runAgentBrowser(args: string, cwd: string): Promise<string> {
   const raw = await runCommand(["agent-browser", ...splitShellArgs(args)], cwd);
   if (isHeadlessError(raw)) {
-    return `${raw}\n${LOG_PREFIX} [Headless/display warning: ensure DISPLAY is set or Chrome is running with --disable-gpu in headless mode]`;
+    return `${raw}\n${LOG_PREFIX} [Headless/display warning: Lightpanda is headless-only and does not use DISPLAY. Do not install Chrome on this workstation. Upstream Chrome hosts may need DISPLAY or --disable-gpu.]`;
   }
   return raw;
 }
@@ -340,7 +340,7 @@ export function createAgentBrowserTools() {
           },
         });
         if (!stdout.trim() || isScreenshotError(stdout)) {
-          return `Screenshot: (empty or error output)\n${stdout}\nHint: check DISPLAY availability. In headless environments try --disable-gpu Chrome flag.`;
+          return `Screenshot: (empty or error output)\n${stdout}\nHint: Lightpanda is headless-only; screenshot fidelity is engine-dependent. Do not install Chrome on this workstation. Upstream Chrome hosts may try DISPLAY / --disable-gpu.`;
         }
         return formatScreenshotOutput(stdout, cwd);
       },

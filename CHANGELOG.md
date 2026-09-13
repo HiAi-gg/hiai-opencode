@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Docs and CI (no version bump)
+
+- Doctor tests now assert hard failures (`fail`/`error`) exit 1, and a complete model set exits 0 even when Lightpanda is absent (info, not a hard fail).
+- Workstation operator docs (`AGENTS.md`) install Lightpanda only and do not run `agent-browser install` (Chrome). README still documents Chrome as an upstream-host option.
+- Lightpanda unsupported surfaces (headed mode, extensions, profiles, persistent auth, `file://`, Chrome DevTools MCP) are recorded in operator docs.
+- README drops the stale `986 tests` claim and points Roadmap at `ROADMAP.md`.
+- CI and release workflows use Bun `1.4.x` to match the approved DEV-01 environment. Version stays 0.6.6; no publish without a user-facing release.
+
 ## [0.6.6] — 2026-08-24
 
 ### Tests

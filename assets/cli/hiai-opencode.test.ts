@@ -22,6 +22,100 @@ function writeStub(bin: string, name: string, unixBody: string, cmdBody: string)
   chmodSync(path, 0o755);
 }
 
+const REQUIRED_MODELS = {
+  bob: { model: "test/bob" },
+  build: { model: "test/build" },
+  plan: { model: "test/plan" },
+  manager: { model: "test/manager" },
+  critic: { model: "test/critic" },
+  designer: { model: "test/designer" },
+  explore: { model: "test/explore" },
+  writer: { model: "test/writer" },
+  vision: { model: "test/vision" },
+  general: { model: "test/general" },
+};
+
+const DISABLED_MCP = {
+  "sequential-thinking": { enabled: false },
+  grep_app: { enabled: false },
+};
+
+function setupDoctorWorkspace(plugin = "@hiai-gg/hiai-opencode@0.6.6"): {
+  root: string;
+  xdg: string;
+  project: string;
+  bin: string;
+  appData: string;
+} {
+  const root = join(tmpdir(), `hiai-opencode-doctor-${crypto.randomUUID()}`);
+  const xdg = join(root, "xdg");
+  const project = join(root, "project");
+  const bin = join(root, "bin");
+  const appData = join(root, "AppData", "Roaming");
+  tempRoots.push(root);
+  mkdirSync(join(xdg, "hiai-opencode"), { recursive: true });
+  mkdirSync(join(project, ".opencode"), { recursive: true });
+  mkdirSync(bin, { recursive: true });
+  mkdirSync(appData, { recursive: true });
+
+  writeStub(
+    bin,
+    "c7",
+    "#!/bin/sh\nexit 0\n",
+    "@echo off\r\nexit /b 0\r\n",
+  );
+  writeStub(
+    bin,
+    "opencode",
+    "#!/bin/sh\n[ \"$1\" = \"--version\" ] && exit 0\n[ \"$1 $2\" = \"providers list\" ] || exit 1\nprintf 'Credentials: test-provider\\n'\n",
+    "@echo off\r\nif \"%~1\"==\"--version\" exit /b 0\r\nif \"%~1\"==\"providers\" if \"%~2\"==\"list\" (\r\n  echo Credentials: test-provider\r\n  exit /b 0\r\n)\r\nexit /b 1\r\n",
+  );
+  writeFileSync(
+    join(project, ".opencode", "opencode.json"),
+    JSON.stringify({ plugin: [plugin] }),
+  );
+  writeFileSync(
+    join(xdg, "hiai-opencode", "bob.env"),
+    "FIRECRAWL_API_KEY=test-firecrawl-key\nCONTEXT7_API_KEY=test-context7-key\n",
+  );
+  return { root, xdg, project, bin, appData };
+}
+
+function writeBobJson(
+  project: string,
+  config: Record<string, unknown> | string,
+): void {
+  const text = typeof config === "string" ? config : JSON.stringify(config);
+  writeFileSync(join(project, "bob.json"), text);
+}
+
+function runDoctor(opts: {
+  root: string;
+  xdg: string;
+  project: string;
+  bin: string;
+  appData: string;
+}): { exitCode: number; output: string } {
+  const result = Bun.spawnSync({
+    cmd: [process.execPath, join(import.meta.dir, "hiai-opencode.mjs"), "doctor"],
+    cwd: opts.project,
+    env: {
+      ...process.env,
+      HOME: opts.root,
+      USERPROFILE: opts.root,
+      APPDATA: opts.appData,
+      XDG_CONFIG_HOME: opts.xdg,
+      PATH: `${opts.bin}${delimiter}${process.env.PATH ?? ""}`,
+    },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  return {
+    exitCode: result.exitCode ?? 1,
+    output: `${result.stdout.toString()}\n${result.stderr.toString()}`,
+  };
+}
+
 describe("hiai-opencode doctor", (): void => {
   test.each([
     "@hiai-gg/hiai-opencode@latest",
@@ -29,57 +123,10 @@ describe("hiai-opencode doctor", (): void => {
     "@hiai-gg/hiai-opencode@0.6.5",
     "@hiai-gg/hiai-opencode@0.6.6",
   ])("recognizes versioned plugin registration: %s", (plugin): void => {
-    const root = join(tmpdir(), `hiai-opencode-doctor-${crypto.randomUUID()}`);
-    const xdg = join(root, "xdg");
-    const project = join(root, "project");
-    const bin = join(root, "bin");
-    const appData = join(root, "AppData", "Roaming");
-    tempRoots.push(root);
-    mkdirSync(join(xdg, "hiai-opencode"), { recursive: true });
-    mkdirSync(join(project, ".opencode"), { recursive: true });
-    mkdirSync(bin, { recursive: true });
-    mkdirSync(appData, { recursive: true });
+    const workspace = setupDoctorWorkspace(plugin);
+    writeBobJson(workspace.project, { mcp: DISABLED_MCP });
 
-    writeStub(
-      bin,
-      "c7",
-      "#!/bin/sh\nexit 0\n",
-      "@echo off\r\nexit /b 0\r\n",
-    );
-    writeStub(
-      bin,
-      "opencode",
-      "#!/bin/sh\n[ \"$1\" = \"--version\" ] && exit 0\n[ \"$1 $2\" = \"providers list\" ] || exit 1\nprintf 'Credentials: test-provider\\n'\n",
-      "@echo off\r\nif \"%~1\"==\"--version\" exit /b 0\r\nif \"%~1\"==\"providers\" if \"%~2\"==\"list\" (\r\n  echo Credentials: test-provider\r\n  exit /b 0\r\n)\r\nexit /b 1\r\n",
-    );
-    writeFileSync(
-      join(project, ".opencode", "opencode.json"),
-      JSON.stringify({ plugin: [plugin] }),
-    );
-    writeFileSync(
-      join(xdg, "hiai-opencode", "bob.json"),
-      JSON.stringify({ mcp: { "sequential-thinking": { enabled: false }, grep_app: { enabled: false } } }),
-    );
-    writeFileSync(
-      join(xdg, "hiai-opencode", "bob.env"),
-      "FIRECRAWL_API_KEY=test-firecrawl-key\nCONTEXT7_API_KEY=test-context7-key\n",
-    );
-
-    const result = Bun.spawnSync({
-      cmd: [process.execPath, join(import.meta.dir, "hiai-opencode.mjs"), "doctor"],
-      cwd: project,
-      env: {
-        ...process.env,
-        HOME: root,
-        USERPROFILE: root,
-        APPDATA: appData,
-        XDG_CONFIG_HOME: xdg,
-        PATH: `${bin}${delimiter}${process.env.PATH ?? ""}`,
-      },
-      stdout: "pipe",
-      stderr: "pipe",
-    });
-    const output = `${result.stdout.toString()}\n${result.stderr.toString()}`;
+    const { output } = runDoctor(workspace);
 
     expect(output).toContain("OpenCode plugin registration");
     expect(output).not.toContain("is not registered");
@@ -90,5 +137,77 @@ describe("hiai-opencode doctor", (): void => {
     expect(output).not.toContain("skill registry missing");
     expect(output).toContain("OpenCode Providers visible");
     expect(output).toContain("✅ OpenCode plugin registration");
+  });
+
+  test("exits 1 when core orchestration models are missing", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, { mcp: DISABLED_MCP });
+
+    const { exitCode, output } = runDoctor(workspace);
+
+    expect(exitCode).toBe(1);
+    expect(output).toMatch(/Core models \(bob\/plan\/build\)/);
+    expect(output).toMatch(/missing\/empty/);
+  });
+
+  test("exits 1 when bob.json is unparseable", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, "{ not-json");
+
+    const { exitCode, output } = runDoctor(workspace);
+
+    expect(exitCode).toBe(1);
+    expect(output).toMatch(/bob\.json/);
+    expect(output).toMatch(/parse error/);
+  });
+
+  test("exits 1 when subagent_depth is invalid", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, {
+      models: REQUIRED_MODELS,
+      mcp: DISABLED_MCP,
+      subagent_depth: 0,
+    });
+
+    const { exitCode, output } = runDoctor(workspace);
+
+    expect(exitCode).toBe(1);
+    expect(output).toMatch(/invalid subagent_depth=0/);
+  });
+
+  test("exits 1 when a managed static .mcp.json is stale", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, {
+      models: REQUIRED_MODELS,
+      mcp: DISABLED_MCP,
+    });
+    writeFileSync(
+      join(workspace.project, ".opencode", ".mcp.json"),
+      JSON.stringify({
+        _meta: { generatedBy: "hiai-opencode", version: 1, generatedAt: "stale" },
+        mcpServers: { leftover: { command: "false" } },
+      }),
+    );
+
+    const { exitCode, output } = runDoctor(workspace);
+
+    expect(exitCode).toBe(1);
+    expect(output).toMatch(/static \.mcp\.json freshness/);
+    expect(output).toMatch(/stale/);
+  });
+
+  test("exits 0 when models are complete; missing Lightpanda is info, not a hard fail", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, {
+      models: REQUIRED_MODELS,
+      mcp: DISABLED_MCP,
+    });
+
+    const { exitCode, output } = runDoctor(workspace);
+
+    expect(exitCode).toBe(0);
+    expect(output).toContain("✅ Core models (bob/plan/build)");
+    expect(output).toMatch(/Lightpanda engine/);
+    expect(output).not.toMatch(/❌ Lightpanda engine/);
   });
 });

@@ -75,6 +75,50 @@ for (const doc of DOCS) {
   }
 }
 
+// Workstation operator docs must not provision Chrome. Public README still
+// documents `agent-browser install` as an upstream-host option.
+const agentsMdPath = join(rootDir, "AGENTS.md");
+try {
+  const agentsMd = readFileSync(agentsMdPath, "utf-8");
+  if (/bun add -g agent-browser\s+&&\s+agent-browser install/.test(agentsMd)) {
+    console.log(
+      "ERROR: AGENTS.md: workstation bootstrap must not run `agent-browser install` (Chrome). Use Lightpanda; document Chrome as an upstream-host option only.",
+    );
+    hasError = true;
+  }
+  if (!/lightpanda/i.test(agentsMd)) {
+    console.log("ERROR: AGENTS.md: missing Lightpanda workstation engine");
+    hasError = true;
+  }
+} catch {
+  console.log("ERROR: AGENTS.md: not found");
+  hasError = true;
+}
+
+const readmePath = join(rootDir, "README.md");
+try {
+  const readme = readFileSync(readmePath, "utf-8");
+  if (/#\s*986 tests/.test(readme)) {
+    console.log(
+      "ERROR: README.md: stale `986 tests` claim — do not hard-code a drifting test count",
+    );
+    hasError = true;
+  }
+  if (!readme.includes("agent-browser install")) {
+    console.log(
+      "ERROR: README.md: must still document `agent-browser install` as an upstream-host Chrome option",
+    );
+    hasError = true;
+  }
+  if (!/ROADMAP\.md/.test(readme)) {
+    console.log("ERROR: README.md: Roadmap section must point at ROADMAP.md");
+    hasError = true;
+  }
+} catch {
+  console.log("ERROR: README.md: not found");
+  hasError = true;
+}
+
 if (hasError) {
   console.log("\ncheck:docs FAILED");
   process.exit(1);
