@@ -80,11 +80,10 @@ Lightpanda screenshots are the engine placeholder (“No screenshot available, L
 ## SHA / URL
 
 - Pre-edit HEAD: `6b493cc4e4fb36e4edd59a48efbf282a67303a09` (origin/main)
+- This pass: `fceb25e9c7fb5b826381d107b45f26dd41a15d22`
 - npm published: `@hiai-gg/hiai-opencode@0.6.6` (tag `v0.6.6`, 2026-08-26) — **not** this HEAD
 - Canonical source: `https://github.com/HiAi-gg/hiai-opencode`
 - Domain: none. Not a website. Do not provision `portfolio@hiai-opencode`.
-
-Commit SHA for this pass is the git commit created with this report.
 
 ## Remaining blockers
 
@@ -106,4 +105,4 @@ Not applicable. This is an npm plugin, not an old VPS site. LAN browse is source
 
 ## Deploy candidate
 
-Hand to controller: git SHA on `main` after push + CI. **Not** a Coolify/VPS deploy. **Not** an npm publish. `deploy_candidate` is source-only.
+Hand to controller: `fceb25e9c7fb5b826381d107b45f26dd41a15d22` on `main` after push + CI. **Not** a Coolify/VPS deploy. **Not** an npm publish. `deploy_candidate` is source-only.
