@@ -1,21 +1,23 @@
 # Team backlog — hiai-opencode
 
-Source audit: **2026-09-13**. Kind: **plugin**.
-Baseline HEAD: `cfa8185d71fbc895b106958530b8b3c457f0a0d4`; branch: `main`.
+Source audit: **2026-09-15**. Kind: **plugin**.
+Baseline HEAD: `6b493cc4e4fb36e4edd59a48efbf282a67303a09`; branch: `main`.
 
 Coordination and acceptance: [TEAM_HANDOFF.md](../TEAM_HANDOFF.md).
 
 ## Current reconciliation
 
-Version 0.6.6 remains. 2026-09-13 pass: doctor hard-fail tests, Lightpanda-vs-Chrome docs split, README test-count/Roadmap, CI Bun 1.4.x. No publish.
+Version 0.6.6 remains. 2026-09-15 pass: isolate doctor Lightpanda PATH so missing-binary is actually proven; include `ROADMAP.md` in npm `files`; record `@opencode-ai/plugin` 1.18.21 vs npm latest 1.18.31 without bumping. No publish, no tag, no OpenCode runtime certification.
 
-Source checks in [docs/acceptance/GROK-20260913.md](docs/acceptance/GROK-20260913.md) support review, not runtime/visual/production certification. GitHub freshness was not verified. Coordinator alone marks accepted.
+2026-09-13 pass (committed as `6b493cc`): doctor hard-fail tests, Lightpanda-vs-Chrome docs split, README test-count/Roadmap, CI Bun 1.4.x. GitHub CI on that SHA succeeded.
+
+Source checks support review, not runtime/visual/production certification. Coordinator alone marks accepted.
 
 Recent local commits:
 
+- `6b493cc Make doctor fail on invalid configuration and verify workstation guidance`
 - `cfa8185 chore: pin TypeScript 6 / Drizzle 0.45.2 and keep .env.example tracked`
 - `d17bf65 chore(release): v0.6.6`
-- `fe6a80b chore(release): v0.6.5`
 
 Pre-existing Git status: **1 changed/untracked entries** before this audit. Preserve them; the baseline inventory records paths, not secret contents.
 
@@ -61,6 +63,14 @@ Effort is a planning estimate, not a deadline. Confirm the first task baseline b
 - Acceptance: check:docs, typecheck, test and package checks recorded; CI Bun matches approved environment; no publish without a user-facing release.
 - Evidence: `bun run check:docs` 0; `bun run typecheck` 0; `bun test` 1102/0; `bun run ci` 0 (183 files); `bun run build` 0; `bun run check:bundle-size` 0 (897.3 KB). CI/release Bun `1.4.x`; local Bun 1.4.0. Version 0.6.6, no publish. `npm pack` dry-run not repeated after permission denial. `run-check.py` blocked (EACCES on check-slots).
 - Delivery: [docs/acceptance/GROK-20260913.md](docs/acceptance/GROK-20260913.md).
+
+### HIAI-OPENCODE-T04 — Prove missing-Lightpanda doctor path and ship ROADMAP in the package
+
+- [x] **P2** · status: **review** · owner: **grok** · effort: S: about 0.5 day
+- Depends on: HIAI-OPENCODE-T01, HIAI-OPENCODE-T03.
+- Acceptance: Doctor healthy-exit fixture does not inherit host PATH; missing Lightpanda is info (`not installed`) and present stub is ok. `package.json` `files` includes `ROADMAP.md`; `check:docs` gates it. Host plugin pin recorded vs npm latest; no bump/publish.
+- Evidence: Isolated-PATH doctor tests; `check:docs` ROADMAP allowlist gate. See [docs/acceptance/NEXT-NIGHT-20260915.md](docs/acceptance/NEXT-NIGHT-20260915.md).
+- Delivery: [docs/acceptance/NEXT-NIGHT-20260915.md](docs/acceptance/NEXT-NIGHT-20260915.md).
 
 ## Verification entry points
 

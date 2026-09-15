@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Lightpanda unsupported surfaces (headed mode, extensions, profiles, persistent auth, `file://`, Chrome DevTools MCP) are recorded in operator docs.
 - README drops the stale `986 tests` claim and points Roadmap at `ROADMAP.md`.
 - CI and release workflows use Bun `1.4.x` to match the approved DEV-01 environment. Version stays 0.6.6; no publish without a user-facing release.
+- Doctor Lightpanda absence is proven on an isolated PATH (host Lightpanda no longer hides the missing-binary branch).
+- `ROADMAP.md` is included in the npm `files` allowlist so the README relative link works in the unpacked package. `check:docs` gates that inclusion.
+- Host plugin pin remains `@opencode-ai/plugin` `^1.18.21`. npm latest observed 2026-09-15 is `1.18.31`; no bump or publish in this pass.
 
 ## [0.6.6] — 2026-08-24
 

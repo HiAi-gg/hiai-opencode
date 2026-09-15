@@ -1,0 +1,7 @@
+check-docs=0
+typecheck=0
+biome-ci=0
+test=0
+build=0
+bundle-size=0
+pack-dry=0

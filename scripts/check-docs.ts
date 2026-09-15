@@ -119,6 +119,25 @@ try {
   hasError = true;
 }
 
+const pkgPath = join(rootDir, "package.json");
+try {
+  const pkg = JSON.parse(readFileSync(pkgPath, "utf-8")) as {
+    files?: unknown;
+  };
+  const files = Array.isArray(pkg.files)
+    ? pkg.files.filter((entry): entry is string => typeof entry === "string")
+    : [];
+  if (!files.includes("ROADMAP.md")) {
+    console.log(
+      "ERROR: package.json files must include ROADMAP.md so the README link works in the unpacked npm package",
+    );
+    hasError = true;
+  }
+} catch {
+  console.log("ERROR: package.json: not found or unparseable");
+  hasError = true;
+}
+
 if (hasError) {
   console.log("\ncheck:docs FAILED");
   process.exit(1);

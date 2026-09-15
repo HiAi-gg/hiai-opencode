@@ -89,24 +89,44 @@ function writeBobJson(
   writeFileSync(join(project, "bob.json"), text);
 }
 
+function isolatedDoctorPath(bin: string): string {
+  // Keep `which`/`where` resolvable so hasBinary can search the stub bin,
+  // but drop the host user PATH (where Lightpanda/agent-browser live).
+  if (process.platform === "win32") {
+    const system32 = process.env.SystemRoot
+      ? join(process.env.SystemRoot, "System32")
+      : "C:\\Windows\\System32";
+    return `${bin}${delimiter}${system32}`;
+  }
+  return `${bin}${delimiter}/usr/bin${delimiter}/bin`;
+}
+
 function runDoctor(opts: {
   root: string;
   xdg: string;
   project: string;
   bin: string;
   appData: string;
+  isolatePath?: boolean;
 }): { exitCode: number; output: string } {
+  const path = opts.isolatePath
+    ? isolatedDoctorPath(opts.bin)
+    : `${opts.bin}${delimiter}${process.env.PATH ?? ""}`;
+  const env: Record<string, string | undefined> = {
+    ...process.env,
+    HOME: opts.root,
+    USERPROFILE: opts.root,
+    APPDATA: opts.appData,
+    XDG_CONFIG_HOME: opts.xdg,
+    PATH: path,
+  };
+  if (opts.isolatePath) {
+    delete env.AGENT_BROWSER_ENGINE;
+  }
   const result = Bun.spawnSync({
     cmd: [process.execPath, join(import.meta.dir, "hiai-opencode.mjs"), "doctor"],
     cwd: opts.project,
-    env: {
-      ...process.env,
-      HOME: opts.root,
-      USERPROFILE: opts.root,
-      APPDATA: opts.appData,
-      XDG_CONFIG_HOME: opts.xdg,
-      PATH: `${opts.bin}${delimiter}${process.env.PATH ?? ""}`,
-    },
+    env,
     stdout: "pipe",
     stderr: "pipe",
   });
@@ -203,11 +223,40 @@ describe("hiai-opencode doctor", (): void => {
       mcp: DISABLED_MCP,
     });
 
-    const { exitCode, output } = runDoctor(workspace);
+    const { exitCode, output } = runDoctor({
+      ...workspace,
+      isolatePath: true,
+    });
 
     expect(exitCode).toBe(0);
     expect(output).toContain("✅ Core models (bob/plan/build)");
     expect(output).toMatch(/Lightpanda engine/);
+    expect(output).toMatch(/not installed/);
     expect(output).not.toMatch(/❌ Lightpanda engine/);
+    expect(output).not.toMatch(/binary found on PATH/);
+  });
+
+  test("exits 0 and reports Lightpanda present when the binary is on an isolated PATH", (): void => {
+    const workspace = setupDoctorWorkspace();
+    writeBobJson(workspace.project, {
+      models: REQUIRED_MODELS,
+      mcp: DISABLED_MCP,
+    });
+    writeStub(
+      workspace.bin,
+      "lightpanda",
+      "#!/bin/sh\nexit 0\n",
+      "@echo off\r\nexit /b 0\r\n",
+    );
+
+    const { exitCode, output } = runDoctor({
+      ...workspace,
+      isolatePath: true,
+    });
+
+    expect(exitCode).toBe(0);
+    expect(output).toMatch(/✅ Lightpanda engine/);
+    expect(output).toMatch(/binary found on PATH/);
+    expect(output).not.toMatch(/not installed/);
   });
 });
