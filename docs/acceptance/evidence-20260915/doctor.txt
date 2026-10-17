@@ -1,0 +1,38 @@
+[0m[31mhiai-opencode doctor[0m
+[0m[31mConfig: /mnt/data/projects/hiai-opencode/bob.json[0m
+[0m[31mStatic MCP export: /mnt/data/projects/hiai-opencode/.opencode/.mcp.json[0m
+[0m[31m[0m
+[0m[31mMCP Servers:[0m
+[0m[31m✅ sequential-thinking  - backend ok[0m
+[0m[31m✅ grep_app             - remote endpoint configured (no key required)[0m
+[0m[31m[0m
+[0m[31mDoctor Checks:[0m
+[0m[31m✅ bob.json - /mnt/data/projects/hiai-opencode/bob.json[0m
+[0m[31m⚠️  static .mcp.json freshness - /mnt/data/projects/hiai-opencode/.opencode/.mcp.json is missing[0m
+[0m[31m✅ OpenCode Connect visibility - OpenCode Providers visible. Configured model providers: openai, opencode-go; summary: ┌  Credentials [90m~/.local/share/opencode/auth.json | │ | ●  OpenCode Go [90mapi[0m
+[0m[31m✅ OpenCode plugin registration - plugin registered in /home/vlgalib/.config/opencode/opencode.jsonc; DCP (opencode-dcp) not found — optional for Dynamic Context Pruning[0m
+[0m[31mℹ️  Skill materialization - runtime skill registry is optional; skills load from the plugin bundle[0m
+[0m[31m✅ Agent count and naming - visible=3 [bob, plan, general]; hidden=7 [manager, critic, designer, explore, writer, vision, build]; model slots=10/10[0m
+[0m[31m✅ Core models (bob/plan/build) - bob, plan, and build have models[0m
+[0m[31m✅ Delegation depth - subagent_depth=2; nested Bob → Plan → Explore / Bob → Manager → worker enabled[0m
+[0m[31m✅ LSP runtime availability - ✅ typescript: runtime available | ✅ svelte: runtime available | ✅ eslint: runtime available | ✅ bash: runtime available | ✅ pyright: runtime available[0m
+[0m[31m✅ Firecrawl auth - Firecrawl auth OK ([38;5;208m🔥 [1mfirecrawl[0m [2mcli[0m [2mv1.23.1[0m
+
+  [32m●[0m Authenticated [2mvia FIRECRAWL_API_KEY=(redacted)
+  [2mConcurrency:[0m 0/2 jobs [2m(parallel scrape limit)[0m
+  [2mCredits:[0m 1,406 / 1,000 [2m(141% left this cycle)[0m
+  [2m.firecrawl:[0m not found [2m- no local cache[0m
+  [2m.gitignore:[0m present [2m- .firecrawl ignored: no[0m)[0m
+[0m[31m⚠️  Context7 CLI - context7 CLI not found — install via skill("explore/context7") or npm i -g context7[0m
+[0m[31m✅ Agent-browser CLI - agent-browser CLI available (agent-browser)[0m
+[0m[31m✅ Lightpanda engine - lightpanda binary found on PATH[0m
+[0m[31mℹ️  Agent-browser effective engine - effective engine=lightpanda [explicit AGENT_BROWSER_ENGINE=lightpanda][0m
+[0m[31m[0m
+[0m[31mMCP Tool Probes:[0m
+[0m[31m✅ sequential-thinking: reachable, tools=1[0m
+[0m[31m✅ grep_app: endpoint reachable (405)[0m
+[0m[31m[0m
+[0m[31mRecommended follow-ups:[0m
+[0m[31m  - hiai-opencode export-mcp .opencode/.mcp.json[0m
+[0m[31m  - opencode debug config[0m
+[0m[31m  - opencode mcp list --print-logs --log-level INFO[0m
