@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Operator reference for autonomous agents and tooling that need to install, configure, verify, or modify `hiai-opencode`. For the product overview, see [README.md](README.md). For internals, see [ARCHITECTURE.md](ARCHITECTURE.md).
+Operator reference for the last OpenCode 1.x release of `hiai-opencode`. For the product overview, see [README.md](README.md). For internals, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## Production Environment
+## Status
 
-**This is a production project.** All tools, MCP servers, skills, and integrations must be functional at all times. If any service breaks during a session (build failures, test regressions, MCP errors), diagnose and fix immediately — never leave broken state behind.
+**Archived on 2026-10-17.** [OpenCode 2.0](https://opencode.ai/changelog) does not load OpenCode 1 plugins ([migration](https://opencode.ai/v2/docs/migrate-v1/)). `@hiai-gg/hiai-opencode` 0.6.6 targets `@opencode-ai/plugin` ^1.18.21 and is frozen. Do not port, publish, or treat this tree as an active product. The notes below describe that last release.
 
 ## Purpose
 

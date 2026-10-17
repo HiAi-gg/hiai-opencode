@@ -1,4 +1,6 @@
 <!-- portfolio-audit:2026-09-13 -->
+> **Frozen — 2026-10-17.** OpenCode 2.0 does not run V1 plugins. `@hiai-gg/hiai-opencode` 0.6.6 stays on OpenCode 1 (`@opencode-ai/plugin` ^1.18.21) and is not ported. This roadmap is historical. No further releases.
+
 > **Source reconciliation — 2026-09-15:** Read [TEAM_BACKLOG.md](TEAM_BACKLOG.md) before using the tasks/status below. Version 0.6.6 remains. GitHub CI on `6b493cc` succeeded (run 34766718339, Ubuntu/Windows/macOS + static checks). npm `latest` is still the tagged `v0.6.6`. This pass does not publish. The linked task ledger holds execution status.
 
 # ROADMAP — hiai-opencode
@@ -20,6 +22,7 @@ OpenCode plugin (`@hiai-gg/hiai-opencode` 0.6.6, MIT) that registers Bob plus pl
 
 ## Now
 
+- **Frozen.** Public archive of the OpenCode 1.x plugin. Do not publish, port, or schedule the items under Next.
 - Published plugin + CLI; plan freeze, delivery Critic, quality/LSP/legal/circuit-breaker gates are in source and covered by tests
 - Lightpanda is auto-selected when its binary is on PATH; Chrome is not hardcoded (`src/shared/agent-browser-engine.ts`)
 - `.env.example` is tracked; `bob.env` stays gitignored

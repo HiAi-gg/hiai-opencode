@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Frozen
+
+- Archived on 2026-10-17 after [OpenCode 2.0](https://opencode.ai/changelog) (12 October 2026). V1 plugin implementations do not run in V2 ([migration](https://opencode.ai/v2/docs/migrate-v1/)). This package stays on `@opencode-ai/plugin` ^1.18.21 at version 0.6.6. No port and no publish.
+
 ### Docs and CI (no version bump)
 
 - Doctor tests now assert hard failures (`fail`/`error`) exit 1, and a complete model set exits 0 even when Lightpanda is absent (info, not a hard fail).

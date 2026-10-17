@@ -1,5 +1,7 @@
 # hiai-opencode Architecture
 
+> **Archived.** OpenCode 2.0 does not load this OpenCode 1.x plugin. The layout below is the last 0.6.6 tree. See [README.md](README.md).
+
 This file explains how the plugin is assembled and where to change each layer.
 It reflects the **actual** on-disk code layout — every path below is real.
 

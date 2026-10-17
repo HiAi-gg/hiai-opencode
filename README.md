@@ -1,5 +1,7 @@
 # HiAi-Opencode
 
+> **Archived — frozen on 2026-10-17.** [OpenCode 2.0](https://opencode.ai/changelog) (12 October 2026) replaced the 1.x plugin API. [V1 plugins do not run on OpenCode 2](https://opencode.ai/v2/docs/migrate-v1/): entrypoints, hooks, tools, and the server client have to be ported to [`@opencode/plugin`](https://opencode.ai/v2/docs/build/plugins/). **hiai-opencode 0.6.6** targets OpenCode 1 (`@opencode-ai/plugin` ^1.18.21) and is not being ported. This repository stays public and read-only. The last npm release, `@hiai-gg/hiai-opencode@0.6.6`, is for OpenCode 1.x only. No further issues, pull requests, or releases.
+
 [![CI](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml/badge.svg?branch=main&event=push)](https://github.com/HiAi-gg/hiai-opencode/actions/workflows/ci.yml?query=branch%3Amain)
 [![Release](https://img.shields.io/github/v/release/HiAi-gg/hiai-opencode?style=flat-square&logo=github)](https://github.com/HiAi-gg/hiai-opencode/releases/latest)
 [![npm](https://img.shields.io/npm/v/@hiai-gg/hiai-opencode?style=flat-square&logo=npm)](https://www.npmjs.com/package/@hiai-gg/hiai-opencode)
@@ -28,6 +30,8 @@ Most AI coding tools drop you into one big context window and hope the model sel
 ---
 
 ## Install
+
+Last release, **OpenCode 1.x only**. OpenCode 2 does not load this plugin.
 
 ### 1. Install the plugin
 
@@ -265,6 +269,8 @@ Never put raw keys in JSON — use `{env:VAR_NAME}` placeholders. Never commit `
 
 ## Quick start for contributors
 
+Development stopped with the OpenCode 2.0 release. The commands below build the last OpenCode 1.x source.
+
 ```bash
 git clone https://github.com/HiAi-gg/hiai-opencode.git
 cd hiai-opencode
@@ -286,7 +292,7 @@ bun test               # current suite; do not hard-code a count here
 
 ## Roadmap
 
-Product direction, open work, and version notes live in [ROADMAP.md](ROADMAP.md). This README does not keep a second backlog.
+Product direction through 0.6.6 lives in [ROADMAP.md](ROADMAP.md). That file is historical. Nothing on it is scheduled.
 
 ---
 
